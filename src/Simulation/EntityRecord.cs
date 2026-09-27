@@ -13,14 +13,15 @@ public sealed class EntityRecord
         string speciesId,
         Vector3 position,
         double satiety,
-        NeedsTuning needsTuning)
+        NeedsTuning needsTuning,
+        ReservationService reservations)
     {
         Id = id;
         SpeciesId = speciesId;
         Position = position;
         Needs = new NeedsState(needsTuning, satiety);
         _inventoryView = new ReadOnlyDictionary<string, int>(_inventory);
-        Actions = new ActionLifecycle();
+        Actions = new ActionLifecycle(id, reservations);
     }
 
     public string Id { get; }

@@ -80,5 +80,14 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Status: Provisional; implemented for J01a
 - Decision: Give each entity one domain-owned active action, selected by fixed priority and stable candidate ID. Completion, cancellation, and preemption run the active action cleanup exactly once.
 - Reason: Hunger must be able to preempt lower-priority work without duplicating action state or dropping carried inventory.
-- Consequence: Action reservations and bounded retry timing remain separate concerns for the follow-up job issues.
+- Consequence: Action completion, cancellation, and preemption provide a lifecycle hook for transient reservation cleanup. Bounded retry timing remains a separate concern for follow-up job issues.
 - Revisit: If action selection needs measured scheduling or parallel work beyond the Milestone 0.1 scope.
+
+## D010 — Action-scoped resource reservations
+
+- Date: 2026-09-27
+- Status: Provisional; implemented for J01b
+- Decision: A World-owned reservation service tracks resource quantities and destination capacity by active entity action and stable target ID. Action completion/cancellation, entity removal, and target removal release transient reservations.
+- Reason: Competing actions must not claim the same resource units or storage capacity, and cleanup must not leave stale claims after lifecycle changes.
+- Consequence: Reservations do not mutate durable inventories; transfer operations remain atomic and separate. Removed target IDs cannot be reused in that World.
+- Revisit: If later job systems require partial reservation transfer or target recreation semantics.

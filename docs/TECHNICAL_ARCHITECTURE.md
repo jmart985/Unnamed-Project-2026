@@ -23,7 +23,7 @@ These are planned paths. F01 creates the runnable scaffold. Use a fixed, flat 3D
 - The simulation clock advances in 0.1-second ticks. Each tick invokes domain update callbacks in stable order, then the engine refreshes presentation. It supports 1x and 4x speed, ignores elapsed wall time while paused, and caps one frame at eight ticks; excess accumulated time is discarded rather than causing an unbounded catch-up.
 - Simulation rules do not depend on rendering or UI. A small navigation boundary permits deterministic fake-path tests; live navigation is validated in Godot.
 - Use a simple action state machine: Idle, Moving, Eating, Hauling, Waiting. Hunger preempts work. Avoid behavior-tree or utility-AI frameworks until necessary.
-- Inventory transfers and reservations go through one domain service. Counts stay nonnegative, capacity is enforced, and a transfer either fully succeeds for its agreed quantity or changes neither container.
+- Inventory transfers go through one domain service. Counts stay nonnegative, capacity is enforced, and a transfer either fully succeeds for its agreed quantity or changes neither container. A World-owned reservation service claims resource quantities and destination capacity for active entity actions; completion, cancellation, entity removal, and target removal release those transient claims.
 - Item/species definitions use small validated JSON files with stable string IDs. `data/species.json` defines each species' positive movement speed (world units per simulation second), nonnegative hunger rate (satiety per simulation second), known item IDs in its diet, and hauling capability. Start with food, wood, human, and one creature species. No mod loader or schema framework.
 
 ## Navigation

@@ -11,10 +11,12 @@ public sealed class World
     public World(NeedsTuning? needsTuning = null)
     {
         NeedsTuning = needsTuning ?? new NeedsTuning();
+        Reservations = new ReservationService(IsActionActive);
     }
 
     public IReadOnlyCollection<EntityRecord> Entities => _entities.Values;
     public NeedsTuning NeedsTuning { get; }
+    public ReservationService Reservations { get; }
 
     public EntityRecord SpawnEntity(
         string speciesId,
@@ -42,7 +44,7 @@ public sealed class World
         }
 
         var id = $"entity-{(++_lastEntityId).ToString("D6", CultureInfo.InvariantCulture)}";
-        var entity = new EntityRecord(id, speciesId, position, satiety, NeedsTuning);
+        var entity = new EntityRecord(id, speciesId, position, satiety, NeedsTuning, Reservations);
         _entities.Add(id, entity);
         return entity;
     }
@@ -60,7 +62,14 @@ public sealed class World
 
     public bool TryRemoveEntity(string? id)
     {
-        return !string.IsNullOrWhiteSpace(id) && _entities.Remove(id);
+        if (string.IsNullOrWhiteSpace(id) || !_entities.TryGetValue(id, out var entity))
+        {
+            return false;
+        }
+
+        entity.Actions.Cancel();
+        Reservations.ReleaseForEntity(id);
+        return _entities.Remove(id);
     }
 
     public bool TrySetEntityPosition(string? id, Vector3 position)
@@ -81,6 +90,19 @@ public sealed class World
 
     public void Reset()
     {
+        foreach (var entity in _entities.Values)
+        {
+            entity.Actions.Cancel();
+            Reservations.ReleaseForEntity(entity.Id);
+        }
+
         _entities.Clear();
+        Reservations.Reset();
+    }
+
+    private bool IsActionActive(string entityId, string actionId)
+    {
+        return _entities.TryGetValue(entityId, out var entity)
+            && string.Equals(entity.Actions.Current?.Id, actionId, StringComparison.Ordinal);
     }
 }
