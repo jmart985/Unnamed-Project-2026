@@ -58,21 +58,16 @@ public sealed class FoodSelectionService
     public const int DefaultRetryDelayTicks = 10;
 
     private readonly World _world;
-    private readonly int _retryDelayTicks;
     private readonly Dictionary<string, SelectionAttempt> _attempts = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, long> _retryAtTicks = new(StringComparer.Ordinal);
+    private readonly RetryScheduler _retryScheduler;
     private long _nextActionId;
 
     public FoodSelectionService(World world, int retryDelayTicks = DefaultRetryDelayTicks)
     {
         ArgumentNullException.ThrowIfNull(world);
-        if (retryDelayTicks <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(retryDelayTicks), "Retry delay must be positive.");
-        }
 
         _world = world;
-        _retryDelayTicks = retryDelayTicks;
+        _retryScheduler = new RetryScheduler(retryDelayTicks);
     }
 
     public FoodSelectionResult TrySelect(
@@ -98,7 +93,7 @@ public sealed class FoodSelectionService
         {
             var shouldReturnToIdle = entity.Activity is "SeekingFood" or "Waiting";
             CancelAttempt(entity);
-            _retryAtTicks.Remove(entity.Id);
+            _retryScheduler.Clear(entity.Id);
             if (shouldReturnToIdle && entity.Actions.Current is null)
             {
                 entity.Activity = "Idle";
@@ -127,16 +122,11 @@ public sealed class FoodSelectionService
             }
         }
 
-        if (_retryAtTicks.TryGetValue(entity.Id, out var retryAtTick))
+        if (_retryScheduler.IsWaiting(entity.Id, simulationTick))
         {
-            if (simulationTick < retryAtTick)
-            {
-                return new FoodSelectionResult(
-                    FoodSelectionStatus.RetryDeferred,
-                    WaitingReason: entity.WaitingReason);
-            }
-
-            _retryAtTicks.Remove(entity.Id);
+            return new FoodSelectionResult(
+                FoodSelectionStatus.RetryDeferred,
+                WaitingReason: entity.WaitingReason);
         }
 
         var actionId = $"eat-{entity.Id}-{(++_nextActionId).ToString("D6", CultureInfo.InvariantCulture)}";
@@ -207,7 +197,7 @@ public sealed class FoodSelectionService
         }
 
         _attempts.Clear();
-        _retryAtTicks.Clear();
+        _retryScheduler.Reset();
     }
 
     private FoodSelectionResult TrySelectCandidate(
@@ -245,16 +235,14 @@ public sealed class FoodSelectionService
             attempt.SelectedSource = source;
             entity.Activity = "SeekingFood";
             entity.WaitingReason = null;
-            _retryAtTicks.Remove(entity.Id);
+            _retryScheduler.Clear(entity.Id);
             return new FoodSelectionResult(FoodSelectionStatus.Selected, source, attempt.ActionId);
         }
 
         entity.Actions.Cancel();
         entity.Activity = "Waiting";
         entity.WaitingReason = GetWaitingReason(attempt, sources);
-        _retryAtTicks[entity.Id] = simulationTick > long.MaxValue - _retryDelayTicks
-            ? long.MaxValue
-            : simulationTick + _retryDelayTicks;
+        _retryScheduler.ScheduleRetry(entity.Id, simulationTick);
         return new FoodSelectionResult(
             FoodSelectionStatus.Waiting,
             WaitingReason: entity.WaitingReason);

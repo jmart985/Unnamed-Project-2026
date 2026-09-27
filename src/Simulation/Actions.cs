@@ -19,12 +19,13 @@ public enum ActionStartResult
 {
     Started,
     Preempted,
-    Rejected
+    Rejected,
+    CargoPending
 }
 
 public sealed class ActionCandidate
 {
-    public ActionCandidate(string id, ActionKind kind)
+    public ActionCandidate(string id, ActionKind kind, bool requiresEmptyCargo = false)
     {
         if (string.IsNullOrWhiteSpace(id))
         {
@@ -33,10 +34,19 @@ public sealed class ActionCandidate
 
         Id = id;
         Kind = kind;
+        RequiresEmptyCargo = requiresEmptyCargo;
     }
 
     public string Id { get; }
     public ActionKind Kind { get; }
+
+    /// <summary>
+    /// When true, this candidate represents new pickup-style work that must not start while
+    /// the owning entity still carries inventory from an interrupted trip. The entity must
+    /// resume delivering (depositing) its carried items before claiming this kind of work.
+    /// </summary>
+    public bool RequiresEmptyCargo { get; }
+
     public int Priority => Kind switch
     {
         ActionKind.Eat => 300,
@@ -69,15 +79,17 @@ public sealed class ActionLifecycle
 {
     private readonly string? _ownerEntityId;
     private readonly ReservationService? _reservations;
+    private readonly Func<bool>? _hasCarriedItems;
 
     public ActionLifecycle()
     {
     }
 
-    internal ActionLifecycle(string ownerEntityId, ReservationService reservations)
+    internal ActionLifecycle(string ownerEntityId, ReservationService reservations, Func<bool> hasCarriedItems)
     {
         _ownerEntityId = ownerEntityId;
         _reservations = reservations;
+        _hasCarriedItems = hasCarriedItems;
     }
 
     public ActionState? Current { get; private set; }
@@ -85,6 +97,11 @@ public sealed class ActionLifecycle
     public ActionStartResult TryStart(ActionCandidate candidate, Action? cleanup = null)
     {
         ArgumentNullException.ThrowIfNull(candidate);
+
+        if (candidate.RequiresEmptyCargo && (_hasCarriedItems?.Invoke() ?? false))
+        {
+            return ActionStartResult.CargoPending;
+        }
 
         if (Current is null)
         {
