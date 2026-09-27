@@ -21,6 +21,7 @@ public sealed class WorldTests
             Assert.Equal("human", entity.SpeciesId);
             Assert.Equal(60, entity.Satiety);
             Assert.Empty(entity.Inventory);
+            Assert.Equal(10, entity.Inventory.Capacity);
             Assert.Equal("Idle", entity.Activity);
         });
         Assert.Equal(10, world.Entities.Count);

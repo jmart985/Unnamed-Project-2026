@@ -73,3 +73,12 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: A stale reference from before removal or reset must not resolve to a different entity in the same World.
 - Consequence: Repeated scenario resets in one World continue increasing IDs.
 - Revisit: If save/load or world replacement requires IDs to be restored from durable data.
+
+## D009 — Bounded item containers
+
+- Date: 2026-09-27
+- Status: Provisional; implemented for I01a
+- Decision: Use one `ItemContainer` implementation backed by a validated JSON item catalog and a unit-count capacity. Entity inventories, ground piles, and the stockpile share its mutation rules; the initial catalog defines food and wood by stable IDs.
+- Reason: Keep item-specific behavior out of storage mechanics and enforce nonnegative counts and capacity at every mutation boundary.
+- Consequence: Container capacity is configured in units, applies across all contained item IDs, and does not model weight. Transfers remain a separate atomic operation.
+- Revisit: If item definitions require additional fields or container capacity semantics become item-specific.
