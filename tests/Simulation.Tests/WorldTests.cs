@@ -87,4 +87,19 @@ public sealed class WorldTests
 
         Assert.Equal("entity-000001", world.SpawnEntity("human", Vector3.Zero).Id);
     }
+
+    [Fact]
+    public void EntityPositionCanBeUpdatedThroughTheWorldOwner()
+    {
+        var world = new World();
+        var entity = world.SpawnEntity("human", Vector3.Zero);
+        var position = new Vector3(2, 0, 3);
+
+        Assert.True(world.TrySetEntityPosition(entity.Id, position));
+        Assert.Equal(position, entity.Position);
+        Assert.False(world.TrySetEntityPosition("missing", Vector3.One));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            world.TrySetEntityPosition(entity.Id, new Vector3(float.NaN, 0, 0)));
+        Assert.Equal(position, entity.Position);
+    }
 }

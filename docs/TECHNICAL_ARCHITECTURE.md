@@ -30,6 +30,8 @@ These are planned paths. F01 creates the runnable scaffold. Use a fixed, flat 3D
 
 Use Godot navigation on a static map, with explicit arrival tolerance, failure/timeout handling, and throttled replanning. Domain decisions select goals; the engine adapter moves a view and feeds authoritative movement results back to entity position. Do not maintain independent UI and domain inventories or hunger values.
 
+In the sandbox, select `entity-000001` and press `R` to route around the central obstacle, `U` to request an unreachable goal, `C` to cancel, or `D` to mark the active goal removed. Movement and navigation time advance only on simulation ticks, so pause freezes both.
+
 ## Save/load boundary
 
 Use a versioned JSON snapshot of durable state: schema version, simulation time, entity IDs/species/positions/satiety/inventories, and world resource containers. Validate into a temporary world before replacing the current world. Unsupported versions or invalid references produce an error without changing the running world.

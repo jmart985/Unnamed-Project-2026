@@ -63,6 +63,22 @@ public sealed class World
         return !string.IsNullOrWhiteSpace(id) && _entities.Remove(id);
     }
 
+    public bool TrySetEntityPosition(string? id, Vector3 position)
+    {
+        if (!float.IsFinite(position.X) || !float.IsFinite(position.Y) || !float.IsFinite(position.Z))
+        {
+            throw new ArgumentOutOfRangeException(nameof(position), "Position coordinates must be finite.");
+        }
+
+        if (!TryGetEntity(id, out var entity) || entity is null)
+        {
+            return false;
+        }
+
+        entity.Position = position;
+        return true;
+    }
+
     public void Reset()
     {
         _entities.Clear();
