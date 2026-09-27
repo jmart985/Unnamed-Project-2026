@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Numerics;
 
@@ -6,15 +7,19 @@ namespace Simulation;
 public sealed class World
 {
     private readonly Dictionary<string, EntityRecord> _entities = new(StringComparer.Ordinal);
+    private readonly List<FoodSource> _foodSources = new();
+    private readonly ReadOnlyCollection<FoodSource> _foodSourceView;
     private long _lastEntityId;
 
     public World(NeedsTuning? needsTuning = null)
     {
         NeedsTuning = needsTuning ?? new NeedsTuning();
+        _foodSourceView = _foodSources.AsReadOnly();
         Reservations = new ReservationService(IsActionActive);
     }
 
     public IReadOnlyCollection<EntityRecord> Entities => _entities.Values;
+    public ReadOnlyCollection<FoodSource> FoodSources => _foodSourceView;
     public NeedsTuning NeedsTuning { get; }
     public ReservationService Reservations { get; }
 
@@ -88,6 +93,37 @@ public sealed class World
         return true;
     }
 
+    public void AddFoodSource(FoodSource source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        if (_foodSources.Any(existing =>
+                string.Equals(existing.Id, source.Id, StringComparison.Ordinal)))
+        {
+            throw new InvalidOperationException($"Food source '{source.Id}' already exists in this world.");
+        }
+
+        _foodSources.Add(source);
+    }
+
+    public bool TryRemoveFoodSource(string? id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            return false;
+        }
+
+        var sourceIndex = _foodSources.FindIndex(source =>
+            string.Equals(source.Id, id, StringComparison.Ordinal));
+        if (sourceIndex < 0)
+        {
+            return false;
+        }
+
+        Reservations.RemoveTarget(id);
+        _foodSources.RemoveAt(sourceIndex);
+        return true;
+    }
+
     public void Reset()
     {
         foreach (var entity in _entities.Values)
@@ -97,6 +133,7 @@ public sealed class World
         }
 
         _entities.Clear();
+        _foodSources.Clear();
         Reservations.Reset();
     }
 

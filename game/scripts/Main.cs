@@ -9,7 +9,9 @@ public partial class Main : Node3D
     private readonly World _world = new();
     private readonly Dictionary<string, EntityView> _entityViews = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Button> _entityButtons = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, MeshInstance3D> _foodSourceViews = new(StringComparer.Ordinal);
     private SpeciesCatalog _speciesCatalog = null!;
+    private FoodEatingService _foodEatingService = null!;
     private MeshInstance3D _map = null!;
     private MeshInstance3D _obstacle = null!;
     private NavigationRegion3D _navigationRegion = null!;
@@ -19,6 +21,7 @@ public partial class Main : Node3D
     private Label _inspectorLabel = null!;
     private Button _removeSelectedButton = null!;
     private string? _selectedEntityId;
+    private long _simulationTick;
 
     public override void _Ready()
     {
@@ -91,8 +94,11 @@ public partial class Main : Node3D
     private void ResetScenario()
     {
         _clock.Reset();
+        _simulationTick = 0;
         _world.Reset();
+        _foodEatingService = new FoodEatingService(_world, new FoodSelectionService(_world));
         ClearEntityViews();
+        ClearFoodSourceViews();
         if (_map is not null)
         {
             _map.Mesh = new PlaneMesh { Size = new Vector2(20, 20) };
@@ -101,6 +107,8 @@ public partial class Main : Node3D
         _obstacle.Mesh = new BoxMesh { Size = new Vector3(2, 1, 2) };
         _obstacle.Position = new Vector3(0, 0.5f, 0);
         _navigationRegion.NavigationMesh = CreateNavigationMesh();
+        AddFoodSource("food-west", new System.Numerics.Vector3(-8, 0, 5), 50);
+        AddFoodSource("food-east", new System.Numerics.Vector3(8, 0, -5), 50);
 
         for (var index = 0; index < 10; index++)
         {
@@ -169,15 +177,80 @@ public partial class Main : Node3D
 
     private void AdvanceSimulationTick(double tickSeconds)
     {
+        _simulationTick++;
         AdvanceNeeds(tickSeconds);
         AdvanceNavigationTick(tickSeconds);
     }
 
     private void AdvanceNavigationTick(double tickSeconds)
     {
-        foreach (var view in _entityViews.Values)
+        foreach (var entity in _world.Entities)
         {
+            if (!_entityViews.TryGetValue(entity.Id, out var view))
+            {
+                continue;
+            }
+
             view.AdvanceNavigation(tickSeconds, _world);
+            if (entity.Needs.IsHungry || entity.Actions.Current?.Kind == ActionKind.Eat)
+            {
+                _foodEatingService.Advance(
+                    entity,
+                    _speciesCatalog.GetRequired(entity.SpeciesId),
+                    view.NavigationAdapter,
+                    tickSeconds,
+                    _simulationTick);
+            }
+            else
+            {
+                view.PollNavigation(tickSeconds);
+            }
+        }
+
+        SyncFoodSourceViews();
+    }
+
+    private void AddFoodSource(string id, System.Numerics.Vector3 position, int amount)
+    {
+        var contents = new ResourceContainer(id, amount);
+        var addResult = contents.TryAdd(ItemIds.Food, amount);
+        if (addResult != ResourceMutationResult.Success)
+        {
+            throw new InvalidOperationException($"Could not initialize food source '{id}': {addResult}.");
+        }
+
+        _world.AddFoodSource(new FoodSource(id, position, contents));
+        var view = new MeshInstance3D
+        {
+            Name = $"Food_{id}",
+            Mesh = new SphereMesh { Height = 0.5f, Radius = 0.35f },
+            Position = new Vector3(position.X, 0.25f, position.Z)
+        };
+        AddChild(view);
+        _foodSourceViews.Add(id, view);
+    }
+
+    private void ClearFoodSourceViews()
+    {
+        foreach (var view in _foodSourceViews.Values)
+        {
+            view.QueueFree();
+        }
+
+        _foodSourceViews.Clear();
+    }
+
+    private void SyncFoodSourceViews()
+    {
+        var sourceIds = _world.FoodSources
+            .Select(source => source.Id)
+            .ToHashSet(StringComparer.Ordinal);
+        foreach (var sourceId in _foodSourceViews.Keys
+                     .Where(sourceId => !sourceIds.Contains(sourceId))
+                     .ToArray())
+        {
+            _foodSourceViews.Remove(sourceId, out var view);
+            view?.QueueFree();
         }
     }
 
@@ -216,6 +289,8 @@ public partial class Main : Node3D
         var state = _clock.IsPaused ? "Paused" : "Running";
         _statusLabel.Text =
             $"Simulation time: {_clock.SimulationTime:0.0}s\nState: {state}\nSpeed: {(int)_clock.Speed}x\n" +
+            $"Food remaining: {_world.FoodSources.Sum(source => source.Contents.Counts.GetValueOrDefault(ItemIds.Food))}  " +
+            $"Consumed: {_foodEatingService.TotalFoodConsumed}\n" +
             "Select an entity; R route, U unreachable, C cancel, D remove goal";
         _pauseButton.Text = _clock.IsPaused ? "Resume" : "Pause";
         UpdateInspector();

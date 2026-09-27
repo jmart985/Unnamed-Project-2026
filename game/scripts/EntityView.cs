@@ -12,6 +12,8 @@ public partial class EntityView : Node3D
     public string EntityId { get; private set; } = string.Empty;
     public NavigationOutcome? NavigationOutcome => _navigationAdapter?.LastOutcome;
     public NumericsVector3? NavigationTarget => _navigationAdapter?.LastTarget;
+    public INavigationAdapter NavigationAdapter => _navigationAdapter
+        ?? throw new InvalidOperationException("The entity view is not ready for navigation.");
 
     public override void _Ready()
     {
@@ -91,5 +93,12 @@ public partial class EntityView : Node3D
         {
             adapter.RemoveTarget(requestId);
         }
+    }
+
+    public NavigationOutcome? PollNavigation(double simulationSeconds)
+    {
+        return _navigationAdapter?.ActiveRequestId is { } requestId
+            ? _navigationAdapter.Poll(requestId, simulationSeconds)
+            : _navigationAdapter?.LastOutcome;
     }
 }

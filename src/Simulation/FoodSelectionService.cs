@@ -79,7 +79,8 @@ public sealed class FoodSelectionService
         EntityRecord entity,
         SpeciesDefinition species,
         IEnumerable<FoodSource> sources,
-        long simulationTick)
+        long simulationTick,
+        Action? actionCleanup = null)
     {
         ValidateInputs(entity, species, sources, simulationTick);
         var candidates = ValidateSources(sources);
@@ -142,7 +143,11 @@ public sealed class FoodSelectionService
         var attempt = new SelectionAttempt(actionId, species);
         var startResult = entity.Actions.TryStart(
             new ActionCandidate(actionId, ActionKind.Eat),
-            () => OnActionFinished(entity.Id, actionId));
+            () =>
+            {
+                OnActionFinished(entity.Id, actionId);
+                actionCleanup?.Invoke();
+            });
         if (startResult == ActionStartResult.Rejected)
         {
             return new FoodSelectionResult(FoodSelectionStatus.ActionRejected);

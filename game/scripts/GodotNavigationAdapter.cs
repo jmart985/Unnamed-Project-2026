@@ -132,7 +132,6 @@ public sealed class GodotNavigationAdapter : INavigationAdapter
         }
 
         if (_activeRequest is not { } state
-            || Poll(state.Id, simulationSeconds) != NavigationOutcome.InProgress
             || !state.HasPath)
         {
             return;

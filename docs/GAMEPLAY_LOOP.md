@@ -6,7 +6,7 @@
 2. Advance simulation time. Satiety decreases toward 0; the scenario starts at 60 and the maximum is 100.
 3. At satiety <= 30, request food. Eating takes priority over hauling or wandering.
 4. Reserve one compatible food unit, choose an accessible source, and move there.
-5. At arrival, atomically consume that unit and add 50 satiety, clamped to 100.
+5. Confirm arrival within 0.1 world units, atomically consume that unit, and add 50 satiety, clamped to 100. Failed navigation or an invalid arrival preserves the food and releases the reservation.
 6. Release the reservation and re-evaluate needs. If still hungry, repeat; otherwise humans seek hauling work and creatures wander.
 
 Rates and thresholds are prototype tuning data. Initial satiety drain is 0.2 per simulation second. Zero satiety records a visible starving state; death and health are deferred.
