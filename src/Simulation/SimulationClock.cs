@@ -10,6 +10,7 @@ public sealed class SimulationClock
 {
     public const double TickIntervalSeconds = 0.1;
     public const int MaximumTicksPerAdvance = 8;
+    private const double TickToleranceSeconds = TickIntervalSeconds * 1e-12;
 
     private double _accumulator;
 
@@ -31,15 +32,17 @@ public sealed class SimulationClock
 
         _accumulator += frameDeltaSeconds * (int)Speed;
         var tickCount = 0;
-        while (_accumulator >= TickIntervalSeconds && tickCount < MaximumTicksPerAdvance)
+        while (_accumulator + TickToleranceSeconds >= TickIntervalSeconds
+               && tickCount < MaximumTicksPerAdvance)
         {
-            _accumulator -= TickIntervalSeconds;
+            _accumulator = Math.Max(0, _accumulator - TickIntervalSeconds);
             SimulationTime += TickIntervalSeconds;
             tickCount++;
             tick?.Invoke(TickIntervalSeconds);
         }
 
-        if (tickCount == MaximumTicksPerAdvance && _accumulator >= TickIntervalSeconds)
+        if (tickCount == MaximumTicksPerAdvance
+            && _accumulator + TickToleranceSeconds >= TickIntervalSeconds)
         {
             _accumulator = 0;
         }
