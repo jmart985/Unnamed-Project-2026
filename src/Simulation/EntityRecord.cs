@@ -20,12 +20,14 @@ public sealed class EntityRecord
         Position = position;
         Needs = new NeedsState(needsTuning, satiety);
         _inventoryView = new ReadOnlyDictionary<string, int>(_inventory);
+        Actions = new ActionLifecycle();
     }
 
     public string Id { get; }
     public string SpeciesId { get; }
     public Vector3 Position { get; internal set; }
     public NeedsState Needs { get; }
+    public ActionLifecycle Actions { get; }
     public double Satiety => Needs.Satiety;
     public IReadOnlyDictionary<string, int> Inventory => _inventoryView;
     public string Activity { get; internal set; } = "Idle";
