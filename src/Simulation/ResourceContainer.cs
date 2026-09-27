@@ -8,7 +8,8 @@ public enum ResourceMutationResult
     UnknownItem,
     InvalidAmount,
     CapacityExceeded,
-    InsufficientQuantity
+    InsufficientQuantity,
+    InvalidDestination
 }
 
 public sealed class ResourceContainer
@@ -56,10 +57,7 @@ public sealed class ResourceContainer
             return ResourceMutationResult.CapacityExceeded;
         }
 
-        var knownItemId = itemId!;
-        _counts.TryGetValue(knownItemId, out var current);
-        _counts[knownItemId] = current + amount;
-        UsedCapacity += amount;
+        AddKnown(itemId!, amount);
         return ResourceMutationResult.Success;
     }
 
@@ -76,23 +74,40 @@ public sealed class ResourceContainer
         }
 
         var knownItemId = itemId!;
-        if (!_counts.TryGetValue(knownItemId, out var current) || current < amount)
+        if (!HasQuantity(knownItemId, amount))
         {
             return ResourceMutationResult.InsufficientQuantity;
         }
 
-        var remaining = current - amount;
+        RemoveKnown(knownItemId, amount);
+        return ResourceMutationResult.Success;
+    }
+
+    internal bool HasQuantity(string itemId, int amount)
+    {
+        return _counts.TryGetValue(itemId, out var current) && current >= amount;
+    }
+
+    internal void AddKnown(string itemId, int amount)
+    {
+        _counts.TryGetValue(itemId, out var current);
+        _counts[itemId] = current + amount;
+        UsedCapacity += amount;
+    }
+
+    internal void RemoveKnown(string itemId, int amount)
+    {
+        var remaining = _counts[itemId] - amount;
         if (remaining == 0)
         {
-            _counts.Remove(knownItemId);
+            _counts.Remove(itemId);
         }
         else
         {
-            _counts[knownItemId] = remaining;
+            _counts[itemId] = remaining;
         }
 
         UsedCapacity -= amount;
-        return ResourceMutationResult.Success;
     }
 
     public bool TryGetCount(string? itemId, out int count)
