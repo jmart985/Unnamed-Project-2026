@@ -49,6 +49,7 @@ public interface INavigationAdapter
     string Request(NavigationRequest request);
     NavigationOutcome Poll(string requestId, double elapsedSeconds);
     bool Cancel(string requestId);
+    bool RemoveTarget(string requestId);
 }
 
 public sealed class FakeNavigationAdapter : INavigationAdapter

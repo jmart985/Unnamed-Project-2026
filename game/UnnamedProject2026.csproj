@@ -12,4 +12,7 @@
   <ItemGroup>
     <Compile Include="scripts\**\*.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\data\species.json" Link="data\species.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>
