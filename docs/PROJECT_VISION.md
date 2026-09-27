@@ -17,3 +17,7 @@ An entity becomes hungry, finds accessible food, travels to it, consumes a real 
 The current milestone is a technical and design experiment, not a promise of open-world scope or production quality. Success means the behavior is observable, explainable, and repeatable enough to improve.
 
 See [Milestone 0.1](MILESTONE_0_1.md) for the scope contract. Earlier conversation examples included combat, relationships, and factions; the current small-scope brief supersedes those examples.
+
+## Development Philosophy
+
+Prototype first. Replace placeholder systems only after gameplay proves they are valuable.
