@@ -22,4 +22,8 @@
     <ProjectReference Include="..\..\src\Simulation\Simulation.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="..\..\data\species.json" Link="data\species.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

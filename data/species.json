@@ -1,0 +1,16 @@
+[
+  {
+    "id": "human",
+    "movementSpeed": 3.0,
+    "hungerRate": 0.2,
+    "diet": ["food"],
+    "canHaul": true
+  },
+  {
+    "id": "creature",
+    "movementSpeed": 2.0,
+    "hungerRate": 0.2,
+    "diet": ["food"],
+    "canHaul": false
+  }
+]
