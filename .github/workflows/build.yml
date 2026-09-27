@@ -1,0 +1,20 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  dotnet:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.401
+      - name: Restore
+        run: dotnet restore UnnamedProject2026.slnx
+      - name: Build
+        run: dotnet build UnnamedProject2026.slnx --configuration Release --no-restore
+      - name: Test
+        run: dotnet test tests/Simulation.Tests/Simulation.Tests.csproj --configuration Release --no-build
