@@ -21,8 +21,8 @@ rotation_degrees = Vector3(-55, -25, 0)
 [node name="Panel" type="PanelContainer" parent="Controls"]
 offset_left = 24.0
 offset_top = 24.0
-offset_right = 280.0
-offset_bottom = 260.0
+offset_right = 360.0
+offset_bottom = 620.0
 
 [node name="Margin" type="MarginContainer" parent="Controls/Panel"]
 theme_override_constants/margin_left = 12
@@ -46,3 +46,18 @@ text = "4x"
 
 [node name="Reset" type="Button" parent="Controls/Panel/Margin/VBox"]
 text = "Reset"
+
+[node name="EntityListHeading" type="Label" parent="Controls/Panel/Margin/VBox"]
+text = "Entities"
+
+[node name="EntityList" type="VBoxContainer" parent="Controls/Panel/Margin/VBox"]
+
+[node name="InspectorHeading" type="Label" parent="Controls/Panel/Margin/VBox"]
+text = "Inspector"
+
+[node name="Inspector" type="Label" parent="Controls/Panel/Margin/VBox"]
+text = "Select an entity to inspect."
+
+[node name="RemoveSelected" type="Button" parent="Controls/Panel/Margin/VBox"]
+text = "Remove selected"
+disabled = true
