@@ -55,3 +55,12 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: This is the installed compatible editor/SDK pair used to restore, build, test, and launch the initial project.
 - Consequence: Local setup and future CI must use these versions unless a later issue records a deliberate upgrade.
 - Revisit: If Godot or .NET compatibility blocks the prototype or a later F01 task.
+
+## D007 — Fixed simulation clock policy
+
+- Date: 2026-09-27
+- Status: Provisional; implemented for F02
+- Decision: Advance domain time in 0.1-second ticks at 1x or 4x speed. Pause discards elapsed wall time, and each frame processes at most eight ticks; overflow is discarded.
+- Reason: Fixed ticks make simulation behavior independent of render frame chunking while the cap prevents long-frame catch-up spirals.
+- Consequence: Frame deltas up to 0.8 simulated seconds are fully processed; larger deltas intentionally lose excess elapsed time.
+- Revisit: If measured frame stalls or later simulation requirements need a different overflow policy.

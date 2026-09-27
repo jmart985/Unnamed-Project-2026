@@ -19,6 +19,7 @@ These are planned paths. F01 creates the runnable scaffold. Use a fixed, flat 3D
 - A World owns entity records identified by stable IDs, resource containers, and simulation time. Use simple composition, not a custom ECS framework.
 - Entity state contains ID, species ID, position, satiety, inventory, and current activity. Views reference IDs; scene-node paths are not save identities.
 - A single-threaded fixed simulation tick updates hunger, chooses actions, and processes outcomes in a documented stable order. Godot adapters perform navigation and report arrival/failure back to the simulation.
+- The simulation clock advances in 0.1-second ticks. Each tick invokes domain update callbacks in stable order, then the engine refreshes presentation. It supports 1x and 4x speed, ignores elapsed wall time while paused, and caps one frame at eight ticks; excess accumulated time is discarded rather than causing an unbounded catch-up.
 - Simulation rules do not depend on rendering or UI. A small navigation boundary permits deterministic fake-path tests; live navigation is validated in Godot.
 - Use a simple action state machine: Idle, Moving, Eating, Hauling, Waiting. Hunger preempts work. Avoid behavior-tree or utility-AI frameworks until necessary.
 - Inventory transfers and reservations go through one domain service. Counts stay nonnegative, capacity is enforced, and a transfer either fully succeeds for its agreed quantity or changes neither container.
