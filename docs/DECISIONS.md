@@ -64,3 +64,12 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: Fixed ticks make simulation behavior independent of render frame chunking while the cap prevents long-frame catch-up spirals.
 - Consequence: Frame deltas up to 0.8 simulated seconds are fully processed; larger deltas intentionally lose excess elapsed time.
 - Revisit: If measured frame stalls or later simulation requirements need a different overflow policy.
+
+## D008 — Entity ID lifetime
+
+- Date: 2026-09-27
+- Status: Provisional; implemented for E01a
+- Decision: Allocate readable entity IDs monotonically within each World. Removing entities or resetting a World does not rewind its ID sequence; a newly created World starts a new sequence.
+- Reason: A stale reference from before removal or reset must not resolve to a different entity in the same World.
+- Consequence: Repeated scenario resets in one World continue increasing IDs.
+- Revisit: If save/load or world replacement requires IDs to be restored from durable data.
