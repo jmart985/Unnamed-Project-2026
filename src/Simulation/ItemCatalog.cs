@@ -34,8 +34,20 @@ public sealed class ItemCatalog
     {
         ArgumentNullException.ThrowIfNull(json);
 
-        var document = JsonSerializer.Deserialize<ItemCatalogDocument>(json)
-            ?? throw new FormatException("The item catalog JSON must contain an object.");
+        ItemCatalogDocument? document;
+        try
+        {
+            document = JsonSerializer.Deserialize<ItemCatalogDocument>(json);
+        }
+        catch (JsonException exception)
+        {
+            throw new FormatException("The item catalog JSON is invalid.", exception);
+        }
+
+        if (document is null)
+        {
+            throw new FormatException("The item catalog JSON must contain an object.");
+        }
         if (document.Items is null)
         {
             throw new FormatException("The item catalog JSON must contain an 'items' array.");

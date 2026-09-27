@@ -76,6 +76,7 @@ public sealed class ItemContainerTests
             new ItemCatalog([new ItemDefinition("food"), new ItemDefinition("food")]));
         Assert.Throws<ArgumentException>(() => new ItemDefinition(" "));
         Assert.Throws<FormatException>(() => ItemCatalog.FromJson("{}"));
+        Assert.Throws<FormatException>(() => ItemCatalog.FromJson("{"));
     }
 
     [Fact]
