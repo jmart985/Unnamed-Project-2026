@@ -91,3 +91,12 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: Competing actions must not claim the same resource units or storage capacity, and cleanup must not leave stale claims after lifecycle changes.
 - Consequence: Reservations do not mutate durable inventories; transfer operations remain atomic and separate. Removed target IDs cannot be reused in that World.
 - Revisit: If later job systems require partial reservation transfer or target recreation semantics.
+
+## D011 — Bounded food-selection retries
+
+- Date: 2026-09-27
+- Status: Provisional; implemented for H02a
+- Decision: Retry food selection after 10 simulation ticks (1.0 simulated second) when no compatible, available, or reachable food candidate can be reserved.
+- Reason: Avoid retrying selection every tick while keeping recovery responsive to replenishment or changing reachability.
+- Consequence: The retry interval follows simulation time and therefore pauses with the simulation.
+- Revisit: If scenario measurements show the interval causes excessive waiting or repeated failed navigation.

@@ -32,4 +32,5 @@ public sealed class EntityRecord
     public double Satiety => Needs.Satiety;
     public IReadOnlyDictionary<string, int> Inventory => _inventoryView;
     public string Activity { get; internal set; } = "Idle";
+    public string? WaitingReason { get; internal set; }
 }
