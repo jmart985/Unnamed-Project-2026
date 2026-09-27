@@ -17,6 +17,7 @@ These are planned paths. F01 creates the runnable scaffold. Use a fixed, flat 3D
 ## Ownership and update model
 
 - A World owns entity records identified by stable IDs, resource containers, and simulation time. Use simple composition, not a custom ECS framework.
+- Entity IDs are allocated monotonically within a World and are not reused after entity removal or world reset. Reset clears records but preserves the allocator, so stale IDs cannot resolve to new entities; a newly created World starts a new ID sequence.
 - Entity state contains ID, species ID, position, satiety, inventory, and current activity. Views reference IDs; scene-node paths are not save identities.
 - A single-threaded fixed simulation tick updates hunger, chooses actions, and processes outcomes in a documented stable order. Godot adapters perform navigation and report arrival/failure back to the simulation.
 - The simulation clock advances in 0.1-second ticks. Each tick invokes domain update callbacks in stable order, then the engine refreshes presentation. It supports 1x and 4x speed, ignores elapsed wall time while paused, and caps one frame at eight ticks; excess accumulated time is discarded rather than causing an unbounded catch-up.
