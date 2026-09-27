@@ -53,7 +53,8 @@ public partial class Main : Node3D
             return;
         }
 
-        _statusLabel.Text = $"Simulation time: {_clock.SimulationTime:0.0}s\nSpeed: {(int)_clock.Speed}x";
+        var state = _clock.IsPaused ? "Paused" : "Running";
+        _statusLabel.Text = $"Simulation time: {_clock.SimulationTime:0.0}s\nState: {state}\nSpeed: {(int)_clock.Speed}x";
         _pauseButton.Text = _clock.IsPaused ? "Resume" : "Pause";
     }
 }

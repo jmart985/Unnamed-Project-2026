@@ -76,6 +76,22 @@ public sealed class SimulationClockTests
     }
 
     [Fact]
+    public void ChangingSpeedAfterPauseDoesNotAdvanceUntilResumed()
+    {
+        var clock = new SimulationClock();
+        clock.SetPaused(true);
+        clock.SetSpeed(SimulationSpeed.FourX);
+
+        Assert.Equal(0, clock.Advance(1));
+        Assert.Equal(0, clock.SimulationTime);
+
+        clock.SetPaused(false);
+
+        Assert.Equal(4, clock.Advance(0.1));
+        Assert.Equal(0.4, clock.SimulationTime, precision: 6);
+    }
+
+    [Fact]
     public void ResetRestoresInitialScenarioClockState()
     {
         var clock = new SimulationClock();
