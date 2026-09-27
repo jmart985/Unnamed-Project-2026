@@ -73,3 +73,12 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: A stale reference from before removal or reset must not resolve to a different entity in the same World.
 - Consequence: Repeated scenario resets in one World continue increasing IDs.
 - Revisit: If save/load or world replacement requires IDs to be restored from durable data.
+
+## D009 — Entity action lifecycle
+
+- Date: 2026-09-27
+- Status: Provisional; implemented for J01a
+- Decision: Give each entity one domain-owned active action, selected by fixed priority and stable candidate ID. Completion, cancellation, and preemption run the active action cleanup exactly once.
+- Reason: Hunger must be able to preempt lower-priority work without duplicating action state or dropping carried inventory.
+- Consequence: Action reservations and bounded retry timing remain separate concerns for the follow-up job issues.
+- Revisit: If action selection needs measured scheduling or parallel work beyond the Milestone 0.1 scope.
