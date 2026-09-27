@@ -46,3 +46,12 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: Test spatial movement with minimal art and map work.
 - Consequence: Final art style, platforms, and world scale remain undecided.
 - Revisit: After observing the first complete loop.
+
+## D006 — F01 toolchain pin
+
+- Date: 2026-09-27
+- Status: Provisional; validated for the scaffold
+- Decision: Pin Godot 4.7.2 .NET (Mono), build `4.7.2.stable.mono.official.ed1daf0bf`, with .NET SDK 10.0.401.
+- Reason: This is the installed compatible editor/SDK pair used to restore, build, test, and launch the initial project.
+- Consequence: Local setup and future CI must use these versions unless a later issue records a deliberate upgrade.
+- Revisit: If Godot or .NET compatibility blocks the prototype or a later F01 task.

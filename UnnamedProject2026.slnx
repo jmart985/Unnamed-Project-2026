@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="src/Simulation/Simulation.csproj" />
+  <Project Path="tests/Simulation.Tests/Simulation.Tests.csproj" />
+  <Project Path="game/UnnamedProject2026.csproj" />
+</Solution>
