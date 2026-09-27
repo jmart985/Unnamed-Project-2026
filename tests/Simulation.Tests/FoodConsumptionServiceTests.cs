@@ -195,6 +195,47 @@ public sealed class FoodConsumptionServiceTests
     }
 
     [Fact]
+    public void RemainingAndConsumedCountersReconcileAcrossFoodSources()
+    {
+        var world = new World();
+        var first = CreateHungryEntity(world);
+        var second = CreateHungryEntity(world);
+        var nearSource = AddSource(world, "near", Vector3.UnitX, amount: 2);
+        AddSource(world, "far", new Vector3(0, 0, 4), amount: 1);
+        var firstNavigator = new FakeNavigationAdapter();
+        var secondNavigator = new FakeNavigationAdapter();
+        var navigators = new Dictionary<string, FakeNavigationAdapter>(StringComparer.Ordinal)
+        {
+            [first.Id] = firstNavigator,
+            [second.Id] = secondNavigator
+        };
+        var service = new FoodConsumptionService(
+            world,
+            entity => navigators[entity.Id]);
+        var species = GetHumanSpecies();
+        var initialFood = service.FoodUnitsRemaining;
+
+        var firstTrip = service.Advance(first, species, simulationTick: 0);
+        var secondTrip = service.Advance(second, species, simulationTick: 0);
+
+        Assert.Equal(nearSource, firstTrip.Source);
+        Assert.Equal(nearSource, secondTrip.Source);
+        Assert.Equal(3, service.FoodUnitsRemaining);
+        Assert.Equal(0, service.FoodUnitsConsumed);
+
+        firstNavigator.CompleteAsArrived(firstNavigator.Requests.Keys.Single());
+        secondNavigator.CompleteAsArrived(secondNavigator.Requests.Keys.Single());
+        world.TrySetEntityPosition(first.Id, nearSource.Position);
+        world.TrySetEntityPosition(second.Id, nearSource.Position);
+
+        Assert.Equal(FoodConsumptionStatus.Ate, service.Advance(first, species, simulationTick: 1).Status);
+        Assert.Equal(FoodConsumptionStatus.Ate, service.Advance(second, species, simulationTick: 1).Status);
+        Assert.Equal(1, service.FoodUnitsRemaining);
+        Assert.Equal(2, service.FoodUnitsConsumed);
+        Assert.Equal(initialFood, service.FoodUnitsRemaining + service.FoodUnitsConsumed);
+    }
+
+    [Fact]
     public void EmptySourceRetriesAfterDelayAndRecoversWhenReplenished()
     {
         var scenario = CreateScenario(amount: 0);

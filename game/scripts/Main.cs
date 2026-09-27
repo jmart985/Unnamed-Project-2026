@@ -252,6 +252,7 @@ public partial class Main : Node3D
         var state = _clock.IsPaused ? "Paused" : "Running";
         _statusLabel.Text =
             $"Simulation time: {_clock.SimulationTime:0.0}s\nState: {state}\nSpeed: {(int)_clock.Speed}x\n" +
+            $"Food: {_foodConsumption.FoodUnitsRemaining} remaining, {_foodConsumption.FoodUnitsConsumed} consumed\n" +
             "Select an entity; R route, U unreachable, C cancel, D remove goal";
         _pauseButton.Text = _clock.IsPaused ? "Resume" : "Pause";
         UpdateInspector();
