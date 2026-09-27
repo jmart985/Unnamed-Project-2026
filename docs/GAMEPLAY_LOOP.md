@@ -3,7 +3,7 @@
 ## Ant Farm loop
 
 1. Start a fixed test map with 10 humans, 3 creatures of one species, food piles, wood piles, and a stockpile.
-2. Advance simulation time. Satiety falls from 100 toward 0.
+2. Advance simulation time. Satiety decreases toward 0; the scenario starts at 60 and the maximum is 100.
 3. At satiety <= 30, request food. Eating takes priority over hauling or wandering.
 4. Reserve one compatible food unit, choose an accessible source, and move there.
 5. At arrival, atomically consume that unit and add 50 satiety, clamped to 100.
