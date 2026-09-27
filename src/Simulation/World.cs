@@ -8,7 +8,13 @@ public sealed class World
     private readonly Dictionary<string, EntityRecord> _entities = new(StringComparer.Ordinal);
     private long _lastEntityId;
 
+    public World(NeedsTuning? needsTuning = null)
+    {
+        NeedsTuning = needsTuning ?? new NeedsTuning();
+    }
+
     public IReadOnlyCollection<EntityRecord> Entities => _entities.Values;
+    public NeedsTuning NeedsTuning { get; }
 
     public EntityRecord SpawnEntity(
         string speciesId,
@@ -36,7 +42,7 @@ public sealed class World
         }
 
         var id = $"entity-{(++_lastEntityId).ToString("D6", CultureInfo.InvariantCulture)}";
-        var entity = new EntityRecord(id, speciesId, position, satiety);
+        var entity = new EntityRecord(id, speciesId, position, satiety, NeedsTuning);
         _entities.Add(id, entity);
         return entity;
     }
