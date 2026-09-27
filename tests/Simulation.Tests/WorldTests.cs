@@ -83,8 +83,20 @@ public sealed class WorldTests
             world.SpawnEntity("human", new Vector3(float.NaN, 0, 0)));
         Assert.Throws<ArgumentOutOfRangeException>(() =>
             world.SpawnEntity("human", Vector3.Zero, double.NaN));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            world.SpawnEntity("human", Vector3.Zero, 101));
         Assert.Empty(world.Entities);
 
         Assert.Equal("entity-000001", world.SpawnEntity("human", Vector3.Zero).Id);
+    }
+
+    [Fact]
+    public void SpawnUsesConfiguredInitialSatietyWhenNoOverrideIsProvided()
+    {
+        var world = new World(new NeedsTuning(initialSatiety: 85));
+
+        var entity = world.SpawnEntity("human", Vector3.Zero);
+
+        Assert.Equal(85, entity.Satiety);
     }
 }

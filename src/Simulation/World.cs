@@ -19,7 +19,7 @@ public sealed class World
     public EntityRecord SpawnEntity(
         string speciesId,
         Vector3 position,
-        double satiety = 60)
+        double? satiety = null)
     {
         if (string.IsNullOrWhiteSpace(speciesId))
         {
@@ -31,9 +31,10 @@ public sealed class World
             throw new ArgumentOutOfRangeException(nameof(position), "Position coordinates must be finite.");
         }
 
-        if (!double.IsFinite(satiety))
+        var initialSatiety = satiety ?? NeedsTuning.InitialSatiety;
+        if (!double.IsFinite(initialSatiety) || initialSatiety is < 0 or > 100)
         {
-            throw new ArgumentOutOfRangeException(nameof(satiety), "Satiety must be finite.");
+            throw new ArgumentOutOfRangeException(nameof(satiety), "Satiety must be finite and within [0, 100].");
         }
 
         if (_lastEntityId == long.MaxValue)
@@ -42,9 +43,24 @@ public sealed class World
         }
 
         var id = $"entity-{(++_lastEntityId).ToString("D6", CultureInfo.InvariantCulture)}";
-        var entity = new EntityRecord(id, speciesId, position, satiety, NeedsTuning);
+        var entity = new EntityRecord(id, speciesId, position, initialSatiety, NeedsTuning);
         _entities.Add(id, entity);
         return entity;
+    }
+
+    public void AdvanceNeeds(double simulationSeconds)
+    {
+        if (!double.IsFinite(simulationSeconds) || simulationSeconds < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(simulationSeconds),
+                "Simulation time must be finite and nonnegative.");
+        }
+
+        foreach (var entity in _entities.Values)
+        {
+            entity.Needs.Advance(simulationSeconds);
+        }
     }
 
     public bool TryGetEntity(string? id, out EntityRecord? entity)

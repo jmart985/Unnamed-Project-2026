@@ -38,7 +38,7 @@ Save at a tick boundary while simulation is paused. Persist carried items. Jobs,
 
 ## Tests and observability
 
-Unit tests cover tick-driven hunger, entity identity, atomic inventory operations, reservation cleanup, prioritization, and save round trips. Integration scenarios cover actual Godot movement and the complete eating/hauling loop. An inspector shows ID, species, satiety, action, target, inventory, and waiting reason. Record reproducible scenario inputs and observed output in the issue/PR.
+Unit tests cover tick-driven hunger, entity identity, atomic inventory operations, reservation cleanup, prioritization, and save round trips. Integration scenarios cover actual Godot movement and the complete eating/hauling loop. An inspector shows ID, species, satiety and hunger/starving status, action, target, inventory, and waiting reason. Record reproducible scenario inputs and observed output in the issue/PR.
 
 ## Revisit criteria
 

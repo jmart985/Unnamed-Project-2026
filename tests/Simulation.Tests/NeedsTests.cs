@@ -71,4 +71,23 @@ public sealed class NeedsTests
         Assert.Throws<ArgumentOutOfRangeException>(() => needs.Advance(-1));
         Assert.Throws<ArgumentOutOfRangeException>(() => needs.AddNutrition(0));
     }
+
+    [Fact]
+    public void SimulationClockAdvancesWorldNeedsButPauseFreezesThem()
+    {
+        var world = new World(new NeedsTuning(drainPerSecond: 1));
+        var entity = world.SpawnEntity("human", System.Numerics.Vector3.Zero, 50);
+        var clock = new SimulationClock();
+
+        Assert.Equal(2, clock.Advance(0.2, world.AdvanceNeeds));
+        Assert.Equal(49.8, entity.Satiety, precision: 6);
+
+        clock.SetPaused(true);
+        Assert.Equal(0, clock.Advance(1, world.AdvanceNeeds));
+        Assert.Equal(49.8, entity.Satiety, precision: 6);
+
+        clock.SetPaused(false);
+        Assert.Equal(1, clock.Advance(0.1, world.AdvanceNeeds));
+        Assert.Equal(49.7, entity.Satiety, precision: 6);
+    }
 }

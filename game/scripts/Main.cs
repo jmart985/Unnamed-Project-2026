@@ -36,7 +36,7 @@ public partial class Main : Node3D
 
     public override void _Process(double delta)
     {
-        _clock.Advance(delta);
+        _clock.Advance(delta, _world.AdvanceNeeds);
         SyncEntityViews();
         UpdateStatus();
     }
@@ -169,11 +169,15 @@ public partial class Main : Node3D
         var inventory = entity.Inventory.Count == 0
             ? "empty"
             : string.Join(", ", entity.Inventory.Select(item => $"{item.Key}: {item.Value}"));
+        var needsStatus = entity.Needs.IsStarving
+            ? "Starving"
+            : entity.Needs.IsHungry ? "Hungry" : "Satisfied";
         _inspectorLabel.Text =
             $"ID: {entity.Id}\n" +
             $"Species: {entity.SpeciesId}\n" +
             $"Position: {entity.Position}\n" +
             $"Satiety: {entity.Satiety:0.0}\n" +
+            $"Needs: {needsStatus}\n" +
             $"Activity: {entity.Activity}\n" +
             "Target: none\n" +
             $"Inventory: {inventory}\n" +
