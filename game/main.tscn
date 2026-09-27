@@ -33,7 +33,7 @@ theme_override_constants/margin_bottom = 12
 [node name="VBox" type="VBoxContainer" parent="Controls/Panel/Margin"]
 
 [node name="Status" type="Label" parent="Controls/Panel/Margin/VBox"]
-text = "Simulation time: 0.0s\nSpeed: 1x"
+text = "Simulation time: 0.0s\nState: Running\nSpeed: 1x"
 
 [node name="Pause" type="Button" parent="Controls/Panel/Margin/VBox"]
 text = "Pause"
