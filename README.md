@@ -4,6 +4,13 @@ A systemic open-world colony RPG in which people and creatures share consistent 
 
 **Status:** Planning foundation. No game implementation yet. **Provisional stack:** Godot 4 .NET + C#; revisit after the prototype if evidence warrants it.
 
+## Work on GitHub
+
+- [Project board](https://github.com/users/jmart985/projects/1): Ideas → Backlog → Ready → In Progress → Testing → Done
+- [Milestone 0.1: The Ant Farm](https://github.com/jmart985/Unnamed-Project-2026/milestone/1)
+- [All implementation issues](https://github.com/jmart985/Unnamed-Project-2026/issues)
+- **Start here:** [#1 — Create the Godot C# sandbox and build checks](https://github.com/jmart985/Unnamed-Project-2026/issues/1)
+
 ## Start here
 
 - [Project vision](docs/PROJECT_VISION.md)
@@ -12,7 +19,7 @@ A systemic open-world colony RPG in which people and creatures share consistent 
 - [Technical architecture](docs/TECHNICAL_ARCHITECTURE.md)
 - [Decisions log](docs/DECISIONS.md)
 - [Milestone scope and acceptance](docs/MILESTONE_0_1.md)
-- [Work sequence and issue specifications](docs/BACKLOG.md)
+- [Work sequence and issue index](docs/BACKLOG.md)
 - [Contribution and AI workflow](CONTRIBUTING.md)
 
 ## First playable target
