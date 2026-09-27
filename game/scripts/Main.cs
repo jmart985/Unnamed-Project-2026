@@ -9,7 +9,9 @@ public partial class Main : Node3D
     private readonly World _world = new();
     private readonly Dictionary<string, EntityView> _entityViews = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Button> _entityButtons = new(StringComparer.Ordinal);
+    private readonly List<MeshInstance3D> _resourceMarkers = [];
     private FoodConsumptionService _foodConsumption = null!;
+    private WoodHaulingService _woodHauling = null!;
     private long _simulationTick;
     private SpeciesCatalog _speciesCatalog = null!;
     private MeshInstance3D _map = null!;
@@ -35,6 +37,7 @@ public partial class Main : Node3D
         _speciesCatalog = SpeciesCatalog.LoadFromFile(
             Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
         _foodConsumption = new FoodConsumptionService(_world, GetNavigationAdapter);
+        _woodHauling = new WoodHaulingService(_world, GetNavigationAdapter);
         _pauseButton.Pressed += TogglePause;
         GetNode<Button>("Controls/Panel/Margin/VBox/OneX").Pressed += () => _clock.SetSpeed(SimulationSpeed.OneX);
         GetNode<Button>("Controls/Panel/Margin/VBox/FourX").Pressed += () => _clock.SetSpeed(SimulationSpeed.FourX);
@@ -95,9 +98,11 @@ public partial class Main : Node3D
     {
         _clock.Reset();
         _foodConsumption.Reset();
+        _woodHauling.Reset();
         _simulationTick = 0;
         _world.Reset();
         ClearEntityViews();
+        ClearResourceMarkers();
         if (_map is not null)
         {
             _map.Mesh = new PlaneMesh { Size = new Vector2(20, 20) };
@@ -117,6 +122,23 @@ public partial class Main : Node3D
             "food-pile-1",
             new System.Numerics.Vector3(-8, 0, -8),
             foodContents);
+
+        var woodContents = new ResourceContainer("wood-pile-1", 100);
+        if (woodContents.TryAdd(ItemIds.Wood, 100) != ResourceMutationResult.Success)
+        {
+            throw new InvalidOperationException("Unable to seed the initial wood pile.");
+        }
+
+        var woodPile = _world.AddResourcePile(
+            "wood-pile-1",
+            new System.Numerics.Vector3(8, 0, -8),
+            woodContents);
+        var stockpile = _world.AddStockpile(
+            "stockpile-1",
+            new System.Numerics.Vector3(-8, 0, 8),
+            new ResourceContainer("stockpile-1", 100));
+        AddResourceMarker("WoodPile", woodPile.Position, new Color(0.45f, 0.25f, 0.1f));
+        AddResourceMarker("Stockpile", stockpile.Position, new Color(0.2f, 0.45f, 0.25f));
 
         for (var index = 0; index < 10; index++)
         {
@@ -149,6 +171,16 @@ public partial class Main : Node3D
         {
             _selectedEntityId = entityId;
             UpdateInspector();
+        }
+    }
+
+    private void AdvanceWoodHauling()
+    {
+        foreach (var entity in _world.Entities)
+        {
+            _woodHauling.Advance(
+                entity,
+                _speciesCatalog.GetRequired(entity.SpeciesId));
         }
     }
 
@@ -189,6 +221,7 @@ public partial class Main : Node3D
         AdvanceNeeds(tickSeconds);
         AdvanceNavigationTick(tickSeconds);
         AdvanceFoodConsumption();
+        AdvanceWoodHauling();
     }
 
     private void AdvanceNavigationTick(double tickSeconds)
@@ -242,6 +275,29 @@ public partial class Main : Node3D
         _selectedEntityId = null;
     }
 
+    private void ClearResourceMarkers()
+    {
+        foreach (var marker in _resourceMarkers)
+        {
+            marker.QueueFree();
+        }
+
+        _resourceMarkers.Clear();
+    }
+
+    private void AddResourceMarker(string name, System.Numerics.Vector3 position, Color color)
+    {
+        var marker = new MeshInstance3D
+        {
+            Name = name,
+            Mesh = new BoxMesh { Size = new Vector3(1, 0.6f, 1) },
+            Position = new Vector3(position.X, 0.3f, position.Z),
+            MaterialOverride = new StandardMaterial3D { AlbedoColor = color }
+        };
+        AddChild(marker);
+        _resourceMarkers.Add(marker);
+    }
+
     private void UpdateStatus()
     {
         if (_statusLabel is null)
@@ -250,8 +306,16 @@ public partial class Main : Node3D
         }
 
         var state = _clock.IsPaused ? "Paused" : "Running";
+        var groundWood = _world.ResourcePiles.Sum(
+            target => (long)target.Contents.Counts.GetValueOrDefault(ItemIds.Wood));
+        var carriedWood = _world.Entities.Sum(
+            entity => (long)entity.Inventory.GetValueOrDefault(ItemIds.Wood));
+        var storedWood = _world.Stockpiles.Sum(
+            target => (long)target.Contents.Counts.GetValueOrDefault(ItemIds.Wood));
+        var totalWood = groundWood + carriedWood + storedWood;
         _statusLabel.Text =
             $"Simulation time: {_clock.SimulationTime:0.0}s\nState: {state}\nSpeed: {(int)_clock.Speed}x\n" +
+            $"Wood: ground {groundWood}, carried {carriedWood}, stored {storedWood} (total {totalWood})\n" +
             "Select an entity; R route, U unreachable, C cancel, D remove goal";
         _pauseButton.Text = _clock.IsPaused ? "Resume" : "Pause";
         UpdateInspector();

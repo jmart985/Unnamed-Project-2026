@@ -89,6 +89,15 @@ public sealed class WorldTests
     }
 
     [Fact]
+    public void EntityInventoryUsesTheWorldConfiguredCapacity()
+    {
+        var world = new World(inventoryCapacity: 3);
+
+        Assert.Equal(3, world.SpawnEntity("human", Vector3.Zero).InventoryCapacity);
+        Assert.Throws<ArgumentOutOfRangeException>(() => new World(inventoryCapacity: -1));
+    }
+
+    [Fact]
     public void EntityPositionCanBeUpdatedThroughTheWorldOwner()
     {
         var world = new World();

@@ -1,18 +1,15 @@
-using System.Collections.ObjectModel;
 using System.Numerics;
 
 namespace Simulation;
 
 public sealed class EntityRecord
 {
-    private readonly Dictionary<string, int> _inventory = new(StringComparer.Ordinal);
-    private readonly ReadOnlyDictionary<string, int> _inventoryView;
-
     internal EntityRecord(
         string id,
         string speciesId,
         Vector3 position,
         double satiety,
+        int inventoryCapacity,
         NeedsTuning needsTuning,
         ReservationService reservations)
     {
@@ -20,7 +17,7 @@ public sealed class EntityRecord
         SpeciesId = speciesId;
         Position = position;
         Needs = new NeedsState(needsTuning, satiety);
-        _inventoryView = new ReadOnlyDictionary<string, int>(_inventory);
+        InventoryContainer = new ResourceContainer($"inventory-{id}", inventoryCapacity);
         Actions = new ActionLifecycle(id, reservations);
     }
 
@@ -30,7 +27,9 @@ public sealed class EntityRecord
     public NeedsState Needs { get; }
     public ActionLifecycle Actions { get; }
     public double Satiety => Needs.Satiety;
-    public IReadOnlyDictionary<string, int> Inventory => _inventoryView;
+    public IReadOnlyDictionary<string, int> Inventory => InventoryContainer.Counts;
+    public int InventoryCapacity => InventoryContainer.Capacity;
     public string Activity { get; internal set; } = "Idle";
     public string? WaitingReason { get; internal set; }
+    internal ResourceContainer InventoryContainer { get; }
 }
