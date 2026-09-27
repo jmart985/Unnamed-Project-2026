@@ -43,7 +43,7 @@ public partial class Main : Node3D
 
     public override void _Process(double delta)
     {
-        _clock.Advance(delta, AdvanceNavigationTick);
+        _clock.Advance(delta, AdvanceSimulationTick);
         SyncEntityViews();
         UpdateStatus();
     }
@@ -167,11 +167,25 @@ public partial class Main : Node3D
         }
     }
 
+    private void AdvanceSimulationTick(double tickSeconds)
+    {
+        AdvanceNeeds(tickSeconds);
+        AdvanceNavigationTick(tickSeconds);
+    }
+
     private void AdvanceNavigationTick(double tickSeconds)
     {
         foreach (var view in _entityViews.Values)
         {
             view.AdvanceNavigation(tickSeconds, _world);
+        }
+    }
+
+    private void AdvanceNeeds(double simulationSeconds)
+    {
+        foreach (var entity in _world.Entities)
+        {
+            entity.Needs.Advance(simulationSeconds);
         }
     }
 
@@ -231,11 +245,17 @@ public partial class Main : Node3D
             ? $"({navigationTarget.X:0.0}, {navigationTarget.Y:0.0}, {navigationTarget.Z:0.0})"
             : "none";
         var navigationStatus = view?.NavigationOutcome?.ToString() ?? "Idle";
+        var needState = entity.Needs.IsStarving
+            ? "Starving"
+            : entity.Needs.IsHungry
+                ? "Hungry (food requested)"
+                : "Satisfied";
         _inspectorLabel.Text =
             $"ID: {entity.Id}\n" +
             $"Species: {entity.SpeciesId}\n" +
             $"Position: {entity.Position}\n" +
             $"Satiety: {entity.Satiety:0.0}\n" +
+            $"Needs: {needState}\n" +
             $"Activity: {entity.Activity}\n" +
             $"Target: {target}\n" +
             $"Navigation: {navigationStatus}\n" +
