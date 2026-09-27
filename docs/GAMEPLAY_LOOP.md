@@ -10,6 +10,7 @@
 6. Release the reservation and re-evaluate needs. If still hungry, repeat; otherwise humans seek hauling work and creatures wander.
 
 Rates and thresholds are prototype tuning data. Initial satiety drain is 0.2 per simulation second. Zero satiety records a visible starving state; death and health are deferred.
+The sandbox status reports food units remaining across all sources and food units consumed; successful eating decreases the former and increments the latter once.
 
 ## Hauling
 
