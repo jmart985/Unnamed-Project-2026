@@ -260,7 +260,7 @@ public partial class Main : Node3D
             $"Target: {target}\n" +
             $"Navigation: {navigationStatus}\n" +
             $"Inventory: {inventory}\n" +
-            "Waiting reason: none";
+            $"Waiting reason: {entity.WaitingReason ?? "none"}";
         _removeSelectedButton.Disabled = false;
     }
 

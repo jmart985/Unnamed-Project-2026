@@ -17,7 +17,7 @@ A human claims a wood transfer from a ground pile to the stockpile, reserves ava
 
 ## Failures and recovery
 
-- Empty or incompatible food: remain hungry, show the reason, and retry after a bounded delay.
+- Empty or incompatible food: remain hungry, show the reason, and retry after 10 simulation ticks (1.0 simulated second).
 - Unreachable source: release its reservation and try another candidate. Do not retry every frame.
 - Target removed or source depleted: cancel safely and re-evaluate.
 - Full stockpile: retain carried wood, show waiting status, and retry later.
