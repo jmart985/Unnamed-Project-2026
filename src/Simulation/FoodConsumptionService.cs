@@ -46,6 +46,9 @@ public sealed class FoodConsumptionService
 
     public long FoodUnitsConsumed { get; private set; }
 
+    public long FoodUnitsRemaining => _world.FoodSources.Sum(source =>
+        (long)source.Contents.Counts.GetValueOrDefault(ItemIds.Food));
+
     public FoodConsumptionResult Advance(
         EntityRecord entity,
         SpeciesDefinition species,
