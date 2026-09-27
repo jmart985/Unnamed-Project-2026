@@ -100,3 +100,12 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: Avoid retrying selection every tick while keeping recovery responsive to replenishment or changing reachability.
 - Consequence: The retry interval follows simulation time and therefore pauses with the simulation.
 - Revisit: If scenario measurements show the interval causes excessive waiting or repeated failed navigation.
+
+## D012 — Arrival-gated food consumption
+
+- Date: 2026-09-27
+- Status: Provisional; implemented for H02b
+- Decision: A domain food-consumption service composes food selection, action cleanup, and the navigation adapter. It removes one reserved food unit only after navigation reports arrival and the authoritative entity position is within the request tolerance.
+- Reason: Keep food and satiety authoritative in the simulation while preventing remote, repeated, or failed-navigation consumption.
+- Consequence: World owns food-source lifetimes; cancelling an eat action cancels its navigation request and releases its reservation. The Godot tick synchronizes movement before processing food outcomes.
+- Revisit: When eating duration, partial nutrition, or persisted in-progress actions become part of a later issue.

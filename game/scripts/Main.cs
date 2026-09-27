@@ -9,6 +9,8 @@ public partial class Main : Node3D
     private readonly World _world = new();
     private readonly Dictionary<string, EntityView> _entityViews = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Button> _entityButtons = new(StringComparer.Ordinal);
+    private FoodConsumptionService _foodConsumption = null!;
+    private long _simulationTick;
     private SpeciesCatalog _speciesCatalog = null!;
     private MeshInstance3D _map = null!;
     private MeshInstance3D _obstacle = null!;
@@ -32,6 +34,7 @@ public partial class Main : Node3D
         _removeSelectedButton = GetNode<Button>("Controls/Panel/Margin/VBox/RemoveSelected");
         _speciesCatalog = SpeciesCatalog.LoadFromFile(
             Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
+        _foodConsumption = new FoodConsumptionService(_world, GetNavigationAdapter);
         _pauseButton.Pressed += TogglePause;
         GetNode<Button>("Controls/Panel/Margin/VBox/OneX").Pressed += () => _clock.SetSpeed(SimulationSpeed.OneX);
         GetNode<Button>("Controls/Panel/Margin/VBox/FourX").Pressed += () => _clock.SetSpeed(SimulationSpeed.FourX);
@@ -91,6 +94,8 @@ public partial class Main : Node3D
     private void ResetScenario()
     {
         _clock.Reset();
+        _foodConsumption.Reset();
+        _simulationTick = 0;
         _world.Reset();
         ClearEntityViews();
         if (_map is not null)
@@ -101,6 +106,17 @@ public partial class Main : Node3D
         _obstacle.Mesh = new BoxMesh { Size = new Vector3(2, 1, 2) };
         _obstacle.Position = new Vector3(0, 0.5f, 0);
         _navigationRegion.NavigationMesh = CreateNavigationMesh();
+
+        var foodContents = new ResourceContainer("food-pile-1", 100);
+        if (foodContents.TryAdd(ItemIds.Food, 100) != ResourceMutationResult.Success)
+        {
+            throw new InvalidOperationException("Unable to seed the initial food pile.");
+        }
+
+        _world.AddFoodSource(
+            "food-pile-1",
+            new System.Numerics.Vector3(-8, 0, -8),
+            foodContents);
 
         for (var index = 0; index < 10; index++)
         {
@@ -169,8 +185,10 @@ public partial class Main : Node3D
 
     private void AdvanceSimulationTick(double tickSeconds)
     {
+        _simulationTick = checked(_simulationTick + 1);
         AdvanceNeeds(tickSeconds);
         AdvanceNavigationTick(tickSeconds);
+        AdvanceFoodConsumption();
     }
 
     private void AdvanceNavigationTick(double tickSeconds)
@@ -187,6 +205,24 @@ public partial class Main : Node3D
         {
             entity.Needs.Advance(simulationSeconds);
         }
+    }
+
+    private void AdvanceFoodConsumption()
+    {
+        foreach (var entity in _world.Entities)
+        {
+            _foodConsumption.Advance(
+                entity,
+                _speciesCatalog.GetRequired(entity.SpeciesId),
+                _simulationTick);
+        }
+    }
+
+    private INavigationAdapter GetNavigationAdapter(EntityRecord entity)
+    {
+        return _entityViews.TryGetValue(entity.Id, out var view)
+            ? view.NavigationAdapter
+            : throw new InvalidOperationException($"Entity view '{entity.Id}' has no navigation adapter.");
     }
 
     private void ClearEntityViews()

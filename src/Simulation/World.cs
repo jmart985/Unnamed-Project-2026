@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Numerics;
 
@@ -6,17 +7,59 @@ namespace Simulation;
 public sealed class World
 {
     private readonly Dictionary<string, EntityRecord> _entities = new(StringComparer.Ordinal);
+    private readonly List<FoodSource> _foodSources = [];
+    private readonly ReadOnlyCollection<FoodSource> _foodSourceView;
+    private readonly HashSet<string> _foodSourceIds = new(StringComparer.Ordinal);
     private long _lastEntityId;
 
     public World(NeedsTuning? needsTuning = null)
     {
         NeedsTuning = needsTuning ?? new NeedsTuning();
         Reservations = new ReservationService(IsActionActive);
+        _foodSourceView = _foodSources.AsReadOnly();
     }
 
     public IReadOnlyCollection<EntityRecord> Entities => _entities.Values;
+    public IReadOnlyList<FoodSource> FoodSources => _foodSourceView;
     public NeedsTuning NeedsTuning { get; }
     public ReservationService Reservations { get; }
+
+    public FoodSource AddFoodSource(string id, Vector3 position, ResourceContainer contents)
+    {
+        var source = new FoodSource(id, position, contents);
+        if (!_foodSourceIds.Add(source.Id))
+        {
+            throw new ArgumentException($"Food source ID '{source.Id}' has already been used in this world.", nameof(id));
+        }
+
+        _foodSources.Add(source);
+        return source;
+    }
+
+    public bool TryGetFoodSource(string? id, out FoodSource? source)
+    {
+        if (!string.IsNullOrWhiteSpace(id))
+        {
+            source = _foodSources.FirstOrDefault(candidate =>
+                string.Equals(candidate.Id, id, StringComparison.Ordinal));
+            return source is not null;
+        }
+
+        source = null;
+        return false;
+    }
+
+    public bool TryRemoveFoodSource(string? id)
+    {
+        if (!TryGetFoodSource(id, out var source) || source is null)
+        {
+            return false;
+        }
+
+        _foodSources.Remove(source);
+        Reservations.RemoveTarget(source.Id);
+        return true;
+    }
 
     public EntityRecord SpawnEntity(
         string speciesId,
@@ -97,6 +140,8 @@ public sealed class World
         }
 
         _entities.Clear();
+        _foodSources.Clear();
+        _foodSourceIds.Clear();
         Reservations.Reset();
     }
 

@@ -79,7 +79,8 @@ public sealed class FoodSelectionService
         EntityRecord entity,
         SpeciesDefinition species,
         IEnumerable<FoodSource> sources,
-        long simulationTick)
+        long simulationTick,
+        Action? actionCleanup = null)
     {
         ValidateInputs(entity, species, sources, simulationTick);
         var candidates = ValidateSources(sources);
@@ -139,7 +140,7 @@ public sealed class FoodSelectionService
         }
 
         var actionId = $"eat-{entity.Id}-{(++_nextActionId).ToString("D6", CultureInfo.InvariantCulture)}";
-        var attempt = new SelectionAttempt(actionId, species);
+        var attempt = new SelectionAttempt(actionId, species, actionCleanup);
         var startResult = entity.Actions.TryStart(
             new ActionCandidate(actionId, ActionKind.Eat),
             () => OnActionFinished(entity.Id, actionId));
@@ -191,6 +192,22 @@ public sealed class FoodSelectionService
         attempt.LastFailure = failure;
         attempt.SelectedSource = null;
         return TrySelectCandidate(entity, attempt, candidates, simulationTick);
+    }
+
+    public void Reset()
+    {
+        foreach (var pair in _attempts.ToArray())
+        {
+            if (_world.TryGetEntity(pair.Key, out var entity)
+                && entity is not null
+                && string.Equals(entity.Actions.Current?.Id, pair.Value.ActionId, StringComparison.Ordinal))
+            {
+                entity.Actions.Cancel();
+            }
+        }
+
+        _attempts.Clear();
+        _retryAtTicks.Clear();
     }
 
     private FoodSelectionResult TrySelectCandidate(
@@ -285,6 +302,7 @@ public sealed class FoodSelectionService
             && string.Equals(attempt.ActionId, actionId, StringComparison.Ordinal))
         {
             _attempts.Remove(entityId);
+            attempt.ActionCleanup?.Invoke();
         }
     }
 
@@ -328,10 +346,14 @@ public sealed class FoodSelectionService
         return candidates;
     }
 
-    private sealed class SelectionAttempt(string actionId, SpeciesDefinition species)
+    private sealed class SelectionAttempt(
+        string actionId,
+        SpeciesDefinition species,
+        Action? actionCleanup)
     {
         public string ActionId { get; } = actionId;
         public SpeciesDefinition Species { get; } = species;
+        public Action? ActionCleanup { get; } = actionCleanup;
         public HashSet<string> ExcludedTargetIds { get; } = new(StringComparer.Ordinal);
         public FoodSource? SelectedSource { get; set; }
         public FoodTargetFailure? LastFailure { get; set; }
