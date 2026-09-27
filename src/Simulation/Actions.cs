@@ -67,6 +67,19 @@ public sealed class ActionState
 
 public sealed class ActionLifecycle
 {
+    private readonly string? _ownerEntityId;
+    private readonly ReservationService? _reservations;
+
+    public ActionLifecycle()
+    {
+    }
+
+    internal ActionLifecycle(string ownerEntityId, ReservationService reservations)
+    {
+        _ownerEntityId = ownerEntityId;
+        _reservations = reservations;
+    }
+
     public ActionState? Current { get; private set; }
 
     public ActionStartResult TryStart(ActionCandidate candidate, Action? cleanup = null)
@@ -140,6 +153,11 @@ public sealed class ActionLifecycle
         var finished = Current;
         finished.Status = status;
         Current = null;
+        if (_ownerEntityId is not null)
+        {
+            _reservations?.ReleaseForAction(_ownerEntityId, finished.Id);
+        }
+
         finished.Cleanup?.Invoke();
         return true;
     }
