@@ -117,3 +117,11 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: Action completion, cancellation, and preemption already never touch `EntityRecord.Inventory`, but nothing previously exercised that guarantee with real carried items, and no job had a documented, reusable way to require delivery before a new pickup or to retry without reselecting every tick. These primitives let J02 (hauling) implement "resume delivery before a new pickup" and bounded waiting without inventing job-specific mechanisms.
 - Consequence: Carried inventory has no capacity limit yet; bounded haul capacity per species is deferred to the hauling job that defines it. Only whole-entity removal discards carried inventory; cancellation, preemption, and reservation release never do.
 - Revisit: When the hauling job (J02) defines per-species haul capacity, or if other job kinds need a different cargo-completion signal than "any carried item."
+## D014 - Versioned durable world snapshots
+
+- Date: 2026-09-27
+- Status: Provisional; implemented for S01a
+- Decision: Capture simulation time, the entity ID allocator position, entity durable state, carried inventory, and world food-source containers in a versioned JSON snapshot. Runtime actions, reservations, navigation requests, and engine nodes remain transient.
+- Reason: Save/load needs a stable, engine-independent boundary that can be validated before a later restore operation replaces the running world.
+- Consequence: Snapshot schema changes require an explicit version update; transient work is rebuilt rather than serialized.
+- Revisit: When S01b adds atomic validation and world restoration.

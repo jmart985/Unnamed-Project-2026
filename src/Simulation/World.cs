@@ -37,6 +37,7 @@ public sealed class World
 
     public IReadOnlyCollection<EntityRecord> Entities => _entities.Values;
     public IReadOnlyList<FoodSource> FoodSources => _foodSourceView;
+    internal long LastAllocatedEntityId => _lastEntityId;
     public IReadOnlyList<ResourceLocation> ResourcePiles => _resourcePileView;
     public IReadOnlyList<ResourceLocation> Stockpiles => _stockpileView;
     public NeedsTuning NeedsTuning { get; }
