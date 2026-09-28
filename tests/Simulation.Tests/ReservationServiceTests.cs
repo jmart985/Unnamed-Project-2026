@@ -160,6 +160,76 @@ public sealed class ReservationServiceTests
             world.Reservations.TryReserveCapacity(nextEntity.Id, "haul-2", "stockpile-2", stockpile, 1));
     }
 
+    [Theory]
+    [InlineData(RemovalPath.FoodSource)]
+    [InlineData(RemovalPath.ResourcePile)]
+    public void WorldTargetRemovalReleasesResourceReservationsAndMarksTheTargetStale(RemovalPath removalPath)
+    {
+        var world = new World();
+        var entity = world.SpawnEntity("human", Vector3.Zero);
+        var contents = new ResourceContainer("target-contents", 1);
+        var itemId = removalPath == RemovalPath.FoodSource ? ItemIds.Food : ItemIds.Wood;
+        contents.TryAdd(itemId, 1);
+        StartAction(entity, "eat-1");
+
+        var targetId = removalPath switch
+        {
+            RemovalPath.FoodSource => world.AddFoodSource("food-1", Vector3.UnitX, contents).Id,
+            RemovalPath.ResourcePile => world.AddResourcePile("pile-1", Vector3.UnitX, contents).Id,
+            _ => throw new ArgumentOutOfRangeException(nameof(removalPath))
+        };
+
+        Assert.Equal(
+            ReservationResult.Reserved,
+            world.Reservations.TryReserveResource(entity.Id, "eat-1", targetId, contents, itemId, 1));
+
+        var removed = removalPath switch
+        {
+            RemovalPath.FoodSource => world.TryRemoveFoodSource(targetId),
+            RemovalPath.ResourcePile => world.TryRemoveResourcePile(targetId),
+            _ => false
+        };
+
+        Assert.True(removed);
+
+        var replacement = world.SpawnEntity("human", Vector3.One);
+        StartAction(replacement, "eat-2");
+        Assert.Equal(
+            ReservationResult.StaleTarget,
+            world.Reservations.TryReserveResource(replacement.Id, "eat-2", targetId, contents, itemId, 1));
+    }
+
+    [Fact]
+    public void WorldStockpileRemovalReleasesCapacityReservationsAndMarksTheTargetStale()
+    {
+        var world = new World();
+        var entity = world.SpawnEntity("human", Vector3.Zero);
+        var stockpile = world.AddStockpile("stockpile-1", Vector3.UnitX, new ResourceContainer("stockpile", 1));
+        StartAction(entity, "haul-1");
+
+        Assert.Equal(
+            ReservationResult.Reserved,
+            world.Reservations.TryReserveCapacity(
+                entity.Id,
+                "haul-1",
+                stockpile.Id,
+                stockpile.Contents,
+                1));
+
+        Assert.True(world.TryRemoveStockpile(stockpile.Id));
+
+        var replacement = world.SpawnEntity("human", Vector3.One);
+        StartAction(replacement, "haul-2");
+        Assert.Equal(
+            ReservationResult.StaleTarget,
+            world.Reservations.TryReserveCapacity(
+                replacement.Id,
+                "haul-2",
+                stockpile.Id,
+                stockpile.Contents,
+                1));
+    }
+
     [Fact]
     public void StaleActionsAndInvalidRequestsReturnControlledResults()
     {
@@ -219,5 +289,11 @@ public sealed class ReservationServiceTests
         Complete,
         Cancel,
         Preempt
+    }
+
+    public enum RemovalPath
+    {
+        FoodSource,
+        ResourcePile
     }
 }
