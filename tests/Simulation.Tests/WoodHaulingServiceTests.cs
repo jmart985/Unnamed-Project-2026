@@ -17,7 +17,7 @@ public sealed class WoodHaulingServiceTests
         var species = GetSpecies("human");
         var initialWood = TotalWood(source, entity, stockpile);
 
-        var toSource = service.Advance(entity, species);
+        var toSource = service.Advance(entity, species, simulationTick: 0);
 
         Assert.Equal(WoodHaulingStatus.TravelingToSource, toSource.Status);
         Assert.Equal(2, toSource.Amount);
@@ -28,7 +28,7 @@ public sealed class WoodHaulingServiceTests
         var sourceRequest = navigator.Requests.Keys.Single();
         navigator.CompleteAsArrived(sourceRequest);
         world.TrySetEntityPosition(entity.Id, source.Position);
-        var toStockpile = service.Advance(entity, species);
+        var toStockpile = service.Advance(entity, species, simulationTick: 1);
 
         Assert.Equal(WoodHaulingStatus.TravelingToStockpile, toStockpile.Status);
         Assert.Equal(3, source.Contents.Counts[ItemIds.Wood]);
@@ -38,7 +38,7 @@ public sealed class WoodHaulingServiceTests
         var stockpileRequest = navigator.Requests.Keys.Single(id => id != sourceRequest);
         navigator.CompleteAsArrived(stockpileRequest);
         world.TrySetEntityPosition(entity.Id, stockpile.Position);
-        var delivered = service.Advance(entity, species);
+        var delivered = service.Advance(entity, species, simulationTick: 2);
 
         Assert.Equal(WoodHaulingStatus.Delivered, delivered.Status);
         Assert.Equal(2, delivered.Amount);
@@ -63,8 +63,8 @@ public sealed class WoodHaulingServiceTests
         };
         var service = new WoodHaulingService(world, entity => navigators[entity.Id]);
 
-        var firstTrip = service.Advance(first, GetSpecies("human"));
-        var secondTrip = service.Advance(second, GetSpecies("human"));
+        var firstTrip = service.Advance(first, GetSpecies("human"), simulationTick: 0);
+        var secondTrip = service.Advance(second, GetSpecies("human"), simulationTick: 0);
 
         Assert.Equal(WoodHaulingStatus.TravelingToSource, firstTrip.Status);
         Assert.Equal(WoodHaulingStatus.Waiting, secondTrip.Status);
@@ -89,8 +89,8 @@ public sealed class WoodHaulingServiceTests
         };
         var service = new WoodHaulingService(world, entity => navigators[entity.Id]);
 
-        var firstTrip = service.Advance(first, GetSpecies("human"));
-        var secondTrip = service.Advance(second, GetSpecies("human"));
+        var firstTrip = service.Advance(first, GetSpecies("human"), simulationTick: 0);
+        var secondTrip = service.Advance(second, GetSpecies("human"), simulationTick: 0);
 
         Assert.Equal(WoodHaulingStatus.TravelingToSource, firstTrip.Status);
         Assert.Equal(2, firstTrip.Amount);
@@ -126,13 +126,13 @@ public sealed class WoodHaulingServiceTests
         var service = new WoodHaulingService(world, entity => navigators[entity.Id]);
         var species = GetSpecies("human");
 
-        var firstTrip = service.Advance(first, species);
+        var firstTrip = service.Advance(first, species, simulationTick: 0);
         var firstSourceRequest = navigators[first.Id].Requests.Keys.Single();
         navigators[first.Id].CompleteAsArrived(firstSourceRequest);
         world.TrySetEntityPosition(first.Id, source.Position);
-        var firstDelivery = service.Advance(first, species);
+        var firstDelivery = service.Advance(first, species, simulationTick: 1);
 
-        var secondTrip = service.Advance(second, species);
+        var secondTrip = service.Advance(second, species, simulationTick: 1);
 
         Assert.Equal(WoodHaulingStatus.TravelingToStockpile, firstDelivery.Status);
         Assert.Equal(firstStockpile, firstDelivery.Stockpile);
@@ -152,7 +152,7 @@ public sealed class WoodHaulingServiceTests
         var source = AddLocation(world.AddResourcePile, "wood-pile", Vector3.UnitX, capacity: 1, wood: 1);
         var service = new WoodHaulingService(world, _ => new FakeNavigationAdapter());
 
-        var result = service.Advance(entity, GetSpecies("creature"));
+        var result = service.Advance(entity, GetSpecies("creature"), simulationTick: 0);
 
         Assert.Equal(WoodHaulingStatus.NotHauler, result.Status);
         Assert.Null(entity.Actions.Current);
@@ -171,14 +171,14 @@ public sealed class WoodHaulingServiceTests
 
         Assert.Equal(
             WoodHaulingStatus.TravelingToSource,
-            service.Advance(entity, GetSpecies("human")).Status);
+            service.Advance(entity, GetSpecies("human"), simulationTick: 0).Status);
         source.Contents.TryRemove(ItemIds.Wood, 2);
         var woodBeforeFailure = TotalWood(source, entity, stockpile);
         var requestId = navigator.Requests.Keys.Single();
         navigator.CompleteAsArrived(requestId);
         world.TrySetEntityPosition(entity.Id, source.Position);
 
-        var failed = service.Advance(entity, GetSpecies("human"));
+        var failed = service.Advance(entity, GetSpecies("human"), simulationTick: 1);
 
         Assert.Equal(WoodHaulingStatus.Waiting, failed.Status);
         Assert.Contains("Wood pickup failed", failed.WaitingReason);
@@ -197,6 +197,34 @@ public sealed class WoodHaulingServiceTests
                 stockpile.Contents,
                 2));
         Assert.Equal(woodBeforeFailure, TotalWood(source, entity, stockpile));
+    }
+
+    [Fact]
+    public void WaitingDefersRetryUntilConfiguredDelayElapses()
+    {
+        var world = new World(inventoryCapacity: 2);
+        var entity = world.SpawnEntity("human", Vector3.Zero);
+        AddLocation(world.AddResourcePile, "wood-pile", Vector3.UnitX, capacity: 5, wood: 2);
+        var service = new WoodHaulingService(world, _ => new FakeNavigationAdapter(), retryDelayTicks: 10);
+        var species = GetSpecies("human");
+
+        var waiting = service.Advance(entity, species, simulationTick: 0);
+        var deferred = service.Advance(entity, species, simulationTick: 1);
+
+        Assert.Equal(WoodHaulingStatus.Waiting, waiting.Status);
+        Assert.Equal("No stockpile is available.", waiting.WaitingReason);
+        Assert.Equal(WoodHaulingStatus.RetryDeferred, deferred.Status);
+        Assert.Equal("No stockpile is available.", deferred.WaitingReason);
+
+        AddLocation(world.AddStockpile, "stockpile-1", new Vector3(2, 0, 0), capacity: 2);
+        Assert.Equal(
+            WoodHaulingStatus.RetryDeferred,
+            service.Advance(entity, species, simulationTick: 9).Status);
+
+        var resumed = service.Advance(entity, species, simulationTick: 10);
+        Assert.Equal(WoodHaulingStatus.TravelingToSource, resumed.Status);
+        Assert.Equal("SeekingWood", entity.Activity);
+        Assert.Null(entity.WaitingReason);
     }
 
     private static SpeciesDefinition GetSpecies(string id)
