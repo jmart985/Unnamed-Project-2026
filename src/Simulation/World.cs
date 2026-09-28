@@ -21,6 +21,7 @@ public sealed class World
 
     public IReadOnlyCollection<EntityRecord> Entities => _entities.Values;
     public IReadOnlyList<FoodSource> FoodSources => _foodSourceView;
+    internal long LastAllocatedEntityId => _lastEntityId;
     public NeedsTuning NeedsTuning { get; }
     public ReservationService Reservations { get; }
 
