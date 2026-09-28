@@ -296,6 +296,173 @@ public sealed class WoodHaulingServiceTests
     }
 
     [Fact]
+    public void RemovedWoodSourceReleasesReservationsAndSelectsAnAlternateSource()
+    {
+        var world = new World(inventoryCapacity: 2);
+        var entity = world.SpawnEntity("human", Vector3.Zero);
+        var removedSource = AddLocation(world.AddResourcePile, "wood-near", Vector3.UnitX, capacity: 2, wood: 2);
+        var alternateSource = AddLocation(
+            world.AddResourcePile,
+            "wood-far",
+            new Vector3(2, 0, 0),
+            capacity: 2,
+            wood: 2);
+        var stockpile = AddLocation(world.AddStockpile, "stockpile", new Vector3(3, 0, 0), capacity: 4);
+        var navigator = new FakeNavigationAdapter();
+        var service = new WoodHaulingService(world, _ => navigator, retryDelayTicks: 10);
+        var species = GetSpecies("human");
+        const int initialWood = 4;
+
+        var started = service.Advance(entity, species, simulationTick: 0);
+        Assert.Equal(WoodHaulingStatus.TravelingToSource, started.Status);
+        Assert.Same(removedSource, started.Source);
+        Assert.True(world.TryRemoveResourcePile(removedSource.Id));
+
+        var removed = service.Advance(entity, species, simulationTick: 1);
+
+        Assert.Equal(WoodHaulingStatus.Waiting, removed.Status);
+        Assert.Equal("The wood source was removed.", removed.WaitingReason);
+        Assert.Empty(entity.Inventory);
+        Assert.Equal(2, removedSource.Contents.Counts[ItemIds.Wood]);
+        Assert.Null(entity.Actions.Current);
+
+        var competitor = world.SpawnEntity("human", Vector3.Zero);
+        Assert.Equal(
+            ActionStartResult.Started,
+            competitor.Actions.TryStart(new ActionCandidate("capacity-check", ActionKind.Haul)));
+        Assert.Equal(
+            ReservationResult.Reserved,
+            world.Reservations.TryReserveCapacity(
+                competitor.Id,
+                "capacity-check",
+                stockpile.Id,
+                stockpile.Contents,
+                2));
+        Assert.True(competitor.Actions.Cancel());
+
+        Assert.Equal(
+            WoodHaulingStatus.RetryDeferred,
+            service.Advance(entity, species, simulationTick: 10).Status);
+        var replacement = service.Advance(entity, species, simulationTick: 11);
+        Assert.Equal(WoodHaulingStatus.TravelingToSource, replacement.Status);
+        Assert.Same(alternateSource, replacement.Source);
+
+        var sourceRequest = navigator.Requests.Single(pair => pair.Value == NavigationOutcome.InProgress).Key;
+        Assert.True(navigator.CompleteAsArrived(sourceRequest));
+        Assert.True(world.TrySetEntityPosition(entity.Id, alternateSource.Position));
+        Assert.Equal(
+            WoodHaulingStatus.TravelingToStockpile,
+            service.Advance(entity, species, simulationTick: 12).Status);
+        Assert.True(world.TryRemoveResourcePile(alternateSource.Id));
+
+        var stockpileRequest = navigator.Requests.Single(pair => pair.Value == NavigationOutcome.InProgress).Key;
+        Assert.True(navigator.CompleteAsArrived(stockpileRequest));
+        Assert.True(world.TrySetEntityPosition(entity.Id, stockpile.Position));
+        var delivered = service.Advance(entity, species, simulationTick: 13);
+
+        Assert.Equal(WoodHaulingStatus.Delivered, delivered.Status);
+        Assert.Empty(entity.Inventory);
+        Assert.Equal(2, stockpile.Contents.Counts[ItemIds.Wood]);
+        Assert.Equal(
+            initialWood,
+            removedSource.Contents.Counts.GetValueOrDefault(ItemIds.Wood)
+                + alternateSource.Contents.Counts.GetValueOrDefault(ItemIds.Wood)
+                + entity.Inventory.GetValueOrDefault(ItemIds.Wood)
+                + stockpile.Contents.Counts.GetValueOrDefault(ItemIds.Wood));
+    }
+
+    [Fact]
+    public void RemovedStockpilesReleaseReservationsRetainCargoAndSelectAReplacement()
+    {
+        var world = new World(inventoryCapacity: 2);
+        var entity = world.SpawnEntity("human", Vector3.Zero);
+        var source = AddLocation(world.AddResourcePile, "wood-pile", Vector3.UnitX, capacity: 2, wood: 2);
+        var removedBeforePickup = AddLocation(
+            world.AddStockpile,
+            "stockpile-near",
+            new Vector3(2, 0, 0),
+            capacity: 2);
+        var removedAfterPickup = AddLocation(
+            world.AddStockpile,
+            "stockpile-far",
+            new Vector3(3, 0, 0),
+            capacity: 2);
+        var navigator = new FakeNavigationAdapter();
+        var service = new WoodHaulingService(world, _ => navigator, retryDelayTicks: 10);
+        var species = GetSpecies("human");
+
+        var started = service.Advance(entity, species, simulationTick: 0);
+        Assert.Equal(WoodHaulingStatus.TravelingToSource, started.Status);
+        Assert.Same(removedBeforePickup, started.Stockpile);
+        Assert.True(world.TryRemoveStockpile(removedBeforePickup.Id));
+
+        var firstRemoval = service.Advance(entity, species, simulationTick: 1);
+
+        Assert.Equal(WoodHaulingStatus.Waiting, firstRemoval.Status);
+        Assert.Equal("The stockpile target was removed.", firstRemoval.WaitingReason);
+        Assert.Empty(entity.Inventory);
+        Assert.Equal(2, source.Contents.Counts[ItemIds.Wood]);
+        Assert.Null(entity.Actions.Current);
+
+        var competitor = world.SpawnEntity("human", Vector3.Zero);
+        Assert.Equal(
+            ActionStartResult.Started,
+            competitor.Actions.TryStart(new ActionCandidate("resource-check", ActionKind.Haul)));
+        Assert.Equal(
+            ReservationResult.Reserved,
+            world.Reservations.TryReserveResource(
+                competitor.Id,
+                "resource-check",
+                source.Id,
+                source.Contents,
+                ItemIds.Wood,
+                2));
+        Assert.True(competitor.Actions.Cancel());
+
+        var replacementTrip = service.Advance(entity, species, simulationTick: 11);
+        Assert.Equal(WoodHaulingStatus.TravelingToSource, replacementTrip.Status);
+        Assert.Same(removedAfterPickup, replacementTrip.Stockpile);
+        var sourceRequest = navigator.Requests.Single(pair => pair.Value == NavigationOutcome.InProgress).Key;
+        Assert.True(navigator.CompleteAsArrived(sourceRequest));
+        Assert.True(world.TrySetEntityPosition(entity.Id, source.Position));
+        Assert.Equal(
+            WoodHaulingStatus.TravelingToStockpile,
+            service.Advance(entity, species, simulationTick: 12).Status);
+        Assert.Equal(2, entity.Inventory[ItemIds.Wood]);
+
+        Assert.True(world.TryRemoveStockpile(removedAfterPickup.Id));
+        var secondRemoval = service.Advance(entity, species, simulationTick: 13);
+
+        Assert.Equal(WoodHaulingStatus.Waiting, secondRemoval.Status);
+        Assert.Equal("The stockpile target was removed.", secondRemoval.WaitingReason);
+        Assert.Equal(2, entity.Inventory[ItemIds.Wood]);
+        Assert.Empty(source.Contents.Counts);
+        Assert.Null(entity.Actions.Current);
+
+        var replacementStockpile = AddLocation(
+            world.AddStockpile,
+            "stockpile-replacement",
+            new Vector3(4, 0, 0),
+            capacity: 2);
+        Assert.Equal(
+            WoodHaulingStatus.RetryDeferred,
+            service.Advance(entity, species, simulationTick: 22).Status);
+        var resumed = service.Advance(entity, species, simulationTick: 23);
+        Assert.Equal(WoodHaulingStatus.TravelingToStockpile, resumed.Status);
+        Assert.Same(replacementStockpile, resumed.Stockpile);
+
+        var stockpileRequest = navigator.Requests.Single(pair => pair.Value == NavigationOutcome.InProgress).Key;
+        Assert.True(navigator.CompleteAsArrived(stockpileRequest));
+        Assert.True(world.TrySetEntityPosition(entity.Id, replacementStockpile.Position));
+        var delivered = service.Advance(entity, species, simulationTick: 24);
+
+        Assert.Equal(WoodHaulingStatus.Delivered, delivered.Status);
+        Assert.Empty(entity.Inventory);
+        Assert.Equal(2, replacementStockpile.Contents.Counts[ItemIds.Wood]);
+        Assert.Equal(2, TotalWood(source, entity, replacementStockpile));
+    }
+
+    [Fact]
     public void WaitingDefersRetryUntilConfiguredDelayElapses()
     {
         var world = new World(inventoryCapacity: 2);
