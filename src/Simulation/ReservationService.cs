@@ -23,6 +23,32 @@ public sealed class ReservationService
         _isActionActive = isActionActive;
     }
 
+    internal int GetAvailableResourceQuantity(ResourceContainer source, string itemId)
+    {
+        if (!source.TryGetCount(itemId, out var count))
+        {
+            return 0;
+        }
+
+        var reserved = _reservations
+            .Where(reservation =>
+                reservation.Kind == ReservationKind.Resource
+                && ReferenceEquals(reservation.Container, source)
+                && string.Equals(reservation.ItemId, itemId, StringComparison.Ordinal))
+            .Sum(reservation => reservation.Amount);
+        return Math.Max(0, count - reserved);
+    }
+
+    internal int GetAvailableCapacity(ResourceContainer destination)
+    {
+        var reserved = _reservations
+            .Where(reservation =>
+                reservation.Kind == ReservationKind.Capacity
+                && ReferenceEquals(reservation.Container, destination))
+            .Sum(reservation => reservation.Amount);
+        return Math.Max(0, destination.RemainingCapacity - reserved);
+    }
+
     public ReservationResult TryReserveResource(
         string? entityId,
         string? actionId,
@@ -125,6 +151,31 @@ public sealed class ReservationService
         return RemoveWhere(reservation =>
             string.Equals(reservation.EntityId, entityId, StringComparison.Ordinal)
             && string.Equals(reservation.ActionId, actionId, StringComparison.Ordinal));
+    }
+
+    public int ReleaseResourceReservation(
+        string? entityId,
+        string? actionId,
+        string? targetId,
+        ResourceContainer? source,
+        string? itemId)
+    {
+        if (string.IsNullOrWhiteSpace(entityId)
+            || string.IsNullOrWhiteSpace(actionId)
+            || string.IsNullOrWhiteSpace(targetId)
+            || source is null
+            || !ItemIds.IsKnown(itemId))
+        {
+            return 0;
+        }
+
+        return RemoveWhere(reservation =>
+            reservation.Kind == ReservationKind.Resource
+            && string.Equals(reservation.EntityId, entityId, StringComparison.Ordinal)
+            && string.Equals(reservation.ActionId, actionId, StringComparison.Ordinal)
+            && string.Equals(reservation.TargetId, targetId, StringComparison.Ordinal)
+            && ReferenceEquals(reservation.Container, source)
+            && string.Equals(reservation.ItemId, itemId, StringComparison.Ordinal));
     }
 
     public int ReleaseForEntity(string? entityId)

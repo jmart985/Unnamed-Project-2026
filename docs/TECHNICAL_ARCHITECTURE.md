@@ -16,11 +16,16 @@ These are planned paths. F01 creates the runnable scaffold. Use a fixed, flat 3D
 
 ## Ownership and update model
 
-- A World owns entity records identified by stable IDs, resource containers, and simulation time. Use simple composition, not a custom ECS framework.
+- A World owns entity records identified by stable IDs, resource containers, and simulation time. It owns food sources, haul piles, and stockpiles; entity inventories are bounded resource containers. Use simple composition, not a custom ECS framework.
 - Entity IDs are allocated monotonically within a World and are not reused after entity removal or world reset. Reset clears records but preserves the allocator, so stale IDs cannot resolve to new entities; a newly created World starts a new ID sequence.
 - Entity state contains ID, species ID, position, satiety, inventory, and current activity. Views reference IDs; scene-node paths are not save identities.
 - A single-threaded fixed simulation tick updates hunger, chooses actions, and processes outcomes in a documented stable order. Godot adapters perform navigation and report arrival/failure back to the simulation.
 - World-owned food sources are selected and reserved by the domain. After navigation advances and synchronizes the authoritative position, food is consumed only for a reported arrival within tolerance; nutrition is applied once and needs are checked before lower-priority work can resume.
+- Haul actions reserve available source wood and stockpile capacity before travel. They transfer to the entity inventory only after validated arrival, release the source claim after pickup, and keep the stockpile capacity claim until deposit or cancellation.
+- The simulation clock advances in 0.1-second ticks. Each tick invokes domain update callbacks in stable order, then the engine refreshes presentation. It supports 1x and 4x speed, ignores elapsed wall time while paused, and caps one frame at eight ticks; excess accumulated time is discarded rather than causing an unbounded catch-up.
+- Simulation rules do not depend on rendering or UI. A small navigation boundary permits deterministic fake-path tests; live navigation is validated in Godot.
+- Use a simple action state machine: Idle, Moving, Eating, Hauling, Waiting. Hunger preempts work. Avoid behavior-tree or utility-AI frameworks until necessary.
+- Inventory transfers go through one domain service. Counts stay nonnegative, capacity is enforced, and a transfer either fully succeeds for its agreed quantity or changes neither container. Entity inventory capacity is configurable per World (default 10 units). A World-owned reservation service claims resource quantities and destination capacity for active entity actions; completion, cancellation, entity removal, and target removal release those transient claims.
 - The simulation clock advances in 0.1-second ticks. Each tick invokes domain update callbacks in stable order (needs, then navigation advancement, then action outcomes such as food consumption), then the engine refreshes presentation. It supports 1x and 4x speed, ignores elapsed wall time while paused, and caps one frame at eight ticks; excess accumulated time is discarded rather than causing an unbounded catch-up.
 - Simulation rules do not depend on rendering or UI. A small navigation boundary permits deterministic fake-path tests; live navigation is validated in Godot.
 - Use a simple action state machine: Idle, Moving, Eating, Hauling, Waiting. Hunger preempts work. Avoid behavior-tree or utility-AI frameworks until necessary.
