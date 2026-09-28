@@ -61,7 +61,7 @@ public sealed class WorldSnapshotTests
             () => WorldSnapshotSerializer.Capture(world, double.NaN));
 
         var json = WorldSnapshotSerializer.Serialize(world, 0)
-            .Replace("\"SchemaVersion\": 1", "\"SchemaVersion\": 99", StringComparison.Ordinal);
+            .Replace("\"SchemaVersion\": 2", "\"SchemaVersion\": 99", StringComparison.Ordinal);
 
         Assert.Throws<InvalidDataException>(() => WorldSnapshotSerializer.Deserialize(json));
     }
@@ -107,7 +107,7 @@ public sealed class WorldSnapshotTests
         var invalidSnapshots = new[]
         {
             "{",
-            validJson.Replace("\"SchemaVersion\": 1", "\"SchemaVersion\": 99", StringComparison.Ordinal),
+            validJson.Replace("\"SchemaVersion\": 2", "\"SchemaVersion\": 99", StringComparison.Ordinal),
             validJson.Replace("\"SpeciesId\": \"human\"", "\"SpeciesId\": \"unknown\"", StringComparison.Ordinal),
             validJson.Replace("\"food\": 3", "\"food\": -1", StringComparison.Ordinal)
         };
@@ -124,6 +124,45 @@ public sealed class WorldSnapshotTests
             Assert.Equal(originalFood, world.FoodSources.Single().Contents.Counts[ItemIds.Food]);
             Assert.Same(originalEntity, Assert.Single(world.Entities));
         }
+    }
+
+    [Fact]
+    public void LoadRebuildsTransientHaulingAndDeliversCarriedWoodFirst()
+    {
+        var world = new World();
+        var source = new ResourceContainer("wood-source", 10);
+        Assert.Equal(ResourceMutationResult.Success, source.TryAdd(ItemIds.Wood, 4));
+        world.AddResourcePile("wood-source", Vector3.Zero, source);
+        world.AddStockpile("stockpile", new Vector3(2, 0, 0), new ResourceContainer("stockpile", 20));
+        var entity = world.SpawnEntity("human", Vector3.Zero, 80);
+        var navigator = new FakeNavigationAdapter();
+        var hauling = new WoodHaulingService(world, _ => navigator);
+        var species = GetSpeciesCatalog().GetRequired("human");
+
+        Assert.Equal(WoodHaulingStatus.TravelingToSource, hauling.Advance(entity, species, 0).Status);
+        Assert.True(navigator.CompleteAsArrived(navigator.Requests.Single().Key));
+        Assert.Equal(WoodHaulingStatus.TravelingToStockpile, hauling.Advance(entity, species, 1).Status);
+        var json = WorldSnapshotSerializer.Serialize(world, 0.2);
+
+        var restoredTime = WorldSnapshotSerializer.Load(world, json, GetSpeciesCatalog(), hauling);
+        var restored = Assert.Single(world.Entities);
+        Assert.Null(restored.Actions.Current);
+        Assert.DoesNotContain(NavigationOutcome.InProgress, navigator.Requests.Values);
+        Assert.Equal(0.2, restoredTime);
+        Assert.Equal(4, restored.Inventory[ItemIds.Wood]);
+
+        var resumed = hauling.Advance(restored, species, 2);
+        Assert.Equal(WoodHaulingStatus.TravelingToStockpile, resumed.Status);
+        Assert.Equal("stockpile", resumed.Stockpile?.Id);
+        Assert.Equal(0, world.ResourcePiles.Single().Contents.Counts.GetValueOrDefault(ItemIds.Wood));
+
+        var deliveryRequest = navigator.Requests.Single(pair => pair.Value == NavigationOutcome.InProgress).Key;
+        Assert.True(navigator.CompleteAsArrived(deliveryRequest));
+        Assert.True(world.TrySetEntityPosition(restored.Id, world.Stockpiles.Single().Position));
+        Assert.Equal(WoodHaulingStatus.Delivered, hauling.Advance(restored, species, 3).Status);
+        Assert.Empty(restored.Inventory);
+        Assert.Equal(4, world.Stockpiles.Single().Contents.Counts[ItemIds.Wood]);
+        Assert.Equal(0, world.ResourcePiles.Single().Contents.Counts.GetValueOrDefault(ItemIds.Wood));
     }
 
     [Fact]
