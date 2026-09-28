@@ -227,6 +227,32 @@ public sealed class WoodHaulingServiceTests
         Assert.Null(entity.WaitingReason);
     }
 
+    [Fact]
+    public void PendingPickupRetryDoesNotBlockDeliveryWhenCargoExists()
+    {
+        var world = new World(inventoryCapacity: 2);
+        var entity = world.SpawnEntity("human", Vector3.Zero);
+        AddLocation(world.AddResourcePile, "wood-pile", Vector3.UnitX, capacity: 5, wood: 2);
+        var carriedSource = new ResourceContainer("carried-source", 2);
+        Assert.Equal(ResourceMutationResult.Success, carriedSource.TryAdd(ItemIds.Wood, 1));
+        var navigator = new FakeNavigationAdapter();
+        var service = new WoodHaulingService(world, _ => navigator, retryDelayTicks: 10);
+        var species = GetSpecies("human");
+
+        Assert.Equal(WoodHaulingStatus.Waiting, service.Advance(entity, species, simulationTick: 0).Status);
+        Assert.Equal(
+            ResourceMutationResult.Success,
+            ResourceTransferService.TryPickUp(carriedSource, entity, ItemIds.Wood, 1));
+        AddLocation(world.AddStockpile, "stockpile-1", new Vector3(2, 0, 0), capacity: 2);
+
+        var resumedDelivery = service.Advance(entity, species, simulationTick: 1);
+
+        Assert.Equal(WoodHaulingStatus.TravelingToStockpile, resumedDelivery.Status);
+        Assert.Equal(1, resumedDelivery.Amount);
+        Assert.Equal("DeliveringWood", entity.Activity);
+        Assert.Null(entity.WaitingReason);
+    }
+
     private static SpeciesDefinition GetSpecies(string id)
     {
         return SpeciesCatalog.LoadFromFile(

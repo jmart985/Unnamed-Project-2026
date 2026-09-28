@@ -33,6 +33,7 @@ public sealed class WoodHaulingService
     private readonly World _world;
     private readonly Func<EntityRecord, INavigationAdapter> _navigationForEntity;
     private readonly RetryScheduler _retryScheduler;
+    private readonly Dictionary<string, bool> _waitingForDelivery = new(StringComparer.Ordinal);
     private readonly Dictionary<string, ActiveTrip> _activeTrips = new(StringComparer.Ordinal);
     private long _nextActionId;
 
@@ -91,14 +92,22 @@ public sealed class WoodHaulingService
             return new WoodHaulingResult(WoodHaulingStatus.ActionRejected);
         }
 
+        var hasCarriedWood = entity.Inventory.GetValueOrDefault(ItemIds.Wood) > 0;
         if (_retryScheduler.IsWaiting(entity.Id, simulationTick))
         {
+            if (hasCarriedWood && !_waitingForDelivery.GetValueOrDefault(entity.Id))
+            {
+                ClearWaitingState(entity.Id);
+            }
+            else
+            {
             return new WoodHaulingResult(
                 WoodHaulingStatus.RetryDeferred,
                 WaitingReason: entity.WaitingReason);
+            }
         }
 
-        return entity.Inventory.GetValueOrDefault(ItemIds.Wood) > 0
+        return hasCarriedWood
             ? BeginDelivery(entity, simulationTick)
             : BeginPickup(entity, simulationTick);
     }
@@ -122,6 +131,7 @@ public sealed class WoodHaulingService
         _activeTrips.Clear();
         _nextActionId = 0;
         _retryScheduler.Reset();
+        _waitingForDelivery.Clear();
     }
 
     private WoodHaulingResult BeginPickup(EntityRecord entity, long simulationTick)
@@ -136,19 +146,19 @@ public sealed class WoodHaulingService
         {
             entity.Activity = "Idle";
             entity.WaitingReason = null;
-            _retryScheduler.Clear(entity.Id);
+            ClearWaitingState(entity.Id);
             return new WoodHaulingResult(WoodHaulingStatus.NoWork);
         }
 
         var remainingCapacity = RemainingCargoCapacity(entity);
         if (remainingCapacity <= 0)
         {
-            return Wait(entity, "No inventory capacity available for wood.", simulationTick);
+            return Wait(entity, "No inventory capacity available for wood.", simulationTick, waitingForDelivery: false);
         }
 
         if (_world.Stockpiles.Count == 0)
         {
-            return Wait(entity, "No stockpile is available.", simulationTick);
+            return Wait(entity, "No stockpile is available.", simulationTick, waitingForDelivery: false);
         }
 
         var actionId = NextActionId(entity);
@@ -212,7 +222,7 @@ public sealed class WoodHaulingService
         }
 
         entity.Actions.Cancel();
-        return Wait(entity, "Wood or stockpile capacity is already reserved.", simulationTick);
+        return Wait(entity, "Wood or stockpile capacity is already reserved.", simulationTick, waitingForDelivery: false);
     }
 
     private WoodHaulingResult BeginDelivery(EntityRecord entity, long simulationTick)
@@ -226,7 +236,7 @@ public sealed class WoodHaulingService
 
         if (stockpiles.Length == 0)
         {
-            return Wait(entity, "No stockpile has enough capacity for carried wood.", simulationTick);
+            return Wait(entity, "No stockpile has enough capacity for carried wood.", simulationTick, waitingForDelivery: true);
         }
 
         var actionId = NextActionId(entity);
@@ -259,7 +269,7 @@ public sealed class WoodHaulingService
         }
 
         entity.Actions.Cancel();
-        return Wait(entity, "Stockpile capacity is already reserved.", simulationTick);
+        return Wait(entity, "Stockpile capacity is already reserved.", simulationTick, waitingForDelivery: true);
     }
 
     private WoodHaulingResult AdvanceTrip(EntityRecord entity, ActiveTrip trip, long simulationTick)
@@ -336,7 +346,7 @@ public sealed class WoodHaulingService
         entity.Actions.Complete();
         entity.Activity = "Idle";
         entity.WaitingReason = null;
-        _retryScheduler.Clear(entity.Id);
+        ClearWaitingState(entity.Id);
         return new WoodHaulingResult(
             WoodHaulingStatus.Delivered,
             trip.Source,
@@ -384,7 +394,7 @@ public sealed class WoodHaulingService
 
         entity.Activity = trip.Stage == TripStage.ToSource ? "SeekingWood" : "DeliveringWood";
         entity.WaitingReason = null;
-        _retryScheduler.Clear(entity.Id);
+        ClearWaitingState(entity.Id);
         return ToTravelResult(_activeTrips[entity.Id]);
     }
 
@@ -398,7 +408,7 @@ public sealed class WoodHaulingService
     private WoodHaulingResult FailTrip(EntityRecord entity, ActiveTrip trip, string reason, long simulationTick)
     {
         entity.Actions.Cancel();
-        var waiting = Wait(entity, reason, simulationTick);
+        var waiting = Wait(entity, reason, simulationTick, waitingForDelivery: trip.Stage == TripStage.ToStockpile);
         return waiting with
         {
             Source = trip.Source,
@@ -407,12 +417,23 @@ public sealed class WoodHaulingService
         };
     }
 
-    private WoodHaulingResult Wait(EntityRecord entity, string reason, long simulationTick)
+    private WoodHaulingResult Wait(
+        EntityRecord entity,
+        string reason,
+        long simulationTick,
+        bool waitingForDelivery)
     {
         entity.Activity = "Waiting";
         entity.WaitingReason = reason;
         _retryScheduler.ScheduleRetry(entity.Id, simulationTick);
+        _waitingForDelivery[entity.Id] = waitingForDelivery;
         return new WoodHaulingResult(WoodHaulingStatus.Waiting, WaitingReason: reason);
+    }
+
+    private void ClearWaitingState(string entityId)
+    {
+        _retryScheduler.Clear(entityId);
+        _waitingForDelivery.Remove(entityId);
     }
 
     private static WoodHaulingResult ToTravelResult(ActiveTrip trip)
