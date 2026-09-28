@@ -80,10 +80,12 @@ public sealed class WanderService
                 entity.WaitingReason = null;
                 if (outcome == NavigationOutcome.Arrived)
                 {
+                    ReleaseWander(entity.Id);
                     entity.Actions.Complete();
                     return new WanderResult(WanderStatus.Arrived, activeWander.ActionId, activeWander.Goal);
                 }
 
+                ReleaseWander(entity.Id);
                 entity.Actions.Cancel();
                 return new WanderResult(WanderStatus.ActionRejected, activeWander.ActionId, activeWander.Goal);
             }
@@ -163,6 +165,11 @@ public sealed class WanderService
         {
             activeWander.Navigator.Cancel(activeWander.NavigationRequestId);
         }
+    }
+
+    private void ReleaseWander(string entityId)
+    {
+        _activeWanders.Remove(entityId);
     }
 
     private bool OwnsEntity(EntityRecord entity)

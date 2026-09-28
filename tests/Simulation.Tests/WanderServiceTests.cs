@@ -78,6 +78,9 @@ public sealed class WanderServiceTests
         Assert.Null(creature.Actions.Current);
         Assert.Equal("Idle", creature.Activity);
         Assert.Equal(NavigationOutcome.Unreachable, navigator.Poll(requestId, 0));
+
+        var restarted = service.Advance(creature, species, [new Vector3(2, 0, 0)]);
+        Assert.Equal(WanderStatus.Traveling, restarted.Status);
     }
 
     [Fact]
