@@ -311,38 +311,52 @@ public sealed class FoodConsumptionServiceTests
         Assert.Equal(1, scenario.Source.Contents.Counts[ItemIds.Food]);
     }
 
-    [Fact]
-    public void FinalFoodUnitCannotBeClaimedOrConsumedByTwoHungryEntities()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void FinalFoodUnitCannotBeClaimedOrConsumedByTwoHungryEntities(bool reverseClaimOrder)
     {
-        var scenario = CreateScenario(amount: 1);
-        var competitor = CreateHungryEntity(scenario.World);
-        var competitorNavigator = new FakeNavigationAdapter();
-        var competitorService = new FoodConsumptionService(
-            scenario.World,
-            _ => competitorNavigator);
-        var initialFood = scenario.Service.FoodUnitsRemaining;
+        var world = new World();
+        var first = CreateHungryEntity(world);
+        var second = CreateHungryEntity(world);
+        var source = AddSource(world, "last-food", Vector3.UnitX, amount: 1);
+        var navigators = new Dictionary<string, FakeNavigationAdapter>(StringComparer.Ordinal)
+        {
+            [first.Id] = new FakeNavigationAdapter(),
+            [second.Id] = new FakeNavigationAdapter()
+        };
+        var service = new FoodConsumptionService(world, entity => navigators[entity.Id]);
+        var species = GetHumanSpecies();
+        var claimants = reverseClaimOrder ? new[] { second, first } : new[] { first, second };
+        var winner = claimants[0];
+        var waitingClaimant = claimants[1];
+        var initialFood = service.FoodUnitsRemaining;
 
         Assert.Equal(
             FoodConsumptionStatus.Traveling,
-            scenario.Service.Advance(scenario.Entity, scenario.Species, simulationTick: 0).Status);
-        var waiting = competitorService.Advance(competitor, scenario.Species, simulationTick: 0);
+            service.Advance(winner, species, simulationTick: 0).Status);
+        var waiting = service.Advance(waitingClaimant, species, simulationTick: 0);
         Assert.Equal(FoodConsumptionStatus.Waiting, waiting.Status);
-        Assert.Equal(initialFood, scenario.Service.FoodUnitsRemaining + scenario.Service.FoodUnitsConsumed);
+        Assert.Equal("No available food.", waiting.WaitingReason);
+        Assert.Equal("Waiting", waitingClaimant.Activity);
+        Assert.Null(waitingClaimant.Actions.Current);
+        Assert.Equal(initialFood, service.FoodUnitsRemaining + service.FoodUnitsConsumed);
 
-        scenario.Navigator.CompleteAsArrived(scenario.Navigator.Requests.Keys.Single());
-        scenario.World.TrySetEntityPosition(scenario.Entity.Id, scenario.Source.Position);
-        var ate = scenario.Service.Advance(scenario.Entity, scenario.Species, simulationTick: 1);
+        Assert.True(navigators[winner.Id].CompleteAsArrived(navigators[winner.Id].Requests.Keys.Single()));
+        Assert.True(world.TrySetEntityPosition(winner.Id, source.Position));
+        var ate = service.Advance(winner, species, simulationTick: 1);
 
         Assert.Equal(FoodConsumptionStatus.Ate, ate.Status);
-        Assert.Equal(0, scenario.Source.Contents.Counts.GetValueOrDefault(ItemIds.Food));
-        Assert.Equal(1, scenario.Service.FoodUnitsConsumed);
-        Assert.Equal(20, competitor.Satiety);
+        Assert.Equal(0, source.Contents.Counts.GetValueOrDefault(ItemIds.Food));
+        Assert.Equal(1, service.FoodUnitsConsumed);
+        Assert.Equal(20, waitingClaimant.Satiety);
         Assert.Equal(FoodConsumptionStatus.RetryDeferred,
-            competitorService.Advance(competitor, scenario.Species, simulationTick: 9).Status);
-        Assert.Equal(FoodConsumptionStatus.Waiting,
-            competitorService.Advance(competitor, scenario.Species, simulationTick: 10).Status);
-        Assert.Equal(1, scenario.Service.FoodUnitsConsumed);
-        Assert.Equal(initialFood, scenario.Service.FoodUnitsRemaining + scenario.Service.FoodUnitsConsumed);
+            service.Advance(waitingClaimant, species, simulationTick: 9).Status);
+        var retried = service.Advance(waitingClaimant, species, simulationTick: 10);
+        Assert.Equal(FoodConsumptionStatus.Waiting, retried.Status);
+        Assert.Equal("No available food.", retried.WaitingReason);
+        Assert.Equal(1, service.FoodUnitsConsumed);
+        Assert.Equal(initialFood, service.FoodUnitsRemaining + service.FoodUnitsConsumed);
     }
 
     [Fact]

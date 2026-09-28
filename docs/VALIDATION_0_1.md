@@ -29,30 +29,30 @@ The scenarios covered:
 
 Resource counts and entity needs remained unchanged on failed or deferred attempts. A full Godot 600-second milestone run is not recorded here; that broader scenario also requires the hauling and save/load issues to be complete.
 
-## H02c: Food contention and consumption accounting
+## F03b3: Final-unit food contention and resource accounting
 
 **Date:** 2026-09-28  
-**Branch:** `copilot/h02c-verify-food-contention`
+**Branch:** `43-f03b3-verify-final-unit-food-contention-and-resource-accounting`
 
 ### Command
 
-```bash
-dotnet restore UnnamedProject2026.slnx
-dotnet build UnnamedProject2026.slnx --configuration Release --no-restore
-dotnet test tests/Simulation.Tests/Simulation.Tests.csproj \
-  --configuration Release --no-build \
-  --filter "FullyQualifiedName~FoodSelectionServiceTests|FullyQualifiedName~FoodConsumptionServiceTests"
+```powershell
+dotnet test tests\Simulation.Tests\Simulation.Tests.csproj `
+  --configuration Release --no-restore `
+  --filter "FullyQualifiedName~FoodSelectionServiceTests|FullyQualifiedName~FoodConsumptionServiceTests" `
+  /p:UseSharedCompilation=false
 ```
 
 ### Result
 
-The focused run passed **26 tests**, with 0 failures and 0 skips.
+The focused run passed **29 tests**, with 0 failures and 0 skips.
 
 The scenarios covered:
 
-- two hungry entities competing for the final food unit leave exactly one successful consumption;
+- both claimant orders for two hungry entities competing for the final food unit leave exactly one successful consumption;
+- the failed claimant exposes `No available food.`, has no active action, honors the bounded retry delay, and remains recoverable;
 - unreachable, depleted, and removed targets recover through alternate selection or bounded waiting;
 - no-food retries stay deferred for the documented delay and recover after replenishment;
-- consumed-food counters reconcile with remaining world food after successful contention and multi-source consumption.
+- consumed-food counters reconcile with remaining world food after successful contention and multi-source consumption. The final-unit runs each ended with 0 food remaining, 1 food consumed, and the invariant `initial = remaining + consumed` satisfied.
 
-The sandbox used for this run did not provide a Godot executable, so the issue's live blocked-food, no-food, and target-removal scenarios remain to be recorded on a machine with the pinned Godot 4.7.2 .NET editor.
+This is deterministic domain-level evidence. It does not replace the full Godot 600-second milestone run or prove simultaneous multithreaded execution; the Milestone 0.1 simulation advances entities sequentially on one fixed tick loop.
