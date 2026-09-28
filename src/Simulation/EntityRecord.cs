@@ -36,8 +36,10 @@ public sealed class EntityRecord
 
     /// <summary>
     /// Atomically adds carried units of a known item to this entity's inventory. Carried
-    /// inventory has no capacity limit yet; bounded haul capacity is deferred to the hauling
-    /// job that defines it per species (see docs/DECISIONS.md).
+    /// inventory has no bounded capacity limit yet (bounded haul capacity is deferred to the
+    /// hauling job that defines it per species; see docs/DECISIONS.md), but an addition that
+    /// would overflow the representable <see cref="int"/> count is rejected as
+    /// <see cref="ResourceMutationResult.CapacityExceeded"/> rather than wrapping.
     /// </summary>
     internal ResourceMutationResult TryAddCarried(string? itemId, int amount)
     {
@@ -53,6 +55,11 @@ public sealed class EntityRecord
 
         var knownItemId = itemId!;
         _inventory.TryGetValue(knownItemId, out var current);
+        if (amount > int.MaxValue - current)
+        {
+            return ResourceMutationResult.CapacityExceeded;
+        }
+
         _inventory[knownItemId] = current + amount;
         return ResourceMutationResult.Success;
     }

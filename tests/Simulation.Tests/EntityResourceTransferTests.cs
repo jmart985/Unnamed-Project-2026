@@ -133,6 +133,27 @@ public sealed class EntityResourceTransferTests
         Assert.Equal(0, groundPile.Counts.GetValueOrDefault(ItemIds.Wood));
     }
 
+    [Fact]
+    public void PickUpRejectsAnAdditionThatWouldOverflowCarriedInventoryWithoutMutatingEitherSide()
+    {
+        var entity = CreateEntity();
+        var filledSource = new ResourceContainer("ground-pile-full", int.MaxValue);
+        filledSource.TryAdd(ItemIds.Wood, int.MaxValue);
+        Assert.Equal(
+            ResourceMutationResult.Success,
+            ResourceTransferService.TryPickUp(filledSource, entity, ItemIds.Wood, int.MaxValue));
+        Assert.Equal(int.MaxValue, entity.Inventory[ItemIds.Wood]);
+
+        var overflowSource = new ResourceContainer("ground-pile-extra", 5);
+        overflowSource.TryAdd(ItemIds.Wood, 1);
+
+        var result = ResourceTransferService.TryPickUp(overflowSource, entity, ItemIds.Wood, 1);
+
+        Assert.Equal(ResourceMutationResult.CapacityExceeded, result);
+        Assert.Equal(1, overflowSource.Counts[ItemIds.Wood]);
+        Assert.Equal(int.MaxValue, entity.Inventory[ItemIds.Wood]);
+    }
+
     private static EntityRecord CreateEntity()
     {
         var world = new World();
