@@ -121,7 +121,8 @@ public sealed class WoodHaulingService
             return new WoodHaulingResult(WoodHaulingStatus.NoWork);
         }
 
-        if (entity.InventoryContainer.RemainingCapacity <= 0)
+        var remainingCapacity = RemainingCargoCapacity(entity);
+        if (remainingCapacity <= 0)
         {
             return Wait(entity, "No inventory capacity available for wood.");
         }
@@ -148,7 +149,7 @@ public sealed class WoodHaulingService
                 var maximumAmount = Math.Min(
                     _world.Reservations.GetAvailableResourceQuantity(source.Contents, ItemIds.Wood),
                     Math.Min(
-                        entity.InventoryContainer.RemainingCapacity,
+                        remainingCapacity,
                         _world.Reservations.GetAvailableCapacity(stockpile.Contents)));
                 if (maximumAmount <= 0)
                 {
@@ -279,9 +280,9 @@ public sealed class WoodHaulingService
 
         if (trip.Stage == TripStage.ToSource)
         {
-            var transfer = ResourceTransferService.TryTransfer(
+            var transfer = ResourceTransferService.TryPickUp(
                 trip.Source!.Contents,
-                entity.InventoryContainer,
+                entity,
                 ItemIds.Wood,
                 trip.Amount);
             if (transfer != ResourceMutationResult.Success)
@@ -303,8 +304,8 @@ public sealed class WoodHaulingService
             });
         }
 
-        var deposit = ResourceTransferService.TryTransfer(
-            entity.InventoryContainer,
+        var deposit = ResourceTransferService.TryDeliver(
+            entity,
             trip.Stockpile.Contents,
             ItemIds.Wood,
             trip.Amount);
@@ -442,6 +443,12 @@ public sealed class WoodHaulingService
         var y = (double)first.Y - second.Y;
         var z = (double)first.Z - second.Z;
         return x * x + y * y + z * z;
+    }
+
+    private static int RemainingCargoCapacity(EntityRecord entity)
+    {
+        var carriedUnits = entity.Inventory.Values.Sum();
+        return Math.Max(0, entity.InventoryCapacity - carriedUnits);
     }
 
     private enum TripStage
