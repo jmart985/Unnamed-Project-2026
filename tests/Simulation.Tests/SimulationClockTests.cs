@@ -39,6 +39,26 @@ public sealed class SimulationClockTests
     }
 
     [Fact]
+    public void SupportedFrameRangeProducesEquivalentTicksRegardlessOfChunking()
+    {
+        var oneLargeFrame = new SimulationClock();
+        var manySmallFrames = new SimulationClock();
+        var unevenChunks = new SimulationClock();
+
+        var largeFrameTicks = oneLargeFrame.Advance(0.8);
+        var smallFrameTicks = Enumerable.Range(0, 8).Sum(_ => manySmallFrames.Advance(0.1));
+        var unevenChunkTicks = unevenChunks.Advance(0.35)
+            + unevenChunks.Advance(0.25)
+            + unevenChunks.Advance(0.2);
+
+        Assert.Equal(SimulationClock.MaximumTicksPerAdvance, largeFrameTicks);
+        Assert.Equal(largeFrameTicks, smallFrameTicks);
+        Assert.Equal(largeFrameTicks, unevenChunkTicks);
+        Assert.Equal(oneLargeFrame.SimulationTime, manySmallFrames.SimulationTime, precision: 6);
+        Assert.Equal(oneLargeFrame.SimulationTime, unevenChunks.SimulationTime, precision: 6);
+    }
+
+    [Fact]
     public void PauseFreezesTimeAndDoesNotCatchUp()
     {
         var clock = new SimulationClock();
