@@ -60,14 +60,20 @@ public sealed class NeedsState
     public bool IsStarving => Satiety <= 0;
     public double NutritionPerUnit => _tuning.NutritionPerUnit;
 
-    public void Advance(double simulationSeconds)
+    public void Advance(double simulationSeconds, double? drainPerSecondOverride = null)
     {
         if (!double.IsFinite(simulationSeconds) || simulationSeconds < 0)
         {
             throw new ArgumentOutOfRangeException(nameof(simulationSeconds), "Simulation time must be finite and nonnegative.");
         }
 
-        Satiety = Math.Clamp(Satiety - _tuning.DrainPerSecond * simulationSeconds, 0, 100);
+        var drainPerSecond = drainPerSecondOverride ?? _tuning.DrainPerSecond;
+        if (!double.IsFinite(drainPerSecond) || drainPerSecond < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(drainPerSecondOverride), "Drain must be finite and nonnegative.");
+        }
+
+        Satiety = Math.Clamp(Satiety - drainPerSecond * simulationSeconds, 0, 100);
     }
 
     public void AddNutrition(double nutrition)

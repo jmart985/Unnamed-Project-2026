@@ -27,6 +27,20 @@ public sealed class WorldTests
     }
 
     [Fact]
+    public void SpawnCreatesDistinctCreatureRecordsWithStableIds()
+    {
+        var world = new World();
+
+        var creatures = Enumerable.Range(0, 3)
+            .Select(index => world.SpawnEntity("creature", new Vector3(index, 0, 0)))
+            .ToArray();
+
+        Assert.Equal(new[] { "entity-000001", "entity-000002", "entity-000003" },
+            creatures.Select(entity => entity.Id));
+        Assert.All(creatures, entity => Assert.Equal("creature", entity.SpeciesId));
+    }
+
+    [Fact]
     public void LookupReturnsTheWorldOwnedRecordAndMissingIdsAreControlled()
     {
         var world = new World();
@@ -86,6 +100,15 @@ public sealed class WorldTests
         Assert.Empty(world.Entities);
 
         Assert.Equal("entity-000001", world.SpawnEntity("human", Vector3.Zero).Id);
+    }
+
+    [Fact]
+    public void EntityInventoryUsesTheWorldConfiguredCapacity()
+    {
+        var world = new World(inventoryCapacity: 3);
+
+        Assert.Equal(3, world.SpawnEntity("human", Vector3.Zero).InventoryCapacity);
+        Assert.Throws<ArgumentOutOfRangeException>(() => new World(inventoryCapacity: -1));
     }
 
     [Fact]
