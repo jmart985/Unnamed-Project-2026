@@ -76,13 +76,16 @@ public sealed class WanderService
                     return new WanderResult(WanderStatus.Traveling, activeWander.ActionId, activeWander.Goal);
                 }
 
-                CancelWander(entity.Id);
-                entity.Actions.Complete();
                 entity.Activity = "Idle";
                 entity.WaitingReason = null;
-                return outcome == NavigationOutcome.Arrived
-                    ? new WanderResult(WanderStatus.Arrived, activeWander.ActionId, activeWander.Goal)
-                    : new WanderResult(WanderStatus.ActionRejected, activeWander.ActionId, activeWander.Goal);
+                if (outcome == NavigationOutcome.Arrived)
+                {
+                    entity.Actions.Complete();
+                    return new WanderResult(WanderStatus.Arrived, activeWander.ActionId, activeWander.Goal);
+                }
+
+                entity.Actions.Cancel();
+                return new WanderResult(WanderStatus.ActionRejected, activeWander.ActionId, activeWander.Goal);
             }
         }
 

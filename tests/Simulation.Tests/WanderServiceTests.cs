@@ -56,6 +56,31 @@ public sealed class WanderServiceTests
     }
 
     [Fact]
+    public void FailedWanderCancelsTheActionInsteadOfCompletingIt()
+    {
+        var world = new World();
+        var creature = world.SpawnEntity("creature", Vector3.Zero);
+        var navigator = new FakeNavigationAdapter();
+        var service = new WanderService(world, _ => navigator);
+        var species = LoadSpecies(
+            """[{"id":"creature","movementSpeed":2,"hungerRate":0.2,"diet":["food"],"canHaul":false}]""",
+            "creature");
+
+        var started = service.Advance(creature, species, [new Vector3(2, 0, 0)]);
+        var requestId = navigator.Requests.Keys.Single();
+
+        Assert.Equal(WanderStatus.Traveling, started.Status);
+        Assert.True(navigator.MarkUnreachable(requestId));
+
+        var failed = service.Advance(creature, species, [new Vector3(2, 0, 0)]);
+
+        Assert.Equal(WanderStatus.ActionRejected, failed.Status);
+        Assert.Null(creature.Actions.Current);
+        Assert.Equal("Idle", creature.Activity);
+        Assert.Equal(NavigationOutcome.Unreachable, navigator.Poll(requestId, 0));
+    }
+
+    [Fact]
     public void SpeciesHungerRateDrivesSatietyLossWithoutSpeciesSpecificLogic()
     {
         var catalog = LoadCatalog(
