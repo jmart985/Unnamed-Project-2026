@@ -18,6 +18,7 @@ public partial class Main : Node3D
     private readonly Dictionary<string, Button> _entityButtons = new(StringComparer.Ordinal);
     private readonly List<MeshInstance3D> _resourceMarkers = [];
     private FoodConsumptionService _foodConsumption = null!;
+    private WanderingService _wandering = null!;
     private WoodHaulingService _woodHauling = null!;
     private WanderService _wander = null!;
     private long _simulationTick;
@@ -45,6 +46,14 @@ public partial class Main : Node3D
         _speciesCatalog = SpeciesCatalog.LoadFromFile(
             Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
         _foodConsumption = new FoodConsumptionService(_world, GetNavigationAdapter);
+        _wandering = new WanderingService(
+            _world,
+            GetNavigationAdapter,
+            [
+                new System.Numerics.Vector3(-5, 0, -3),
+                new System.Numerics.Vector3(4, 0, 3),
+                new System.Numerics.Vector3(7, 0, -5)
+            ]);
         _woodHauling = new WoodHaulingService(_world, GetNavigationAdapter);
         _wander = new WanderService(_world, GetNavigationAdapter);
         _pauseButton.Pressed += TogglePause;
@@ -107,6 +116,7 @@ public partial class Main : Node3D
     {
         _clock.Reset();
         _foodConsumption.Reset();
+        _wandering.Reset();
         _woodHauling.Reset();
         _wander.Reset();
         _simulationTick = 0;
@@ -158,7 +168,7 @@ public partial class Main : Node3D
 
         for (var index = 0; index < 3; index++)
         {
-            var entity = _world.SpawnEntity("creature", new System.Numerics.Vector3(-6 + (index * 2), 0, 5));
+            var entity = _world.SpawnEntity("creature", new System.Numerics.Vector3(index - 1, 0, 4));
             AddEntityView(entity);
         }
 
@@ -274,6 +284,9 @@ public partial class Main : Node3D
     {
         foreach (var entity in _world.Entities)
         {
+            _wandering.Advance(
+                entity,
+                _speciesCatalog.GetRequired(entity.SpeciesId));
             var species = _speciesCatalog.GetRequired(entity.SpeciesId);
             if (species.CanHaul)
             {
