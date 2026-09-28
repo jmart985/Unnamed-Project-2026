@@ -10,6 +10,7 @@ public partial class Main : Node3D
     private readonly Dictionary<string, EntityView> _entityViews = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Button> _entityButtons = new(StringComparer.Ordinal);
     private FoodConsumptionService _foodConsumption = null!;
+    private WanderingService _wandering = null!;
     private long _simulationTick;
     private SpeciesCatalog _speciesCatalog = null!;
     private MeshInstance3D _map = null!;
@@ -35,6 +36,14 @@ public partial class Main : Node3D
         _speciesCatalog = SpeciesCatalog.LoadFromFile(
             Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
         _foodConsumption = new FoodConsumptionService(_world, GetNavigationAdapter);
+        _wandering = new WanderingService(
+            _world,
+            GetNavigationAdapter,
+            [
+                new System.Numerics.Vector3(-5, 0, -3),
+                new System.Numerics.Vector3(4, 0, 3),
+                new System.Numerics.Vector3(7, 0, -5)
+            ]);
         _pauseButton.Pressed += TogglePause;
         GetNode<Button>("Controls/Panel/Margin/VBox/OneX").Pressed += () => _clock.SetSpeed(SimulationSpeed.OneX);
         GetNode<Button>("Controls/Panel/Margin/VBox/FourX").Pressed += () => _clock.SetSpeed(SimulationSpeed.FourX);
@@ -95,6 +104,7 @@ public partial class Main : Node3D
     {
         _clock.Reset();
         _foodConsumption.Reset();
+        _wandering.Reset();
         _simulationTick = 0;
         _world.Reset();
         ClearEntityViews();
@@ -121,6 +131,12 @@ public partial class Main : Node3D
         for (var index = 0; index < 10; index++)
         {
             var entity = _world.SpawnEntity("human", new System.Numerics.Vector3(index - 4.5f, 0, 0));
+            AddEntityView(entity);
+        }
+
+        for (var index = 0; index < 3; index++)
+        {
+            var entity = _world.SpawnEntity("creature", new System.Numerics.Vector3(index - 1, 0, 4));
             AddEntityView(entity);
         }
 
@@ -189,6 +205,7 @@ public partial class Main : Node3D
         AdvanceNeeds(tickSeconds);
         AdvanceNavigationTick(tickSeconds);
         AdvanceFoodConsumption();
+        AdvanceWandering();
     }
 
     private void AdvanceNavigationTick(double tickSeconds)
@@ -215,6 +232,16 @@ public partial class Main : Node3D
                 entity,
                 _speciesCatalog.GetRequired(entity.SpeciesId),
                 _simulationTick);
+        }
+    }
+
+    private void AdvanceWandering()
+    {
+        foreach (var entity in _world.Entities)
+        {
+            _wandering.Advance(
+                entity,
+                _speciesCatalog.GetRequired(entity.SpeciesId));
         }
     }
 
