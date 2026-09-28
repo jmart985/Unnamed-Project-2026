@@ -65,4 +65,97 @@ public sealed class WorldSnapshotTests
 
         Assert.Throws<InvalidDataException>(() => WorldSnapshotSerializer.Deserialize(json));
     }
+
+    [Fact]
+    public void LoadAppliesValidSnapshotAfterCompleteValidation()
+    {
+        var sourceWorld = new World();
+        var contents = new ResourceContainer("food-pile", 10);
+        contents.TryAdd(ItemIds.Food, 4);
+        sourceWorld.AddFoodSource("food-pile", new Vector3(3, 0, 2), contents);
+        var sourceEntity = sourceWorld.SpawnEntity("creature", new Vector3(1, 0, -2), 42);
+        var json = WorldSnapshotSerializer.Serialize(sourceWorld, 8.5);
+
+        var targetWorld = new World();
+        targetWorld.SpawnEntity("human", Vector3.Zero, 90);
+
+        var simulationTime = WorldSnapshotSerializer.Load(
+            targetWorld,
+            json,
+            GetSpeciesCatalog());
+
+        Assert.Equal(8.5, simulationTime);
+        var restored = Assert.Single(targetWorld.Entities);
+        Assert.Equal(sourceEntity.Id, restored.Id);
+        Assert.Equal("creature", restored.SpeciesId);
+        Assert.Equal(new Vector3(1, 0, -2), restored.Position);
+        Assert.Equal(42, restored.Satiety);
+        Assert.Equal(4, targetWorld.FoodSources.Single().Contents.Counts[ItemIds.Food]);
+        Assert.Equal("entity-000002", targetWorld.SpawnEntity("human", Vector3.One).Id);
+    }
+
+    [Fact]
+    public void InvalidSnapshotLeavesExistingWorldUnchanged()
+    {
+        var world = CreatePopulatedWorld();
+        var originalEntity = Assert.Single(world.Entities);
+        var originalPosition = originalEntity.Position;
+        var originalSatiety = originalEntity.Satiety;
+        var originalFood = world.FoodSources.Single().Contents.Counts[ItemIds.Food];
+        var validJson = WorldSnapshotSerializer.Serialize(world, 3);
+
+        var invalidSnapshots = new[]
+        {
+            "{",
+            validJson.Replace("\"SchemaVersion\": 1", "\"SchemaVersion\": 99", StringComparison.Ordinal),
+            validJson.Replace("\"SpeciesId\": \"human\"", "\"SpeciesId\": \"unknown\"", StringComparison.Ordinal),
+            validJson.Replace("\"food\": 3", "\"food\": -1", StringComparison.Ordinal)
+        };
+
+        foreach (var invalidJson in invalidSnapshots)
+        {
+            Assert.Throws<InvalidDataException>(() => WorldSnapshotSerializer.Load(
+                world,
+                invalidJson,
+                GetSpeciesCatalog()));
+
+            Assert.Equal(originalPosition, originalEntity.Position);
+            Assert.Equal(originalSatiety, originalEntity.Satiety);
+            Assert.Equal(originalFood, world.FoodSources.Single().Contents.Counts[ItemIds.Food]);
+            Assert.Same(originalEntity, Assert.Single(world.Entities));
+        }
+    }
+
+    [Fact]
+    public void DuplicateEntityIdsAreRejectedBeforeWorldMutation()
+    {
+        var world = CreatePopulatedWorld();
+        world.SpawnEntity("creature", Vector3.One, 45);
+        var sourceSnapshot = WorldSnapshotSerializer.Serialize(world, 3);
+        var duplicateId = sourceSnapshot.Replace(
+            "\"Id\": \"entity-000002\"",
+            "\"Id\": \"entity-000001\"",
+            StringComparison.Ordinal);
+
+        Assert.Throws<InvalidDataException>(() => WorldSnapshotSerializer.Load(
+            world,
+            duplicateId,
+            GetSpeciesCatalog()));
+        Assert.Equal(2, world.Entities.Count);
+    }
+
+    private static World CreatePopulatedWorld()
+    {
+        var world = new World();
+        var contents = new ResourceContainer("food-pile", 10);
+        contents.TryAdd(ItemIds.Food, 3);
+        world.AddFoodSource("food-pile", Vector3.UnitX, contents);
+        world.SpawnEntity("human", Vector3.Zero, 55);
+        return world;
+    }
+
+    private static SpeciesCatalog GetSpeciesCatalog()
+    {
+        return SpeciesCatalog.LoadFromFile(Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
+    }
 }
