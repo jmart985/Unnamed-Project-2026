@@ -206,7 +206,8 @@ public partial class Main : Node3D
         {
             _woodHauling.Advance(
                 entity,
-                _speciesCatalog.GetRequired(entity.SpeciesId));
+                _speciesCatalog.GetRequired(entity.SpeciesId),
+                _simulationTick);
         }
     }
 
