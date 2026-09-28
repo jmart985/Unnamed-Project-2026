@@ -160,6 +160,31 @@ public sealed class WoodHaulingServiceTests
     }
 
     [Fact]
+    public void HungryHaulerKeepsFoodWaitingStateInsteadOfStartingWoodWork()
+    {
+        var world = new World();
+        var entity = world.SpawnEntity("human", Vector3.Zero, satiety: 20);
+        var source = AddLocation(world.AddResourcePile, "wood-pile", Vector3.UnitX, capacity: 2, wood: 2);
+        var stockpile = AddLocation(world.AddStockpile, "stockpile", new Vector3(2, 0, 0), capacity: 2);
+        var foodService = new FoodConsumptionService(world, _ => new FakeNavigationAdapter());
+        var hauling = new WoodHaulingService(world, _ => new FakeNavigationAdapter());
+        var species = GetSpecies("human");
+
+        var hungryWaiting = foodService.Advance(entity, species, simulationTick: 0);
+        var haulingResult = hauling.Advance(entity, species);
+
+        Assert.Equal(FoodConsumptionStatus.Waiting, hungryWaiting.Status);
+        Assert.Equal("No available food.", hungryWaiting.WaitingReason);
+        Assert.Equal(WoodHaulingStatus.NeedsFood, haulingResult.Status);
+        Assert.Equal("No available food.", haulingResult.WaitingReason);
+        Assert.Equal("Waiting", entity.Activity);
+        Assert.Equal("No available food.", entity.WaitingReason);
+        Assert.Null(entity.Actions.Current);
+        Assert.Equal(2, source.Contents.Counts[ItemIds.Wood]);
+        Assert.Empty(stockpile.Contents.Counts);
+    }
+
+    [Fact]
     public void FailedPickupLeavesBothContainersUnchangedAndReleasesClaims()
     {
         var world = new World(inventoryCapacity: 2);

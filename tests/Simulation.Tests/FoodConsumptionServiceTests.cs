@@ -385,8 +385,11 @@ public sealed class FoodConsumptionServiceTests
         var world = new World(new NeedsTuning(initialSatiety: 0, hungryThreshold: 60));
         var entity = world.SpawnEntity("human", Vector3.Zero, satiety: 0);
         var source = AddSource(world, "food", Vector3.UnitX, amount: 2);
+        AddLocation(world.AddResourcePile, "wood-pile", new Vector3(2, 0, 0), capacity: 2, wood: 2);
+        AddLocation(world.AddStockpile, "stockpile", new Vector3(3, 0, 0), capacity: 2);
         var navigator = new FakeNavigationAdapter();
         var service = new FoodConsumptionService(world, _ => navigator);
+        var hauling = new WoodHaulingService(world, _ => new FakeNavigationAdapter());
         var species = GetHumanSpecies();
 
         Assert.Equal(FoodConsumptionStatus.Traveling,
@@ -397,10 +400,13 @@ public sealed class FoodConsumptionServiceTests
 
         var ate = service.Advance(entity, species, simulationTick: 1);
         Assert.Equal("Hungry", entity.Activity);
+        var haulingWhileHungry = hauling.Advance(entity, species);
         var reevaluated = service.Advance(entity, species, simulationTick: 2);
 
         Assert.Equal(FoodConsumptionStatus.Ate, ate.Status);
         Assert.True(ate.IsHungryAfterEating);
+        Assert.Equal(WoodHaulingStatus.NeedsFood, haulingWhileHungry.Status);
+        Assert.Null(entity.WaitingReason);
         Assert.Equal(FoodConsumptionStatus.Traveling, reevaluated.Status);
         Assert.Equal("SeekingFood", entity.Activity);
         Assert.Equal(ActionKind.Eat, entity.Actions.Current?.Kind);
@@ -474,6 +480,22 @@ public sealed class FoodConsumptionServiceTests
         }
 
         return world.AddFoodSource(id, position, contents);
+    }
+
+    private static ResourceLocation AddLocation(
+        Func<string, Vector3, ResourceContainer, ResourceLocation> addLocation,
+        string id,
+        Vector3 position,
+        int capacity,
+        int wood = 0)
+    {
+        var contents = new ResourceContainer(id, capacity);
+        if (wood > 0)
+        {
+            Assert.Equal(ResourceMutationResult.Success, contents.TryAdd(ItemIds.Wood, wood));
+        }
+
+        return addLocation(id, position, contents);
     }
 
     private static SpeciesDefinition GetHumanSpecies()
