@@ -320,12 +320,14 @@ public sealed class FoodConsumptionServiceTests
         var competitorService = new FoodConsumptionService(
             scenario.World,
             _ => competitorNavigator);
+        var initialFood = scenario.Service.FoodUnitsRemaining;
 
         Assert.Equal(
             FoodConsumptionStatus.Traveling,
             scenario.Service.Advance(scenario.Entity, scenario.Species, simulationTick: 0).Status);
         var waiting = competitorService.Advance(competitor, scenario.Species, simulationTick: 0);
         Assert.Equal(FoodConsumptionStatus.Waiting, waiting.Status);
+        Assert.Equal(initialFood, scenario.Service.FoodUnitsRemaining + scenario.Service.FoodUnitsConsumed);
 
         scenario.Navigator.CompleteAsArrived(scenario.Navigator.Requests.Keys.Single());
         scenario.World.TrySetEntityPosition(scenario.Entity.Id, scenario.Source.Position);
@@ -340,6 +342,7 @@ public sealed class FoodConsumptionServiceTests
         Assert.Equal(FoodConsumptionStatus.Waiting,
             competitorService.Advance(competitor, scenario.Species, simulationTick: 10).Status);
         Assert.Equal(1, scenario.Service.FoodUnitsConsumed);
+        Assert.Equal(initialFood, scenario.Service.FoodUnitsRemaining + scenario.Service.FoodUnitsConsumed);
     }
 
     [Fact]
