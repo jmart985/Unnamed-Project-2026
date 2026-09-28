@@ -54,7 +54,7 @@ public sealed record FoodSelectionResult(
     string? WaitingReason = null,
     string? ItemId = null);
 
-public sealed class FoodSelectionService
+public sealed class FoodSelectionService : ITransientSimulationState
 {
     public const int DefaultRetryDelayTicks = 10;
 

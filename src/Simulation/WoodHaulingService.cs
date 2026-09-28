@@ -25,7 +25,7 @@ public sealed record WoodHaulingResult(
     int Amount = 0,
     string? WaitingReason = null);
 
-public sealed class WoodHaulingService
+public sealed class WoodHaulingService : ITransientSimulationState
 {
     private const double NavigationTimeoutSeconds = 30;
     private const double ArrivalTolerance = 0.1;

@@ -9,7 +9,9 @@ public sealed record WorldSnapshot(
     double SimulationTime,
     long LastAllocatedEntityId,
     IReadOnlyList<EntitySnapshot> Entities,
-    IReadOnlyList<FoodSourceSnapshot> FoodSources);
+    IReadOnlyList<FoodSourceSnapshot> FoodSources,
+    IReadOnlyList<ResourceLocationSnapshot> ResourcePiles,
+    IReadOnlyList<ResourceLocationSnapshot> Stockpiles);
 
 public sealed record EntitySnapshot(
     string Id,
@@ -23,6 +25,16 @@ public sealed record FoodSourceSnapshot(
     Vector3 Position,
     ResourceContainerSnapshot Contents);
 
+public sealed record ResourceLocationSnapshot(
+    string Id,
+    Vector3 Position,
+    ResourceContainerSnapshot Contents);
+
+public interface ITransientSimulationState
+{
+    void Reset();
+}
+
 public sealed record ResourceContainerSnapshot(
     string Name,
     int Capacity,
@@ -30,7 +42,7 @@ public sealed record ResourceContainerSnapshot(
 
 public static class WorldSnapshotSerializer
 {
-    public const int CurrentSchemaVersion = 1;
+    public const int CurrentSchemaVersion = 2;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -62,13 +74,17 @@ public static class WorldSnapshotSerializer
                 source.Position,
                 CaptureContainer(source.Contents)))
             .ToArray();
+        var resourcePiles = world.ResourcePiles.Select(CaptureLocation).ToArray();
+        var stockpiles = world.Stockpiles.Select(CaptureLocation).ToArray();
 
         return new WorldSnapshot(
             CurrentSchemaVersion,
             simulationTime,
             world.LastAllocatedEntityId,
             entities,
-            foodSources);
+            foodSources,
+            resourcePiles,
+            stockpiles);
     }
 
     public static string Serialize(World world, double simulationTime)
@@ -106,13 +122,24 @@ public static class WorldSnapshotSerializer
     public static double Load(
         World target,
         string json,
-        SpeciesCatalog speciesCatalog)
+        SpeciesCatalog speciesCatalog,
+        params ITransientSimulationState[] transientState)
     {
         ArgumentNullException.ThrowIfNull(target);
         ArgumentNullException.ThrowIfNull(speciesCatalog);
 
         var snapshot = Deserialize(json);
         Validate(snapshot, target, speciesCatalog);
+
+        foreach (var state in transientState)
+        {
+            ArgumentNullException.ThrowIfNull(state);
+        }
+
+        foreach (var state in transientState)
+        {
+            state.Reset();
+        }
 
         target.ApplySnapshot(snapshot);
         return snapshot.SimulationTime;
@@ -133,7 +160,8 @@ public static class WorldSnapshotSerializer
             throw new InvalidDataException("Snapshot last allocated entity ID cannot be negative.");
         }
 
-        if (snapshot.Entities is null || snapshot.FoodSources is null)
+        if (snapshot.Entities is null || snapshot.FoodSources is null
+            || snapshot.ResourcePiles is null || snapshot.Stockpiles is null)
         {
             throw new InvalidDataException("Snapshot entity and food source lists are required.");
         }
@@ -190,6 +218,27 @@ public static class WorldSnapshotSerializer
 
             ValidatePosition(source.Position, $"food source '{source.Id}' position");
             ValidateContainer(source.Contents, source.Id);
+        }
+
+        ValidateLocations(snapshot.ResourcePiles, "resource pile", foodSourceIds);
+        ValidateLocations(snapshot.Stockpiles, "stockpile", foodSourceIds);
+    }
+
+    private static void ValidateLocations(
+        IReadOnlyList<ResourceLocationSnapshot> locations,
+        string kind,
+        HashSet<string> targetIds)
+    {
+        foreach (var location in locations)
+        {
+            if (location is null || string.IsNullOrWhiteSpace(location.Id)
+                || !targetIds.Add(location.Id))
+            {
+                throw new InvalidDataException($"Snapshot contains an invalid or duplicate {kind} ID.");
+            }
+
+            ValidatePosition(location.Position, $"{kind} '{location.Id}' position");
+            ValidateContainer(location.Contents, location.Id);
         }
     }
 
@@ -284,4 +333,7 @@ public static class WorldSnapshotSerializer
             container.Capacity,
             new Dictionary<string, int>(container.Counts, StringComparer.Ordinal));
     }
+
+    private static ResourceLocationSnapshot CaptureLocation(ResourceLocation location) =>
+        new(location.Id, location.Position, CaptureContainer(location.Contents));
 }
