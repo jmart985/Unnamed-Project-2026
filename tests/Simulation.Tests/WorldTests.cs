@@ -27,6 +27,20 @@ public sealed class WorldTests
     }
 
     [Fact]
+    public void SpawnCreatesDistinctCreatureRecordsWithStableIds()
+    {
+        var world = new World();
+
+        var creatures = Enumerable.Range(0, 3)
+            .Select(index => world.SpawnEntity("creature", new Vector3(index, 0, 0)))
+            .ToArray();
+
+        Assert.Equal(new[] { "entity-000001", "entity-000002", "entity-000003" },
+            creatures.Select(entity => entity.Id));
+        Assert.All(creatures, entity => Assert.Equal("creature", entity.SpeciesId));
+    }
+
+    [Fact]
     public void LookupReturnsTheWorldOwnedRecordAndMissingIdsAreControlled()
     {
         var world = new World();
