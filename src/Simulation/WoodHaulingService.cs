@@ -6,6 +6,7 @@ namespace Simulation;
 public enum WoodHaulingStatus
 {
     NotHauler,
+    NeedsFood,
     TravelingToSource,
     TravelingToStockpile,
     Delivered,
@@ -62,6 +63,11 @@ public sealed class WoodHaulingService
         if (!species.CanHaul)
         {
             return new WoodHaulingResult(WoodHaulingStatus.NotHauler);
+        }
+
+        if (entity.Needs.IsHungry)
+        {
+            return new WoodHaulingResult(WoodHaulingStatus.NeedsFood, WaitingReason: entity.WaitingReason);
         }
 
         if (_activeTrips.TryGetValue(entity.Id, out var trip))
