@@ -82,6 +82,43 @@ public sealed class FoodSelectionServiceTests
     }
 
     [Fact]
+    public void SkipsIncompatibleSourcesAndReservesACompatibleDietItem()
+    {
+        var world = new World();
+        var entity = SpawnHungryEntity(world, "wood-eater");
+        var species = LoadSpecies(
+            """[{"id":"wood-eater","movementSpeed":1,"hungerRate":0.2,"diet":["wood"],"canHaul":false}]""",
+            "wood-eater");
+        var incompatible = CreateFoodSource("berries", Vector3.UnitX, (ItemIds.Food, 1));
+        var compatible = CreateFoodSource("logpile", new Vector3(2, 0, 0), (ItemIds.Wood, 1));
+        var service = new FoodSelectionService(world);
+
+        var result = service.TrySelect(
+            entity,
+            species,
+            [incompatible, compatible],
+            simulationTick: 0);
+
+        Assert.Equal(FoodSelectionStatus.Selected, result.Status);
+        Assert.Same(compatible, result.Source);
+        Assert.Equal(ItemIds.Wood, result.ItemId);
+
+        var competitor = SpawnHungryEntity(world, "wood-eater");
+        Assert.Equal(
+            ActionStartResult.Started,
+            competitor.Actions.TryStart(new ActionCandidate("competitor-eat", ActionKind.Eat)));
+        Assert.Equal(
+            ReservationResult.InsufficientQuantity,
+            world.Reservations.TryReserveResource(
+                competitor.Id,
+                "competitor-eat",
+                compatible.Id,
+                compatible.Contents,
+                ItemIds.Wood,
+                1));
+    }
+
+    [Fact]
     public void UnreachableCandidateReleasesItsReservationAndSelectsAnother()
     {
         var world = new World();
@@ -302,9 +339,9 @@ public sealed class FoodSelectionServiceTests
         Assert.Null(entity.Actions.Current);
     }
 
-    private static EntityRecord SpawnHungryEntity(World world)
+    private static EntityRecord SpawnHungryEntity(World world, string speciesId = "human")
     {
-        var entity = world.SpawnEntity("human", Vector3.Zero);
+        var entity = world.SpawnEntity(speciesId, Vector3.Zero);
         entity.Needs.Advance(150);
         Assert.True(entity.Needs.IsHungry);
         return entity;
@@ -312,10 +349,20 @@ public sealed class FoodSelectionServiceTests
 
     private static FoodSource CreateFoodSource(string id, Vector3 position, int amount)
     {
+        return CreateFoodSource(id, position, (ItemIds.Food, amount));
+    }
+
+    private static FoodSource CreateFoodSource(string id, Vector3 position, params (string ItemId, int Amount)[] contentsByItem)
+    {
         var contents = new ResourceContainer(id, 10);
-        if (amount > 0)
+        foreach (var (itemId, amount) in contentsByItem)
         {
-            Assert.Equal(ResourceMutationResult.Success, contents.TryAdd(ItemIds.Food, amount));
+            if (amount <= 0)
+            {
+                continue;
+            }
+
+            Assert.Equal(ResourceMutationResult.Success, contents.TryAdd(itemId, amount));
         }
 
         return new FoodSource(id, position, contents);

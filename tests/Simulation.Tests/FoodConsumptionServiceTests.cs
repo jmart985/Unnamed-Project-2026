@@ -85,6 +85,31 @@ public sealed class FoodConsumptionServiceTests
     }
 
     [Fact]
+    public void ConsumesTheReservedCompatibleDietItemFromAFoodSource()
+    {
+        var world = new World();
+        var entity = world.SpawnEntity("wood-eater", Vector3.Zero, satiety: 20);
+        var species = LoadSpecies(
+            """[{"id":"wood-eater","movementSpeed":1,"hungerRate":0.2,"diet":["wood"],"canHaul":false}]""",
+            "wood-eater");
+        var source = AddSource(world, "logpile", Vector3.UnitX, (ItemIds.Wood, 2));
+        var navigator = new FakeNavigationAdapter();
+        var service = new FoodConsumptionService(world, _ => navigator);
+
+        var started = service.Advance(entity, species, simulationTick: 0);
+
+        Assert.Equal(FoodConsumptionStatus.Traveling, started.Status);
+        navigator.CompleteAsArrived(navigator.Requests.Keys.Single());
+        world.TrySetEntityPosition(entity.Id, source.Position);
+
+        var ate = service.Advance(entity, species, simulationTick: 1);
+
+        Assert.Equal(FoodConsumptionStatus.Ate, ate.Status);
+        Assert.Equal(1, source.Contents.Counts[ItemIds.Wood]);
+        Assert.Equal(70, entity.Satiety);
+    }
+
+    [Fact]
     public void UnreachableOnlySourceWaitsAndRetriesAfterBoundedDelay()
     {
         var scenario = CreateScenario(amount: 1);
@@ -473,10 +498,27 @@ public sealed class FoodConsumptionServiceTests
 
     private static FoodSource AddSource(World world, string id, Vector3 position, int amount)
     {
-        var contents = new ResourceContainer(id, Math.Max(amount, 1));
-        if (amount > 0)
+        return AddSource(world, id, position, (ItemIds.Food, amount));
+    }
+
+    private static FoodSource AddSource(
+        World world,
+        string id,
+        Vector3 position,
+        params (string ItemId, int Amount)[] contentsByItem)
+    {
+        var capacity = Math.Max(
+            contentsByItem.Where(entry => entry.Amount > 0).Sum(entry => entry.Amount),
+            1);
+        var contents = new ResourceContainer(id, capacity);
+        foreach (var (itemId, amount) in contentsByItem)
         {
-            Assert.Equal(ResourceMutationResult.Success, contents.TryAdd(ItemIds.Food, amount));
+            if (amount <= 0)
+            {
+                continue;
+            }
+
+            Assert.Equal(ResourceMutationResult.Success, contents.TryAdd(itemId, amount));
         }
 
         return world.AddFoodSource(id, position, contents);
@@ -503,6 +545,12 @@ public sealed class FoodConsumptionServiceTests
         return SpeciesCatalog.LoadFromFile(
             Path.Combine(AppContext.BaseDirectory, "data", "species.json"))
             .GetRequired("human");
+    }
+
+    private static SpeciesDefinition LoadSpecies(string json, string speciesId)
+    {
+        using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
+        return SpeciesCatalog.Load(stream).GetRequired(speciesId);
     }
 
     private sealed record Scenario(
