@@ -73,6 +73,22 @@ public sealed class SimulationClockTests
     }
 
     [Fact]
+    public void PausePreservesPrePausePartialTickButExcludesPausedWallTime()
+    {
+        var clock = new SimulationClock();
+
+        Assert.Equal(0, clock.Advance(0.05));
+
+        clock.SetPaused(true);
+        Assert.Equal(0, clock.Advance(10));
+
+        clock.SetPaused(false);
+
+        Assert.Equal(1, clock.Advance(0.05));
+        Assert.Equal(0.1, clock.SimulationTime, precision: 6);
+    }
+
+    [Fact]
     public void EachTickInvokesDomainUpdateCallback()
     {
         var clock = new SimulationClock();
@@ -138,5 +154,29 @@ public sealed class SimulationClockTests
 
         Assert.Equal(SimulationClock.MaximumTicksPerAdvance, ticks);
         Assert.Equal(0.8, clock.SimulationTime, precision: 6);
+    }
+
+    [Fact]
+    public void OverflowBeyondTheCatchUpCapIsDiscarded()
+    {
+        var clock = new SimulationClock();
+
+        Assert.Equal(SimulationClock.MaximumTicksPerAdvance, clock.Advance(1.0));
+
+        var nextFrameTicks = clock.Advance(0.1);
+
+        Assert.Equal(1, nextFrameTicks);
+        Assert.Equal(0.9, clock.SimulationTime, precision: 6);
+    }
+
+    [Fact]
+    public void UnsupportedSpeedsAreRejected()
+    {
+        var clock = new SimulationClock();
+
+        var error = Assert.Throws<ArgumentOutOfRangeException>(() => clock.SetSpeed((SimulationSpeed)2));
+
+        Assert.Equal("speed", error.ParamName);
+        Assert.Equal(SimulationSpeed.OneX, clock.Speed);
     }
 }
