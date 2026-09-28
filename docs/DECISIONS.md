@@ -101,6 +101,14 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: World owns food-source lifetimes; cancelling an eat action cancels its navigation request and releases its reservation. The Godot tick synchronizes movement before processing food outcomes.
 - Revisit: When eating duration, partial nutrition, or persisted in-progress actions become part of a later issue.
 
+## D013 — Bounded entity inventory
+
+- Date: 2026-09-27
+- Status: Provisional; implemented for J02a
+- Decision: Store entity inventory in a World-created `ResourceContainer` with a configurable World capacity and a default of 10 item units.
+- Reason: Hauling needs the same atomic quantity and capacity checks as ground sources and stockpiles.
+- Consequence: All entities use the same initial capacity; inventory counts remain read-only to callers and transfers use the domain resource-transfer service.
+- Revisit: If species-specific carrying capacity is required by a later milestone.
 ## D013 — Generic cargo retention and bounded action retries
 
 - Date: 2026-09-27

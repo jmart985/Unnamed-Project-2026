@@ -14,7 +14,7 @@ The sandbox status reports food units remaining across all sources and food unit
 
 ## Hauling
 
-A human claims a wood transfer from a ground pile to the stockpile, reserves available quantity and destination space, walks to the source, picks up within capacity, walks to storage, and deposits. Carried wood stays in inventory if hunger interrupts the trip; after eating, deposit carried wood before claiming more. Cancellation releases claims and never deletes carried items.
+A human claims a wood transfer from a ground pile to the stockpile, reserves available quantity and destination space, walks to the source, picks up within the World-configured inventory capacity (10 units by default), walks to storage, and deposits. Carried wood stays in inventory if hunger interrupts the trip; after eating, deposit carried wood before claiming more. Cancellation releases claims and never deletes carried items. The sandbox status reports wood remaining on the ground, carried by entities, and stored; their sum should remain equal to the initial 100 units.
 
 ## Failures and recovery
 
