@@ -47,7 +47,7 @@ public sealed class FoodConsumptionService
     public long FoodUnitsConsumed { get; private set; }
 
     public long FoodUnitsRemaining => _world.FoodSources.Sum(source =>
-        source.Contents.Counts.Sum(entry => (long)entry.Value));
+        (long)source.Contents.Counts.GetValueOrDefault(ItemIds.Food));
 
     public FoodConsumptionResult Advance(
         EntityRecord entity,
@@ -178,7 +178,9 @@ public sealed class FoodConsumptionService
         ActiveTravel travel,
         long simulationTick)
     {
-        var nextConsumedCount = checked(FoodUnitsConsumed + 1);
+        var nextConsumedCount = string.Equals(travel.ItemId, ItemIds.Food, StringComparison.Ordinal)
+            ? checked(FoodUnitsConsumed + 1)
+            : FoodUnitsConsumed;
         var removalResult = travel.Source.Contents.TryRemove(travel.ItemId, 1);
         if (removalResult == ResourceMutationResult.InsufficientQuantity)
         {

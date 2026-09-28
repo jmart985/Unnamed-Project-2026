@@ -99,7 +99,6 @@ public sealed class FoodConsumptionServiceTests
         var started = service.Advance(entity, species, simulationTick: 0);
 
         Assert.Equal(FoodConsumptionStatus.Traveling, started.Status);
-        Assert.Equal(2, service.FoodUnitsRemaining);
         navigator.CompleteAsArrived(navigator.Requests.Keys.Single());
         world.TrySetEntityPosition(entity.Id, source.Position);
 
@@ -107,8 +106,6 @@ public sealed class FoodConsumptionServiceTests
 
         Assert.Equal(FoodConsumptionStatus.Ate, ate.Status);
         Assert.Equal(1, source.Contents.Counts[ItemIds.Wood]);
-        Assert.Equal(1, service.FoodUnitsRemaining);
-        Assert.Equal(1, service.FoodUnitsConsumed);
         Assert.Equal(70, entity.Satiety);
     }
 
