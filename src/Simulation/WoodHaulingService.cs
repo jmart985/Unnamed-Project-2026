@@ -34,6 +34,7 @@ public sealed class WoodHaulingService
     private readonly Func<EntityRecord, INavigationAdapter> _navigationForEntity;
     private readonly RetryScheduler _retryScheduler;
     private readonly Dictionary<string, bool> _waitingForDelivery = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, WoodHaulingResult> _waitingContexts = new(StringComparer.Ordinal);
     private readonly Dictionary<string, ActiveTrip> _activeTrips = new(StringComparer.Ordinal);
     private long _nextActionId;
 
@@ -101,9 +102,14 @@ public sealed class WoodHaulingService
             }
             else
             {
-            return new WoodHaulingResult(
-                WoodHaulingStatus.RetryDeferred,
-                WaitingReason: entity.WaitingReason);
+                if (_waitingContexts.TryGetValue(entity.Id, out var waitingContext))
+                {
+                    return waitingContext with { Status = WoodHaulingStatus.RetryDeferred };
+                }
+
+                return new WoodHaulingResult(
+                    WoodHaulingStatus.RetryDeferred,
+                    WaitingReason: entity.WaitingReason);
             }
         }
 
@@ -132,6 +138,7 @@ public sealed class WoodHaulingService
         _nextActionId = 0;
         _retryScheduler.Reset();
         _waitingForDelivery.Clear();
+        _waitingContexts.Clear();
     }
 
     private WoodHaulingResult BeginPickup(EntityRecord entity, long simulationTick)
@@ -409,12 +416,14 @@ public sealed class WoodHaulingService
     {
         entity.Actions.Cancel();
         var waiting = Wait(entity, reason, simulationTick, waitingForDelivery: trip.Stage == TripStage.ToStockpile);
-        return waiting with
+        var withContext = waiting with
         {
             Source = trip.Source,
             Stockpile = trip.Stockpile,
             Amount = trip.Amount
         };
+        _waitingContexts[entity.Id] = withContext;
+        return withContext;
     }
 
     private WoodHaulingResult Wait(
@@ -427,13 +436,16 @@ public sealed class WoodHaulingService
         entity.WaitingReason = reason;
         _retryScheduler.ScheduleRetry(entity.Id, simulationTick);
         _waitingForDelivery[entity.Id] = waitingForDelivery;
-        return new WoodHaulingResult(WoodHaulingStatus.Waiting, WaitingReason: reason);
+        var waiting = new WoodHaulingResult(WoodHaulingStatus.Waiting, WaitingReason: reason);
+        _waitingContexts[entity.Id] = waiting;
+        return waiting;
     }
 
     private void ClearWaitingState(string entityId)
     {
         _retryScheduler.Clear(entityId);
         _waitingForDelivery.Remove(entityId);
+        _waitingContexts.Remove(entityId);
     }
 
     private static WoodHaulingResult ToTravelResult(ActiveTrip trip)
