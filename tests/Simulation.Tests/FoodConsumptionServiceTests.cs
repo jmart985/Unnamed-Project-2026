@@ -428,7 +428,7 @@ public sealed class FoodConsumptionServiceTests
 
         var ate = service.Advance(entity, species, simulationTick: 1);
         Assert.Equal("Hungry", entity.Activity);
-        var haulingWhileHungry = hauling.Advance(entity, species);
+        var haulingWhileHungry = hauling.Advance(entity, species, simulationTick: 1);
         var reevaluated = service.Advance(entity, species, simulationTick: 2);
 
         Assert.Equal(FoodConsumptionStatus.Ate, ate.Status);

@@ -171,7 +171,7 @@ public sealed class WoodHaulingServiceTests
         var species = GetSpecies("human");
 
         var hungryWaiting = foodService.Advance(entity, species, simulationTick: 0);
-        var haulingResult = hauling.Advance(entity, species);
+        var haulingResult = hauling.Advance(entity, species, simulationTick: 0);
 
         Assert.Equal(FoodConsumptionStatus.Waiting, hungryWaiting.Status);
         Assert.Equal("No available food.", hungryWaiting.WaitingReason);
