@@ -213,6 +213,58 @@ public sealed class World
         Reservations.Reset();
     }
 
+    internal void ApplySnapshot(WorldSnapshot snapshot)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+
+        Reset();
+        foreach (var entity in snapshot.Entities)
+        {
+            var restored = SpawnEntityWithId(
+                entity.Id,
+                entity.SpeciesId,
+                entity.Position,
+                entity.Satiety);
+            foreach (var item in entity.Inventory)
+            {
+                restored.TryAddCarried(item.Key, item.Value);
+            }
+        }
+
+        foreach (var source in snapshot.FoodSources)
+        {
+            var contents = new ResourceContainer(
+                source.Contents.Name,
+                source.Contents.Capacity);
+            foreach (var item in source.Contents.Counts)
+            {
+                contents.AddKnown(item.Key, item.Value);
+            }
+
+            AddFoodSource(source.Id, source.Position, contents);
+        }
+
+        _lastEntityId = snapshot.LastAllocatedEntityId;
+    }
+
+    private EntityRecord SpawnEntityWithId(
+        string id,
+        string speciesId,
+        Vector3 position,
+        double satiety)
+    {
+        var entity = new EntityRecord(
+            id,
+            speciesId,
+            position,
+            satiety,
+            InventoryCapacity,
+            NeedsTuning,
+            Reservations);
+        _entities.Add(id, entity);
+        return entity;
+    }
+
     private void AddTargetId(string id, string parameterName)
     {
         if (!_targetIds.Add(id))

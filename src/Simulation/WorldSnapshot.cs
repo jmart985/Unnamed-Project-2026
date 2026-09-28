@@ -83,8 +83,17 @@ public static class WorldSnapshotSerializer
             throw new ArgumentException("Snapshot JSON is required.", nameof(json));
         }
 
-        var snapshot = JsonSerializer.Deserialize<WorldSnapshot>(json, JsonOptions)
-            ?? throw new InvalidDataException("Snapshot JSON did not contain a snapshot.");
+        WorldSnapshot snapshot;
+        try
+        {
+            snapshot = JsonSerializer.Deserialize<WorldSnapshot>(json, JsonOptions)
+                ?? throw new InvalidDataException("Snapshot JSON did not contain a snapshot.");
+        }
+        catch (JsonException exception)
+        {
+            throw new InvalidDataException("Snapshot JSON is malformed.", exception);
+        }
+
         if (snapshot.SchemaVersion != CurrentSchemaVersion)
         {
             throw new InvalidDataException(
@@ -92,6 +101,180 @@ public static class WorldSnapshotSerializer
         }
 
         return snapshot;
+    }
+
+    public static double Load(
+        World target,
+        string json,
+        SpeciesCatalog speciesCatalog)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(speciesCatalog);
+
+        var snapshot = Deserialize(json);
+        Validate(snapshot, target, speciesCatalog);
+
+        target.ApplySnapshot(snapshot);
+        return snapshot.SimulationTime;
+    }
+
+    private static void Validate(
+        WorldSnapshot snapshot,
+        World target,
+        SpeciesCatalog speciesCatalog)
+    {
+        if (!double.IsFinite(snapshot.SimulationTime) || snapshot.SimulationTime < 0)
+        {
+            throw new InvalidDataException("Snapshot simulation time must be finite and nonnegative.");
+        }
+
+        if (snapshot.LastAllocatedEntityId < 0)
+        {
+            throw new InvalidDataException("Snapshot last allocated entity ID cannot be negative.");
+        }
+
+        if (snapshot.Entities is null || snapshot.FoodSources is null)
+        {
+            throw new InvalidDataException("Snapshot entity and food source lists are required.");
+        }
+
+        var entityIds = new HashSet<string>(StringComparer.Ordinal);
+        var highestEntityId = 0L;
+        foreach (var entity in snapshot.Entities)
+        {
+            if (entity is null || string.IsNullOrWhiteSpace(entity.Id))
+            {
+                throw new InvalidDataException("Snapshot entities must have IDs.");
+            }
+
+            if (!entityIds.Add(entity.Id))
+            {
+                throw new InvalidDataException($"Snapshot contains duplicate entity ID '{entity.Id}'.");
+            }
+
+            if (!speciesCatalog.TryGet(entity.SpeciesId, out _))
+            {
+                throw new InvalidDataException(
+                    $"Snapshot entity '{entity.Id}' references unknown species '{entity.SpeciesId}'.");
+            }
+
+            ValidatePosition(entity.Position, $"entity '{entity.Id}' position");
+            if (!double.IsFinite(entity.Satiety) || entity.Satiety is < 0 or > 100)
+            {
+                throw new InvalidDataException(
+                    $"Snapshot entity '{entity.Id}' satiety must be finite and within [0, 100].");
+            }
+
+            ValidateInventory(entity.Inventory, target.InventoryCapacity, entity.Id);
+            highestEntityId = Math.Max(highestEntityId, ParseEntityId(entity.Id));
+        }
+
+        if (snapshot.LastAllocatedEntityId < highestEntityId)
+        {
+            throw new InvalidDataException(
+                "Snapshot last allocated entity ID must include every entity ID.");
+        }
+
+        var foodSourceIds = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var source in snapshot.FoodSources)
+        {
+            if (source is null || string.IsNullOrWhiteSpace(source.Id))
+            {
+                throw new InvalidDataException("Snapshot food sources must have IDs.");
+            }
+
+            if (!foodSourceIds.Add(source.Id))
+            {
+                throw new InvalidDataException($"Snapshot contains duplicate food source ID '{source.Id}'.");
+            }
+
+            ValidatePosition(source.Position, $"food source '{source.Id}' position");
+            ValidateContainer(source.Contents, source.Id);
+        }
+    }
+
+    private static void ValidateInventory(
+        IReadOnlyDictionary<string, int>? inventory,
+        int capacity,
+        string entityId)
+    {
+        if (inventory is null)
+        {
+            throw new InvalidDataException($"Snapshot entity '{entityId}' inventory is required.");
+        }
+
+        var usedCapacity = 0L;
+        foreach (var item in inventory)
+        {
+            ValidateItemCount(item.Key, item.Value, $"entity '{entityId}' inventory");
+            usedCapacity += item.Value;
+        }
+
+        if (usedCapacity > capacity)
+        {
+            throw new InvalidDataException(
+                $"Snapshot entity '{entityId}' inventory exceeds capacity {capacity}.");
+        }
+    }
+
+    private static void ValidateContainer(ResourceContainerSnapshot? container, string sourceId)
+    {
+        if (container is null || string.IsNullOrWhiteSpace(container.Name))
+        {
+            throw new InvalidDataException($"Snapshot food source '{sourceId}' has invalid contents.");
+        }
+
+        if (container.Capacity < 0 || container.Counts is null)
+        {
+            throw new InvalidDataException($"Snapshot food source '{sourceId}' has invalid capacity or counts.");
+        }
+
+        var usedCapacity = 0L;
+        foreach (var item in container.Counts)
+        {
+            ValidateItemCount(item.Key, item.Value, $"food source '{sourceId}'");
+            usedCapacity += item.Value;
+        }
+
+        if (usedCapacity > container.Capacity)
+        {
+            throw new InvalidDataException(
+                $"Snapshot food source '{sourceId}' contents exceed capacity {container.Capacity}.");
+        }
+    }
+
+    private static void ValidateItemCount(string itemId, int count, string owner)
+    {
+        if (!ItemIds.IsKnown(itemId))
+        {
+            throw new InvalidDataException($"Snapshot {owner} references unknown item '{itemId}'.");
+        }
+
+        if (count < 0)
+        {
+            throw new InvalidDataException($"Snapshot {owner} contains a negative count for '{itemId}'.");
+        }
+    }
+
+    private static void ValidatePosition(Vector3 position, string owner)
+    {
+        if (!float.IsFinite(position.X) || !float.IsFinite(position.Y) || !float.IsFinite(position.Z))
+        {
+            throw new InvalidDataException($"Snapshot {owner} must have finite coordinates.");
+        }
+    }
+
+    private static long ParseEntityId(string id)
+    {
+        const string prefix = "entity-";
+        if (!id.StartsWith(prefix, StringComparison.Ordinal)
+            || !long.TryParse(id.AsSpan(prefix.Length), out var number)
+            || number <= 0)
+        {
+            throw new InvalidDataException($"Snapshot entity ID '{id}' is invalid.");
+        }
+
+        return number;
     }
 
     private static ResourceContainerSnapshot CaptureContainer(ResourceContainer container)
