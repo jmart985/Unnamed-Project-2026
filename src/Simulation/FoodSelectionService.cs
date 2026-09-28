@@ -250,14 +250,14 @@ public sealed class FoodSelectionService
 
     private string GetWaitingReason(SelectionAttempt attempt, IReadOnlyCollection<FoodSource> sources)
     {
+        if (!attempt.Species.Eats(ItemIds.Food))
+        {
+            return "No compatible food available.";
+        }
+
         if (sources.Count == 0)
         {
             return "No available food.";
-        }
-
-        if (!sources.Any(source => attempt.Species.Eats(ItemIds.Food)))
-        {
-            return "No compatible food available.";
         }
 
         return attempt.LastFailure == FoodTargetFailure.Unreachable
