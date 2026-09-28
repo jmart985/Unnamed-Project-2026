@@ -209,6 +209,23 @@ public sealed class FoodSelectionServiceTests
     }
 
     [Fact]
+    public void IncompatibleDietWithNoSourcesReportsIncompatibleReasonNotEmptyReason()
+    {
+        var world = new World();
+        var entity = SpawnHungryEntity(world);
+        var service = new FoodSelectionService(world);
+        var woodOnlySpecies = LoadSpecies(
+            """[{"id":"human","movementSpeed":1,"hungerRate":0.2,"diet":["wood"],"canHaul":true}]""",
+            "human");
+
+        var waiting = service.TrySelect(entity, woodOnlySpecies, [], simulationTick: 0);
+
+        Assert.Equal(FoodSelectionStatus.Waiting, waiting.Status);
+        Assert.Equal("Waiting", entity.Activity);
+        Assert.Equal("No compatible food available.", entity.WaitingReason);
+    }
+
+    [Fact]
     public void EmptyFoodSourceRecoversAfterReplenishmentAndRetryDelay()
     {
         var world = new World();

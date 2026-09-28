@@ -52,7 +52,15 @@ public sealed class SimulationClock
 
     public void SetPaused(bool paused) => IsPaused = paused;
 
-    public void SetSpeed(SimulationSpeed speed) => Speed = speed;
+    public void SetSpeed(SimulationSpeed speed)
+    {
+        if (speed is not SimulationSpeed.OneX and not SimulationSpeed.FourX)
+        {
+            throw new ArgumentOutOfRangeException(nameof(speed), "Only 1x and 4x simulation speeds are supported.");
+        }
+
+        Speed = speed;
+    }
 
     public void Reset()
     {

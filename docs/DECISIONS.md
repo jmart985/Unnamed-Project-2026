@@ -92,15 +92,6 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Reservations do not mutate durable inventories; transfer operations remain atomic and separate. Removed target IDs cannot be reused in that World.
 - Revisit: If later job systems require partial reservation transfer or target recreation semantics.
 
-## D011 — Bounded food-selection retries
-
-- Date: 2026-09-27
-- Status: Provisional; implemented for H02a
-- Decision: Retry food selection after 10 simulation ticks (1.0 simulated second) when no compatible, available, or reachable food candidate can be reserved.
-- Reason: Avoid retrying selection every tick while keeping recovery responsive to replenishment or changing reachability.
-- Consequence: The retry interval follows simulation time and therefore pauses with the simulation.
-- Revisit: If scenario measurements show the interval causes excessive waiting or repeated failed navigation.
-
 ## D012 — Arrival-gated food consumption
 
 - Date: 2026-09-27
@@ -118,3 +109,11 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: Hauling needs the same atomic quantity and capacity checks as ground sources and stockpiles.
 - Consequence: All entities use the same initial capacity; inventory counts remain read-only to callers and transfers use the domain resource-transfer service.
 - Revisit: If species-specific carrying capacity is required by a later milestone.
+## D013 — Generic cargo retention and bounded action retries
+
+- Date: 2026-09-27
+- Status: Provisional; implemented for J01c
+- Decision: Extract the bounded-retry delay used by food selection into a reusable `RetryScheduler` (10-tick default, matching D011) that any waiting job keys per entity. Give `EntityRecord` atomic, uncapped carried-inventory mutation, and extend the single inventory-transfer domain service (`ResourceTransferService`) with `TryPickUp`/`TryDeliver` overloads that atomically move items between a `ResourceContainer` and an entity's carried inventory. Give `ActionCandidate` an opt-in `RequiresEmptyCargo` flag so `ActionLifecycle.TryStart` returns `ActionStartResult.CargoPending` instead of starting new pickup-style work while the owning entity still carries items.
+- Reason: Action completion, cancellation, and preemption already never touch `EntityRecord.Inventory`, but nothing previously exercised that guarantee with real carried items, and no job had a documented, reusable way to require delivery before a new pickup or to retry without reselecting every tick. These primitives let J02 (hauling) implement "resume delivery before a new pickup" and bounded waiting without inventing job-specific mechanisms.
+- Consequence: Carried inventory has no capacity limit yet; bounded haul capacity per species is deferred to the hauling job that defines it. Only whole-entity removal discards carried inventory; cancellation, preemption, and reservation release never do.
+- Revisit: When the hauling job (J02) defines per-species haul capacity, or if other job kinds need a different cargo-completion signal than "any carried item."
