@@ -51,7 +51,8 @@ public sealed record FoodSelectionResult(
     FoodSelectionStatus Status,
     FoodSource? Source = null,
     string? ActionId = null,
-    string? WaitingReason = null);
+    string? WaitingReason = null,
+    string? ItemId = null);
 
 public sealed class FoodSelectionService
 {
@@ -114,7 +115,8 @@ public sealed class FoodSelectionService
                 return new FoodSelectionResult(
                     FoodSelectionStatus.Selected,
                     currentAttempt.SelectedSource,
-                    currentAttempt.ActionId);
+                    currentAttempt.ActionId,
+                    ItemId: currentAttempt.SelectedItemId);
             }
             else
             {
@@ -181,6 +183,7 @@ public sealed class FoodSelectionService
         attempt.ExcludedTargetIds.Add(targetId);
         attempt.LastFailure = failure;
         attempt.SelectedSource = null;
+        attempt.SelectedItemId = null;
         return TrySelectCandidate(entity, attempt, candidates, simulationTick);
     }
 
@@ -207,7 +210,6 @@ public sealed class FoodSelectionService
         long simulationTick)
     {
         var compatibleSources = sources
-            .Where(source => attempt.Species.Eats(ItemIds.Food))
             .Where(source => !attempt.ExcludedTargetIds.Contains(source.Id))
             .OrderBy(source => DistanceSquared(entity.Position, source.Position))
             .ThenBy(source => source.Id, StringComparer.Ordinal)
@@ -215,28 +217,22 @@ public sealed class FoodSelectionService
 
         foreach (var source in compatibleSources)
         {
-            if (!source.Contents.TryGetCount(ItemIds.Food, out var count) || count <= 0)
-            {
-                continue;
-            }
-
-            var reservation = _world.Reservations.TryReserveResource(
-                entity.Id,
-                attempt.ActionId,
-                source.Id,
-                source.Contents,
-                ItemIds.Food,
-                1);
-            if (reservation != ReservationResult.Reserved)
+            var selectedItemId = TryReserveCompatibleItem(entity, attempt, source);
+            if (selectedItemId is null)
             {
                 continue;
             }
 
             attempt.SelectedSource = source;
+            attempt.SelectedItemId = selectedItemId;
             entity.Activity = "SeekingFood";
             entity.WaitingReason = null;
             _retryScheduler.Clear(entity.Id);
-            return new FoodSelectionResult(FoodSelectionStatus.Selected, source, attempt.ActionId);
+            return new FoodSelectionResult(
+                FoodSelectionStatus.Selected,
+                source,
+                attempt.ActionId,
+                ItemId: selectedItemId);
         }
 
         entity.Actions.Cancel();
@@ -250,7 +246,17 @@ public sealed class FoodSelectionService
 
     private string GetWaitingReason(SelectionAttempt attempt, IReadOnlyCollection<FoodSource> sources)
     {
-        if (!attempt.Species.Eats(ItemIds.Food))
+        if (attempt.LastFailure == FoodTargetFailure.Unreachable)
+        {
+            return "No reachable food available.";
+        }
+
+        if (attempt.LastFailure is FoodTargetFailure.Depleted or FoodTargetFailure.Removed)
+        {
+            return "No available food.";
+        }
+
+        if (!HasCompatibleFood(attempt.Species, sources))
         {
             return "No compatible food available.";
         }
@@ -260,9 +266,7 @@ public sealed class FoodSelectionService
             return "No available food.";
         }
 
-        return attempt.LastFailure == FoodTargetFailure.Unreachable
-            ? "No reachable food available."
-            : "No available food.";
+        return "No available food.";
     }
 
     private bool OwnsEntity(EntityRecord entity)
@@ -339,6 +343,41 @@ public sealed class FoodSelectionService
         return candidates;
     }
 
+    private string? TryReserveCompatibleItem(
+        EntityRecord entity,
+        SelectionAttempt attempt,
+        FoodSource source)
+    {
+        foreach (var itemId in attempt.Species.Diet)
+        {
+            if (!source.Contents.TryGetCount(itemId, out var count) || count <= 0)
+            {
+                continue;
+            }
+
+            var reservation = _world.Reservations.TryReserveResource(
+                entity.Id,
+                attempt.ActionId,
+                source.Id,
+                source.Contents,
+                itemId,
+                1);
+            if (reservation == ReservationResult.Reserved)
+            {
+                return itemId;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool HasCompatibleFood(SpeciesDefinition species, IEnumerable<FoodSource> sources)
+    {
+        return species.Eats(ItemIds.Food)
+            || sources.Any(source => source.Contents.Counts.Any(entry =>
+                entry.Value > 0 && species.Eats(entry.Key)));
+    }
+
     private sealed class SelectionAttempt(
         string actionId,
         SpeciesDefinition species,
@@ -349,6 +388,7 @@ public sealed class FoodSelectionService
         public Action? ActionCleanup { get; } = actionCleanup;
         public HashSet<string> ExcludedTargetIds { get; } = new(StringComparer.Ordinal);
         public FoodSource? SelectedSource { get; set; }
+        public string? SelectedItemId { get; set; }
         public FoodTargetFailure? LastFailure { get; set; }
     }
 }

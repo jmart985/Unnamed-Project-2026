@@ -47,7 +47,7 @@ public sealed class FoodConsumptionService
     public long FoodUnitsConsumed { get; private set; }
 
     public long FoodUnitsRemaining => _world.FoodSources.Sum(source =>
-        (long)source.Contents.Counts.GetValueOrDefault(ItemIds.Food));
+        source.Contents.Counts.Sum(entry => (long)entry.Value));
 
     public FoodConsumptionResult Advance(
         EntityRecord entity,
@@ -179,7 +179,7 @@ public sealed class FoodConsumptionService
         long simulationTick)
     {
         var nextConsumedCount = checked(FoodUnitsConsumed + 1);
-        var removalResult = travel.Source.Contents.TryRemove(ItemIds.Food, 1);
+        var removalResult = travel.Source.Contents.TryRemove(travel.ItemId, 1);
         if (removalResult == ResourceMutationResult.InsufficientQuantity)
         {
             return FailCandidate(
@@ -214,12 +214,12 @@ public sealed class FoodConsumptionService
     {
         if (selection.Status == FoodSelectionStatus.Selected)
         {
-            if (entity is null || selection.Source is null || selection.ActionId is null)
+            if (entity is null || selection.Source is null || selection.ActionId is null || selection.ItemId is null)
             {
                 return new FoodConsumptionResult(FoodConsumptionStatus.InvalidSelection);
             }
 
-            return StartTravel(entity, selection.Source, selection.ActionId);
+            return StartTravel(entity, selection.Source, selection.ActionId, selection.ItemId);
         }
 
         var status = selection.Status switch
@@ -235,7 +235,7 @@ public sealed class FoodConsumptionService
         return new FoodConsumptionResult(status, WaitingReason: selection.WaitingReason);
     }
 
-    private FoodConsumptionResult StartTravel(EntityRecord entity, FoodSource source, string actionId)
+    private FoodConsumptionResult StartTravel(EntityRecord entity, FoodSource source, string actionId, string itemId)
     {
         var request = new NavigationRequest(
             source.Position,
@@ -256,7 +256,7 @@ public sealed class FoodConsumptionService
 
             _activeTravels.Add(
                 entity.Id,
-                new ActiveTravel(source, actionId, navigator, requestId, request.ArrivalTolerance));
+                new ActiveTravel(source, actionId, itemId, navigator, requestId, request.ArrivalTolerance));
             travelStarted = true;
         }
         finally
@@ -309,6 +309,7 @@ public sealed class FoodConsumptionService
     private sealed record ActiveTravel(
         FoodSource Source,
         string ActionId,
+        string ItemId,
         INavigationAdapter Navigator,
         string NavigationRequestId,
         double ArrivalTolerance);
