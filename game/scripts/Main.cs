@@ -169,7 +169,6 @@ public partial class Main : Node3D
         for (var index = 0; index < 3; index++)
         {
             var entity = _world.SpawnEntity("creature", new System.Numerics.Vector3(index - 1, 0, 4));
-            var entity = _world.SpawnEntity("creature", new System.Numerics.Vector3(-6 + (index * 2), 0, 5));
             AddEntityView(entity);
         }
 
