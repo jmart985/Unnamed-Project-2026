@@ -41,9 +41,9 @@ In the sandbox, select `entity-000001` and press `R` to route around the central
 
 ## Save/load boundary
 
-Use a versioned JSON snapshot of durable state: schema version, simulation time, entity IDs/species/positions/satiety/inventories, and world resource containers. Validate into a temporary world before replacing the current world. Unsupported versions or invalid references produce an error without changing the running world.
+Use a versioned JSON snapshot of durable state: schema version, simulation time, entity IDs/species/positions/satiety/inventories, and food, resource-pile, and stockpile containers. Validate the complete snapshot before replacing the current world. Unsupported versions or invalid references produce an error without changing the running world.
 
-Save at a tick boundary while simulation is paused. Persist carried items. Jobs, reservations, paths, and current movement are transient: release/rebuild them after load and re-evaluate actions, depositing carried wood first. The first version promises durable-state continuity, not bit-for-bit replay of paths or random wandering. Write through a temporary file and preserve the previous valid save on failure.
+Save at a tick boundary while simulation is paused. Persist carried items. Jobs, reservations, paths, and current movement are transient: registered simulation services reset only after snapshot validation and re-evaluate actions on the next tick, depositing carried wood first. The first version promises durable-state continuity, not bit-for-bit replay of paths or random wandering. Write through a temporary file and preserve the previous valid save on failure.
 
 ## Tests and observability
 

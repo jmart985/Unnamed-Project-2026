@@ -121,7 +121,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 
 - Date: 2026-09-27
 - Status: Provisional; implemented for S01a
-- Decision: Capture simulation time, the entity ID allocator position, entity durable state, carried inventory, and world food-source containers in a versioned JSON snapshot. Runtime actions, reservations, navigation requests, and engine nodes remain transient.
+- Decision: Capture simulation time, the entity ID allocator position, entity durable state, carried inventory, and food, resource-pile, and stockpile containers in a versioned JSON snapshot. Runtime actions, reservations, navigation requests, and engine nodes remain transient. Snapshot schema version 2 restores every durable resource location, then resets registered transient services before replacing the world so their next tick rebuilds valid work.
 - Reason: Save/load needs a stable, engine-independent boundary that can be validated before a later restore operation replaces the running world.
 - Consequence: Snapshot schema changes require an explicit version update; transient work is rebuilt rather than serialized.
 - Revisit: When S01b adds atomic validation and world restoration.
