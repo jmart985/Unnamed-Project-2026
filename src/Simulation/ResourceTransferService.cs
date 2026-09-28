@@ -76,8 +76,8 @@ public static class ResourceTransferService
         var addResult = entity.TryAddCarried(knownItemId, amount);
         if (addResult != ResourceMutationResult.Success)
         {
-            // Restore the source; carried inventory currently has no capacity ceiling so this
-            // path is unreachable in practice, but keep the transfer atomic if that changes.
+            // Restore the source so the transfer stays atomic (e.g. the entity's carried
+            // count would otherwise overflow int.MaxValue).
             source.AddKnown(knownItemId, amount);
             return addResult;
         }
