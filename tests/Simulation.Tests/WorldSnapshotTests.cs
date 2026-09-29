@@ -144,15 +144,22 @@ public sealed class WorldSnapshotTests
         Assert.Equal(WoodHaulingStatus.TravelingToStockpile, hauling.Advance(entity, species, 1).Status);
         var json = WorldSnapshotSerializer.Serialize(world, 0.2);
 
+        var persisted = WorldSnapshotSerializer.Deserialize(json);
+        Assert.Single(persisted.Stockpiles);
+
         var restoredTime = WorldSnapshotSerializer.Load(world, json, GetSpeciesCatalog(), hauling);
         var restored = Assert.Single(world.Entities);
         Assert.Null(restored.Actions.Current);
         Assert.DoesNotContain(NavigationOutcome.InProgress, navigator.Requests.Values);
         Assert.Equal(0.2, restoredTime);
         Assert.Equal(4, restored.Inventory[ItemIds.Wood]);
+        Assert.Equal(20, world.Stockpiles.Single().Contents.Capacity);
+        Assert.Equal(0, world.Stockpiles.Single().Contents.UsedCapacity);
 
         var resumed = hauling.Advance(restored, species, 2);
-        Assert.Equal(WoodHaulingStatus.TravelingToStockpile, resumed.Status);
+        Assert.True(
+            resumed.Status == WoodHaulingStatus.TravelingToStockpile,
+            $"Expected hauling to resume toward storage, but got {resumed.Status}: {resumed.WaitingReason}");
         Assert.Equal("stockpile", resumed.Stockpile?.Id);
         Assert.Equal(0, world.ResourcePiles.Single().Contents.Counts.GetValueOrDefault(ItemIds.Wood));
 
