@@ -56,3 +56,31 @@ The scenarios covered:
 - consumed-food counters reconcile with remaining world food after successful contention and multi-source consumption. The final-unit runs each ended with 0 food remaining, 1 food consumed, and the invariant `initial = remaining + consumed` satisfied.
 
 This is deterministic domain-level evidence. It does not replace the full Godot 600-second milestone run or prove simultaneous multithreaded execution; the Milestone 0.1 simulation advances entities sequentially on one fixed tick loop.
+
+## F03b2: Full-storage and removed-target haul recovery
+
+**Date:** 2026-09-28  
+**Branch:** `issue-42-haul-recovery-validation`
+
+### Command
+
+```powershell
+dotnet test tests\Simulation.Tests\Simulation.Tests.csproj `
+  --configuration Release --no-restore `
+  --filter "FullyQualifiedName~WoodHaulingServiceTests" `
+  /p:UseSharedCompilation=false
+```
+
+### Result
+
+The focused run passed **12 tests**, with 0 failures and 0 skips.
+
+The focused failure scenarios produced these outcomes:
+
+- A stockpile filled after pickup rejected the deposit with `Wood deposit failed: CapacityExceeded`. The hauler entered the visible `Waiting` activity, retained all 2 carried wood, released the stale capacity reservation, honored the 10-tick retry delay, and delivered after capacity was freed.
+- Removing a source before pickup produced `The wood source was removed.`, released both reservations, preserved the source's 2 wood without creating cargo, and selected the alternate source after the retry delay. The alternate trip ended with 2 wood in storage and all 4 initial wood accounted for across the removed source, removed alternate source, inventory, and storage.
+- Removing a stockpile before pickup produced `The stockpile target was removed.`, released the source reservation, and left the source's 2 wood unchanged. Removing the replacement stockpile after pickup produced the same visible waiting reason while retaining all 2 carried wood. After a new stockpile was added, the hauler resumed delivery and ended with 0 carried wood and 2 stored wood.
+
+Reservation release was checked by immediately acquiring the released resource or capacity with a competing action. Every waiting result was inspectable through both the returned reason and the entity's `Waiting` activity and waiting reason.
+
+These are deterministic domain-level failure scenarios using the simulation's fixed-tick service. They do not replace the full 600-second Godot milestone run or exercise engine-node removal during a rendered frame.
