@@ -144,6 +144,9 @@ public sealed class WorldSnapshotTests
         Assert.Equal(WoodHaulingStatus.TravelingToStockpile, hauling.Advance(entity, species, 1).Status);
         var json = WorldSnapshotSerializer.Serialize(world, 0.2);
 
+        var persisted = WorldSnapshotSerializer.Deserialize(json);
+        Assert.Single(persisted.Stockpiles);
+
         var restoredTime = WorldSnapshotSerializer.Load(world, json, GetSpeciesCatalog(), hauling);
         var restored = Assert.Single(world.Entities);
         Assert.Null(restored.Actions.Current);
