@@ -152,7 +152,9 @@ public sealed class WorldSnapshotTests
         Assert.Equal(4, restored.Inventory[ItemIds.Wood]);
 
         var resumed = hauling.Advance(restored, species, 2);
-        Assert.Equal(WoodHaulingStatus.TravelingToStockpile, resumed.Status);
+        Assert.True(
+            resumed.Status == WoodHaulingStatus.TravelingToStockpile,
+            $"Expected hauling to resume toward storage, but got {resumed.Status}: {resumed.WaitingReason}");
         Assert.Equal("stockpile", resumed.Stockpile?.Id);
         Assert.Equal(0, world.ResourcePiles.Single().Contents.Counts.GetValueOrDefault(ItemIds.Wood));
 
