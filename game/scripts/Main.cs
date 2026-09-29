@@ -187,7 +187,7 @@ public partial class Main : Node3D
     {
         var movementSpeed = (float)_speciesCatalog.GetRequired(entity.SpeciesId).MovementSpeed;
         var view = new EntityView { Name = $"View_{entity.Id}" };
-        view.Bind(entity.Id, movementSpeed);
+        view.Bind(entity.Id, movementSpeed, isCreature: !string.Equals(entity.SpeciesId, "human", StringComparison.Ordinal));
         AddChild(view);
         _entityViews.Add(entity.Id, view);
 
