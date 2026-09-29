@@ -84,3 +84,23 @@ The focused failure scenarios produced these outcomes:
 Reservation release was checked by immediately acquiring the released resource or capacity with a competing action. Every waiting result was inspectable through both the returned reason and the entity's `Waiting` activity and waiting reason.
 
 These are deterministic domain-level failure scenarios using the simulation's fixed-tick service. They do not replace the full 600-second Godot milestone run or exercise engine-node removal during a rendered frame.
+
+
+## F03a: Ten-minute Ant Farm acceptance scenario
+
+**Date:** 2026-09-29  
+**Branch:** issue-37-ant-farm-acceptance
+
+The deterministic acceptance test advanced 6,000 fixed 0.1-second ticks with 10 humans, 3 creatures, 100 food, 100 ground wood, and an empty 100-capacity stockpile. All 13 entities ate at least once; 26 meals left 74 food. Humans delivered all 100 wood to storage, and ground + carried + stored wood remained 100 on every tick. A mid-haul save/load round trip preserved durable state exactly after transient services reset, and carried wood delivered before new pickup work. Pause and 1x/4x clock behavior also passed.
+
+### Reproduction
+
+```powershell
+dotnet test tests\Simulation.Tests\Simulation.Tests.csproj --configuration Release --no-restore /p:UseSharedCompilation=false
+```
+
+Focused acceptance tests: 2 passed. Full suite: 155 passed. Release build: 0 errors with one existing NU1900 vulnerability-feed warning. The automated run uses deterministic immediate-arrival navigation for CI speed; live rendered Godot navigation timing remains a limitation because the Godot executable was unavailable in the validation environment.
+
+## Report summary
+
+The child reports now cover food depletion, final-unit contention, full storage, removed targets, the 600-second acceptance loop, and save/load recovery. Failures are recorded as bounded waiting states with preserved resources and retry delays; no child report identifies a required feature implementation outside Milestone 0.1. Pinned project versions remain Godot 4.7.2 .NET and .NET SDK 10.0.401.
