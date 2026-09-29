@@ -22,7 +22,7 @@ public sealed record FoodConsumptionResult(
     string? WaitingReason = null,
     bool IsHungryAfterEating = false);
 
-public sealed class FoodConsumptionService
+public sealed class FoodConsumptionService : ITransientSimulationState
 {
     private const double NavigationTimeoutSeconds = 30;
 
