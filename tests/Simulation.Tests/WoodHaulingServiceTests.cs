@@ -255,6 +255,8 @@ public sealed class WoodHaulingServiceTests
 
         Assert.Equal(WoodHaulingStatus.Waiting, failed.Status);
         Assert.Contains("Wood deposit failed: CapacityExceeded", failed.WaitingReason);
+        Assert.Equal("Waiting", entity.Activity);
+        Assert.Equal(failed.WaitingReason, entity.WaitingReason);
         Assert.Equal(2, entity.Inventory[ItemIds.Wood]);
         Assert.Equal(2, stockpile.Contents.Counts[ItemIds.Wood]);
         Assert.Empty(source.Contents.Counts);
@@ -322,6 +324,8 @@ public sealed class WoodHaulingServiceTests
 
         Assert.Equal(WoodHaulingStatus.Waiting, removed.Status);
         Assert.Equal("The wood source was removed.", removed.WaitingReason);
+        Assert.Equal("Waiting", entity.Activity);
+        Assert.Equal(removed.WaitingReason, entity.WaitingReason);
         Assert.Empty(entity.Inventory);
         Assert.Equal(2, removedSource.Contents.Counts[ItemIds.Wood]);
         Assert.Null(entity.Actions.Current);
@@ -400,6 +404,8 @@ public sealed class WoodHaulingServiceTests
 
         Assert.Equal(WoodHaulingStatus.Waiting, firstRemoval.Status);
         Assert.Equal("The stockpile target was removed.", firstRemoval.WaitingReason);
+        Assert.Equal("Waiting", entity.Activity);
+        Assert.Equal(firstRemoval.WaitingReason, entity.WaitingReason);
         Assert.Empty(entity.Inventory);
         Assert.Equal(2, source.Contents.Counts[ItemIds.Wood]);
         Assert.Null(entity.Actions.Current);
@@ -435,6 +441,8 @@ public sealed class WoodHaulingServiceTests
 
         Assert.Equal(WoodHaulingStatus.Waiting, secondRemoval.Status);
         Assert.Equal("The stockpile target was removed.", secondRemoval.WaitingReason);
+        Assert.Equal("Waiting", entity.Activity);
+        Assert.Equal(secondRemoval.WaitingReason, entity.WaitingReason);
         Assert.Equal(2, entity.Inventory[ItemIds.Wood]);
         Assert.Empty(source.Contents.Counts);
         Assert.Null(entity.Actions.Current);
