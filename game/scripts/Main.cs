@@ -41,11 +41,11 @@ public partial class Main : Node3D
         _map = GetNode<MeshInstance3D>("Map");
         _obstacle = GetNode<MeshInstance3D>("Obstacle");
         _navigationRegion = GetNode<NavigationRegion3D>("NavigationRegion3D");
-        _statusLabel = GetNode<Label>("Controls/Panel/Margin/VBox/Status");
-        _pauseButton = GetNode<Button>("Controls/Panel/Margin/VBox/Pause");
-        _entityList = GetNode<VBoxContainer>("Controls/Panel/Margin/VBox/EntityList");
-        _inspectorLabel = GetNode<Label>("Controls/Panel/Margin/VBox/Inspector");
-        _removeSelectedButton = GetNode<Button>("Controls/Panel/Margin/VBox/RemoveSelected");
+        _statusLabel = GetNode<Label>("Controls/Panel/Scroll/Margin/VBox/Status");
+        _pauseButton = GetNode<Button>("Controls/Panel/Scroll/Margin/VBox/Pause");
+        _entityList = GetNode<VBoxContainer>("Controls/Panel/Scroll/Margin/VBox/EntityList");
+        _inspectorLabel = GetNode<Label>("Controls/Panel/Scroll/Margin/VBox/Inspector");
+        _removeSelectedButton = GetNode<Button>("Controls/Panel/Scroll/Margin/VBox/RemoveSelected");
         _saveSlotPath = ProjectSettings.GlobalizePath("user://ant-farm-save.json");
         _speciesCatalog = SpeciesCatalog.LoadFromFile(
             Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
@@ -61,11 +61,11 @@ public partial class Main : Node3D
         _woodHauling = new WoodHaulingService(_world, GetNavigationAdapter);
         _wander = new WanderService(_world, GetNavigationAdapter);
         _pauseButton.Pressed += TogglePause;
-        GetNode<Button>("Controls/Panel/Margin/VBox/OneX").Pressed += () => _clock.SetSpeed(SimulationSpeed.OneX);
-        GetNode<Button>("Controls/Panel/Margin/VBox/FourX").Pressed += () => _clock.SetSpeed(SimulationSpeed.FourX);
-        GetNode<Button>("Controls/Panel/Margin/VBox/Reset").Pressed += ResetScenario;
-        GetNode<Button>("Controls/Panel/Margin/VBox/Save").Pressed += SaveScenario;
-        GetNode<Button>("Controls/Panel/Margin/VBox/Load").Pressed += LoadScenario;
+        GetNode<Button>("Controls/Panel/Scroll/Margin/VBox/OneX").Pressed += () => _clock.SetSpeed(SimulationSpeed.OneX);
+        GetNode<Button>("Controls/Panel/Scroll/Margin/VBox/FourX").Pressed += () => _clock.SetSpeed(SimulationSpeed.FourX);
+        GetNode<Button>("Controls/Panel/Scroll/Margin/VBox/Reset").Pressed += ResetScenario;
+        GetNode<Button>("Controls/Panel/Scroll/Margin/VBox/Save").Pressed += SaveScenario;
+        GetNode<Button>("Controls/Panel/Scroll/Margin/VBox/Load").Pressed += LoadScenario;
         _removeSelectedButton.Pressed += RemoveSelectedEntity;
         ResetScenario();
         UpdateStatus();
