@@ -69,4 +69,17 @@ public sealed class SimulationClock
         IsPaused = false;
         Speed = SimulationSpeed.OneX;
     }
+
+    public void Restore(double simulationTime)
+    {
+        if (!double.IsFinite(simulationTime) || simulationTime < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(simulationTime));
+        }
+
+        _accumulator = 0;
+        SimulationTime = simulationTime;
+        IsPaused = true;
+        Speed = SimulationSpeed.OneX;
+    }
 }
