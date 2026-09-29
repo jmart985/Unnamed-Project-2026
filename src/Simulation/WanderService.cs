@@ -19,7 +19,7 @@ public sealed record WanderResult(
     string? ActionId = null,
     Vector3? Goal = null);
 
-public sealed class WanderService
+public sealed class WanderService : ITransientSimulationState
 {
     private readonly World _world;
     private readonly Func<EntityRecord, INavigationAdapter> _navigationForEntity;

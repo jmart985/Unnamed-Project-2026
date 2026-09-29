@@ -146,6 +146,37 @@ public sealed class SimulationClockTests
     }
 
     [Fact]
+    public void RestoreSetsSavedTimeAndStartsPausedWithNoPartialTick()
+    {
+        var clock = new SimulationClock();
+        clock.SetSpeed(SimulationSpeed.FourX);
+        clock.Advance(0.05);
+
+        clock.Restore(123.4);
+
+        Assert.Equal(123.4, clock.SimulationTime, precision: 6);
+        Assert.True(clock.IsPaused);
+        Assert.Equal(SimulationSpeed.OneX, clock.Speed);
+        Assert.Equal(0, clock.Advance(1));
+
+        clock.SetPaused(false);
+        Assert.Equal(0, clock.Advance(0.05));
+        Assert.Equal(1, clock.Advance(0.05));
+        Assert.Equal(123.5, clock.SimulationTime, precision: 6);
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(double.NaN)]
+    [InlineData(double.PositiveInfinity)]
+    public void RestoreRejectsInvalidSimulationTime(double simulationTime)
+    {
+        var clock = new SimulationClock();
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => clock.Restore(simulationTime));
+    }
+
+    [Fact]
     public void ExcessiveFrameDeltaUsesBoundedCatchUp()
     {
         var clock = new SimulationClock();

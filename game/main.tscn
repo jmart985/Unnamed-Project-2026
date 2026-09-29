@@ -51,6 +51,12 @@ text = "4x"
 [node name="Reset" type="Button" parent="Controls/Panel/Margin/VBox"]
 text = "Reset"
 
+[node name="Save" type="Button" parent="Controls/Panel/Margin/VBox"]
+text = "Save"
+
+[node name="Load" type="Button" parent="Controls/Panel/Margin/VBox"]
+text = "Load"
+
 [node name="EntityListHeading" type="Label" parent="Controls/Panel/Margin/VBox"]
 text = "Entities"
 

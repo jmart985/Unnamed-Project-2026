@@ -6,6 +6,7 @@ namespace UnnamedProject2026;
 public partial class Main : Node3D
 {
     private readonly SimulationClock _clock = new();
+    private readonly SaveSlotStore _saveSlotStore = new();
     private readonly World _world = new();
     private static readonly System.Numerics.Vector3[] CreatureWanderGoals =
     [
@@ -31,6 +32,8 @@ public partial class Main : Node3D
     private VBoxContainer _entityList = null!;
     private Label _inspectorLabel = null!;
     private Button _removeSelectedButton = null!;
+    private string _saveLoadStatus = "No save loaded.";
+    private string _saveSlotPath = null!;
     private string? _selectedEntityId;
 
     public override void _Ready()
@@ -43,6 +46,7 @@ public partial class Main : Node3D
         _entityList = GetNode<VBoxContainer>("Controls/Panel/Margin/VBox/EntityList");
         _inspectorLabel = GetNode<Label>("Controls/Panel/Margin/VBox/Inspector");
         _removeSelectedButton = GetNode<Button>("Controls/Panel/Margin/VBox/RemoveSelected");
+        _saveSlotPath = ProjectSettings.GlobalizePath("user://ant-farm-save.json");
         _speciesCatalog = SpeciesCatalog.LoadFromFile(
             Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
         _foodConsumption = new FoodConsumptionService(_world, GetNavigationAdapter);
@@ -60,6 +64,8 @@ public partial class Main : Node3D
         GetNode<Button>("Controls/Panel/Margin/VBox/OneX").Pressed += () => _clock.SetSpeed(SimulationSpeed.OneX);
         GetNode<Button>("Controls/Panel/Margin/VBox/FourX").Pressed += () => _clock.SetSpeed(SimulationSpeed.FourX);
         GetNode<Button>("Controls/Panel/Margin/VBox/Reset").Pressed += ResetScenario;
+        GetNode<Button>("Controls/Panel/Margin/VBox/Save").Pressed += SaveScenario;
+        GetNode<Button>("Controls/Panel/Margin/VBox/Load").Pressed += LoadScenario;
         _removeSelectedButton.Pressed += RemoveSelectedEntity;
         ResetScenario();
         UpdateStatus();
@@ -173,6 +179,7 @@ public partial class Main : Node3D
         }
 
         _selectedEntityId = null;
+        _saveLoadStatus = "Scenario reset; save slot unchanged.";
         UpdateStatus();
     }
 
@@ -364,6 +371,8 @@ public partial class Main : Node3D
             $"Simulation time: {_clock.SimulationTime:0.0}s\nState: {state}\nSpeed: {(int)_clock.Speed}x\n" +
             $"Food: {_foodConsumption.FoodUnitsRemaining} remaining, {_foodConsumption.FoodUnitsConsumed} consumed\n" +
             $"Wood: ground {groundWood}, carried {carriedWood}, stored {storedWood} (total {totalWood})\n" +
+            $"Save/load: {_saveLoadStatus}\n" +
+
             "Select an entity; R route, U unreachable, C cancel, D remove goal";
         _pauseButton.Text = _clock.IsPaused ? "Resume" : "Pause";
         UpdateInspector();
@@ -411,6 +420,80 @@ public partial class Main : Node3D
             $"Waiting reason: {entity.WaitingReason ?? "none"}";
         _removeSelectedButton.Disabled = false;
     }
+
+    private void SaveScenario()
+    {
+        _clock.SetPaused(true);
+        try
+        {
+            _saveSlotStore.Save(
+                _saveSlotPath,
+                () => WorldSnapshotSerializer.Serialize(_world, _clock.SimulationTime));
+            _saveLoadStatus = $"Saved at {_clock.SimulationTime:0.0}s.";
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            _saveLoadStatus = $"Save failed: {exception.Message}";
+        }
+
+        UpdateStatus();
+    }
+
+    private void LoadScenario()
+    {
+        _clock.SetPaused(true);
+        try
+        {
+            var json = _saveSlotStore.Load(_saveSlotPath);
+            var restoredTime = WorldSnapshotSerializer.Load(
+                _world,
+                json,
+                _speciesCatalog,
+                _foodConsumption,
+                _wandering,
+                _woodHauling,
+                _wander);
+            _clock.Restore(restoredTime);
+            _simulationTick = checked((long)Math.Round(
+                restoredTime / SimulationClock.TickIntervalSeconds,
+                MidpointRounding.AwayFromZero));
+            RebuildPresentationFromWorld();
+            _saveLoadStatus = $"Loaded {_clock.SimulationTime:0.0}s; paused for inspection.";
+        }
+        catch (Exception exception) when (exception is IOException or InvalidDataException or UnauthorizedAccessException)
+        {
+            _saveLoadStatus = $"Load failed: {exception.Message}";
+        }
+
+        UpdateStatus();
+    }
+
+    private void RebuildPresentationFromWorld()
+    {
+        ClearEntityViews();
+        ClearResourceMarkers();
+        foreach (var source in _world.FoodSources)
+        {
+            AddResourceMarker($"Food_{source.Id}", source.Position, new Color(0.75f, 0.6f, 0.15f));
+        }
+
+        foreach (var source in _world.ResourcePiles)
+        {
+            AddResourceMarker($"Resource_{source.Id}", source.Position, new Color(0.45f, 0.25f, 0.1f));
+        }
+
+        foreach (var stockpile in _world.Stockpiles)
+        {
+            AddResourceMarker($"Stockpile_{stockpile.Id}", stockpile.Position, new Color(0.2f, 0.45f, 0.25f));
+        }
+
+        foreach (var entity in _world.Entities)
+        {
+            AddEntityView(entity);
+        }
+    }
+
+
 
     private static NavigationMesh CreateNavigationMesh()
     {
