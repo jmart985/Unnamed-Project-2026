@@ -244,7 +244,28 @@ public sealed class World
             AddFoodSource(source.Id, source.Position, contents);
         }
 
+        foreach (var pile in snapshot.ResourcePiles)
+        {
+            AddResourcePile(pile.Id, pile.Position, RestoreContainer(pile.Contents));
+        }
+
+        foreach (var stockpile in snapshot.Stockpiles)
+        {
+            AddStockpile(stockpile.Id, stockpile.Position, RestoreContainer(stockpile.Contents));
+        }
+
         _lastEntityId = snapshot.LastAllocatedEntityId;
+    }
+
+    private static ResourceContainer RestoreContainer(ResourceContainerSnapshot snapshot)
+    {
+        var contents = new ResourceContainer(snapshot.Name, snapshot.Capacity);
+        foreach (var item in snapshot.Counts)
+        {
+            contents.AddKnown(item.Key, item.Value);
+        }
+
+        return contents;
     }
 
     private EntityRecord SpawnEntityWithId(
