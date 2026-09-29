@@ -1,17 +1,18 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/Main.cs" id="1_main"]
+[ext_resource type="PackedScene" path="res://player_character.tscn" id="2_player"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_main")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-
 [node name="Map" type="MeshInstance3D" parent="."]
-
 [node name="Obstacle" type="MeshInstance3D" parent="."]
-
 [node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
+
+[node name="PlayerCharacter" parent="." instance=ExtResource("2_player")]
+position = Vector3(0, 1, 0)
 
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 12, 12)
@@ -21,7 +22,6 @@ current = true
 rotation_degrees = Vector3(-55, -25, 0)
 
 [node name="Controls" type="CanvasLayer" parent="."]
-
 [node name="Panel" type="PanelContainer" parent="Controls"]
 offset_left = 24.0
 offset_top = 24.0
@@ -48,36 +48,25 @@ size_flags_horizontal = 3
 
 [node name="Status" type="Label" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Simulation time: 0.0s\nState: Running\nSpeed: 1x"
-
 [node name="Pause" type="Button" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Pause"
-
 [node name="OneX" type="Button" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "1x"
-
 [node name="FourX" type="Button" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "4x"
-
 [node name="Reset" type="Button" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Reset"
-
 [node name="Save" type="Button" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Save"
-
 [node name="Load" type="Button" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Load"
-
 [node name="EntityListHeading" type="Label" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Entities"
-
 [node name="EntityList" type="VBoxContainer" parent="Controls/Panel/Scroll/Margin/VBox"]
-
 [node name="InspectorHeading" type="Label" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Inspector"
-
 [node name="Inspector" type="Label" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Select an entity to inspect."
-
 [node name="RemoveSelected" type="Button" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Remove selected"
 disabled = true
