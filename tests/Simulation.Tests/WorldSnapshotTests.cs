@@ -150,6 +150,8 @@ public sealed class WorldSnapshotTests
         Assert.DoesNotContain(NavigationOutcome.InProgress, navigator.Requests.Values);
         Assert.Equal(0.2, restoredTime);
         Assert.Equal(4, restored.Inventory[ItemIds.Wood]);
+        Assert.Equal(20, world.Stockpiles.Single().Contents.Capacity);
+        Assert.Equal(0, world.Stockpiles.Single().Contents.UsedCapacity);
 
         var resumed = hauling.Advance(restored, species, 2);
         Assert.True(
