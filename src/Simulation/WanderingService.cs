@@ -19,7 +19,7 @@ public sealed record WanderingResult(
     Vector3? Target = null,
     string? WaitingReason = null);
 
-public sealed class WanderingService
+public sealed class WanderingService : ITransientSimulationState
 {
     private const double NavigationTimeoutSeconds = 30;
     private const double ArrivalTolerance = 0.1;
