@@ -26,48 +26,58 @@ rotation_degrees = Vector3(-55, -25, 0)
 offset_left = 24.0
 offset_top = 24.0
 offset_right = 360.0
-offset_bottom = 620.0
+offset_bottom = -24.0
+grow_vertical = 2
 
-[node name="Margin" type="MarginContainer" parent="Controls/Panel"]
+[node name="Scroll" type="ScrollContainer" parent="Controls/Panel"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 1
+
+[node name="Margin" type="MarginContainer" parent="Controls/Panel/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_constants/margin_left = 12
 theme_override_constants/margin_top = 12
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 12
 
-[node name="VBox" type="VBoxContainer" parent="Controls/Panel/Margin"]
+[node name="VBox" type="VBoxContainer" parent="Controls/Panel/Scroll/Margin"]
+layout_mode = 2
+size_flags_horizontal = 3
 
-[node name="Status" type="Label" parent="Controls/Panel/Margin/VBox"]
+[node name="Status" type="Label" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Simulation time: 0.0s\nState: Running\nSpeed: 1x"
 
-[node name="Pause" type="Button" parent="Controls/Panel/Margin/VBox"]
+[node name="Pause" type="Button" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Pause"
 
-[node name="OneX" type="Button" parent="Controls/Panel/Margin/VBox"]
+[node name="OneX" type="Button" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "1x"
 
-[node name="FourX" type="Button" parent="Controls/Panel/Margin/VBox"]
+[node name="FourX" type="Button" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "4x"
 
-[node name="Reset" type="Button" parent="Controls/Panel/Margin/VBox"]
+[node name="Reset" type="Button" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Reset"
 
-[node name="Save" type="Button" parent="Controls/Panel/Margin/VBox"]
+[node name="Save" type="Button" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Save"
 
-[node name="Load" type="Button" parent="Controls/Panel/Margin/VBox"]
+[node name="Load" type="Button" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Load"
 
-[node name="EntityListHeading" type="Label" parent="Controls/Panel/Margin/VBox"]
+[node name="EntityListHeading" type="Label" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Entities"
 
-[node name="EntityList" type="VBoxContainer" parent="Controls/Panel/Margin/VBox"]
+[node name="EntityList" type="VBoxContainer" parent="Controls/Panel/Scroll/Margin/VBox"]
 
-[node name="InspectorHeading" type="Label" parent="Controls/Panel/Margin/VBox"]
+[node name="InspectorHeading" type="Label" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Inspector"
 
-[node name="Inspector" type="Label" parent="Controls/Panel/Margin/VBox"]
+[node name="Inspector" type="Label" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Select an entity to inspect."
 
-[node name="RemoveSelected" type="Button" parent="Controls/Panel/Margin/VBox"]
+[node name="RemoveSelected" type="Button" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Remove selected"
 disabled = true
