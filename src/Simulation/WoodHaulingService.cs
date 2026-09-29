@@ -157,10 +157,7 @@ public sealed class WoodHaulingService : ITransientSimulationState
 
         if (sourceCandidates.Length == 0)
         {
-            entity.Activity = "Idle";
-            entity.WaitingReason = null;
-            ClearWaitingState(entity.Id);
-            return new WoodHaulingResult(WoodHaulingStatus.NoWork);
+            return Wait(entity, "No wood is available.", simulationTick, waitingForDelivery: false);
         }
 
         var remainingCapacity = RemainingCargoCapacity(entity);
