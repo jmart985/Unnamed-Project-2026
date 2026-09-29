@@ -136,13 +136,12 @@ public static class WorldSnapshotSerializer
             ArgumentNullException.ThrowIfNull(state);
         }
 
-        target.ApplySnapshot(snapshot);
-
         foreach (var state in transientState)
         {
             state.Reset();
         }
 
+        target.ApplySnapshot(snapshot);
         return snapshot.SimulationTime;
     }
 
