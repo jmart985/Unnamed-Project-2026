@@ -471,6 +471,44 @@ public sealed class WoodHaulingServiceTests
     }
 
     [Fact]
+    public void NoWoodWaitsUntilBoundedRetryAndDiscoversNewWork()
+    {
+        var world = new World(inventoryCapacity: 2);
+        var entity = world.SpawnEntity("human", Vector3.Zero);
+        var source = AddLocation(world.AddResourcePile, "wood-pile", Vector3.UnitX, capacity: 5);
+        AddLocation(world.AddStockpile, "stockpile-1", new Vector3(2, 0, 0), capacity: 2);
+        var navigator = new FakeNavigationAdapter();
+        var service = new WoodHaulingService(world, _ => navigator, retryDelayTicks: 10);
+        var species = GetSpecies("human");
+
+        var waiting = service.Advance(entity, species, simulationTick: 0);
+        var deferred = service.Advance(entity, species, simulationTick: 1);
+
+        Assert.Equal(WoodHaulingStatus.Waiting, waiting.Status);
+        Assert.Equal("No wood is available.", waiting.WaitingReason);
+        Assert.Equal("Waiting", entity.Activity);
+        Assert.Equal(waiting.WaitingReason, entity.WaitingReason);
+        Assert.Null(entity.Actions.Current);
+        Assert.Equal(WoodHaulingStatus.RetryDeferred, deferred.Status);
+        Assert.Equal(waiting.WaitingReason, deferred.WaitingReason);
+        Assert.Empty(navigator.Requests);
+
+        Assert.Equal(ResourceMutationResult.Success, source.Contents.TryAdd(ItemIds.Wood, 2));
+        Assert.Equal(
+            WoodHaulingStatus.RetryDeferred,
+            service.Advance(entity, species, simulationTick: 9).Status);
+        Assert.Empty(navigator.Requests);
+
+        var resumed = service.Advance(entity, species, simulationTick: 10);
+
+        Assert.Equal(WoodHaulingStatus.TravelingToSource, resumed.Status);
+        Assert.Same(source, resumed.Source);
+        Assert.Equal("SeekingWood", entity.Activity);
+        Assert.Null(entity.WaitingReason);
+        Assert.Single(navigator.Requests);
+    }
+
+    [Fact]
     public void WaitingDefersRetryUntilConfiguredDelayElapses()
     {
         var world = new World(inventoryCapacity: 2);
