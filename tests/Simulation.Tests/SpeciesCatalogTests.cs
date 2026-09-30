@@ -13,7 +13,7 @@ public sealed class SpeciesCatalogTests
         Assert.Equal(new[] { "human", "creature" }, catalog.Species.Select(species => species.Id));
         Assert.Equal(3.0, catalog.GetRequired("human").MovementSpeed);
         Assert.Equal(0.2, catalog.GetRequired("human").HungerRate);
-        Assert.Equal(new[] { ItemIds.Food }, catalog.GetRequired("human").Diet);
+        Assert.Equal(new[] { ItemIds.Food, ItemIds.Plant, ItemIds.Fruit, ItemIds.Meat }, catalog.GetRequired("human").Diet);
         Assert.True(catalog.GetRequired("human").CanHaul);
         Assert.False(catalog.GetRequired("creature").CanHaul);
         Assert.Equal(new[] { "human", "creature" },
@@ -54,9 +54,9 @@ public sealed class SpeciesCatalogTests
     public void RejectsUnknownDietItemIds()
     {
         var exception = Assert.Throws<InvalidDataException>(() =>
-            Load("""[{"id":"creature","movementSpeed":2,"hungerRate":0.2,"diet":["meat"],"canHaul":false}]"""));
+            Load("""[{"id":"creature","movementSpeed":2,"hungerRate":0.2,"diet":["grain"],"canHaul":false}]"""));
 
-        Assert.Contains("references unknown diet item ID 'meat'", exception.Message);
+        Assert.Contains("references unknown diet item ID 'grain'", exception.Message);
     }
 
     [Fact]

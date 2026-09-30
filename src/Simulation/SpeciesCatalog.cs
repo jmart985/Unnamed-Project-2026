@@ -9,7 +9,8 @@ public sealed class SpeciesCatalog
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
-        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow
+        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
+        Converters = { new JsonStringEnumConverter() }
     };
 
     private readonly Dictionary<string, SpeciesDefinition> _byId;
@@ -88,7 +89,11 @@ public sealed class SpeciesCatalog
             var canHaul = entry.CanHaul
                 ?? throw new InvalidDataException($"Species '{id}' must define canHaul.");
             var bodyCategory = string.IsNullOrWhiteSpace(entry.BodyCategory) ? "unspecified" : entry.BodyCategory.Trim();
-            definitions.Add(new SpeciesDefinition(id, displayName, movementSpeed, hungerRate, diet, canHaul, bodyCategory));
+            var dietaryProfile = entry.DietaryProfile ?? InferDietaryProfile(diet);
+            var maxHealth = ValidateStat(id, entry.MaxHealth ?? 100, nameof(entry.MaxHealth));
+            var strength = ValidateStat(id, entry.Strength ?? 1, nameof(entry.Strength));
+            var endurance = ValidateStat(id, entry.Endurance ?? 1, nameof(entry.Endurance));
+            definitions.Add(new SpeciesDefinition(id, displayName, movementSpeed, hungerRate, diet, canHaul, bodyCategory, dietaryProfile, maxHealth, strength, endurance));
         }
 
         return new SpeciesCatalog(definitions);
@@ -193,6 +198,24 @@ public sealed class SpeciesCatalog
         return diet;
     }
 
+    private static double ValidateStat(string speciesId, double value, string fieldName)
+    {
+        if (!double.IsFinite(value) || value <= 0) throw new InvalidDataException($"Species '{speciesId}' {fieldName} must be finite and greater than zero.");
+        return value;
+    }
+
+    private static DietaryProfile InferDietaryProfile(IEnumerable<string> diet)
+    {
+        var plant = diet.Any(ItemIds.IsPlantFood);
+        var meat = diet.Any(ItemIds.IsMeat);
+        return (plant, meat) switch
+        {
+            (true, false) => DietaryProfile.Herbivore,
+            (false, true) => DietaryProfile.Carnivore,
+            _ => DietaryProfile.Omnivore
+        };
+    }
+
     private static string ValidateRequiredText(string speciesId, string? value, string fieldName)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -212,5 +235,9 @@ public sealed class SpeciesCatalog
         public string[]? Diet { get; init; }
         public bool? CanHaul { get; init; }
         public string? BodyCategory { get; init; }
+        public DietaryProfile? DietaryProfile { get; init; }
+        public double? MaxHealth { get; init; }
+        public double? Strength { get; init; }
+        public double? Endurance { get; init; }
     }
 }

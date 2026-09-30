@@ -71,7 +71,7 @@ public sealed class FoodConsumptionService : ITransientSimulationState
     public long FoodUnitsConsumed { get; private set; }
 
     public long FoodUnitsRemaining => _world.FoodSources.Sum(source =>
-        (long)source.Contents.Counts.GetValueOrDefault(ItemIds.Food));
+        source.Contents.Counts.Where(pair => ItemIds.IsEdibleFood(pair.Key)).Sum(pair => (long)pair.Value));
 
     public FoodConsumptionResult Advance(
         EntityRecord entity,
@@ -202,7 +202,7 @@ public sealed class FoodConsumptionService : ITransientSimulationState
         ActiveTravel travel,
         long simulationTick)
     {
-        var nextConsumedCount = string.Equals(travel.ItemId, ItemIds.Food, StringComparison.Ordinal)
+        var nextConsumedCount = ItemIds.IsEdibleFood(travel.ItemId)
             ? checked(FoodUnitsConsumed + 1)
             : FoodUnitsConsumed;
         var removalResult = travel.Source.Contents.TryRemove(travel.ItemId, 1);

@@ -4,7 +4,11 @@
     "displayName": "Human",
     "movementSpeed": 3.0,
     "hungerRate": 0.2,
-    "diet": ["food"],
+    "diet": ["food", "plant", "fruit", "meat"],
+    "dietaryProfile": "Omnivore",
+    "maxHealth": 100,
+    "strength": 1.0,
+    "endurance": 1.0,
     "canHaul": true,
     "bodyCategory": "humanoid"
   },
@@ -13,7 +17,11 @@
     "displayName": "Creature",
     "movementSpeed": 2.0,
     "hungerRate": 0.2,
-    "diet": ["food"],
+    "diet": ["food", "plant", "fruit"],
+    "dietaryProfile": "Herbivore",
+    "maxHealth": 80,
+    "strength": 0.8,
+    "endurance": 1.2,
     "canHaul": false,
     "bodyCategory": "quadruped"
   }

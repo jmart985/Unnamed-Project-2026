@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 
 namespace Simulation;
 
+public enum DietaryProfile { Herbivore, Carnivore, Omnivore }
+
 public sealed class SpeciesDefinition
 {
     private readonly HashSet<string> _dietItems;
@@ -13,7 +15,11 @@ public sealed class SpeciesDefinition
         double hungerRate,
         IEnumerable<string> diet,
         bool canHaul,
-        string bodyCategory)
+        string bodyCategory,
+        DietaryProfile dietaryProfile,
+        double maxHealth,
+        double strength,
+        double endurance)
     {
         Id = id;
         DisplayName = displayName;
@@ -22,6 +28,10 @@ public sealed class SpeciesDefinition
         Diet = Array.AsReadOnly(diet.ToArray());
         CanHaul = canHaul;
         BodyCategory = bodyCategory;
+        DietaryProfile = dietaryProfile;
+        MaxHealth = maxHealth;
+        Strength = strength;
+        Endurance = endurance;
         _dietItems = new HashSet<string>(Diet, StringComparer.Ordinal);
     }
 
@@ -32,6 +42,10 @@ public sealed class SpeciesDefinition
     public ReadOnlyCollection<string> Diet { get; }
     public bool CanHaul { get; }
     public string BodyCategory { get; }
+    public DietaryProfile DietaryProfile { get; }
+    public double MaxHealth { get; }
+    public double Strength { get; }
+    public double Endurance { get; }
 
     public bool Eats(string? itemId)
     {
