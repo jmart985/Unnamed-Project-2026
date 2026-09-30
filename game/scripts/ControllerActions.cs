@@ -10,6 +10,8 @@ public static class ControllerActions
     public const string MoveBackward = "move_backward";
     public const string Jump = "jump";
     public const string Attack = "combat_attack";
+    public const string AttackLeft = "combat_attack_left";
+    public const string AttackRight = "combat_attack_right";
     public const string Collect = "collect";
     public const string Inventory = "open_inventory";
     public const string Settlement = "open_settlement";
@@ -19,3 +21,6 @@ public static class ControllerActions
     public const string DebugCancel = "debug_cancel";
     public const string DebugRemoveGoal = "debug_remove_goal";
 }
+
+
+

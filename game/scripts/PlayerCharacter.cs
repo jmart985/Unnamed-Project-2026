@@ -15,11 +15,15 @@ public partial class PlayerCharacter : CharacterBody3D
     [Export] public float RespawnLift { get; set; } = 0.2f;
     [Export] public float AttackDuration { get; set; } = 0.22f;
     [Export] public float AttackCooldown { get; set; } = 0.35f;
+    [Export] public bool LeftShieldEquipped { get; set; }
+    [Export] public bool RightShieldEquipped { get; set; }
 
     private Vector3 _lastGroundedPosition;
+    private MeshInstance3D _leftArm = null!;
     private MeshInstance3D _rightArm = null!;
     private double _attackCooldownRemaining;
     private float _restingArmRotation;
+    private float _restingLeftArmRotation;
 
     public bool IsAttacking { get; private set; }
 
@@ -27,7 +31,9 @@ public partial class PlayerCharacter : CharacterBody3D
     {
         PrototypeInputMap.EnsureDefaults();
         _lastGroundedPosition = GlobalPosition;
+        _leftArm = GetNode<MeshInstance3D>("LeftArm");
         _rightArm = GetNode<MeshInstance3D>("RightArm");
+        _restingLeftArmRotation = _leftArm.Rotation.X;
         _restingArmRotation = _rightArm.Rotation.X;
     }
 
@@ -38,14 +44,32 @@ public partial class PlayerCharacter : CharacterBody3D
             return;
         }
 
-        if (@event is InputEventMouseButton mouse && (!mouse.Pressed || mouse.ButtonIndex != MouseButton.Left))
+        if (@event is InputEventMouseButton mouse && !mouse.Pressed)
         {
             return;
         }
 
-        if (Input.IsActionPressed(ControllerActions.Attack))
+        if (@event is InputEventMouseButton mouseButton)
         {
-            StartAttackSwing();
+            if (mouseButton.ButtonIndex == MouseButton.Left)
+            {
+                StartAttackSwing(_leftArm, _restingLeftArmRotation, LeftShieldEquipped);
+            }
+            else if (mouseButton.ButtonIndex == MouseButton.Right)
+            {
+                StartAttackSwing(_rightArm, _restingArmRotation, RightShieldEquipped);
+            }
+
+            return;
+        }
+
+        if (Input.IsActionPressed(ControllerActions.AttackLeft))
+        {
+            StartAttackSwing(_leftArm, _restingLeftArmRotation, LeftShieldEquipped);
+        }
+        else if (Input.IsActionPressed(ControllerActions.AttackRight))
+        {
+            StartAttackSwing(_rightArm, _restingArmRotation, RightShieldEquipped);
         }
     }
 
@@ -90,9 +114,9 @@ public partial class PlayerCharacter : CharacterBody3D
         }
     }
 
-    private void StartAttackSwing()
+    private void StartAttackSwing(MeshInstance3D arm, float restingRotation, bool shieldEquipped)
     {
-        if (IsAttacking || _attackCooldownRemaining > 0.0)
+        if (shieldEquipped || IsAttacking || _attackCooldownRemaining > 0.0)
         {
             return;
         }
@@ -101,8 +125,8 @@ public partial class PlayerCharacter : CharacterBody3D
         _attackCooldownRemaining = AttackCooldown;
         var tween = CreateTween();
         tween.SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.Out);
-        tween.TweenProperty(_rightArm, "rotation:x", _restingArmRotation - Mathf.Pi * 0.75f, AttackDuration * 0.45f);
-        tween.TweenProperty(_rightArm, "rotation:x", _restingArmRotation, AttackDuration * 0.55f);
+        tween.TweenProperty(arm, "rotation:x", restingRotation - Mathf.Pi * 0.75f, AttackDuration * 0.45f);
+        tween.TweenProperty(arm, "rotation:x", restingRotation, AttackDuration * 0.55f);
         tween.Finished += () => IsAttacking = false;
     }
 }

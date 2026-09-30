@@ -10,6 +10,8 @@ public static class ControllerActions
     public const string MoveBackward = "move_backward";
     public const string Jump = "jump";
     public const string Attack = "combat_attack";
+    public const string AttackLeft = "combat_attack_left";
+    public const string AttackRight = "combat_attack_right";
     public const string Collect = "collect";
     public const string Inventory = "open_inventory";
     public const string Settlement = "open_settlement";
@@ -22,7 +24,10 @@ public static class ControllerActions
     public static IReadOnlyList<string> All { get; } =
     [
         MoveLeft, MoveRight, MoveForward, MoveBackward, Jump,
-        Attack, Collect, Inventory, Settlement, CloseMenu,
+        Attack, AttackLeft, AttackRight, Collect, Inventory, Settlement, CloseMenu,
         DebugRoute, DebugUnreachable, DebugCancel, DebugRemoveGoal
     ];
 }
+
+
+
