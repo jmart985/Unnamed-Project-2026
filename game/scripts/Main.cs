@@ -38,6 +38,7 @@ public partial class Main : Node3D
     private CanvasLayer _controls = null!;
     private Control _controlsPanel = null!;
     private string? _activeMenu;
+    private string _lastActionMessage = "No action requested.";
 
     public override void _Ready()
     {
@@ -130,8 +131,10 @@ public partial class Main : Node3D
 
         if (Input.IsActionPressed(ControllerActions.Attack))
         {
-            _activeMenu = "Combat";
-            _controls.Visible = true;
+            // Combat is an immediate world action; it must not open a menu.
+            _lastActionMessage = _selectedEntityId is null
+                ? "Combat requested; select an entity first."
+                : $"Combat requested for {_selectedEntityId}.";
             UpdateStatus();
             return;
         }
@@ -437,6 +440,7 @@ public partial class Main : Node3D
             $"Save/load: {_saveLoadStatus}\n" +
 
             $"Menu: {_activeMenu ?? "closed"} | WASD move, Space jump, LMB combat, E collect, I inventory, Tab settlement, Esc close\n" +
+            $"Last action: {_lastActionMessage}\n" +
             "Select an entity; F5 route, F6 unreachable, F7 cancel, F8 remove goal";
         _pauseButton.Text = _clock.IsPaused ? "Resume" : "Pause";
         UpdateInspector();
