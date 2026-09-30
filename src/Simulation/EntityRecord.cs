@@ -23,6 +23,7 @@ public sealed class EntityRecord
         Position = position;
         Needs = new NeedsState(needsTuning, satiety);
         BaseStats = baseStats ?? CharacterStats.Default;
+        Health = CharacterHealth.CreateHumanoid(BaseStats.MaxHealth);
         InventoryCapacity = inventoryCapacity;
         _inventoryView = new ReadOnlyDictionary<string, int>(_inventory);
         Actions = new ActionLifecycle(id, reservations, () => _inventory.Count > 0);
@@ -33,6 +34,7 @@ public sealed class EntityRecord
     public Vector3 Position { get; internal set; }
     public NeedsState Needs { get; }
     public CharacterStats BaseStats { get; }
+    public CharacterHealth Health { get; }
     public ActionLifecycle Actions { get; }
     public double Satiety => Needs.Satiety;
     public IReadOnlyDictionary<string, int> Inventory => _inventoryView;
@@ -105,3 +107,4 @@ public sealed class EntityRecord
         return ResourceMutationResult.Success;
     }
 }
+
