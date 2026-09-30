@@ -30,7 +30,7 @@ public partial class PlayerCharacter : CharacterBody3D
             Velocity = new Vector3(Velocity.X, Velocity.Y - Gravity * physicsDelta, Velocity.Z);
         }
 
-        if (Input.IsActionJustPressed("jump") && IsOnFloor())
+        if (Input.IsActionJustPressed(ControllerActions.Jump) && IsOnFloor())
         {
             Velocity = new Vector3(Velocity.X, JumpVelocity, Velocity.Z);
         }

@@ -81,9 +81,9 @@ public partial class Main : Node3D
         UpdateStatus();
     }
 
-    public override void _UnhandledKeyInput(InputEvent @event)
+    public override void _UnhandledInput(InputEvent @event)
     {
-        if (@event is not InputEventKey key || !key.Pressed || key.Echo)
+        if (@event is InputEventKey key && (!key.Pressed || key.Echo))
         {
             return;
         }
@@ -130,22 +130,25 @@ public partial class Main : Node3D
             return;
         }
 
-        switch (key.Keycode)
+        if (Input.IsActionPressed(ControllerActions.DebugRoute))
         {
-            case Key.R:
-                view.RequestNavigation(new System.Numerics.Vector3(8, 0, 0));
-                break;
-            case Key.U:
-                view.RequestNavigation(new System.Numerics.Vector3(25, 0, 0));
-                break;
-            case Key.C:
-                view.CancelNavigation();
-                break;
-            case Key.D:
-                view.RemoveNavigationTarget();
-                break;
-            default:
-                return;
+            view.RequestNavigation(new System.Numerics.Vector3(8, 0, 0));
+        }
+        else if (Input.IsActionPressed(ControllerActions.DebugUnreachable))
+        {
+            view.RequestNavigation(new System.Numerics.Vector3(25, 0, 0));
+        }
+        else if (Input.IsActionPressed(ControllerActions.DebugCancel))
+        {
+            view.CancelNavigation();
+        }
+        else if (Input.IsActionPressed(ControllerActions.DebugRemoveGoal))
+        {
+            view.RemoveNavigationTarget();
+        }
+        else
+        {
+            return;
         }
 
         UpdateStatus();
@@ -422,7 +425,7 @@ public partial class Main : Node3D
             $"Save/load: {_saveLoadStatus}\n" +
 
             $"Menu: {_activeMenu ?? "closed"} | WASD move, Space jump, LMB combat, E collect, I inventory, Tab settlement, Esc close\n" +
-            "Select an entity; R route, U unreachable, C cancel, D remove goal";
+            "Select an entity; F5 route, F6 unreachable, F7 cancel, F8 remove goal";
         _pauseButton.Text = _clock.IsPaused ? "Resume" : "Pause";
         UpdateInspector();
     }

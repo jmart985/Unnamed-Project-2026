@@ -14,10 +14,15 @@ public static class ControllerActions
     public const string Inventory = "open_inventory";
     public const string Settlement = "open_settlement";
     public const string CloseMenu = "close_menu";
+    public const string DebugRoute = "debug_route";
+    public const string DebugUnreachable = "debug_unreachable";
+    public const string DebugCancel = "debug_cancel";
+    public const string DebugRemoveGoal = "debug_remove_goal";
 
     public static IReadOnlyList<string> All { get; } =
     [
         MoveLeft, MoveRight, MoveForward, MoveBackward, Jump,
-        Attack, Collect, Inventory, Settlement, CloseMenu
+        Attack, Collect, Inventory, Settlement, CloseMenu,
+        DebugRoute, DebugUnreachable, DebugCancel, DebugRemoveGoal
     ];
 }
