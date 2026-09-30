@@ -24,6 +24,7 @@ public sealed class EntityRecord
         Needs = new NeedsState(needsTuning, satiety);
         BaseStats = baseStats ?? CharacterStats.Default;
         Health = CharacterHealth.CreateHumanoid(BaseStats.MaxHealth);
+        Skills = new SkillSet();
         InventoryCapacity = inventoryCapacity;
         _inventoryView = new ReadOnlyDictionary<string, int>(_inventory);
         Actions = new ActionLifecycle(id, reservations, () => _inventory.Count > 0);
@@ -35,6 +36,7 @@ public sealed class EntityRecord
     public NeedsState Needs { get; }
     public CharacterStats BaseStats { get; }
     public CharacterHealth Health { get; }
+    public SkillSet Skills { get; }
     public ActionLifecycle Actions { get; }
     public double Satiety => Needs.Satiety;
     public IReadOnlyDictionary<string, int> Inventory => _inventoryView;
