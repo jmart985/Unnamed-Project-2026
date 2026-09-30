@@ -36,6 +36,7 @@ public partial class Main : Node3D
     private string _saveSlotPath = null!;
     private string? _selectedEntityId;
     private CanvasLayer _controls = null!;
+    private Control _controlsPanel = null!;
     private string? _activeMenu;
 
     public override void _Ready()
@@ -44,6 +45,7 @@ public partial class Main : Node3D
         _obstacle = GetNode<MeshInstance3D>("Obstacle");
         _navigationRegion = GetNode<NavigationRegion3D>("NavigationRegion3D");
         _controls = GetNode<CanvasLayer>("Controls");
+        _controlsPanel = GetNode<Control>("Controls/Panel");
         _statusLabel = GetNode<Label>("Controls/Panel/Scroll/Margin/VBox/Status");
         _pauseButton = GetNode<Button>("Controls/Panel/Scroll/Margin/VBox/Pause");
         _entityList = GetNode<VBoxContainer>("Controls/Panel/Scroll/Margin/VBox/EntityList");
@@ -84,6 +86,16 @@ public partial class Main : Node3D
     public override void _UnhandledInput(InputEvent @event)
     {
         if (@event is InputEventKey key && (!key.Pressed || key.Echo))
+        {
+            return;
+        }
+
+        // UI clicks belong to the menu. Only left clicks outside it become combat actions.
+        if (@event is InputEventMouseButton mouse
+            && mouse.ButtonIndex == MouseButton.Left
+            && mouse.Pressed
+            && _controls.Visible
+            && _controlsPanel.GetGlobalRect().HasPoint(mouse.Position))
         {
             return;
         }
