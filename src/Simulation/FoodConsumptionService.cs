@@ -27,6 +27,7 @@ public sealed class FoodConsumptionService : ITransientSimulationState
     private const double NavigationTimeoutSeconds = 30;
 
     private readonly World _world;
+    private readonly SpeciesCatalog? _catalog;
     private readonly Func<EntityRecord, INavigationAdapter> _navigationForEntity;
     private readonly FoodSelectionService _selection;
     private readonly Dictionary<string, ActiveTravel> _activeTravels = new(StringComparer.Ordinal);
@@ -42,6 +43,29 @@ public sealed class FoodConsumptionService : ITransientSimulationState
         _world = world;
         _navigationForEntity = navigationForEntity;
         _selection = new FoodSelectionService(world, retryDelayTicks);
+    }
+
+    public FoodConsumptionService(
+        World world,
+        SpeciesCatalog catalog,
+        Func<EntityRecord, INavigationAdapter> navigationForEntity,
+        int retryDelayTicks = FoodSelectionService.DefaultRetryDelayTicks)
+        : this(world, navigationForEntity, retryDelayTicks)
+    {
+        _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
+        _selection = new FoodSelectionService(world, catalog, retryDelayTicks);
+    }
+
+    public FoodConsumptionResult Advance(EntityRecord entity, long simulationTick)
+    {
+        ArgumentNullException.ThrowIfNull(_catalog);
+        ArgumentNullException.ThrowIfNull(entity);
+        if (!_catalog.TryGet(entity.SpeciesId, out var species) || species is null)
+        {
+            return new FoodConsumptionResult(FoodConsumptionStatus.InvalidSpecies);
+        }
+
+        return Advance(entity, species, simulationTick);
     }
 
     public long FoodUnitsConsumed { get; private set; }
