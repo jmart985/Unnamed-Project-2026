@@ -17,10 +17,10 @@ public static class PrototypeInputMap
         }
 
         _installed = true;
-        AddKeyboardAction(ControllerActions.MoveLeft, Key.A);
-        AddKeyboardAction(ControllerActions.MoveRight, Key.D);
         AddKeyboardAction(ControllerActions.MoveForward, Key.W);
         AddKeyboardAction(ControllerActions.MoveBackward, Key.S);
+        AddKeyboardAction(ControllerActions.MoveLeft, Key.A);
+        AddKeyboardAction(ControllerActions.MoveRight, Key.D);
         AddKeyboardAction(ControllerActions.Jump, Key.Space);
         AddMouseAction(ControllerActions.Attack, MouseButton.Left);
         AddMouseAction(ControllerActions.AttackLeft, MouseButton.Left);
@@ -40,20 +40,18 @@ public static class PrototypeInputMap
         AddJoypadButtonAction(ControllerActions.Inventory, JoyButton.Y);
         AddJoypadButtonAction(ControllerActions.Settlement, JoyButton.Start);
         AddJoypadButtonAction(ControllerActions.CloseMenu, JoyButton.B);
-        AddJoypadAxisAction(ControllerActions.MoveLeft, JoyAxis.LeftX, -1.0f);
-        AddJoypadAxisAction(ControllerActions.MoveRight, JoyAxis.LeftX, 1.0f);
         AddJoypadAxisAction(ControllerActions.MoveForward, JoyAxis.LeftY, -1.0f);
         AddJoypadAxisAction(ControllerActions.MoveBackward, JoyAxis.LeftY, 1.0f);
     }
 
-    private static void AddKeyboardAction(StringName actionName, Key physicalKey)
+    private static void AddKeyboardAction(StringName actionName, Key physicalKey, bool shift = false)
     {
         if (!InputMap.HasAction(actionName))
         {
             InputMap.AddAction(actionName);
         }
 
-        var input = new InputEventKey { PhysicalKeycode = physicalKey };
+        var input = new InputEventKey { PhysicalKeycode = physicalKey, ShiftPressed = shift };
         InputMap.ActionAddEvent(actionName, input);
     }
 

@@ -15,6 +15,7 @@ public partial class PlayerCharacter : CharacterBody3D
     [Export] public float RespawnLift { get; set; } = 0.2f;
     [Export] public float AttackDuration { get; set; } = 0.22f;
     [Export] public float AttackCooldown { get; set; } = 0.35f;
+    [Export] public float MouseSensitivity { get; set; } = 0.01f;
     [Export] public bool LeftShieldEquipped { get; set; }
     [Export] public bool RightShieldEquipped { get; set; }
 
@@ -39,6 +40,12 @@ public partial class PlayerCharacter : CharacterBody3D
 
     public override void _UnhandledInput(InputEvent @event)
     {
+        if (@event is InputEventMouseMotion motion)
+        {
+            RotateY(-motion.Relative.X * MouseSensitivity);
+            return;
+        }
+
         if (@event is InputEventKey key && (!key.Pressed || key.Echo))
         {
             return;
@@ -87,8 +94,9 @@ public partial class PlayerCharacter : CharacterBody3D
             Velocity = new Vector3(Velocity.X, JumpVelocity, Velocity.Z);
         }
 
-        var input = Input.GetVector(ControllerActions.MoveLeft, ControllerActions.MoveRight, ControllerActions.MoveForward, ControllerActions.MoveBackward);
-        var direction = new Vector3(input.X, 0.0f, input.Y);
+        var forward = Input.GetAxis(ControllerActions.MoveForward, ControllerActions.MoveBackward);
+        var strafe = Input.GetAxis(ControllerActions.MoveLeft, ControllerActions.MoveRight);
+        var direction = new Vector3(strafe, 0.0f, forward);
         if (direction.LengthSquared() > 1.0f)
         {
             direction = direction.Normalized();
