@@ -1,7 +1,10 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/Main.cs" id="1_main"]
 [ext_resource type="PackedScene" path="res://player_character.tscn" id="2_player"]
+
+[sub_resource type="BoxShape3D" id="BoxShape_floor"]
+size = Vector3(20, 0.2, 20)
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_main")
@@ -10,6 +13,11 @@ script = ExtResource("1_main")
 [node name="Map" type="MeshInstance3D" parent="."]
 [node name="Obstacle" type="MeshInstance3D" parent="."]
 [node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
+
+[node name="Floor" type="StaticBody3D" parent="."]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor"]
+position = Vector3(0, -0.1, 0)
+shape = SubResource("BoxShape_floor")
 
 [node name="PlayerCharacter" parent="." instance=ExtResource("2_player")]
 position = Vector3(0, 1, 0)
@@ -28,12 +36,10 @@ offset_top = 24.0
 offset_right = 360.0
 offset_bottom = -24.0
 grow_vertical = 2
-
 [node name="Scroll" type="ScrollContainer" parent="Controls/Panel"]
 layout_mode = 2
 horizontal_scroll_mode = 0
 vertical_scroll_mode = 1
-
 [node name="Margin" type="MarginContainer" parent="Controls/Panel/Scroll"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -41,11 +47,9 @@ theme_override_constants/margin_left = 12
 theme_override_constants/margin_top = 12
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 12
-
 [node name="VBox" type="VBoxContainer" parent="Controls/Panel/Scroll/Margin"]
 layout_mode = 2
 size_flags_horizontal = 3
-
 [node name="Status" type="Label" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Simulation time: 0.0s\nState: Running\nSpeed: 1x"
 [node name="Pause" type="Button" parent="Controls/Panel/Scroll/Margin/VBox"]
