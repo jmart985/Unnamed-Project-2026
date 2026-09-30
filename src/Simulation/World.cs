@@ -20,7 +20,8 @@ public sealed class World
 
     public World(
         NeedsTuning? needsTuning = null,
-        int inventoryCapacity = DefaultInventoryCapacity)
+        int inventoryCapacity = DefaultInventoryCapacity,
+        CharacterStats? defaultCharacterStats = null)
     {
         if (inventoryCapacity < 0)
         {
@@ -29,6 +30,7 @@ public sealed class World
 
         NeedsTuning = needsTuning ?? new NeedsTuning();
         InventoryCapacity = inventoryCapacity;
+        DefaultCharacterStats = defaultCharacterStats ?? CharacterStats.Default;
         Reservations = new ReservationService(IsActionActive);
         _foodSourceView = _foodSources.AsReadOnly();
         _resourcePileView = _resourcePiles.AsReadOnly();
@@ -43,6 +45,7 @@ public sealed class World
     public NeedsTuning NeedsTuning { get; }
     public ReservationService Reservations { get; }
     public int InventoryCapacity { get; }
+    public CharacterStats DefaultCharacterStats { get; }
 
     public FoodSource AddFoodSource(string id, Vector3 position, ResourceContainer contents)
     {
@@ -153,7 +156,8 @@ public sealed class World
             satiety,
             InventoryCapacity,
             NeedsTuning,
-            Reservations);
+            Reservations,
+            DefaultCharacterStats);
         _entities.Add(id, entity);
         return entity;
     }
@@ -281,7 +285,8 @@ public sealed class World
             satiety,
             InventoryCapacity,
             NeedsTuning,
-            Reservations);
+            Reservations,
+            DefaultCharacterStats);
         _entities.Add(id, entity);
         return entity;
     }
