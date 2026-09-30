@@ -18,7 +18,7 @@ public partial class PlayerCharacter : CharacterBody3D
 
     public override void _Ready()
     {
-        EnsureDefaultInputActions();
+        PrototypeInputMap.EnsureDefaults();
         _lastGroundedPosition = GlobalPosition;
     }
 
@@ -63,23 +63,4 @@ public partial class PlayerCharacter : CharacterBody3D
         }
     }
 
-    private static void EnsureDefaultInputActions()
-    {
-        AddKeyboardAction("move_left", Key.A);
-        AddKeyboardAction("move_right", Key.D);
-        AddKeyboardAction("move_forward", Key.W);
-        AddKeyboardAction("move_backward", Key.S);
-        AddKeyboardAction("jump", Key.Space);
-    }
-
-    private static void AddKeyboardAction(StringName actionName, Key physicalKey)
-    {
-        if (InputMap.HasAction(actionName))
-        {
-            return;
-        }
-
-        InputMap.AddAction(actionName);
-        InputMap.ActionAddEvent(actionName, new InputEventKey { PhysicalKeycode = physicalKey });
-    }
 }
