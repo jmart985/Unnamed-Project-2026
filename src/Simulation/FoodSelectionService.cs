@@ -59,6 +59,7 @@ public sealed class FoodSelectionService : ITransientSimulationState
     public const int DefaultRetryDelayTicks = 10;
 
     private readonly World _world;
+    private readonly SpeciesCatalog? _catalog;
     private readonly Dictionary<string, SelectionAttempt> _attempts = new(StringComparer.Ordinal);
     private readonly RetryScheduler _retryScheduler;
     private long _nextActionId;
@@ -69,6 +70,24 @@ public sealed class FoodSelectionService : ITransientSimulationState
 
         _world = world;
         _retryScheduler = new RetryScheduler(retryDelayTicks);
+    }
+
+    public FoodSelectionService(World world, SpeciesCatalog catalog, int retryDelayTicks = DefaultRetryDelayTicks)
+        : this(world, retryDelayTicks)
+    {
+        _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
+    }
+
+    public FoodSelectionResult TrySelect(EntityRecord entity, IEnumerable<FoodSource> sources, long simulationTick, Action? actionCleanup = null)
+    {
+        ArgumentNullException.ThrowIfNull(_catalog);
+        ArgumentNullException.ThrowIfNull(entity);
+        if (!_catalog.TryGet(entity.SpeciesId, out var species) || species is null)
+        {
+            return new FoodSelectionResult(FoodSelectionStatus.InvalidSpecies);
+        }
+
+        return TrySelect(entity, species, sources, simulationTick, actionCleanup);
     }
 
     public FoodSelectionResult TrySelect(
@@ -256,14 +275,21 @@ public sealed class FoodSelectionService : ITransientSimulationState
             return "No available food.";
         }
 
+        if (sources.Count == 0)
+        {
+            return attempt.Species.Eats(ItemIds.Food)
+                ? "No available food."
+                : "No compatible food available.";
+        }
+
+        if (!HasAnyAvailableItem(sources))
+        {
+            return "No available food.";
+        }
+
         if (!HasCompatibleFood(attempt.Species, sources))
         {
             return "No compatible food available.";
-        }
-
-        if (sources.Count == 0)
-        {
-            return "No available food.";
         }
 
         return "No available food.";
@@ -373,9 +399,13 @@ public sealed class FoodSelectionService : ITransientSimulationState
 
     private static bool HasCompatibleFood(SpeciesDefinition species, IEnumerable<FoodSource> sources)
     {
-        return species.Eats(ItemIds.Food)
-            || sources.Any(source => source.Contents.Counts.Any(entry =>
+        return sources.Any(source => source.Contents.Counts.Any(entry =>
                 entry.Value > 0 && species.Eats(entry.Key)));
+    }
+
+    private static bool HasAnyAvailableItem(IEnumerable<FoodSource> sources)
+    {
+        return sources.Any(source => source.Contents.Counts.Values.Any(value => value > 0));
     }
 
     private sealed class SelectionAttempt(
