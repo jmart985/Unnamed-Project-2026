@@ -64,6 +64,7 @@ public sealed class SpeciesCatalog
             }
 
             var id = ValidateId(entry.Id);
+            var displayName = string.IsNullOrWhiteSpace(entry.DisplayName) ? id : entry.DisplayName.Trim();
             if (!ids.Add(id))
             {
                 throw new InvalidDataException($"Species ID '{id}' is defined more than once.");
@@ -86,7 +87,8 @@ public sealed class SpeciesCatalog
             var diet = ValidateDiet(id, entry.Diet);
             var canHaul = entry.CanHaul
                 ?? throw new InvalidDataException($"Species '{id}' must define canHaul.");
-            definitions.Add(new SpeciesDefinition(id, movementSpeed, hungerRate, diet, canHaul));
+            var bodyCategory = string.IsNullOrWhiteSpace(entry.BodyCategory) ? "unspecified" : entry.BodyCategory.Trim();
+            definitions.Add(new SpeciesDefinition(id, displayName, movementSpeed, hungerRate, diet, canHaul, bodyCategory));
         }
 
         return new SpeciesCatalog(definitions);
@@ -191,12 +193,24 @@ public sealed class SpeciesCatalog
         return diet;
     }
 
+    private static string ValidateRequiredText(string speciesId, string? value, string fieldName)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new InvalidDataException($"Species '{speciesId}' must define {fieldName}.");
+        }
+
+        return value.Trim();
+    }
+
     private sealed class SpeciesData
     {
         public string? Id { get; init; }
+        public string? DisplayName { get; init; }
         public double? MovementSpeed { get; init; }
         public double? HungerRate { get; init; }
         public string[]? Diet { get; init; }
         public bool? CanHaul { get; init; }
+        public string? BodyCategory { get; init; }
     }
 }

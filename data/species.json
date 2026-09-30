@@ -1,16 +1,20 @@
 [
   {
     "id": "human",
+    "displayName": "Human",
     "movementSpeed": 3.0,
     "hungerRate": 0.2,
     "diet": ["food"],
-    "canHaul": true
+    "canHaul": true,
+    "bodyCategory": "humanoid"
   },
   {
     "id": "creature",
+    "displayName": "Creature",
     "movementSpeed": 2.0,
     "hungerRate": 0.2,
     "diet": ["food"],
-    "canHaul": false
+    "canHaul": false,
+    "bodyCategory": "quadruped"
   }
 ]
