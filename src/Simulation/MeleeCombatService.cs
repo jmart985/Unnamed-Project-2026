@@ -2,7 +2,7 @@ namespace Simulation;
 
 public sealed record MeleeAttackRequest(string AttackerId, string DefenderId, string BodyPart, double Damage);
 public enum MeleeAttackResult { Success, InvalidRequest, MissingEntity, UnknownBodyPart, OutOfRange }
-public sealed record MeleeAttackResolution(MeleeAttackResult Result, double AppliedDamage = 0, bool DefenderIncapacitated = false);
+public sealed record MeleeAttackResolution(MeleeAttackResult Result, double AppliedDamage = 0, bool DefenderIncapacitated = false, bool DefenderDead = false);
 
 public static class MeleeCombatService
 {
@@ -17,8 +17,9 @@ public static class MeleeCombatService
         if (!defender.Health.TryGetPart(request.BodyPart, out var part) || part is null)
             return new(MeleeAttackResult.UnknownBodyPart);
         var applied = part.ApplyDamage(request.Damage);
-        return new(MeleeAttackResult.Success, applied, defender.Health.IsIncapacitated);
+        return new(MeleeAttackResult.Success, applied, defender.Health.IsIncapacitated, defender.Health.IsDead);
     }
 }
+
 
 
