@@ -11,10 +11,15 @@ public partial class PlayerCharacter : CharacterBody3D
     [Export] public float Gravity { get; set; } = 9.8f;
     [Export] public float Acceleration { get; set; } = 20.0f;
     [Export] public float Deceleration { get; set; } = 24.0f;
+    [Export] public float FallRespawnHeight { get; set; } = -5.0f;
+    [Export] public float RespawnLift { get; set; } = 0.2f;
+
+    private Vector3 _lastGroundedPosition;
 
     public override void _Ready()
     {
         EnsureDefaultInputActions();
+        _lastGroundedPosition = GlobalPosition;
     }
 
     public override void _PhysicsProcess(double delta)
@@ -45,6 +50,17 @@ public partial class PlayerCharacter : CharacterBody3D
             Mathf.MoveToward(Velocity.Z, target.Z, rate * physicsDelta));
 
         MoveAndSlide();
+
+        // Keep a safe checkpoint so falls and map clipping return to the nearest known floor.
+        if (IsOnFloor())
+        {
+            _lastGroundedPosition = GlobalPosition;
+        }
+        else if (GlobalPosition.Y < FallRespawnHeight)
+        {
+            GlobalPosition = _lastGroundedPosition + Vector3.Up * RespawnLift;
+            Velocity = Vector3.Zero;
+        }
     }
 
     private static void EnsureDefaultInputActions()
