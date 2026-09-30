@@ -45,10 +45,14 @@ public sealed class BodyPartHealth
 public sealed class CharacterHealth
 {
     private readonly IReadOnlyList<BodyPartHealth> _parts;
+    private bool _isDead;
+    private double _pendingDeathSeconds;
 
-    public CharacterHealth(IEnumerable<BodyPartHealth> parts)
+    public CharacterHealth(IEnumerable<BodyPartHealth> parts, double headDeathDelaySeconds = 1)
     {
         ArgumentNullException.ThrowIfNull(parts);
+        if (!double.IsFinite(headDeathDelaySeconds) || headDeathDelaySeconds <= 0) throw new ArgumentOutOfRangeException(nameof(headDeathDelaySeconds));
+        HeadDeathDelaySeconds = headDeathDelaySeconds;
         var materialized = parts.ToArray();
         if (materialized.Length == 0) throw new ArgumentException("At least one body part is required.", nameof(parts));
         if (materialized.Select(part => part.Name).Distinct(StringComparer.Ordinal).Count() != materialized.Length)
@@ -57,7 +61,10 @@ public sealed class CharacterHealth
     }
 
     public IReadOnlyList<BodyPartHealth> Parts => _parts;
-    public bool IsIncapacitated => _parts.Any(part => part.RequiredForConsciousness && part.IsDestroyed);
+    public bool IsIncapacitated => _isDead || _parts.Any(part => part.RequiredForConsciousness && part.IsDestroyed);
+    public bool IsDead => _isDead;
+    public double HeadDeathDelaySeconds { get; }
+    public double PendingDeathSeconds => _pendingDeathSeconds;
 
     public bool TryGetPart(string? name, out BodyPartHealth? part)
     {
@@ -67,12 +74,27 @@ public sealed class CharacterHealth
 
     public bool TryDamage(string? name, double amount)
     {
-        return TryGetPart(name, out var part) && part is not null && part.ApplyDamage(amount) >= 0;
+        if (_isDead) return false;
+        var applied = TryGetPart(name, out var part) && part is not null && part.ApplyDamage(amount) >= 0;
+        if (string.Equals(name, "Head", StringComparison.Ordinal) && part is not null && part.IsDestroyed) _pendingDeathSeconds = HeadDeathDelaySeconds;
+        if (string.Equals(name, "Torso", StringComparison.Ordinal) && part is not null && part.IsDestroyed) _isDead = true;
+        return applied;
     }
 
     public bool TryHeal(string? name, double amount)
     {
-        return TryGetPart(name, out var part) && part is not null && part.Heal(amount) >= 0;
+        if (_isDead) return false;
+        var healed = TryGetPart(name, out var part) && part is not null && part.Heal(amount) >= 0;
+        if (healed && string.Equals(name, "Head", StringComparison.Ordinal) && part is not null && !part.IsDestroyed) _pendingDeathSeconds = 0;
+        return healed;
+    }
+
+    public void AdvanceTime(double seconds)
+    {
+        if (!double.IsFinite(seconds) || seconds < 0) throw new ArgumentOutOfRangeException(nameof(seconds));
+        if (_isDead || _pendingDeathSeconds <= 0) return;
+        _pendingDeathSeconds = Math.Max(0, _pendingDeathSeconds - seconds);
+        if (_pendingDeathSeconds == 0) _isDead = true;
     }
 
     public static CharacterHealth CreateHumanoid(double maximumHealth)
@@ -88,3 +110,6 @@ public sealed class CharacterHealth
             new BodyPartHealth("RightLeg", partHealth / 2, false)]);
     }
 }
+
+
+
