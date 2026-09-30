@@ -35,12 +35,15 @@ public partial class Main : Node3D
     private string _saveLoadStatus = "No save loaded.";
     private string _saveSlotPath = null!;
     private string? _selectedEntityId;
+    private CanvasLayer _controls = null!;
+    private string? _activeMenu;
 
     public override void _Ready()
     {
         _map = GetNode<MeshInstance3D>("Map");
         _obstacle = GetNode<MeshInstance3D>("Obstacle");
         _navigationRegion = GetNode<NavigationRegion3D>("NavigationRegion3D");
+        _controls = GetNode<CanvasLayer>("Controls");
         _statusLabel = GetNode<Label>("Controls/Panel/Scroll/Margin/VBox/Status");
         _pauseButton = GetNode<Button>("Controls/Panel/Scroll/Margin/VBox/Pause");
         _entityList = GetNode<VBoxContainer>("Controls/Panel/Scroll/Margin/VBox/EntityList");
@@ -85,6 +88,42 @@ public partial class Main : Node3D
             return;
         }
 
+        if (Input.IsActionPressed(ControllerActions.CloseMenu))
+        {
+            _activeMenu = null;
+            _controls.Visible = false;
+            UpdateStatus();
+            return;
+        }
+
+        if (Input.IsActionPressed(ControllerActions.Inventory))
+        {
+            ToggleMenu("Inventory");
+            return;
+        }
+
+        if (Input.IsActionPressed(ControllerActions.Settlement))
+        {
+            ToggleMenu("Settlement");
+            return;
+        }
+
+        if (Input.IsActionPressed(ControllerActions.Collect))
+        {
+            _activeMenu = "Collection";
+            _controls.Visible = true;
+            UpdateStatus();
+            return;
+        }
+
+        if (Input.IsActionPressed(ControllerActions.Attack))
+        {
+            _activeMenu = "Combat";
+            _controls.Visible = true;
+            UpdateStatus();
+            return;
+        }
+
         if (_selectedEntityId is not { } entityId
             || !_entityViews.TryGetValue(entityId, out var view))
         {
@@ -109,6 +148,15 @@ public partial class Main : Node3D
                 return;
         }
 
+        UpdateStatus();
+    }
+
+    private void ToggleMenu(string menuName)
+    {
+        _activeMenu = string.Equals(_activeMenu, menuName, StringComparison.Ordinal)
+            ? null
+            : menuName;
+        _controls.Visible = true;
         UpdateStatus();
     }
 
@@ -373,6 +421,7 @@ public partial class Main : Node3D
             $"Wood: ground {groundWood}, carried {carriedWood}, stored {storedWood} (total {totalWood})\n" +
             $"Save/load: {_saveLoadStatus}\n" +
 
+            $"Menu: {_activeMenu ?? "closed"} | WASD move, Space jump, LMB combat, E collect, I inventory, Tab settlement, Esc close\n" +
             "Select an entity; R route, U unreachable, C cancel, D remove goal";
         _pauseButton.Text = _clock.IsPaused ? "Resume" : "Pause";
         UpdateInspector();
