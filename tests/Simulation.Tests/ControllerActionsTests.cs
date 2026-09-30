@@ -14,5 +14,7 @@ public sealed class ControllerActionsTests
         Assert.Contains(ControllerActions.Inventory, ControllerActions.All);
         Assert.Contains(ControllerActions.Settlement, ControllerActions.All);
         Assert.Contains(ControllerActions.CloseMenu, ControllerActions.All);
+        Assert.Contains(ControllerActions.DebugRoute, ControllerActions.All);
+        Assert.Contains(ControllerActions.DebugRemoveGoal, ControllerActions.All);
     }
 }
