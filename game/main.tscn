@@ -35,6 +35,7 @@ offset_left = 24.0
 offset_top = 24.0
 offset_right = 360.0
 offset_bottom = -24.0
+anchor_bottom = 1.0
 grow_vertical = 2
 [node name="Scroll" type="ScrollContainer" parent="Controls/Panel"]
 layout_mode = 2
@@ -51,7 +52,9 @@ theme_override_constants/margin_bottom = 12
 layout_mode = 2
 size_flags_horizontal = 3
 [node name="Status" type="Label" parent="Controls/Panel/Scroll/Margin/VBox"]
-text = "Simulation time: 0.0s\nState: Running\nSpeed: 1x"
+text = "Simulation time: 0.0s
+State: Running
+Speed: 1x"
 [node name="Pause" type="Button" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Pause"
 [node name="OneX" type="Button" parent="Controls/Panel/Scroll/Margin/VBox"]
