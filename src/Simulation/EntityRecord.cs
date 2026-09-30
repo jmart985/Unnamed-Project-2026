@@ -15,12 +15,14 @@ public sealed class EntityRecord
         double satiety,
         int inventoryCapacity,
         NeedsTuning needsTuning,
-        ReservationService reservations)
+        ReservationService reservations,
+        CharacterStats? baseStats = null)
     {
         Id = id;
         SpeciesId = speciesId;
         Position = position;
         Needs = new NeedsState(needsTuning, satiety);
+        BaseStats = baseStats ?? CharacterStats.Default;
         InventoryCapacity = inventoryCapacity;
         _inventoryView = new ReadOnlyDictionary<string, int>(_inventory);
         Actions = new ActionLifecycle(id, reservations, () => _inventory.Count > 0);
@@ -30,6 +32,7 @@ public sealed class EntityRecord
     public string SpeciesId { get; }
     public Vector3 Position { get; internal set; }
     public NeedsState Needs { get; }
+    public CharacterStats BaseStats { get; }
     public ActionLifecycle Actions { get; }
     public double Satiety => Needs.Satiety;
     public IReadOnlyDictionary<string, int> Inventory => _inventoryView;
