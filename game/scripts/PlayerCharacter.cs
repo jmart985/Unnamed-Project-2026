@@ -96,12 +96,15 @@ public partial class PlayerCharacter : CharacterBody3D
 
         var forward = Input.GetAxis(ControllerActions.MoveForward, ControllerActions.MoveBackward);
         var strafe = Input.GetAxis(ControllerActions.MoveLeft, ControllerActions.MoveRight);
-        var direction = new Vector3(strafe, 0.0f, forward);
-        if (direction.LengthSquared() > 1.0f)
+        var localDirection = new Vector3(strafe, 0.0f, forward);
+        if (localDirection.LengthSquared() > 1.0f)
         {
-            direction = direction.Normalized();
+            localDirection = localDirection.Normalized();
         }
 
+        // Convert local input into world space so movement follows the player's facing.
+        var direction = GlobalTransform.Basis * localDirection;
+        direction.Y = 0.0f;
         var target = direction * MovementSpeed;
         var rate = direction == Vector3.Zero ? Deceleration : Acceleration;
         Velocity = new Vector3(
