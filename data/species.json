@@ -13,6 +13,19 @@
     "bodyCategory": "humanoid"
   },
   {
+    "id": "creature",
+    "displayName": "Creature",
+    "movementSpeed": 2.0,
+    "hungerRate": 0.2,
+    "diet": ["food", "plant", "fruit"],
+    "dietaryProfile": "Herbivore",
+    "maxHealth": 80,
+    "strength": 0.8,
+    "endurance": 1.2,
+    "canHaul": false,
+    "bodyCategory": "quadruped"
+  },
+  {
     "id": "ape",
     "displayName": "Ape",
     "movementSpeed": 2.4,
