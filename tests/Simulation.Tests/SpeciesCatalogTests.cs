@@ -20,6 +20,12 @@ public sealed class SpeciesCatalogTests
             catalog.GetCompatibleWithDiet(ItemIds.Food).Select(species => species.Id));
         Assert.Equal(new[] { "human", "ape", "cow" }, catalog.GetHaulers().Select(species => species.Id));
         Assert.Empty(catalog.GetCompatibleWithDiet(ItemIds.Wood));
+        Assert.True(catalog.GetRequired("ape").CanUseTools);
+        Assert.True(catalog.GetRequired("ape").CanOpenDoors);
+        Assert.True(catalog.GetRequired("wolf").CanTrack);
+        Assert.True(catalog.GetRequired("wolf").SmellRange > catalog.GetRequired("cow").SmellRange);
+        Assert.Equal(DietaryProfile.Herbivore, catalog.GetRequired("cow").DietaryProfile);
+        Assert.Equal(DietaryProfile.Carnivore, catalog.GetRequired("wolf").DietaryProfile);
     }
 
     [Theory]

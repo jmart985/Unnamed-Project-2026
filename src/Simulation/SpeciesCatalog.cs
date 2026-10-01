@@ -93,7 +93,9 @@ public sealed class SpeciesCatalog
             var maxHealth = ValidateStat(id, entry.MaxHealth ?? 100, nameof(entry.MaxHealth));
             var strength = ValidateStat(id, entry.Strength ?? 1, nameof(entry.Strength));
             var endurance = ValidateStat(id, entry.Endurance ?? 1, nameof(entry.Endurance));
-            definitions.Add(new SpeciesDefinition(id, displayName, movementSpeed, hungerRate, diet, canHaul, bodyCategory, dietaryProfile, maxHealth, strength, endurance));
+            var dexterity = ValidateStat(id, entry.Dexterity ?? 1, nameof(entry.Dexterity));
+            var smellRange = ValidateStat(id, entry.SmellRange ?? 1, nameof(entry.SmellRange));
+            definitions.Add(new SpeciesDefinition(id, displayName, movementSpeed, hungerRate, diet, canHaul, bodyCategory, dietaryProfile, maxHealth, strength, endurance, dexterity, smellRange, entry.CanUseTools ?? false, entry.CanOpenDoors ?? false, entry.CanTrack ?? false));
         }
 
         return new SpeciesCatalog(definitions);
@@ -239,5 +241,10 @@ public sealed class SpeciesCatalog
         public double? MaxHealth { get; init; }
         public double? Strength { get; init; }
         public double? Endurance { get; init; }
+        public double? Dexterity { get; init; }
+        public double? SmellRange { get; init; }
+        public bool? CanUseTools { get; init; }
+        public bool? CanOpenDoors { get; init; }
+        public bool? CanTrack { get; init; }
     }
 }
