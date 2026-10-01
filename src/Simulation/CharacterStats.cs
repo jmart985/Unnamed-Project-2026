@@ -13,6 +13,8 @@ public sealed record CharacterStats
     public const int DefaultCarryCapacity = 10;
     public const double DefaultPerception = 1;
     public const double DefaultDefense = 0;
+    public const double DefaultStrength = 1;
+    public const double DefaultEndurance = 1;
 
     public CharacterStats(
         double health = DefaultHealth,
@@ -20,7 +22,9 @@ public sealed record CharacterStats
         double movementSpeed = DefaultMovementSpeed,
         int carryCapacity = DefaultCarryCapacity,
         double perception = DefaultPerception,
-        double defense = DefaultDefense)
+        double defense = DefaultDefense,
+        double strength = DefaultStrength,
+        double endurance = DefaultEndurance)
     {
         ValidateFinitePositive(health, nameof(health));
         ValidateFinitePositive(stamina, nameof(stamina));
@@ -32,6 +36,8 @@ public sealed record CharacterStats
 
         ValidateFiniteNonNegative(perception, nameof(perception));
         ValidateFiniteNonNegative(defense, nameof(defense));
+        ValidateFinitePositive(strength, nameof(strength));
+        ValidateFinitePositive(endurance, nameof(endurance));
 
         MaxHealth = health;
         MaxStamina = stamina;
@@ -39,6 +45,8 @@ public sealed record CharacterStats
         CarryCapacity = carryCapacity;
         Perception = perception;
         Defense = defense;
+        Strength = strength;
+        Endurance = endurance;
     }
 
     public double MaxHealth { get; }
@@ -47,6 +55,11 @@ public sealed record CharacterStats
     public int CarryCapacity { get; }
     public double Perception { get; }
     public double Defense { get; }
+    public double Strength { get; }
+    public double Endurance { get; }
+
+    /// Carry capacity scales with strength while preserving the configured baseline.
+    public int EffectiveCarryCapacity => checked((int)Math.Round(CarryCapacity * Strength, MidpointRounding.AwayFromZero));
 
     public static CharacterStats Default { get; } = new();
 

@@ -13,6 +13,19 @@ public sealed class CharacterStatsTests
         Assert.Equal(CharacterStats.DefaultCarryCapacity, stats.CarryCapacity);
         Assert.Equal(CharacterStats.DefaultPerception, stats.Perception);
         Assert.Equal(CharacterStats.DefaultDefense, stats.Defense);
+        Assert.Equal(CharacterStats.DefaultStrength, stats.Strength);
+        Assert.Equal(CharacterStats.DefaultEndurance, stats.Endurance);
+    }
+
+    [Fact]
+    public void StrengthScalesCapacityAndEnduranceReducesLoadFatigue()
+    {
+        var strong = new CharacterStats(strength: 2, endurance: 2);
+        var weak = new CharacterStats(strength: 1, endurance: 1);
+
+        Assert.Equal(20, strong.EffectiveCarryCapacity);
+        Assert.True(LoadFatigue.PerSecond(10, strong) < LoadFatigue.PerSecond(10, weak));
+        Assert.True(LoadFatigue.PerSecond(30, weak) > LoadFatigue.PerSecond(10, weak));
     }
 
     [Theory]
