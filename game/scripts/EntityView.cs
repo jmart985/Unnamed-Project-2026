@@ -9,6 +9,7 @@ public partial class EntityView : CharacterBody3D
     private GodotNavigationAdapter? _navigationAdapter;
     private float _movementSpeed;
     private bool _isCreature;
+    private string _speciesId = string.Empty;
 
     public string EntityId { get; private set; } = string.Empty;
     public NavigationOutcome? NavigationOutcome => _navigationAdapter?.LastOutcome;
@@ -26,7 +27,14 @@ public partial class EntityView : CharacterBody3D
 
     private void BuildBodyVisuals()
     {
-        var bodySize = _isCreature ? new Vector3(0.75f, 0.65f, 1.25f) : new Vector3(0.65f, 0.9f, 0.45f);
+        var bodySize = _speciesId switch
+        {
+            "cow" => new Vector3(0.9f, 0.8f, 1.45f),
+            "wolf" => new Vector3(0.65f, 0.55f, 1.35f),
+            "ape" => new Vector3(0.75f, 0.9f, 0.65f),
+            _ when _isCreature => new Vector3(0.75f, 0.65f, 1.25f),
+            _ => new Vector3(0.65f, 0.9f, 0.45f)
+        };
         var bodyHeight = bodySize.Y;
         AddChild(new CollisionShape3D
         {
@@ -43,6 +51,7 @@ public partial class EntityView : CharacterBody3D
         {
             AddLimb(new Vector3(-0.3f, 0.25f, -0.42f)); AddLimb(new Vector3(0.3f, 0.25f, -0.42f));
             AddLimb(new Vector3(-0.3f, 0.25f, 0.42f)); AddLimb(new Vector3(0.3f, 0.25f, 0.42f));
+            AddChild(new MeshInstance3D { Mesh = new CapsuleMesh { Height = 0.7f, Radius = 0.08f }, Position = new Vector3(0, 0.55f, 0.85f), RotationDegrees = new Vector3(90, 0, 0) });
         }
         else
         {
@@ -57,12 +66,13 @@ public partial class EntityView : CharacterBody3D
 
     public override void _PhysicsProcess(double delta) => _navigationAdapter?.RefreshPath();
 
-    public void Bind(string entityId, float movementSpeed, bool isCreature = false)
+    public void Bind(string entityId, float movementSpeed, bool isCreature = false, string? speciesId = null)
     {
         if (!float.IsFinite(movementSpeed) || movementSpeed <= 0) throw new ArgumentOutOfRangeException(nameof(movementSpeed));
         EntityId = entityId;
         _movementSpeed = movementSpeed;
         _isCreature = isCreature;
+        _speciesId = speciesId ?? (isCreature ? "creature" : "human");
     }
 
     public bool Sync(World world)
