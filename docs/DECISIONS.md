@@ -197,3 +197,12 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: Combat should create a durable social consequence only when damage actually succeeds, while misconfiguration must not silently omit that consequence.
 - Consequence: Rejected attacks do not create or change relationship state; reverse-direction relationships remain independent. This service does not provide combat input handling, retaliation, or event selection.
 - Revisit: When combat adds additional outcomes such as blocks, misses, or non-damaging threats.
+
+## D023 — Relationship pairs require distinct entities
+
+- Date: 2026-09-30
+- Status: Provisional; implemented for C06j
+- Decision: Reject relationships whose observer and target are the same entity, reject self-targeted melee requests, and enforce the distinct-participant rule during snapshot validation.
+- Reason: Recruitment and social consequences represent interactions between individuals; permitting self-edges could create false recruitment eligibility or let an attack apply harm to its own attacker.
+- Consequence: Invalid self-pairs cannot be created, retrieved, or restored. Recruitment readiness for identical candidate and recruiter IDs reports no relationship.
+- Revisit: If a future system introduces meaningful self-reflection or self-affecting needs, model those separately rather than as interpersonal relationships.

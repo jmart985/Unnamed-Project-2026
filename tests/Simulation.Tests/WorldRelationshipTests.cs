@@ -76,6 +76,26 @@ public sealed class WorldRelationshipTests
         Assert.Empty(world.Relationships);
     }
 
+    [Fact]
+    public void EntityCannotHaveRelationshipWithItself()
+    {
+        var world = new World();
+        var entity = world.SpawnEntity("human", Vector3.Zero);
+
+        Assert.False(world.TryGetRelationship(entity.Id, entity.Id, out var existing));
+        Assert.Null(existing);
+        Assert.False(world.TryGetOrCreateRelationship(entity.Id, entity.Id, out var created));
+        Assert.Null(created);
+        Assert.Equal(
+            RelationshipAdjustmentResult.InvalidParticipant,
+            world.ApplyRelationshipAdjustment(
+                entity.Id,
+                entity.Id,
+                new RelationshipAdjustment(0, 1, 0, 0)));
+        Assert.Empty(world.Relationships);
+        Assert.Throws<ArgumentException>(() => new RelationshipState(entity.Id, entity.Id));
+    }
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]

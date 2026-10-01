@@ -29,6 +29,11 @@ public sealed class RelationshipState
             throw new ArgumentException("A target entity ID is required.", nameof(targetEntityId));
         }
 
+        if (string.Equals(observerEntityId, targetEntityId, StringComparison.Ordinal))
+        {
+            throw new ArgumentException("An entity cannot have a relationship with itself.", nameof(targetEntityId));
+        }
+
         ObserverEntityId = observerEntityId;
         TargetEntityId = targetEntityId;
     }

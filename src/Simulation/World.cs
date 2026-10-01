@@ -182,7 +182,10 @@ public sealed class World
         out RelationshipState? relationship)
     {
         relationship = null;
-        if (!TryGetEntity(observerEntityId, out _)
+        if (string.IsNullOrWhiteSpace(observerEntityId)
+            || string.IsNullOrWhiteSpace(targetEntityId)
+            || string.Equals(observerEntityId, targetEntityId, StringComparison.Ordinal)
+            || !TryGetEntity(observerEntityId, out _)
             || !TryGetEntity(targetEntityId, out _))
         {
             return false;
@@ -198,7 +201,10 @@ public sealed class World
         string? targetEntityId,
         out RelationshipState? relationship)
     {
-        if (!TryGetEntity(observerEntityId, out _)
+        if (string.IsNullOrWhiteSpace(observerEntityId)
+            || string.IsNullOrWhiteSpace(targetEntityId)
+            || string.Equals(observerEntityId, targetEntityId, StringComparison.Ordinal)
+            || !TryGetEntity(observerEntityId, out _)
             || !TryGetEntity(targetEntityId, out _))
         {
             relationship = null;

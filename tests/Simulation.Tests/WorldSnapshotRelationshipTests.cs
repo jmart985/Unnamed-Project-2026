@@ -88,6 +88,10 @@ public sealed class WorldSnapshotRelationshipTests
             "\"Familiarity\": 20",
             "\"Familiarity\": -0.1",
             StringComparison.Ordinal);
+        var selfRelationshipJson = validJson.Replace(
+            $"\"TargetEntityId\": \"{second.Id}\"",
+            $"\"TargetEntityId\": \"{first.Id}\"",
+            StringComparison.Ordinal);
         var nonFiniteValueJson = validJson.Replace(
             "\"Trust\": 25",
             "\"Trust\": 1e999",
@@ -102,6 +106,7 @@ public sealed class WorldSnapshotRelationshipTests
                 invalidTargetJson,
                 invalidValueJson,
                 negativeValueJson,
+                selfRelationshipJson,
                 nonFiniteValueJson,
                 duplicatePairJson
             })
