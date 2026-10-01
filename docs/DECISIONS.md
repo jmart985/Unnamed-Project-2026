@@ -206,3 +206,12 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: Recruitment and social consequences represent interactions between individuals; permitting self-edges could create false recruitment eligibility or let an attack apply harm to its own attacker.
 - Consequence: Invalid self-pairs cannot be created, retrieved, or restored. Recruitment readiness for identical candidate and recruiter IDs reports no relationship.
 - Revisit: If a future system introduces meaningful self-reflection or self-affecting needs, model those separately rather than as interpersonal relationships.
+
+## D024 — Combat consequences require a live combatant and applied damage
+
+- Date: 2026-09-30
+- Status: Provisional; implemented for C06k
+- Decision: Resolve melee damage through `CharacterHealth`, reject incapacitated attackers and dead defenders or destroyed body parts, and report success only when a positive representable health change occurs. Apply social harm only after that success.
+- Reason: Combat state and social memory must reflect actual world consequences; attacks on incapacitated actors, corpses, destroyed body parts, or below-precision amounts must not appear to succeed.
+- Consequence: Invalid combatants cannot mutate health or relationship values through melee resolution. `CharacterHealth.TryDamage` can report the actual health change to combat callers.
+- Revisit: When non-damaging attack outcomes such as blocks, misses, or intimidation are modeled as explicit events.

@@ -74,11 +74,34 @@ public sealed class CharacterHealth
 
     public bool TryDamage(string? name, double amount)
     {
-        if (_isDead) return false;
-        var applied = TryGetPart(name, out var part) && part is not null && part.ApplyDamage(amount) >= 0;
-        if (string.Equals(name, "Head", StringComparison.Ordinal) && part is not null && part.IsDestroyed) _pendingDeathSeconds = HeadDeathDelaySeconds;
-        if (string.Equals(name, "Torso", StringComparison.Ordinal) && part is not null && part.IsDestroyed) _isDead = true;
-        return applied;
+        return TryDamage(name, amount, out _);
+    }
+
+    public bool TryDamage(string? name, double amount, out double appliedDamage)
+    {
+        appliedDamage = 0;
+        if (_isDead || !TryGetPart(name, out var part) || part is null)
+        {
+            return false;
+        }
+
+        var healthBeforeDamage = part.CurrentHealth;
+        part.ApplyDamage(amount);
+        appliedDamage = healthBeforeDamage - part.CurrentHealth;
+        if (appliedDamage > 0)
+        {
+            if (string.Equals(name, "Head", StringComparison.Ordinal) && part.IsDestroyed)
+            {
+                _pendingDeathSeconds = HeadDeathDelaySeconds;
+            }
+
+            if (string.Equals(name, "Torso", StringComparison.Ordinal) && part.IsDestroyed)
+            {
+                _isDead = true;
+            }
+        }
+
+        return true;
     }
 
     public bool TryHeal(string? name, double amount)
@@ -110,6 +133,5 @@ public sealed class CharacterHealth
             new BodyPartHealth("RightLeg", partHealth / 2, false)]);
     }
 }
-
 
 
