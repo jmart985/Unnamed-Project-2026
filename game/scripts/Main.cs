@@ -1,10 +1,12 @@
 using Godot;
 using Simulation;
+using System.Text.Json;
 
 namespace UnnamedProject2026;
 
 public partial class Main : Node3D
 {
+    private sealed record GameSaveSnapshot(string World, float PlayerX, float PlayerY, float PlayerZ);
     private readonly SimulationClock _clock = new();
     private readonly SaveSlotStore _saveSlotStore = new();
     private readonly World _world = new();
@@ -496,7 +498,15 @@ public partial class Main : Node3D
         {
             _saveSlotStore.Save(
                 _saveSlotPath,
-                () => WorldSnapshotSerializer.Serialize(_world, _clock.SimulationTime));
+                () =>
+                {
+                    var player = GetNode<PlayerCharacter>("PlayerCharacter");
+                    return JsonSerializer.Serialize(new GameSaveSnapshot(
+                        WorldSnapshotSerializer.Serialize(_world, _clock.SimulationTime),
+                        player.GlobalPosition.X,
+                        player.GlobalPosition.Y,
+                        player.GlobalPosition.Z));
+                });
             _saveLoadStatus = $"Saved at {_clock.SimulationTime:0.0}s.";
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
@@ -513,15 +523,21 @@ public partial class Main : Node3D
         try
         {
             var json = _saveSlotStore.Load(_saveSlotPath);
+            var gameSnapshot = JsonSerializer.Deserialize<GameSaveSnapshot>(json)
+                ?? throw new InvalidDataException("Save did not contain a game snapshot.");
             var restoredTime = WorldSnapshotSerializer.Load(
                 _world,
-                json,
+                gameSnapshot.World,
                 _speciesCatalog,
                 _foodConsumption,
                 _wandering,
                 _woodHauling,
                 _wander);
             _clock.Restore(restoredTime);
+            GetNode<PlayerCharacter>("PlayerCharacter").GlobalPosition = new Vector3(
+                gameSnapshot.PlayerX,
+                gameSnapshot.PlayerY,
+                gameSnapshot.PlayerZ);
             _simulationTick = checked((long)Math.Round(
                 restoredTime / SimulationClock.TickIntervalSeconds,
                 MidpointRounding.AwayFromZero));
