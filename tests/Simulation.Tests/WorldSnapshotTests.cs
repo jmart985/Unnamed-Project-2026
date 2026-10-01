@@ -61,7 +61,10 @@ public sealed class WorldSnapshotTests
             () => WorldSnapshotSerializer.Capture(world, double.NaN));
 
         var json = WorldSnapshotSerializer.Serialize(world, 0)
-            .Replace("\"SchemaVersion\": 2", "\"SchemaVersion\": 99", StringComparison.Ordinal);
+            .Replace(
+                $"\"SchemaVersion\": {WorldSnapshotSerializer.CurrentSchemaVersion}",
+                "\"SchemaVersion\": 99",
+                StringComparison.Ordinal);
 
         Assert.Throws<InvalidDataException>(() => WorldSnapshotSerializer.Deserialize(json));
     }
@@ -107,7 +110,10 @@ public sealed class WorldSnapshotTests
         var invalidSnapshots = new[]
         {
             "{",
-            validJson.Replace("\"SchemaVersion\": 2", "\"SchemaVersion\": 99", StringComparison.Ordinal),
+            validJson.Replace(
+                $"\"SchemaVersion\": {WorldSnapshotSerializer.CurrentSchemaVersion}",
+                "\"SchemaVersion\": 99",
+                StringComparison.Ordinal),
             validJson.Replace("\"SpeciesId\": \"human\"", "\"SpeciesId\": \"unknown\"", StringComparison.Ordinal),
             validJson.Replace("\"food\": 3", "\"food\": -1", StringComparison.Ordinal)
         };

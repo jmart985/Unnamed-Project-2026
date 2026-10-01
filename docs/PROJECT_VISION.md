@@ -16,7 +16,7 @@ An entity becomes hungry, finds accessible food, travels to it, consumes a real 
 
 The current milestone is a technical and design experiment, not a promise of open-world scope or production quality. Success means the behavior is observable, explainable, and repeatable enough to improve.
 
-See [Milestone 0.1](MILESTONE_0_1.md) for the scope contract. Earlier conversation examples included combat, relationships, and factions; the current small-scope brief supersedes those examples.
+See [Milestone 0.1](MILESTONE_0_1.md) for the foundational sandbox scope and [Milestone 0.5](MILESTONE_0_5.md) for combat prototype acceptance. Earlier conversation examples included broader combat, relationships, and factions; milestone documents define the current commitment.
 
 ## Development Philosophy
 

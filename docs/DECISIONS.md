@@ -120,8 +120,80 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 ## D014 - Versioned durable world snapshots
 
 - Date: 2026-09-27
-- Status: Provisional; implemented for S01a
-- Decision: Capture simulation time, the entity ID allocator position, entity durable state, carried inventory, and food, resource-pile, and stockpile containers in a versioned JSON snapshot. Runtime actions, reservations, navigation requests, and engine nodes remain transient. Snapshot schema version 2 restores every durable resource location, then resets registered transient services before replacing the world so their next tick rebuilds valid work.
+- Status: Provisional; implemented for S01a and extended by C06c
+- Decision: Capture simulation time, the entity ID allocator position, entity durable state, carried inventory, food/resource-pile/stockpile containers, and directed relationship values in a versioned JSON snapshot. Runtime actions, reservations, navigation requests, and engine nodes remain transient. Snapshot schema version 3 restores durable state, then resets registered transient services before replacing the world so their next tick rebuilds valid work.
 - Reason: Save/load needs a stable, engine-independent boundary that can be validated before a later restore operation replaces the running world.
 - Consequence: Snapshot schema changes require an explicit version update; transient work is rebuilt rather than serialized.
 - Revisit: When S01b adds atomic validation and world restoration.
+
+## D015 — Directed relationship values
+
+- Date: 2026-09-30
+- Status: Provisional; implemented for C06a
+- Decision: Represent an entity's relationship toward another as a directed pair with familiarity, trust, fear, and loyalty values. Each starts at 0, is bounded to [0, 100], and changes only through explicit finite deltas; reverse-direction values are separate.
+- Reason: Trust, fear, familiarity, and loyalty can differ by observer, and later social systems need a deterministic, engine-independent foundation.
+- Consequence: The relationship state type does not yet define memory, decay, autonomous interactions, recruitment, or captivity.
+- Revisit: When a later 0.6 issue defines how social events update or decay relationship values.
+
+## D016 — World-owned relationship lifecycle
+
+- Date: 2026-09-30
+- Status: Provisional; implemented for C06b
+- Decision: The World owns directed relationship state keyed by observer and target entity IDs. Relationships are available only while both participants exist and are removed when either participant is removed or the World resets.
+- Reason: Relationship records must follow the lifetime of their authoritative entity identities and must not retain stale references after removal or reset.
+- Consequence: Relationship records are tied to the current World's entity identities; runtime memories and event histories are not persisted.
+- Revisit: When a later 0.6 issue extends character identity beyond one World.
+
+## D017 — Persist directed relationship values
+
+- Date: 2026-09-30
+- Status: Provisional; implemented for C06c
+- Decision: Store each directed relationship's familiarity, trust, fear, and loyalty in the world snapshot and increment the snapshot schema version to 3. Reject invalid pairs or values before changing the running world.
+- Reason: Relationship values represent durable consequences and should survive save/load, while validation must preserve the existing atomic restore guarantee.
+- Consequence: Snapshots from schema versions 1 and 2 remain explicitly unsupported by the current loader.
+- Revisit: If future migration work introduces backward-compatible snapshot upgrades.
+
+## D018 — Atomic social relationship adjustments
+
+- Date: 2026-09-30
+- Status: Provisional; implemented for C06d
+- Decision: Apply explicit familiarity, trust, fear, and loyalty deltas to a directed relationship as one operation. Validate participant identity and every finite delta before creating or mutating relationship state.
+- Reason: A single social interaction can affect multiple relationship dimensions, and rejecting an invalid event must not leave a partial result.
+- Consequence: The adjustment operation does not assign default effects to named events; interaction rules supply explicit deltas.
+- Revisit: When later social interaction issues define concrete event rules or data-driven effect profiles.
+
+## D019 — Data-defined social event effects
+
+- Date: 2026-09-30
+- Status: Provisional; implemented for C06e
+- Decision: Represent help, rescue, harm, and threat effects as validated data profiles that provide explicit familiarity, trust, fear, and loyalty deltas to the atomic relationship adjustment service.
+- Reason: Keep social consequences inspectable and tunable without embedding event balance in simulation code or introducing autonomous behavior prematurely.
+- Consequence: Initial values in `data/relationship_events.json` are prototype tuning only; callers explicitly decide when an event occurs.
+- Revisit: After observing the relationship behavior in a playable interaction loop.
+
+## D020 — Provisional relationship bond levels
+
+- Date: 2026-09-30
+- Status: Provisional; implemented for C06f
+- Decision: Derive Stranger, Familiar, Trusted, Loyal, or Fearful as a read-only projection of directed relationship values. Fearful takes precedence; Loyal requires configured familiarity, trust, loyalty, and maximum-fear thresholds.
+- Reason: Later recruitment and domestication systems need a deterministic summary while preserving the underlying continuous values.
+- Consequence: The initial thresholds are tuning defaults only and can be replaced through a validated threshold profile.
+- Revisit: After bond levels are observed in a playable social interaction loop.
+
+## D021 — Loyalty-gated voluntary recruitment readiness
+
+- Date: 2026-09-30
+- Status: Provisional; implemented for C06g
+- Decision: A prospective recruit is eligible for voluntary recruitment only when their directed relationship toward the recruiter classifies as Loyal. Missing relationship state, all lower bond levels, and Fearful are ineligible.
+- Reason: Make loyalty consequential without adding dialogue, faction membership, captivity, or a recruitment transaction before those systems are scoped.
+- Consequence: Eligibility is only a read-only policy result; it does not recruit or change either character.
+- Revisit: When recruitment actions, faction ownership, or captive release enter scope.
+
+## D022 — Successful melee damage records harm
+
+- Date: 2026-09-30
+- Status: Provisional; implemented for C06i
+- Decision: Resolve melee damage before applying the configured `harmed` event to the defender-to-attacker relationship. Require that event profile when constructing the social combat service.
+- Reason: Combat should create a durable social consequence only when damage actually succeeds, while misconfiguration must not silently omit that consequence.
+- Consequence: Rejected attacks do not create or change relationship state; reverse-direction relationships remain independent. This service does not provide combat input handling, retaliation, or event selection.
+- Revisit: When combat adds additional outcomes such as blocks, misses, or non-damaging threats.

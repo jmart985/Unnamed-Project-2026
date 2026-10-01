@@ -11,7 +11,16 @@ public sealed record WorldSnapshot(
     IReadOnlyList<EntitySnapshot> Entities,
     IReadOnlyList<FoodSourceSnapshot> FoodSources,
     IReadOnlyList<ResourceLocationSnapshot> ResourcePiles,
-    IReadOnlyList<ResourceLocationSnapshot> Stockpiles);
+    IReadOnlyList<ResourceLocationSnapshot> Stockpiles,
+    IReadOnlyList<RelationshipSnapshot> Relationships);
+
+public sealed record RelationshipSnapshot(
+    string ObserverEntityId,
+    string TargetEntityId,
+    double Familiarity,
+    double Trust,
+    double Fear,
+    double Loyalty);
 
 public sealed record EntitySnapshot(
     string Id,
@@ -42,7 +51,7 @@ public sealed record ResourceContainerSnapshot(
 
 public static class WorldSnapshotSerializer
 {
-    public const int CurrentSchemaVersion = 2;
+    public const int CurrentSchemaVersion = 3;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -76,6 +85,17 @@ public static class WorldSnapshotSerializer
             .ToArray();
         var resourcePiles = world.ResourcePiles.Select(CaptureLocation).ToArray();
         var stockpiles = world.Stockpiles.Select(CaptureLocation).ToArray();
+        var relationships = world.Relationships
+            .OrderBy(relationship => relationship.ObserverEntityId, StringComparer.Ordinal)
+            .ThenBy(relationship => relationship.TargetEntityId, StringComparer.Ordinal)
+            .Select(relationship => new RelationshipSnapshot(
+                relationship.ObserverEntityId,
+                relationship.TargetEntityId,
+                relationship.Familiarity,
+                relationship.Trust,
+                relationship.Fear,
+                relationship.Loyalty))
+            .ToArray();
 
         return new WorldSnapshot(
             CurrentSchemaVersion,
@@ -84,7 +104,8 @@ public static class WorldSnapshotSerializer
             entities,
             foodSources,
             resourcePiles,
-            stockpiles);
+            stockpiles,
+            relationships);
     }
 
     public static string Serialize(World world, double simulationTime)
@@ -161,9 +182,10 @@ public static class WorldSnapshotSerializer
         }
 
         if (snapshot.Entities is null || snapshot.FoodSources is null
-            || snapshot.ResourcePiles is null || snapshot.Stockpiles is null)
+            || snapshot.ResourcePiles is null || snapshot.Stockpiles is null
+            || snapshot.Relationships is null)
         {
-            throw new InvalidDataException("Snapshot entity and food source lists are required.");
+            throw new InvalidDataException("Snapshot entity, resource, and relationship lists are required.");
         }
 
         var entityIds = new HashSet<string>(StringComparer.Ordinal);
@@ -222,6 +244,49 @@ public static class WorldSnapshotSerializer
 
         ValidateLocations(snapshot.ResourcePiles, "resource pile", foodSourceIds);
         ValidateLocations(snapshot.Stockpiles, "stockpile", foodSourceIds);
+        ValidateRelationships(snapshot.Relationships, entityIds);
+    }
+
+    private static void ValidateRelationships(
+        IReadOnlyList<RelationshipSnapshot> relationships,
+        HashSet<string> entityIds)
+    {
+        var relationshipPairs = new HashSet<(string ObserverId, string TargetId)>();
+        foreach (var relationship in relationships)
+        {
+            if (relationship is null
+                || string.IsNullOrWhiteSpace(relationship.ObserverEntityId)
+                || string.IsNullOrWhiteSpace(relationship.TargetEntityId)
+                || !entityIds.Contains(relationship.ObserverEntityId)
+                || !entityIds.Contains(relationship.TargetEntityId))
+            {
+                throw new InvalidDataException("Snapshot relationships must reference existing entity IDs.");
+            }
+
+            if (!relationshipPairs.Add(
+                (relationship.ObserverEntityId, relationship.TargetEntityId)))
+            {
+                throw new InvalidDataException(
+                    $"Snapshot contains duplicate relationship '{relationship.ObserverEntityId}' to '{relationship.TargetEntityId}'.");
+            }
+
+            ValidateRelationshipValue(relationship.Familiarity, "familiarity", relationship);
+            ValidateRelationshipValue(relationship.Trust, "trust", relationship);
+            ValidateRelationshipValue(relationship.Fear, "fear", relationship);
+            ValidateRelationshipValue(relationship.Loyalty, "loyalty", relationship);
+        }
+    }
+
+    private static void ValidateRelationshipValue(
+        double value,
+        string dimension,
+        RelationshipSnapshot relationship)
+    {
+        if (!double.IsFinite(value) || value is < 0 or > 100)
+        {
+            throw new InvalidDataException(
+                $"Snapshot relationship '{relationship.ObserverEntityId}' to '{relationship.TargetEntityId}' has {dimension} outside [0, 100].");
+        }
     }
 
     private static void ValidateLocations(

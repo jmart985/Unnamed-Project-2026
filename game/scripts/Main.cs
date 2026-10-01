@@ -475,6 +475,8 @@ public partial class Main : Node3D
             : entity.Needs.IsHungry
                 ? "Hungry (food requested)"
                 : "Satisfied";
+        var inspection = EntityInspectionReadModel.Create(_world, entity);
+        var relationships = EntityInspectionReadModel.FormatOutgoingRelationships(inspection);
         _inspectorLabel.Text =
             $"ID: {entity.Id}\n" +
             $"Species: {entity.SpeciesId}\n" +
@@ -485,7 +487,8 @@ public partial class Main : Node3D
             $"Target: {target}\n" +
             $"Navigation: {navigationStatus}\n" +
             $"Inventory: {inventory}\n" +
-            $"Waiting reason: {entity.WaitingReason ?? "none"}";
+            $"Waiting reason: {entity.WaitingReason ?? "none"}\n" +
+            $"Outgoing relationships:\n{relationships}";
         _removeSelectedButton.Disabled = false;
     }
 
