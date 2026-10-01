@@ -32,8 +32,8 @@ public partial class PlayerCharacter : CharacterBody3D
     {
         PrototypeInputMap.EnsureDefaults();
         _lastGroundedPosition = GlobalPosition;
-        _leftArm = GetNode<MeshInstance3D>("LeftArm");
-        _rightArm = GetNode<MeshInstance3D>("RightArm");
+        _leftArm = GetNode<MeshInstance3D>("LeftShoulder/LeftArm");
+        _rightArm = GetNode<MeshInstance3D>("RightShoulder/RightArm");
         _restingLeftArmRotation = _leftArm.Rotation.X;
         _restingArmRotation = _rightArm.Rotation.X;
     }
