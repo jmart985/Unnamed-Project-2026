@@ -8,8 +8,17 @@ public static class MeleeCombatService
 {
     public static MeleeAttackResolution Resolve(World? world, MeleeAttackRequest? request, double maximumReach = double.MaxValue)
     {
-        if (world is null || request is null || string.IsNullOrWhiteSpace(request.AttackerId) || string.IsNullOrWhiteSpace(request.DefenderId) || string.IsNullOrWhiteSpace(request.BodyPart) || !double.IsFinite(request.Damage) || request.Damage <= 0)
+        if (world is null
+            || request is null
+            || string.IsNullOrWhiteSpace(request.AttackerId)
+            || string.IsNullOrWhiteSpace(request.DefenderId)
+            || string.Equals(request.AttackerId, request.DefenderId, StringComparison.Ordinal)
+            || string.IsNullOrWhiteSpace(request.BodyPart)
+            || !double.IsFinite(request.Damage)
+            || request.Damage <= 0)
+        {
             return new(MeleeAttackResult.InvalidRequest);
+        }
         if (!double.IsFinite(maximumReach) || maximumReach < 0) return new(MeleeAttackResult.InvalidRequest);
         if (!world.TryGetEntity(request.AttackerId, out var attacker) || attacker is null || !world.TryGetEntity(request.DefenderId, out var defender) || defender is null)
             return new(MeleeAttackResult.MissingEntity);
@@ -20,6 +29,4 @@ public static class MeleeCombatService
         return new(MeleeAttackResult.Success, applied, defender.Health.IsIncapacitated, defender.Health.IsDead);
     }
 }
-
-
 

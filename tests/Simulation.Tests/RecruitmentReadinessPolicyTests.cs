@@ -66,6 +66,18 @@ public sealed class RecruitmentReadinessPolicyTests
     }
 
     [Fact]
+    public void EntityCannotBeEligibleToRecruitItself()
+    {
+        var world = new World();
+        var entity = world.SpawnEntity("human", Vector3.Zero);
+
+        Assert.Equal(
+            RecruitmentReadinessResult.MissingRelationship,
+            RecruitmentReadinessPolicy.Evaluate(world, entity.Id, entity.Id));
+        Assert.Empty(world.Relationships);
+    }
+
+    [Fact]
     public void UsesConfiguredBondThresholds()
     {
         var world = new World();

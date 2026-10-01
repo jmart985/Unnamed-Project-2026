@@ -30,4 +30,19 @@ public sealed class MeleeCombatServiceTests
         var result = MeleeCombatService.Resolve(world, new(attacker.Id, defender.Id, "Head", 1), 1);
         Assert.Equal(MeleeAttackResult.OutOfRange, result.Result); Assert.Equal(25, defender.Health.Parts.Single(part => part.Name == "Head").CurrentHealth);
     }
+
+    [Fact]
+    public void SelfTargetedAttackIsRejectedWithoutMutation()
+    {
+        var world = new World();
+        var attacker = world.SpawnEntity("human", Vector3.Zero);
+
+        var result = MeleeCombatService.Resolve(
+            world,
+            new(attacker.Id, attacker.Id, "Head", 10));
+
+        Assert.Equal(MeleeAttackResult.InvalidRequest, result.Result);
+        Assert.Equal(25, attacker.Health.Parts.Single(part => part.Name == "Head").CurrentHealth);
+        Assert.Empty(world.Relationships);
+    }
 }

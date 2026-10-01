@@ -257,10 +257,15 @@ public static class WorldSnapshotSerializer
             if (relationship is null
                 || string.IsNullOrWhiteSpace(relationship.ObserverEntityId)
                 || string.IsNullOrWhiteSpace(relationship.TargetEntityId)
+                || string.Equals(
+                    relationship.ObserverEntityId,
+                    relationship.TargetEntityId,
+                    StringComparison.Ordinal)
                 || !entityIds.Contains(relationship.ObserverEntityId)
                 || !entityIds.Contains(relationship.TargetEntityId))
             {
-                throw new InvalidDataException("Snapshot relationships must reference existing entity IDs.");
+                throw new InvalidDataException(
+                    "Snapshot relationships must reference two distinct existing entity IDs.");
             }
 
             if (!relationshipPairs.Add(
