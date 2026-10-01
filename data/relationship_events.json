@@ -1,0 +1,30 @@
+[
+  {
+    "id": "helped",
+    "familiarityDelta": 5,
+    "trustDelta": 8,
+    "fearDelta": -2,
+    "loyaltyDelta": 3
+  },
+  {
+    "id": "rescued",
+    "familiarityDelta": 12,
+    "trustDelta": 20,
+    "fearDelta": -15,
+    "loyaltyDelta": 12
+  },
+  {
+    "id": "harmed",
+    "familiarityDelta": 3,
+    "trustDelta": -15,
+    "fearDelta": 18,
+    "loyaltyDelta": -12
+  },
+  {
+    "id": "threatened",
+    "familiarityDelta": 2,
+    "trustDelta": -8,
+    "fearDelta": 12,
+    "loyaltyDelta": -5
+  }
+]

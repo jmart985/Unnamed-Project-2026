@@ -9,6 +9,7 @@ public sealed class World
     public const int DefaultInventoryCapacity = 10;
 
     private readonly Dictionary<string, EntityRecord> _entities = new(StringComparer.Ordinal);
+    private readonly Dictionary<(string ObserverId, string TargetId), RelationshipState> _relationships = [];
     private readonly List<FoodSource> _foodSources = [];
     private readonly ReadOnlyCollection<FoodSource> _foodSourceView;
     private readonly List<ResourceLocation> _resourcePiles = [];
@@ -38,6 +39,8 @@ public sealed class World
     }
 
     public IReadOnlyCollection<EntityRecord> Entities => _entities.Values;
+    public IReadOnlyCollection<RelationshipState> Relationships =>
+        Array.AsReadOnly(_relationships.Values.ToArray());
     public IReadOnlyList<FoodSource> FoodSources => _foodSourceView;
     internal long LastAllocatedEntityId => _lastEntityId;
     public IReadOnlyList<ResourceLocation> ResourcePiles => _resourcePileView;
@@ -173,6 +176,73 @@ public sealed class World
         return _entities.TryGetValue(id, out entity);
     }
 
+    public bool TryGetRelationship(
+        string? observerEntityId,
+        string? targetEntityId,
+        out RelationshipState? relationship)
+    {
+        relationship = null;
+        if (!TryGetEntity(observerEntityId, out _)
+            || !TryGetEntity(targetEntityId, out _))
+        {
+            return false;
+        }
+
+        return _relationships.TryGetValue(
+            (observerEntityId!, targetEntityId!),
+            out relationship);
+    }
+
+    public bool TryGetOrCreateRelationship(
+        string? observerEntityId,
+        string? targetEntityId,
+        out RelationshipState? relationship)
+    {
+        if (!TryGetEntity(observerEntityId, out _)
+            || !TryGetEntity(targetEntityId, out _))
+        {
+            relationship = null;
+            return false;
+        }
+
+        var key = (observerEntityId!, targetEntityId!);
+        if (_relationships.TryGetValue(key, out relationship))
+        {
+            return true;
+        }
+
+        relationship = new RelationshipState(key.Item1, key.Item2);
+        _relationships.Add(key, relationship);
+        return true;
+    }
+
+    public RelationshipAdjustmentResult ApplyRelationshipAdjustment(
+        string? observerEntityId,
+        string? targetEntityId,
+        RelationshipAdjustment? adjustment)
+    {
+        if (adjustment is null
+            || !double.IsFinite(adjustment.FamiliarityDelta)
+            || !double.IsFinite(adjustment.TrustDelta)
+            || !double.IsFinite(adjustment.FearDelta)
+            || !double.IsFinite(adjustment.LoyaltyDelta))
+        {
+            return RelationshipAdjustmentResult.InvalidDelta;
+        }
+
+        if (!TryGetOrCreateRelationship(observerEntityId, targetEntityId, out var relationship)
+            || relationship is null)
+        {
+            return RelationshipAdjustmentResult.InvalidParticipant;
+        }
+
+        relationship.ApplyDelta(RelationshipDimension.Familiarity, adjustment.FamiliarityDelta);
+        relationship.ApplyDelta(RelationshipDimension.Trust, adjustment.TrustDelta);
+        relationship.ApplyDelta(RelationshipDimension.Fear, adjustment.FearDelta);
+        relationship.ApplyDelta(RelationshipDimension.Loyalty, adjustment.LoyaltyDelta);
+        return RelationshipAdjustmentResult.Applied;
+    }
+
     public bool TryRemoveEntity(string? id)
     {
         if (string.IsNullOrWhiteSpace(id) || !_entities.TryGetValue(id, out var entity))
@@ -182,6 +252,7 @@ public sealed class World
 
         entity.Actions.Cancel();
         Reservations.ReleaseForEntity(id);
+        RemoveRelationshipsForEntity(id);
         return _entities.Remove(id);
     }
 
@@ -210,6 +281,7 @@ public sealed class World
         }
 
         _entities.Clear();
+        _relationships.Clear();
         _foodSources.Clear();
         _resourcePiles.Clear();
         _stockpiles.Clear();
@@ -258,6 +330,24 @@ public sealed class World
             AddStockpile(stockpile.Id, stockpile.Position, RestoreContainer(stockpile.Contents));
         }
 
+        foreach (var savedRelationship in snapshot.Relationships)
+        {
+            if (!TryGetOrCreateRelationship(
+                savedRelationship.ObserverEntityId,
+                savedRelationship.TargetEntityId,
+                out var relationship)
+                || relationship is null)
+            {
+                throw new InvalidOperationException(
+                    "A validated relationship could not be restored into the world.");
+            }
+
+            relationship.ApplyDelta(RelationshipDimension.Familiarity, savedRelationship.Familiarity);
+            relationship.ApplyDelta(RelationshipDimension.Trust, savedRelationship.Trust);
+            relationship.ApplyDelta(RelationshipDimension.Fear, savedRelationship.Fear);
+            relationship.ApplyDelta(RelationshipDimension.Loyalty, savedRelationship.Loyalty);
+        }
+
         _lastEntityId = snapshot.LastAllocatedEntityId;
     }
 
@@ -296,6 +386,18 @@ public sealed class World
         if (!_targetIds.Add(id))
         {
             throw new ArgumentException($"Resource target ID '{id}' has already been used in this world.", parameterName);
+        }
+    }
+
+    private void RemoveRelationshipsForEntity(string entityId)
+    {
+        var relatedPairs = _relationships.Keys
+            .Where(pair => string.Equals(pair.ObserverId, entityId, StringComparison.Ordinal)
+                || string.Equals(pair.TargetId, entityId, StringComparison.Ordinal))
+            .ToArray();
+        foreach (var pair in relatedPairs)
+        {
+            _relationships.Remove(pair);
         }
     }
 
