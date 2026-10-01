@@ -43,13 +43,19 @@ position = Vector3(0, 1.8, 0)
 mesh = SubResource("SphereMesh_head")
 material_override = SubResource("Material_skin")
 
-[node name="LeftArm" type="MeshInstance3D" parent="."]
-position = Vector3(-0.55, 1.0, 0)
+[node name="LeftShoulder" type="Node3D" parent="."]
+position = Vector3(-0.55, 1.4, 0)
+
+[node name="LeftArm" type="MeshInstance3D" parent="LeftShoulder"]
+position = Vector3(0, -0.4, 0)
 mesh = SubResource("CapsuleMesh_limb")
 material_override = SubResource("Material_limb")
 
-[node name="RightArm" type="MeshInstance3D" parent="."]
-position = Vector3(0.55, 1.0, 0)
+[node name="RightShoulder" type="Node3D" parent="."]
+position = Vector3(0.55, 1.4, 0)
+
+[node name="RightArm" type="MeshInstance3D" parent="RightShoulder"]
+position = Vector3(0, -0.4, 0)
 mesh = SubResource("CapsuleMesh_limb")
 material_override = SubResource("Material_limb")
 
