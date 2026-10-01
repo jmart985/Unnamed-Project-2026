@@ -238,9 +238,9 @@ public partial class Main : Node3D
             AddEntityView(entity);
         }
 
-        for (var index = 0; index < 3; index++)
+        foreach (var speciesId in new[] { "ape", "cow", "wolf" })
         {
-            var entity = _world.SpawnEntity("creature", new System.Numerics.Vector3(index - 1, 0, 4));
+            var entity = _world.SpawnEntity(speciesId, new System.Numerics.Vector3(_world.Entities.Count - 10, 0, 4));
             AddEntityView(entity);
         }
 
@@ -253,7 +253,7 @@ public partial class Main : Node3D
     {
         var movementSpeed = (float)_speciesCatalog.GetRequired(entity.SpeciesId).MovementSpeed;
         var view = new EntityView { Name = $"View_{entity.Id}" };
-        view.Bind(entity.Id, movementSpeed, isCreature: !string.Equals(entity.SpeciesId, "human", StringComparison.Ordinal));
+        view.Bind(entity.Id, movementSpeed, isCreature: !string.Equals(entity.SpeciesId, "human", StringComparison.Ordinal), entity.SpeciesId);
         AddChild(view);
         _entityViews.Add(entity.Id, view);
 

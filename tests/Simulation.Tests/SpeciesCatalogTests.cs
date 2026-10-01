@@ -10,7 +10,7 @@ public sealed class SpeciesCatalogTests
     {
         var catalog = SpeciesCatalog.LoadFromFile(GetSpeciesDataPath());
 
-        Assert.Equal(new[] { "human", "creature" }, catalog.Species.Select(species => species.Id));
+        Assert.Equal(new[] { "human", "creature", "ape", "cow", "wolf" }, catalog.Species.Select(species => species.Id));
         Assert.Equal(3.0, catalog.GetRequired("human").MovementSpeed);
         Assert.Equal(0.2, catalog.GetRequired("human").HungerRate);
         Assert.Equal(new[] { ItemIds.Food, ItemIds.Plant, ItemIds.Fruit, ItemIds.Meat }, catalog.GetRequired("human").Diet);
@@ -18,8 +18,14 @@ public sealed class SpeciesCatalogTests
         Assert.False(catalog.GetRequired("creature").CanHaul);
         Assert.Equal(new[] { "human", "creature" },
             catalog.GetCompatibleWithDiet(ItemIds.Food).Select(species => species.Id));
-        Assert.Equal(new[] { "human" }, catalog.GetHaulers().Select(species => species.Id));
+        Assert.Equal(new[] { "human", "ape", "cow" }, catalog.GetHaulers().Select(species => species.Id));
         Assert.Empty(catalog.GetCompatibleWithDiet(ItemIds.Wood));
+        Assert.True(catalog.GetRequired("ape").CanUseTools);
+        Assert.True(catalog.GetRequired("ape").CanOpenDoors);
+        Assert.True(catalog.GetRequired("wolf").CanTrack);
+        Assert.True(catalog.GetRequired("wolf").SmellRange > catalog.GetRequired("cow").SmellRange);
+        Assert.Equal(DietaryProfile.Herbivore, catalog.GetRequired("cow").DietaryProfile);
+        Assert.Equal(DietaryProfile.Carnivore, catalog.GetRequired("wolf").DietaryProfile);
     }
 
     [Theory]
