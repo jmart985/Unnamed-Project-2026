@@ -77,3 +77,71 @@ text = "Select an entity to inspect."
 [node name="RemoveSelected" type="Button" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Remove selected"
 disabled = true
+
+[node name="CharacterCreation" type="CanvasLayer" parent="."]
+
+[node name="Backdrop" type="ColorRect" parent="CharacterCreation"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.7)
+
+[node name="Panel" type="PanelContainer" parent="CharacterCreation"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -190.0
+offset_top = -220.0
+offset_right = 190.0
+offset_bottom = 220.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Form" type="VBoxContainer" parent="CharacterCreation/Panel"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="CharacterCreation/Panel/Form"]
+layout_mode = 2
+text = "Create your character"
+
+[node name="NameLabel" type="Label" parent="CharacterCreation/Panel/Form"]
+layout_mode = 2
+text = "Name"
+
+[node name="Name" type="LineEdit" parent="CharacterCreation/Panel/Form"]
+layout_mode = 2
+placeholder_text = "Enter a name"
+
+[node name="HeightLabel" type="Label" parent="CharacterCreation/Panel/Form"]
+layout_mode = 2
+text = "Height"
+
+[node name="Height" type="OptionButton" parent="CharacterCreation/Panel/Form"]
+layout_mode = 2
+
+[node name="BodyTypeLabel" type="Label" parent="CharacterCreation/Panel/Form"]
+layout_mode = 2
+text = "Body type"
+
+[node name="BodyType" type="OptionButton" parent="CharacterCreation/Panel/Form"]
+layout_mode = 2
+
+[node name="SexLabel" type="Label" parent="CharacterCreation/Panel/Form"]
+layout_mode = 2
+text = "Sex"
+
+[node name="Sex" type="OptionButton" parent="CharacterCreation/Panel/Form"]
+layout_mode = 2
+
+[node name="Error" type="Label" parent="CharacterCreation/Panel/Form"]
+layout_mode = 2
+modulate = Color(1, 0.35, 0.35, 1)
+text = ""
+
+[node name="Start" type="Button" parent="CharacterCreation/Panel/Form"]
+layout_mode = 2
+text = "Start new game"

@@ -12,7 +12,10 @@ public sealed record WorldSnapshot(
     IReadOnlyList<FoodSourceSnapshot> FoodSources,
     IReadOnlyList<ResourceLocationSnapshot> ResourcePiles,
     IReadOnlyList<ResourceLocationSnapshot> Stockpiles,
-    IReadOnlyList<RelationshipSnapshot> Relationships);
+    IReadOnlyList<RelationshipSnapshot> Relationships,
+    int? SessionSeed,
+    string? PlayerEntityId,
+    PlayerCharacterProfile? PlayerProfile);
 
 public sealed record RelationshipSnapshot(
     string ObserverEntityId,
@@ -51,7 +54,7 @@ public sealed record ResourceContainerSnapshot(
 
 public static class WorldSnapshotSerializer
 {
-    public const int CurrentSchemaVersion = 3;
+    public const int CurrentSchemaVersion = 4;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -105,7 +108,10 @@ public static class WorldSnapshotSerializer
             foodSources,
             resourcePiles,
             stockpiles,
-            relationships);
+            relationships,
+            world.SessionSeed,
+            world.PlayerEntityId,
+            world.PlayerProfile);
     }
 
     public static string Serialize(World world, double simulationTime)
@@ -225,6 +231,7 @@ public static class WorldSnapshotSerializer
                 "Snapshot last allocated entity ID must include every entity ID.");
         }
 
+        ValidateSessionPlayer(snapshot, entityIds);
         var foodSourceIds = new HashSet<string>(StringComparer.Ordinal);
         foreach (var source in snapshot.FoodSources)
         {
@@ -245,6 +252,44 @@ public static class WorldSnapshotSerializer
         ValidateLocations(snapshot.ResourcePiles, "resource pile", foodSourceIds);
         ValidateLocations(snapshot.Stockpiles, "stockpile", foodSourceIds);
         ValidateRelationships(snapshot.Relationships, entityIds);
+    }
+
+    private static void ValidateSessionPlayer(
+        WorldSnapshot snapshot,
+        HashSet<string> entityIds)
+    {
+        var hasSessionMetadata = snapshot.SessionSeed is not null
+            || snapshot.PlayerEntityId is not null
+            || snapshot.PlayerProfile is not null;
+        if (!hasSessionMetadata)
+        {
+            return;
+        }
+
+        if (snapshot.SessionSeed is < 0)
+        {
+            throw new InvalidDataException("Snapshot session seed cannot be negative.");
+        }
+
+        if (snapshot.PlayerEntityId is null && snapshot.PlayerProfile is null)
+        {
+            return;
+        }
+
+        if (snapshot.SessionSeed is null
+            || string.IsNullOrWhiteSpace(snapshot.PlayerEntityId)
+            || snapshot.PlayerProfile is not { IsValid: true }
+            || !entityIds.Contains(snapshot.PlayerEntityId))
+        {
+            throw new InvalidDataException("Snapshot session player metadata is incomplete or invalid.");
+        }
+
+        var player = snapshot.Entities.First(entity =>
+            string.Equals(entity.Id, snapshot.PlayerEntityId, StringComparison.Ordinal));
+        if (!string.Equals(player.SpeciesId, "human", StringComparison.Ordinal))
+        {
+            throw new InvalidDataException("Snapshot session player must reference a human entity.");
+        }
     }
 
     private static void ValidateRelationships(

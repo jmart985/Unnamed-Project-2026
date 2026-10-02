@@ -28,6 +28,53 @@ public sealed class WorldSnapshotTests
     }
 
     [Fact]
+    public void SnapshotRoundTripPreservesSessionSeedAndPlayerCreationChoices()
+    {
+        var profile = PlayerCharacterProfile.Create(
+            "Ada",
+            PlayerHeight.Small,
+            PlayerBodyType.Thick,
+            PlayerSex.Female);
+        var source = NewGameSession.Create(GetSpeciesCatalog(), profile, seed: 42);
+        var json = WorldSnapshotSerializer.Serialize(source.World, 9);
+        var target = new World();
+
+        var restoredTime = WorldSnapshotSerializer.Load(target, json, GetSpeciesCatalog());
+
+        Assert.Equal(9, restoredTime);
+        Assert.Equal(42, target.SessionSeed);
+        Assert.Equal(source.PlayerEntityId, target.PlayerEntityId);
+        Assert.Equal(profile, target.PlayerProfile);
+        Assert.Equal(
+            source.Player.Position,
+            Assert.Single(target.Entities, entity => entity.Id == target.PlayerEntityId).Position);
+    }
+
+    [Fact]
+    public void InvalidSessionMetadataDoesNotReplaceExistingWorld()
+    {
+        var existing = NewGameSession.Create(
+            GetSpeciesCatalog(),
+            PlayerCharacterProfile.Create("Existing"),
+            seed: 10);
+        var originalPlayer = existing.Player;
+        var validSnapshot = WorldSnapshotSerializer.Serialize(existing.World, 0);
+        var invalidSnapshot = validSnapshot.Replace(
+            "\"PlayerEntityId\": \"entity-000014\"",
+            "\"PlayerEntityId\": \"missing-player\"",
+            StringComparison.Ordinal);
+
+        Assert.Throws<InvalidDataException>(() => WorldSnapshotSerializer.Load(
+            existing.World,
+            invalidSnapshot,
+            GetSpeciesCatalog()));
+
+        Assert.Same(originalPlayer, existing.World.Entities.Single(entity => entity.Id == originalPlayer.Id));
+        Assert.Equal("Existing", existing.World.PlayerProfile!.Name);
+        Assert.Equal(10, existing.World.SessionSeed);
+    }
+
+    [Fact]
     public void SnapshotIncludesEntityInventoryAndExcludesTransientActionState()
     {
         var world = new World();

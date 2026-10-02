@@ -1,4 +1,5 @@
 using Godot;
+using Simulation;
 
 namespace UnnamedProject2026;
 
@@ -25,8 +26,10 @@ public partial class PlayerCharacter : CharacterBody3D
     private double _attackCooldownRemaining;
     private float _restingArmRotation;
     private float _restingLeftArmRotation;
+    private readonly List<MeshInstance3D> _chestPlaceholders = [];
 
     public bool IsAttacking { get; private set; }
+    public string EntityId { get; private set; } = string.Empty;
 
     public override void _Ready()
     {
@@ -36,6 +39,69 @@ public partial class PlayerCharacter : CharacterBody3D
         _rightArm = GetNode<MeshInstance3D>("RightShoulder/RightArm");
         _restingLeftArmRotation = _leftArm.Rotation.X;
         _restingArmRotation = _rightArm.Rotation.X;
+        AddChestPlaceholders();
+    }
+
+    public void BindPlayer(string entityId, PlayerCharacterProfile profile, float movementSpeed)
+    {
+        if (string.IsNullOrWhiteSpace(entityId))
+        {
+            throw new ArgumentException("A player entity ID is required.", nameof(entityId));
+        }
+
+        ArgumentNullException.ThrowIfNull(profile);
+        if (!profile.IsValid)
+        {
+            throw new ArgumentException("The player profile is invalid.", nameof(profile));
+        }
+
+        if (!float.IsFinite(movementSpeed) || movementSpeed <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(movementSpeed));
+        }
+
+        EntityId = entityId;
+        MovementSpeed = movementSpeed;
+        _lastGroundedPosition = GlobalPosition;
+        var heightScale = profile.Height switch
+        {
+            PlayerHeight.Small => 0.88f,
+            PlayerHeight.Medium => 1.0f,
+            PlayerHeight.Tall => 1.12f,
+            _ => throw new ArgumentOutOfRangeException(nameof(profile))
+        };
+        var (widthScale, depthScale) = profile.BodyType switch
+        {
+            PlayerBodyType.Lean => (0.84f, 0.86f),
+            PlayerBodyType.Athletic => (0.96f, 0.94f),
+            PlayerBodyType.Average => (1.0f, 1.0f),
+            PlayerBodyType.Stocky => (1.12f, 1.08f),
+            PlayerBodyType.Thick => (1.24f, 1.18f),
+            _ => throw new ArgumentOutOfRangeException(nameof(profile))
+        };
+        Scale = new Vector3(widthScale, heightScale, depthScale);
+        foreach (var placeholder in _chestPlaceholders)
+        {
+            placeholder.Visible = profile.Sex == PlayerSex.Female;
+        }
+    }
+
+    private void AddChestPlaceholders()
+    {
+        var material = new StandardMaterial3D { AlbedoColor = new Color(0.82f, 0.58f, 0.42f) };
+        foreach (var x in new[] { -0.17f, 0.17f })
+        {
+            var placeholder = new MeshInstance3D
+            {
+                Name = x < 0 ? "ChestLeft" : "ChestRight",
+                Mesh = new SphereMesh { Radius = 0.13f, Height = 0.22f },
+                Position = new Vector3(x, 1.12f, -0.26f),
+                MaterialOverride = material,
+                Visible = false
+            };
+            AddChild(placeholder);
+            _chestPlaceholders.Add(placeholder);
+        }
     }
 
     public override void _UnhandledInput(InputEvent @event)
