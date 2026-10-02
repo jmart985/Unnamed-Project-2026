@@ -12,7 +12,7 @@ data/                 Species and item definitions
 docs/                 Design, decisions, milestone and work sequence
 ```
 
-These are planned paths. F01 creates the runnable scaffold. Use a fixed, flat 3D map with placeholder meshes and an overhead camera. This prototype presentation does not settle the final visual direction.
+These are planned paths. F01 creates the runnable scaffold. Use a fixed, flat 3D map (400 x 400 m: central town plus rural perimeter) with placeholder meshes and an overhead camera. This prototype presentation does not settle the final visual direction.
 
 ## Ownership and update model
 

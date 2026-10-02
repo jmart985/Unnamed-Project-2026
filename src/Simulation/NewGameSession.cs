@@ -84,7 +84,7 @@ public sealed class NewGameSession
         {
             world.SpawnEntity(
                 CreatureSpeciesId,
-                new Vector3(index - 1, 0, 4));
+                new Vector3(90 + index * 4, 0, 60));
         }
 
         var player = world.SpawnEntity("human", GetPlayerSpawnPosition(seed));
