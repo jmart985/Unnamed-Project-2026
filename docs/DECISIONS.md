@@ -321,4 +321,4 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 ## Entity visual and inspector detail
 
 - Decision: Humans, apes, and creatures get procedural primitive bodies (head, eyes, limbs, species features, per-entity color variation) and the inspector shows species traits, diet, temperament, and capabilities from the species catalog, following the long-term vision of people and creatures with diets, temperaments, and capabilities.
-- Consequence: Presentation only; no new simulation state. docs/LONG_TERM_VISION.md does not exist, so docs/PROJECT_VISION.md was used.
+- Consequence: Presentation only; no new simulation state. Guided by docs/LONG_TERM_VISION.md (origin/docs-ai-guidance, 3e9de38): Character layer detail (body parts, captivity, personality) and anatomy-driven creature capabilities.
