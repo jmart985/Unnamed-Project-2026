@@ -14,6 +14,7 @@
     "canUseTools": true,
     "canOpenDoors": true,
     "canTrack": false,
+    "canAcceptFriendlyInteraction": false,
     "canHaul": true,
     "bodyCategory": "humanoid",
     "temperament": { "boldness": 0.5, "curiosity": 0.4, "sociability": 0.6 }
@@ -33,6 +34,7 @@
     "canUseTools": false,
     "canOpenDoors": false,
     "canTrack": false,
+    "canAcceptFriendlyInteraction": true,
     "canHaul": false,
     "bodyCategory": "quadruped",
     "temperament": { "boldness": 0.3, "curiosity": 0.3, "sociability": 0.5 }
@@ -52,6 +54,7 @@
     "canUseTools": true,
     "canOpenDoors": true,
     "canTrack": true,
+    "canAcceptFriendlyInteraction": true,
     "canHaul": true,
     "bodyCategory": "upright_creature",
     "temperament": { "boldness": 0.75, "curiosity": 0.9, "sociability": 0.8 }
@@ -71,6 +74,7 @@
     "canUseTools": false,
     "canOpenDoors": false,
     "canTrack": false,
+    "canAcceptFriendlyInteraction": true,
     "canHaul": true,
     "bodyCategory": "quadruped",
     "temperament": { "boldness": 0.35, "curiosity": 0.25, "sociability": 0.9 }
@@ -90,6 +94,7 @@
     "canUseTools": false,
     "canOpenDoors": false,
     "canTrack": true,
+    "canAcceptFriendlyInteraction": false,
     "canHaul": false,
     "bodyCategory": "quadruped",
     "temperament": { "boldness": 0.85, "curiosity": 0.65, "sociability": 0.45 }

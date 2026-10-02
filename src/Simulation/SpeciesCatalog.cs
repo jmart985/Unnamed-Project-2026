@@ -115,7 +115,8 @@ public sealed class SpeciesCatalog
                 smellRange,
                 entry.CanUseTools ?? false,
                 entry.CanOpenDoors ?? false,
-                entry.CanTrack ?? false));
+                entry.CanTrack ?? false,
+                entry.CanAcceptFriendlyInteraction ?? false));
         }
 
         return new SpeciesCatalog(definitions);
@@ -295,6 +296,7 @@ public sealed class SpeciesCatalog
         public bool? CanUseTools { get; init; }
         public bool? CanOpenDoors { get; init; }
         public bool? CanTrack { get; init; }
+        public bool? CanAcceptFriendlyInteraction { get; init; }
         public TemperamentData? Temperament { get; init; }
     }
 

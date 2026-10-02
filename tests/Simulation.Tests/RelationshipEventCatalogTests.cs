@@ -12,8 +12,10 @@ public sealed class RelationshipEventCatalogTests
             Path.Combine(AppContext.BaseDirectory, "data", "relationship_events.json"));
 
         Assert.Equal(
-            new[] { "helped", "rescued", "harmed", "threatened" },
+            new[] { "greeted", "helped", "rescued", "harmed", "threatened" },
             catalog.Definitions.Select(definition => definition.Id));
+        Assert.True(catalog.TryGet("greeted", out var greeted));
+        Assert.Equal(new RelationshipAdjustment(5, 0, 0, 0), greeted!.Adjustment);
         Assert.True(catalog.TryGet("rescued", out var rescued));
         Assert.Equal(20, rescued!.Adjustment.TrustDelta);
         Assert.Equal(-15, rescued.Adjustment.FearDelta);

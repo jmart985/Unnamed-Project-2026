@@ -23,6 +23,9 @@ public sealed class SpeciesCatalogTests
         Assert.True(catalog.GetRequired("ape").CanUseTools);
         Assert.True(catalog.GetRequired("ape").CanOpenDoors);
         Assert.True(catalog.GetRequired("wolf").CanTrack);
+        Assert.True(catalog.GetRequired("creature").CanAcceptFriendlyInteraction);
+        Assert.True(catalog.GetRequired("ape").CanAcceptFriendlyInteraction);
+        Assert.False(catalog.GetRequired("wolf").CanAcceptFriendlyInteraction);
         Assert.True(catalog.GetRequired("wolf").SmellRange > catalog.GetRequired("cow").SmellRange);
         Assert.Equal(DietaryProfile.Herbivore, catalog.GetRequired("cow").DietaryProfile);
         Assert.Equal(DietaryProfile.Carnivore, catalog.GetRequired("wolf").DietaryProfile);
@@ -121,6 +124,25 @@ public sealed class SpeciesCatalogTests
             Load("""[{"id":"human","movementSpeed":3,"hungerRate":0.2,"diet":["food"],"canHaul":true}]"""));
 
         Assert.Contains("Species 'human' must define temperament", exception.Message);
+    }
+
+    [Fact]
+    public void MissingFriendlyInteractionCapabilityDefaultsToUnsupported()
+    {
+        var catalog = Load("""
+            [{"id":"human","movementSpeed":3,"hungerRate":0.2,"diet":["food"],"canHaul":true,"temperament":{"boldness":0.5,"curiosity":0.5,"sociability":0.5}}]
+            """);
+
+        Assert.False(catalog.GetRequired("human").CanAcceptFriendlyInteraction);
+    }
+
+    [Fact]
+    public void RejectsMalformedFriendlyInteractionCapability()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            Load("""[{"id":"human","movementSpeed":3,"hungerRate":0.2,"diet":["food"],"canHaul":true,"canAcceptFriendlyInteraction":"yes","temperament":{"boldness":0.5,"curiosity":0.5,"sociability":0.5}}]"""));
+
+        Assert.Contains("valid species records", exception.Message);
     }
 
     private static SpeciesCatalog Load(string json)
