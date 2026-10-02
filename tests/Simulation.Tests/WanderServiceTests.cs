@@ -14,7 +14,7 @@ public sealed class WanderServiceTests
         var navigator = new FakeNavigationAdapter();
         var service = new WanderService(world, _ => navigator);
         var species = LoadSpecies(
-            """[{"id":"creature","movementSpeed":2,"hungerRate":0.2,"diet":["food"],"canHaul":false}]""",
+            """[{"id":"creature","movementSpeed":2,"hungerRate":0.2,"diet":["food"],"canHaul":false,"temperament":{"boldness":0.5,"curiosity":0.5,"sociability":0.5}}]""",
             "creature");
         var goals = new[] { new Vector3(2, 0, 0), new Vector3(4, 0, 0) };
 
@@ -45,7 +45,7 @@ public sealed class WanderServiceTests
         var navigator = new FakeNavigationAdapter();
         var service = new WanderService(world, _ => navigator);
         var species = LoadSpecies(
-            """[{"id":"creature","movementSpeed":2,"hungerRate":0.2,"diet":["food"],"canHaul":false}]""",
+            """[{"id":"creature","movementSpeed":2,"hungerRate":0.2,"diet":["food"],"canHaul":false,"temperament":{"boldness":0.5,"curiosity":0.5,"sociability":0.5}}]""",
             "creature");
 
         var result = service.Advance(creature, species, [new Vector3(2, 0, 0)]);
@@ -63,7 +63,7 @@ public sealed class WanderServiceTests
         var navigator = new FakeNavigationAdapter();
         var service = new WanderService(world, _ => navigator);
         var species = LoadSpecies(
-            """[{"id":"creature","movementSpeed":2,"hungerRate":0.2,"diet":["food"],"canHaul":false}]""",
+            """[{"id":"creature","movementSpeed":2,"hungerRate":0.2,"diet":["food"],"canHaul":false,"temperament":{"boldness":0.5,"curiosity":0.5,"sociability":0.5}}]""",
             "creature");
 
         var started = service.Advance(creature, species, [new Vector3(2, 0, 0)]);
@@ -86,8 +86,8 @@ public sealed class WanderServiceTests
         var catalog = LoadCatalog(
             """
             [
-              {"id":"human","movementSpeed":3,"hungerRate":0.2,"diet":["food"],"canHaul":true},
-              {"id":"creature","movementSpeed":2,"hungerRate":0.5,"diet":["food"],"canHaul":false}
+              {"id":"human","movementSpeed":3,"hungerRate":0.2,"diet":["food"],"canHaul":true,"temperament":{"boldness":0.5,"curiosity":0.5,"sociability":0.5}},
+              {"id":"creature","movementSpeed":2,"hungerRate":0.5,"diet":["food"],"canHaul":false,"temperament":{"boldness":0.5,"curiosity":0.5,"sociability":0.5}}
             ]
             """);
         var world = new World();

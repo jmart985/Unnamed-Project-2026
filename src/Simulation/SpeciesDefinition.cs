@@ -24,7 +24,8 @@ public sealed class SpeciesDefinition
         double smellRange = 1,
         bool canUseTools = false,
         bool canOpenDoors = false,
-        bool canTrack = false)
+        bool canTrack = false,
+        TemperamentProfile? temperament = null)
     {
         Id = id;
         DisplayName = displayName;
@@ -42,6 +43,7 @@ public sealed class SpeciesDefinition
         CanUseTools = canUseTools;
         CanOpenDoors = canOpenDoors;
         CanTrack = canTrack;
+        Temperament = temperament ?? throw new ArgumentNullException(nameof(temperament));
         _dietItems = new HashSet<string>(Diet, StringComparer.Ordinal);
     }
 
@@ -61,6 +63,7 @@ public sealed class SpeciesDefinition
     public bool CanUseTools { get; }
     public bool CanOpenDoors { get; }
     public bool CanTrack { get; }
+    public TemperamentProfile Temperament { get; }
 
     public bool Eats(string? itemId)
     {

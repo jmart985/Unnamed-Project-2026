@@ -234,6 +234,15 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: The milestone reuses the existing species catalog and wandering behavior. It does not add cages, capture equipment, player commands, bonds, recruitment, breeding, combat, or advanced ecology. Durable capture/captivity state must participate in snapshot validation and round trips.
 - Revisit: When 1.0 defines player-controlled creature interactions or a later milestone defines housing, release, taming, or escape behavior.
 
+## D027 — Bounded creature temperament profile
+
+- Date: 2026-10-02
+- Status: Provisional; implemented for C03a
+- Decision: Represent species temperament with immutable boldness, curiosity, and sociability values, each finite and normalized to [0, 1]. Require all three values in the existing species catalog.
+- Reason: These independent, data-driven dimensions provide a small, explainable basis for later deterministic wild-behavior choices without conflating temperament with needs or relationships.
+- Consequence: Every species definition must provide valid temperament data; later behavior rules consume the existing profile rather than introducing another species registry.
+- Revisit: After the deterministic creature behavior scenario demonstrates how these dimensions produce distinct outcomes.
+
 ## D027 — First Real Game is a small player-controlled loop
 
 - Date: 2026-10-01
