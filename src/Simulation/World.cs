@@ -353,6 +353,7 @@ public sealed class World
         entity.Actions.Cancel();
         Reservations.ReleaseForEntity(id);
         RemoveRelationshipsForEntity(id);
+        entity.AllegianceFactionId = null;
         if (!_entities.Remove(id))
         {
             return false;
