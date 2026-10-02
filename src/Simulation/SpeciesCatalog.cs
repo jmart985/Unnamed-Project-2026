@@ -92,11 +92,11 @@ public sealed class SpeciesCatalog
                 ?? throw new InvalidDataException($"Species '{id}' must define canHaul.");
             var bodyCategory = string.IsNullOrWhiteSpace(entry.BodyCategory) ? "unspecified" : entry.BodyCategory.Trim();
             var dietaryProfile = entry.DietaryProfile ?? InferDietaryProfile(diet);
-            var maxHealth = ValidateStat(id, entry.MaxHealth ?? 100, nameof(entry.MaxHealth));
-            var strength = ValidateStat(id, entry.Strength ?? 1, nameof(entry.Strength));
-            var endurance = ValidateStat(id, entry.Endurance ?? 1, nameof(entry.Endurance));
-            var dexterity = ValidateStat(id, entry.Dexterity ?? 1, nameof(entry.Dexterity));
-            var smellRange = ValidateStat(id, entry.SmellRange ?? 1, nameof(entry.SmellRange));
+            var maxHealth = ValidateStat(id, entry.MaxHealth ?? 100, "maxHealth");
+            var strength = ValidateStat(id, entry.Strength ?? 1, "strength");
+            var endurance = ValidateStat(id, entry.Endurance ?? 1, "endurance");
+            var dexterity = ValidateStat(id, entry.Dexterity ?? 1, "dexterity");
+            var smellRange = ValidateStat(id, entry.SmellRange ?? 1, "smellRange");
             var temperament = ValidateTemperament(id, entry.Temperament);
             definitions.Add(new SpeciesDefinition(
                 id,
