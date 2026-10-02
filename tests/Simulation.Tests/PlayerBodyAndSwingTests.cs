@@ -70,6 +70,16 @@ public sealed class PlayerBodyAndSwingTests
         Assert.False(swing.IsActive);
     }
 
+    [Fact]
+    public void TotalDurationFactoryPreservesPhaseRatios()
+    {
+        var swing = AttackSwing.ForTotalDuration(0.22f);
+
+        Assert.Equal(0.22f, swing.TotalSeconds, 5);
+        Assert.Equal(0.22f * (0.12f / 0.38f), swing.WindUpSeconds, 5);
+        Assert.Equal(0.22f * (0.08f / 0.38f), swing.StrikeSeconds, 5);
+    }
+
     [Theory]
     [InlineData(0.5f, true, "Head")]
     [InlineData(0f, false, "Torso")]

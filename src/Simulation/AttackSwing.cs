@@ -14,9 +14,15 @@ public enum AttackSwingPhase
 /// </summary>
 public sealed class AttackSwing
 {
+    private const float DefaultWindUpSeconds = 0.12f;
+    private const float DefaultStrikeSeconds = 0.08f;
+    private const float DefaultRecoverySeconds = 0.18f;
+
     public AttackSwing(float windUpSeconds = 0.12f, float strikeSeconds = 0.08f, float recoverySeconds = 0.18f)
     {
-        if (windUpSeconds <= 0 || strikeSeconds <= 0 || recoverySeconds <= 0)
+        if (!float.IsFinite(windUpSeconds) || windUpSeconds <= 0
+            || !float.IsFinite(strikeSeconds) || strikeSeconds <= 0
+            || !float.IsFinite(recoverySeconds) || recoverySeconds <= 0)
         {
             throw new ArgumentOutOfRangeException(nameof(windUpSeconds), "Swing phases must be positive.");
         }
@@ -34,6 +40,20 @@ public sealed class AttackSwing
     public float RecoverySeconds { get; }
     public float TotalSeconds => WindUpSeconds + StrikeSeconds + RecoverySeconds;
     public bool IsActive { get; private set; }
+
+    public static AttackSwing ForTotalDuration(float totalSeconds)
+    {
+        if (!float.IsFinite(totalSeconds) || totalSeconds <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(totalSeconds), "Swing duration must be finite and positive.");
+        }
+
+        var defaultTotalSeconds = DefaultWindUpSeconds + DefaultStrikeSeconds + DefaultRecoverySeconds;
+        var windUpSeconds = totalSeconds * (DefaultWindUpSeconds / defaultTotalSeconds);
+        var strikeSeconds = totalSeconds * (DefaultStrikeSeconds / defaultTotalSeconds);
+        var recoverySeconds = totalSeconds - windUpSeconds - strikeSeconds;
+        return new AttackSwing(windUpSeconds, strikeSeconds, recoverySeconds);
+    }
 
     public AttackSwingPhase Phase => !IsActive
         ? AttackSwingPhase.Idle
