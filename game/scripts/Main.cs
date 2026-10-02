@@ -640,6 +640,7 @@ public partial class Main : Node3D
             species.CanAcceptFriendlyInteraction ? "friendly" : null
         }.Where(name => name is not null));
         if (capabilities.Length == 0) capabilities = "none";
+        var bodyHealth = string.Join(", ", entity.Health.Parts.Select(part => $"{part.Name} {part.CurrentHealth:0}/{part.MaximumHealth:0}"));
         var inspection = EntityInspectionReadModel.Create(_world, entity);
         var relationships = EntityInspectionReadModel.FormatOutgoingRelationships(inspection);
         _inspectorLabel.Text =
@@ -647,6 +648,8 @@ public partial class Main : Node3D
             $"Species: {species.DisplayName} ({species.BodyCategory}, {species.DietaryProfile})\n" +
             $"Traits: boldness {species.Temperament.Boldness:0.0}, curiosity {species.Temperament.Curiosity:0.0}, sociability {species.Temperament.Sociability:0.0}\n" +
             $"Capabilities: {capabilities}\n" +
+            $"Body: {bodyHealth}\n" +
+            $"Captivity: {entity.CaptivityState}\n" +
             $"Strength/Endurance/Dexterity: {species.Strength:0.0}/{species.Endurance:0.0}/{species.Dexterity:0.0}\n" +
             $"Position: {entity.Position}\n" +
             $"Satiety: {entity.Satiety:0.0}\n" +
