@@ -2,7 +2,8 @@
 
 ## C03d: Integrated creature-core scenario
 
-**Date:** 2026-10-02  
+**Date:** 2026-10-02
+
 **Issue:** [#325](https://github.com/jmart985/Unnamed-Project-2026/issues/325)
 
 ### Fixed inputs and observations
