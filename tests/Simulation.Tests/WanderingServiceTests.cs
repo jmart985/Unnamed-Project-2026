@@ -11,9 +11,9 @@ public sealed class WanderingServiceTests
         var catalog = SpeciesCatalog.LoadFromFile(GetSpeciesDataPath());
         var goals = new[] { new Vector3(1, 0, 0), new Vector3(3, 0, 0), new Vector3(5, 0, 0) };
 
-        var cautious = StartWildTrip(catalog.GetRequired("cow"), goals, seed: 42, tick: 7);
-        var exploratory = StartWildTrip(catalog.GetRequired("ape"), goals, seed: 42, tick: 7);
-        var repeatedExploratory = StartWildTrip(catalog.GetRequired("ape"), goals, seed: 42, tick: 7);
+        var cautious = StartWildTrip(catalog.GetRequired("creature"), goals, seed: 42, tick: 7);
+        var exploratory = StartWildTrip(catalog.GetRequired("wolf"), goals, seed: 42, tick: 7);
+        var repeatedExploratory = StartWildTrip(catalog.GetRequired("wolf"), goals, seed: 42, tick: 7);
 
         Assert.Equal(WildBehavior.CautiousRoaming, cautious.Behavior);
         Assert.Equal(goals[0], cautious.Target);
@@ -37,13 +37,15 @@ public sealed class WanderingServiceTests
         Assert.True(navigator.MarkUnreachable(requestId));
 
         var failed = service.Advance(creature, species, simulationTick: 2);
-        var restarted = service.Advance(creature, species, simulationTick: 3);
 
         Assert.Equal(WanderingStatus.Waiting, failed.Status);
         Assert.Equal("Wandering target failed: Unreachable.", failed.WaitingReason);
         Assert.Equal(WildBehavior.CuriousExploration, failed.Behavior);
         Assert.Null(creature.Actions.Current);
+
+        var restarted = service.Advance(creature, species, simulationTick: 3);
         Assert.Equal(WanderingStatus.Traveling, restarted.Status);
+        Assert.NotNull(creature.Actions.Current);
         Assert.Null(creature.WaitingReason);
     }
 
