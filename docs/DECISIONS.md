@@ -224,3 +224,12 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: A repeatable new game needs an explicit player identity and appearance without duplicating the authoritative World or changing the existing NPC population.
 - Consequence: The player entity is bound to the existing Godot PlayerCharacter view/controller. Placeholder geometry reflects height/body type and uses simple chest primitives for Female; final art is deferred. Seed and player profile are durable snapshot state, so the snapshot schema advances to version 4. The milestone's 10 humans are now explicitly 10 NPCs plus the player; player-directed survival actions remain outside this issue.
 - Revisit: When player-controlled eating/actions or final character art are scoped.
+
+## D026 — Creature Core boundary
+
+- Date: 2026-10-01
+- Status: Provisional planning decision for Milestone 0.3
+- Decision: Extend the existing creature foundation with validated temperament data, deterministic wild behavior, and durable domain capture/captivity state. Validate these as a simulation scenario without adding player-facing capture controls or a taming loop.
+- Reason: Creature Core needs a distinct, testable gameplay signal while preserving adjacent milestone boundaries: shared character data is established by 0.2, relationships/domestication/recruitment belong to 0.6, player interaction is deferred to 1.0, and advanced creature behavior belongs to 1.2.
+- Consequence: The milestone reuses the existing species catalog and wandering behavior. It does not add cages, capture equipment, player commands, bonds, recruitment, breeding, combat, or advanced ecology. Durable capture/captivity state must participate in snapshot validation and round trips.
+- Revisit: When 1.0 defines player-controlled creature interactions or a later milestone defines housing, release, taming, or escape behavior.

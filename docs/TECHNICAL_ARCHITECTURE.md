@@ -26,6 +26,7 @@ These are planned paths. F01 creates the runnable scaffold. Use a fixed, flat 3D
 - Voluntary recruitment readiness is evaluated from the prospective recruit's directed relationship toward the recruiter. Only the Loyal bond level is eligible in the prototype policy; evaluation does not create or mutate relationship state.
 - The entity inspector displays each selected entity's outgoing relationships in stable target-ID order, with all four values and the derived bond level; inspection is a read-only projection.
 - World owns directed relationship records for live entity pairs. Removing either participant or resetting the World removes the associated records; valid records persist through versioned world snapshots.
+- Creature Core extends the existing species catalog with a small validated temperament profile used by deterministic wild-behavior decisions. Capture/captivity state belongs to the simulation domain and remains attached to the authoritative entity, not a scene node or separate UI model.
 - A single-threaded fixed simulation tick updates hunger, chooses actions, and processes outcomes in a documented stable order. Godot adapters perform navigation and report arrival/failure back to the simulation.
 - World-owned food sources are selected and reserved by the domain. After navigation advances and synchronizes the authoritative position, food is consumed only for a reported arrival within tolerance; nutrition is applied once and needs are checked before lower-priority work can resume.
 - Haul actions reserve available source wood and stockpile capacity before travel. They transfer to the entity inventory only after validated arrival, release the source claim after pickup, and keep the stockpile capacity claim until deposit or cancellation.
@@ -48,7 +49,7 @@ In the sandbox, select `entity-000001` and press `R` to route around the central
 
 ## Save/load boundary
 
-Use a versioned JSON snapshot of durable state: schema version, simulation time, entity IDs/species/positions/satiety/inventories, food/resource-pile/stockpile containers, directed relationship values, and optional new-session seed/player identity/profile. Validate the complete snapshot before replacing the current world. Unsupported versions or invalid references produce an error without changing the running world.
+Use a versioned JSON snapshot of durable state: schema version, simulation time, entity IDs/species/positions/satiety/inventories, durable creature capture/captivity state, food/resource-pile/stockpile containers, directed relationship values, and optional new-session seed/player identity/profile. Validate the complete snapshot before replacing the current world. Unsupported versions or invalid references produce an error without changing the running world.
 
 Save at a tick boundary while simulation is paused. Persist carried items. Jobs, reservations, paths, and current movement are transient: registered simulation services reset only after snapshot validation and re-evaluate actions on the next tick, depositing carried wood first. The first version promises durable-state continuity, not bit-for-bit replay of paths or random wandering. Write through a temporary file and preserve the previous valid save on failure.
 

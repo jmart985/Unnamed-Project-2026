@@ -2,7 +2,7 @@
 
 Read README.md, docs/TECHNICAL_ARCHITECTURE.md, docs/DECISIONS.md, and the assigned issue before editing code.
 
-- Keep work inside the assigned issue and Milestone 0.1 scope.
+- Keep work inside the assigned issue and its milestone scope. Apply Milestone 0.1 boundaries only to work assigned to Milestone 0.1; respect documented handoffs and defer out-of-milestone work.
 - Follow CONTRIBUTING.md. Keep one authoritative world state and atomic inventory changes.
 - Godot 4 .NET + C# is provisional. Do not silently switch engines or introduce an ECS/framework.
 - Exact build/test commands are established by F01; do not invent successful validation before a scaffold exists.
