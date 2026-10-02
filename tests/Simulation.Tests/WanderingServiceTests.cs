@@ -40,7 +40,7 @@ public sealed class WanderingServiceTests
 
         Assert.Equal(WanderingStatus.Waiting, failed.Status);
         Assert.Equal("Wandering target failed: Unreachable.", failed.WaitingReason);
-        Assert.Equal(WildBehavior.CuriousExploration, failed.Behavior);
+        Assert.Equal(WildBehavior.CautiousRoaming, failed.Behavior);
         Assert.Null(creature.Actions.Current);
 
         var restarted = service.Advance(creature, species, simulationTick: 3);

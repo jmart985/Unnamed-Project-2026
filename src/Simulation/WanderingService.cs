@@ -221,17 +221,25 @@ public sealed class WanderingService : ITransientSimulationState
     private Vector3 SelectGoal(Vector3 origin, WildBehavior behavior, int firstGoalIndex)
     {
         var bestGoal = _goals[firstGoalIndex];
-        var bestDistance = Vector3.DistanceSquared(origin, bestGoal);
-        for (var offset = 1; offset < _goals.Count; offset++)
+        var bestDistance = 0f;
+        var foundGoal = false;
+        for (var offset = 0; offset < _goals.Count; offset++)
         {
             var candidate = _goals[(firstGoalIndex + offset) % _goals.Count];
             var candidateDistance = Vector3.DistanceSquared(origin, candidate);
-            if (behavior == WildBehavior.CuriousExploration
+            if (candidateDistance <= ArrivalTolerance * ArrivalTolerance)
+            {
+                continue;
+            }
+
+            if (!foundGoal
+                || (behavior == WildBehavior.CuriousExploration
                     ? candidateDistance > bestDistance
-                    : candidateDistance < bestDistance)
+                    : candidateDistance < bestDistance))
             {
                 bestGoal = candidate;
                 bestDistance = candidateDistance;
+                foundGoal = true;
             }
         }
 
