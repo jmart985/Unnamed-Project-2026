@@ -8,7 +8,7 @@
 
 ### Fixed inputs and observations
 
-The domain scenario loads `data/species.json`, creates a new World, and spawns a `creature` followed by a `wolf`, both at `(0, 0, 0)` with satiety `70`. A `SimulationClock` advances seven 0.1-second ticks (simulation time `0.7`); each tick advances needs and wandering with decision seed `42`. The species select their first trip at tick `1`, then retain their deterministic result for the remaining ticks, with satiety ending at `69.86`. The configured goals are `(1, 0, 0)`, `(3, 0, 0)`, and `(5, 0, 0)`. The scenario verifies:
+The domain scenario loads `data/species.json`, creates a new World, and spawns a `creature` followed by a `wolf`, both at `(0, 0, 0)` with satiety `70`. A `SimulationClock` advances seven 0.1-second ticks (simulation time `0.7`); each tick advances needs and wandering with decision seed `42`. The species select their first trip at tick `1`, then retain their deterministic result for the remaining ticks. Satiety ends at `69.86` for the creature and `69.832` for the wolf. The configured goals are `(1, 0, 0)`, `(3, 0, 0)`, and `(5, 0, 0)`. The scenario verifies:
 
 - The creature temperament is `(boldness 0.3, curiosity 0.3, sociability 0.5)` and selects cautious roaming toward `(1, 0, 0)`.
 - The wolf temperament is `(boldness 0.85, curiosity 0.65, sociability 0.45)` and selects curious exploration toward `(5, 0, 0)`.

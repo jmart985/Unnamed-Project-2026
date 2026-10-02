@@ -62,7 +62,7 @@ public sealed class CreatureCoreScenarioTests
         Assert.Equal(7, simulationTick);
         Assert.Equal(0.7, clock.SimulationTime, precision: 6);
         Assert.Equal(69.86, cautiousCreature.Satiety, precision: 6);
-        Assert.Equal(69.86, exploratoryCreature.Satiety, precision: 6);
+        Assert.Equal(69.832, exploratoryCreature.Satiety, precision: 6);
         Assert.Equal(WanderingStatus.Traveling, cautiousTrip.Status);
         Assert.Equal(WildBehavior.CautiousRoaming, cautiousTrip.Behavior);
         Assert.Equal(goals[0], cautiousTrip.Target);
