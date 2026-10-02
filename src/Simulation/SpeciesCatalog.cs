@@ -110,12 +110,12 @@ public sealed class SpeciesCatalog
                 maxHealth,
                 strength,
                 endurance,
+                temperament,
                 dexterity,
                 smellRange,
                 entry.CanUseTools ?? false,
                 entry.CanOpenDoors ?? false,
-                entry.CanTrack ?? false,
-                temperament));
+                entry.CanTrack ?? false));
         }
 
         return new SpeciesCatalog(definitions);
