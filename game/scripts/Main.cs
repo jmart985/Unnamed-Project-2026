@@ -5,6 +5,9 @@ namespace UnnamedProject2026;
 
 public partial class Main : Node3D
 {
+    [Export]
+    public bool SkipCharacterCreationForTesting { get; set; } = true;
+
     private readonly SimulationClock _clock = new();
     private readonly SaveSlotStore _saveSlotStore = new();
     private World _world = new();
@@ -98,8 +101,19 @@ public partial class Main : Node3D
         _playerCharacter.Visible = false;
         _playerCharacter.SetPhysicsProcess(false);
         _playerCharacter.SetProcessUnhandledInput(false);
-        _characterCreation.Visible = true;
-        _playerNameInput.GrabFocus();
+        if (SkipCharacterCreationForTesting)
+        {
+            _characterCreation.Visible = false;
+            StartSession(
+                PlayerCharacterProfile.Create("Test Player"),
+                NewGameSession.DefaultSeed,
+                "Test game started; character creation bypassed.");
+        }
+        else
+        {
+            _characterCreation.Visible = true;
+            _playerNameInput.GrabFocus();
+        }
     }
 
     public override void _Process(double delta)
