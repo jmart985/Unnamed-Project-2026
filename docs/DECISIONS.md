@@ -317,3 +317,8 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 
 - Decision: User-directed scope expansion. The playable map is a flat 400 x 400 m area: a 120 x 120 m central town (roads, building blocks as navigation holes) with countryside beyond (fields, tree clumps, country roads), built from procedural primitives. The navigation mesh is a coarse grid over the whole map with holes for buildings and the central obstacle. Humans, food, wood, and stockpile start in town; creatures start and wander in the countryside.
 - Consequence: Replaces the 20 x 20 placeholder map. Scenery is presentation only and not saved.
+
+## Entity visual and inspector detail
+
+- Decision: Humans, apes, and creatures get procedural primitive bodies (head, eyes, limbs, species features, per-entity color variation) and the inspector shows species traits, diet, temperament, and capabilities from the species catalog, following the long-term vision of people and creatures with diets, temperaments, and capabilities.
+- Consequence: Presentation only; no new simulation state. docs/LONG_TERM_VISION.md does not exist, so docs/PROJECT_VISION.md was used.

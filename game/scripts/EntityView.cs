@@ -27,6 +27,17 @@ public partial class EntityView : CharacterBody3D
 
     private void BuildBodyVisuals()
     {
+        // Deterministic per-entity variation so individuals are distinguishable without extra state.
+        var hash = (uint)StringComparer.Ordinal.GetHashCode(EntityId);
+        var variation = (hash % 100) / 100f;
+        var (bodyColor, accentColor) = _speciesId switch
+        {
+            "cow" => (new Color(0.92f, 0.9f, 0.85f), new Color(0.15f, 0.12f, 0.1f)),
+            "wolf" => (new Color(0.45f, 0.45f, 0.5f), new Color(0.2f, 0.2f, 0.24f)),
+            "ape" => (new Color(0.3f, 0.2f, 0.14f), new Color(0.55f, 0.4f, 0.3f)),
+            _ when _isCreature => (new Color(0.6f, 0.45f + variation * 0.15f, 0.3f), new Color(0.35f, 0.25f, 0.15f)),
+            _ => (Color.FromHsv(variation, 0.45f, 0.75f), new Color(0.85f, 0.68f + variation * 0.12f, 0.55f))
+        };
         var bodySize = _speciesId switch
         {
             "cow" => new Vector3(0.9f, 0.8f, 1.45f),
@@ -41,29 +52,94 @@ public partial class EntityView : CharacterBody3D
             Shape = new CapsuleShape3D { Radius = Mathf.Max(bodySize.X, bodySize.Z) * 0.5f, Height = bodyHeight + 0.2f },
             Position = new Vector3(0, bodyHeight * 0.5f + 0.1f, 0)
         });
-        AddChild(new MeshInstance3D { Mesh = new BoxMesh { Size = bodySize }, Position = new Vector3(0, bodyHeight * 0.5f + 0.1f, 0) });
-        AddChild(new MeshInstance3D
+        AddPart(new BoxMesh { Size = bodySize }, new Vector3(0, bodyHeight * 0.5f + 0.1f, 0), bodyColor);
+
+        if (_isCreature && _speciesId != "ape")
         {
-            Mesh = new SphereMesh { Height = 0.45f, Radius = 0.25f },
-            Position = _isCreature ? new Vector3(0, 1.15f, -0.78f) : new Vector3(0, 1.75f, 0)
-        });
-        if (_isCreature)
-        {
-            AddLimb(new Vector3(-0.3f, 0.25f, -0.42f)); AddLimb(new Vector3(0.3f, 0.25f, -0.42f));
-            AddLimb(new Vector3(-0.3f, 0.25f, 0.42f)); AddLimb(new Vector3(0.3f, 0.25f, 0.42f));
-            AddChild(new MeshInstance3D { Mesh = new CapsuleMesh { Height = 0.7f, Radius = 0.08f }, Position = new Vector3(0, 0.55f, 0.85f), RotationDegrees = new Vector3(90, 0, 0) });
+            BuildQuadruped(bodySize, bodyColor, accentColor);
         }
         else
         {
-            AddLimb(new Vector3(-0.2f, -0.25f, 0)); AddLimb(new Vector3(0.2f, -0.25f, 0));
+            BuildUpright(bodyColor, accentColor, bodySize);
         }
     }
 
-    private void AddLimb(Vector3 position)
+    private void BuildQuadruped(Vector3 bodySize, Color bodyColor, Color accentColor)
     {
-        AddChild(new MeshInstance3D { Mesh = new CapsuleMesh { Height = 0.65f, Radius = 0.11f }, Position = position });
+        var headY = bodySize.Y + 0.35f;
+        var headZ = -bodySize.Z * 0.5f - 0.15f;
+        AddPart(new BoxMesh { Size = new Vector3(0.4f, 0.4f, 0.45f) }, new Vector3(0, headY, headZ), bodyColor);
+        AddPart(new BoxMesh { Size = new Vector3(0.22f, 0.18f, 0.22f) }, new Vector3(0, headY - 0.08f, headZ - 0.3f), accentColor);
+        AddPart(new BoxMesh { Size = new Vector3(0.1f, 0.18f, 0.06f) }, new Vector3(-0.15f, headY + 0.28f, headZ + 0.05f), accentColor);
+        AddPart(new BoxMesh { Size = new Vector3(0.1f, 0.18f, 0.06f) }, new Vector3(0.15f, headY + 0.28f, headZ + 0.05f), accentColor);
+        AddPart(new SphereMesh { Radius = 0.04f, Height = 0.08f }, new Vector3(-0.1f, headY + 0.07f, headZ - 0.2f), Colors.Black);
+        AddPart(new SphereMesh { Radius = 0.04f, Height = 0.08f }, new Vector3(0.1f, headY + 0.07f, headZ - 0.2f), Colors.Black);
+        if (_speciesId == "cow")
+        {
+            AddPart(new CapsuleMesh { Height = 0.3f, Radius = 0.03f }, new Vector3(-0.22f, headY + 0.25f, headZ), new Color(0.9f, 0.85f, 0.7f));
+            AddPart(new CapsuleMesh { Height = 0.3f, Radius = 0.03f }, new Vector3(0.22f, headY + 0.25f, headZ), new Color(0.9f, 0.85f, 0.7f));
+            AddPart(new BoxMesh { Size = new Vector3(0.5f, 0.3f, 0.5f) }, new Vector3(0.2f, bodySize.Y * 0.7f, 0.1f), accentColor);
+        }
+        else if (_speciesId == "wolf")
+        {
+            AddPart(new BoxMesh { Size = new Vector3(0.12f, 0.12f, 0.6f) }, new Vector3(0, bodySize.Y * 0.6f, bodySize.Z * 0.5f + 0.25f), accentColor, new Vector3(-30, 0, 0));
+        }
+
+        var legColor = accentColor;
+        foreach (var x in new[] { -0.28f, 0.28f })
+        {
+            foreach (var z in new[] { -bodySize.Z * 0.32f, bodySize.Z * 0.32f })
+            {
+                AddPart(new BoxMesh { Size = new Vector3(0.14f, 0.4f, 0.14f) }, new Vector3(x, 0.2f, z), legColor);
+            }
+        }
+
+        if (_speciesId != "wolf")
+        {
+            AddPart(new CapsuleMesh { Height = 0.7f, Radius = 0.06f }, new Vector3(0, 0.6f, bodySize.Z * 0.5f + 0.2f), accentColor, new Vector3(75, 0, 0));
+        }
     }
 
+    private void BuildUpright(Color bodyColor, Color accentColor, Vector3 bodySize)
+    {
+        var skin = _speciesId == "ape" ? accentColor : accentColor;
+        var shoulderY = bodySize.Y * 0.85f + 0.1f;
+        var headY = _speciesId == "ape" ? 1.25f : 1.5f;
+        AddPart(new SphereMesh { Height = 0.45f, Radius = 0.22f }, new Vector3(0, headY, 0), skin);
+        AddPart(new SphereMesh { Radius = 0.03f, Height = 0.06f }, new Vector3(-0.08f, headY + 0.03f, -0.19f), Colors.Black);
+        AddPart(new SphereMesh { Radius = 0.03f, Height = 0.06f }, new Vector3(0.08f, headY + 0.03f, -0.19f), Colors.Black);
+        var armColor = _speciesId == "ape" ? bodyColor : bodyColor.Darkened(0.15f);
+        var armLength = _speciesId == "ape" ? 0.85f : 0.6f;
+        foreach (var side in new[] { -1f, 1f })
+        {
+            AddPart(new CapsuleMesh { Height = armLength, Radius = 0.07f },
+                new Vector3(side * (bodySize.X * 0.5f + 0.08f), shoulderY - armLength * 0.4f, 0), armColor);
+            AddPart(new CapsuleMesh { Height = 0.65f, Radius = 0.1f },
+                new Vector3(side * 0.18f, 0.33f, 0), _speciesId == "ape" ? bodyColor : new Color(0.25f, 0.28f, 0.4f));
+        }
+
+        if (_speciesId != "ape")
+        {
+            AddPart(new SphereMesh { Radius = 0.24f, Height = 0.2f }, new Vector3(0, headY + 0.16f, 0.02f),
+                new Color(0.2f + (EntityId.Length % 4) * 0.12f, 0.14f, 0.1f));
+        }
+    }
+
+    private void AddPart(Mesh mesh, Vector3 position, Color color, Vector3? rotationDegrees = null)
+    {
+        var part = new MeshInstance3D
+        {
+            Mesh = mesh,
+            Position = position,
+            MaterialOverride = new StandardMaterial3D { AlbedoColor = color }
+        };
+        if (rotationDegrees is { } rotation)
+        {
+            part.RotationDegrees = rotation;
+        }
+
+        AddChild(part);
+    }
     public override void _PhysicsProcess(double delta) => _navigationAdapter?.RefreshPath();
 
     public void Bind(string entityId, float movementSpeed, bool isCreature = false, string? speciesId = null)
