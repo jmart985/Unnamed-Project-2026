@@ -261,6 +261,14 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Dynamic prices, supply/demand, multiple settlements, route networks, autonomous caravan travel, advanced finance, economic AI, and player-facing trading are deferred. Economy depth remains outside 1.0 acceptance. Coins use the existing resource-container and snapshot model; durable settlement totals use existing World snapshot behavior, while in-progress caravan visits are transient.
 - Revisit: After the E08d integrated scenario is exercised and its economic signal is observed.
 
+## D030 — Durable creature captivity
+
+- Date: 2026-10-02
+- Status: Implemented for C03b
+- Decision: Store creature captivity on the authoritative entity, permit one capture transition for a live non-human entity, and persist the state in snapshot schema version 5. Migrate version 4 snapshots by defaulting entities to wild.
+- Reason: Creature Core needs durable capture state without a separate registry or player-facing capture workflow, and existing saves should remain loadable when the new state is introduced.
+- Consequence: Missing, non-creature, dead, or already-captive targets are rejected without changing entity state. Invalid captivity values are rejected during complete snapshot validation before transient services or the live World are reset.
+- Revisit: When a later milestone defines player-controlled capture eligibility, release, or captive housing.
 ## D031 — Deterministic temperament-driven roaming
 
 - Date: 2026-10-02

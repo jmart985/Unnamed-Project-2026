@@ -55,7 +55,7 @@ Use a versioned JSON snapshot of durable state: schema version, simulation time,
 
 Save at a tick boundary while simulation is paused. Persist carried items. Jobs, reservations, paths, and current movement are transient: registered simulation services reset only after snapshot validation and re-evaluate actions on the next tick, depositing carried wood first. The first version promises durable-state continuity, not bit-for-bit replay of paths or random wandering. Write through a temporary file and preserve the previous valid save on failure.
 
-The 1.0 snapshot adds validated squad membership to durable state and increments the current schema version from 4 to 5. Squad orders and navigation requests remain transient.
+Creature captivity is durable entity state in snapshot schema version 5; schema version 4 snapshots migrate with all entities restored as wild. The 1.0 snapshot adds validated squad membership and increments the current schema version from 5 to 6. Squad orders and navigation requests remain transient.
 
 ## Tests and observability
 

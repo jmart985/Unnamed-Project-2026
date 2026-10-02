@@ -207,6 +207,32 @@ public sealed class World
         return _entities.TryGetValue(id, out entity);
     }
 
+    public CreatureCaptureResult TryCaptureCreature(string? entityId)
+    {
+        if (!TryGetEntity(entityId, out var entity) || entity is null)
+        {
+            return CreatureCaptureResult.TargetNotFound;
+        }
+
+        if (string.Equals(entity.SpeciesId, "human", StringComparison.Ordinal))
+        {
+            return CreatureCaptureResult.NotCreature;
+        }
+
+        if (entity.Health.IsDead)
+        {
+            return CreatureCaptureResult.TargetDead;
+        }
+
+        if (entity.CaptivityState == CreatureCaptivityState.Captive)
+        {
+            return CreatureCaptureResult.AlreadyCaptive;
+        }
+
+        entity.CaptivityState = CreatureCaptivityState.Captive;
+        return CreatureCaptureResult.Captured;
+    }
+
     public bool TryGetRelationship(
         string? observerEntityId,
         string? targetEntityId,
@@ -352,6 +378,7 @@ public sealed class World
                 entity.SpeciesId,
                 entity.Position,
                 entity.Satiety);
+            restored.CaptivityState = entity.CaptivityState;
             foreach (var item in entity.Inventory)
             {
                 restored.TryAddCarried(item.Key, item.Value);

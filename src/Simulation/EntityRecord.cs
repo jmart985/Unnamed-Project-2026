@@ -38,6 +38,7 @@ public sealed class EntityRecord
     public CharacterHealth Health { get; }
     public SkillSet Skills { get; }
     public ActionLifecycle Actions { get; }
+    public CreatureCaptivityState CaptivityState { get; internal set; }
     public double Satiety => Needs.Satiety;
     public IReadOnlyDictionary<string, int> Inventory => _inventoryView;
     public int InventoryCapacity { get; }
@@ -109,4 +110,3 @@ public sealed class EntityRecord
         return ResourceMutationResult.Success;
     }
 }
-
