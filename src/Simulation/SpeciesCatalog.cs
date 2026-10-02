@@ -47,7 +47,9 @@ public sealed class SpeciesCatalog
         }
         catch (JsonException exception)
         {
-            throw new InvalidDataException("Species data must be a JSON array of valid species records.", exception);
+            throw new InvalidDataException(
+                $"Species data must be a JSON array of valid species records (at '{exception.Path}').",
+                exception);
         }
 
         if (entries is null || entries.Length == 0)

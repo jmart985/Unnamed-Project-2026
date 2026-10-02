@@ -49,8 +49,8 @@ public sealed class SpeciesCatalogTests
     [InlineData(-1)]
     public void RejectsNonpositiveMovementSpeed(double movementSpeed)
     {
-        var json = $$"""
-            [{"id":"human","movementSpeed":{{movementSpeed}},"hungerRate":0.2,"diet":["food"],"canHaul":true,"temperament":{"boldness":0.5,"curiosity":0.5,"sociability":0.5}}]
+        var json = $$$"""
+            [{"id":"human","movementSpeed":{{{movementSpeed}}},"hungerRate":0.2,"diet":["food"],"canHaul":true,"temperament":{"boldness":0.5,"curiosity":0.5,"sociability":0.5}}]
             """;
 
         var exception = Assert.Throws<InvalidDataException>(() => Load(json));
@@ -102,10 +102,10 @@ public sealed class SpeciesCatalogTests
     [InlineData("""{"boldness":1.1,"curiosity":0.5,"sociability":0.5}""", "temperament.boldness must be finite")]
     public void RejectsInvalidTemperamentWithoutPublishingPartialCatalog(string temperamentJson, string expectedMessage)
     {
-        var json = $$"""
+        var json = $$$"""
             [
               {"id":"human","movementSpeed":3,"hungerRate":0.2,"diet":["food"],"canHaul":true,"temperament":{"boldness":0.5,"curiosity":0.5,"sociability":0.5}},
-              {"id":"creature","movementSpeed":2,"hungerRate":0.2,"diet":["food"],"canHaul":false,"temperament":{{temperamentJson}}}
+              {"id":"creature","movementSpeed":2,"hungerRate":0.2,"diet":["food"],"canHaul":false,"temperament":{{{temperamentJson}}}}
             ]
             """;
 

@@ -25,7 +25,7 @@ public sealed class SpeciesDefinition
         bool canUseTools = false,
         bool canOpenDoors = false,
         bool canTrack = false,
-        TemperamentProfile? temperament = null)
+        TemperamentProfile temperament)
     {
         Id = id;
         DisplayName = displayName;
@@ -43,7 +43,7 @@ public sealed class SpeciesDefinition
         CanUseTools = canUseTools;
         CanOpenDoors = canOpenDoors;
         CanTrack = canTrack;
-        Temperament = temperament ?? throw new ArgumentNullException(nameof(temperament));
+        Temperament = temperament;
         _dietItems = new HashSet<string>(Diet, StringComparer.Ordinal);
     }
 
