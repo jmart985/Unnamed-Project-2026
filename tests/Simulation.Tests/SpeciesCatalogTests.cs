@@ -11,26 +11,101 @@ public sealed class SpeciesCatalogTests
         var catalog = SpeciesCatalog.LoadFromFile(GetSpeciesDataPath());
 
         Assert.Equal(new[] { "human", "creature", "ape", "cow", "wolf" }, catalog.Species.Select(species => species.Id));
-        Assert.Equal(3.0, catalog.GetRequired("human").MovementSpeed);
-        Assert.Equal(0.2, catalog.GetRequired("human").HungerRate);
-        Assert.Equal(new[] { ItemIds.Food, ItemIds.Plant, ItemIds.Fruit, ItemIds.Meat }, catalog.GetRequired("human").Diet);
-        Assert.True(catalog.GetRequired("human").CanHaul);
-        Assert.False(catalog.GetRequired("creature").CanHaul);
+        var human = catalog.GetRequired("human");
+        Assert.Equal(3.0, human.MovementSpeed);
+        Assert.Equal(0.2, human.HungerRate);
+        Assert.Equal(new[] { ItemIds.Food, ItemIds.Plant, ItemIds.Fruit, ItemIds.Meat }, human.Diet);
+        Assert.True(human.CanHaul);
+        Assert.Equal("humanoid", human.BodyCategory);
+        Assert.Equal(DietaryProfile.Omnivore, human.DietaryProfile);
+        Assert.Equal(100, human.MaxHealth);
+        Assert.Equal(1.0, human.Strength);
+        Assert.Equal(1.0, human.Endurance);
+        Assert.Equal(1.0, human.Dexterity);
+        Assert.Equal(1.0, human.SmellRange);
+        Assert.True(human.CanUseTools);
+        Assert.True(human.CanOpenDoors);
+        Assert.False(human.CanTrack);
+
+        var ape = catalog.GetRequired("ape");
+        Assert.Equal(2.4, ape.MovementSpeed);
+        Assert.Equal(0.22, ape.HungerRate);
+        Assert.Equal(new[] { ItemIds.Plant, ItemIds.Fruit, ItemIds.Meat }, ape.Diet);
+        Assert.True(ape.CanHaul);
+        Assert.Equal("upright_creature", ape.BodyCategory);
+        Assert.Equal(DietaryProfile.Omnivore, ape.DietaryProfile);
+        Assert.Equal(95, ape.MaxHealth);
+        Assert.Equal(1.1, ape.Strength);
+        Assert.Equal(1.0, ape.Endurance);
+        Assert.Equal(1.4, ape.Dexterity);
+        Assert.Equal(1.2, ape.SmellRange);
+        Assert.True(ape.CanUseTools);
+        Assert.True(ape.CanOpenDoors);
+        Assert.True(ape.CanTrack);
+
+        var cow = catalog.GetRequired("cow");
+        Assert.Equal(1.8, cow.MovementSpeed);
+        Assert.Equal(0.28, cow.HungerRate);
+        Assert.Equal(new[] { ItemIds.Plant, ItemIds.Fruit }, cow.Diet);
+        Assert.True(cow.CanHaul);
+        Assert.Equal("quadruped", cow.BodyCategory);
+        Assert.Equal(DietaryProfile.Herbivore, cow.DietaryProfile);
+        Assert.Equal(120, cow.MaxHealth);
+        Assert.Equal(1.4, cow.Strength);
+        Assert.Equal(1.3, cow.Endurance);
+        Assert.Equal(0.5, cow.Dexterity);
+        Assert.Equal(1.4, cow.SmellRange);
+        Assert.False(cow.CanUseTools);
+        Assert.False(cow.CanOpenDoors);
+        Assert.False(cow.CanTrack);
+
+        var wolf = catalog.GetRequired("wolf");
+        Assert.Equal(3.4, wolf.MovementSpeed);
+        Assert.Equal(0.24, wolf.HungerRate);
+        Assert.Equal(new[] { ItemIds.Meat }, wolf.Diet);
+        Assert.False(wolf.CanHaul);
+        Assert.Equal("quadruped", wolf.BodyCategory);
+        Assert.Equal(DietaryProfile.Carnivore, wolf.DietaryProfile);
+        Assert.Equal(85, wolf.MaxHealth);
+        Assert.Equal(1.0, wolf.Strength);
+        Assert.Equal(1.1, wolf.Endurance);
+        Assert.Equal(0.8, wolf.Dexterity);
+        Assert.Equal(3.0, wolf.SmellRange);
+        Assert.False(wolf.CanUseTools);
+        Assert.False(wolf.CanOpenDoors);
+        Assert.True(wolf.CanTrack);
+
         Assert.Equal(new[] { "human", "creature" },
             catalog.GetCompatibleWithDiet(ItemIds.Food).Select(species => species.Id));
         Assert.Equal(new[] { "human", "ape", "cow" }, catalog.GetHaulers().Select(species => species.Id));
         Assert.Empty(catalog.GetCompatibleWithDiet(ItemIds.Wood));
-        Assert.True(catalog.GetRequired("ape").CanUseTools);
-        Assert.True(catalog.GetRequired("ape").CanOpenDoors);
-        Assert.True(catalog.GetRequired("wolf").CanTrack);
         Assert.True(catalog.GetRequired("creature").CanAcceptFriendlyInteraction);
-        Assert.True(catalog.GetRequired("ape").CanAcceptFriendlyInteraction);
-        Assert.False(catalog.GetRequired("wolf").CanAcceptFriendlyInteraction);
-        Assert.True(catalog.GetRequired("wolf").SmellRange > catalog.GetRequired("cow").SmellRange);
-        Assert.Equal(DietaryProfile.Herbivore, catalog.GetRequired("cow").DietaryProfile);
-        Assert.Equal(DietaryProfile.Carnivore, catalog.GetRequired("wolf").DietaryProfile);
-        Assert.Equal(new TemperamentProfile(0.75, 0.9, 0.8), catalog.GetRequired("ape").Temperament);
-        Assert.NotEqual(catalog.GetRequired("ape").Temperament, catalog.GetRequired("cow").Temperament);
+        Assert.True(ape.CanAcceptFriendlyInteraction);
+        Assert.False(wolf.CanAcceptFriendlyInteraction);
+        Assert.True(wolf.SmellRange > cow.SmellRange);
+        Assert.Equal(DietaryProfile.Herbivore, cow.DietaryProfile);
+        Assert.Equal(DietaryProfile.Carnivore, wolf.DietaryProfile);
+        Assert.Equal(new TemperamentProfile(0.75, 0.9, 0.8), ape.Temperament);
+        Assert.NotEqual(ape.Temperament, cow.Temperament);
+    }
+
+    [Fact]
+    public void UsesDocumentedDefaultsForOmittedOptionalCapabilityFields()
+    {
+        var species = Load("""
+            [{"id":"human","movementSpeed":3,"hungerRate":0.2,"diet":["food"],"canHaul":true,"temperament":{"boldness":0.5,"curiosity":0.5,"sociability":0.5}}]
+            """).GetRequired("human");
+
+        Assert.Equal("unspecified", species.BodyCategory);
+        Assert.Equal(DietaryProfile.Herbivore, species.DietaryProfile);
+        Assert.Equal(100, species.MaxHealth);
+        Assert.Equal(1, species.Strength);
+        Assert.Equal(1, species.Endurance);
+        Assert.Equal(1, species.Dexterity);
+        Assert.Equal(1, species.SmellRange);
+        Assert.False(species.CanUseTools);
+        Assert.False(species.CanOpenDoors);
+        Assert.False(species.CanTrack);
     }
 
     [Theory]
@@ -59,6 +134,28 @@ public sealed class SpeciesCatalogTests
         var exception = Assert.Throws<InvalidDataException>(() => Load(json));
 
         Assert.Contains("movementSpeed must be finite and greater than zero", exception.Message);
+    }
+
+    [Theory]
+    [InlineData("maxHealth", 0)]
+    [InlineData("maxHealth", -1)]
+    [InlineData("strength", 0)]
+    [InlineData("strength", -1)]
+    [InlineData("endurance", 0)]
+    [InlineData("endurance", -1)]
+    [InlineData("dexterity", 0)]
+    [InlineData("dexterity", -1)]
+    [InlineData("smellRange", 0)]
+    [InlineData("smellRange", -1)]
+    public void RejectsNonpositiveCapabilityNumericValues(string fieldName, double invalidValue)
+    {
+        var json = $$$"""
+            [{"id":"human","movementSpeed":3,"hungerRate":0.2,"diet":["food"],"canHaul":true,"{{{fieldName}}}":{{{invalidValue}}},"temperament":{"boldness":0.5,"curiosity":0.5,"sociability":0.5}}]
+            """;
+
+        var exception = Assert.Throws<InvalidDataException>(() => Load(json));
+
+        Assert.Contains($"Species 'human' {fieldName} must be finite and greater than zero", exception.Message);
     }
 
     [Fact]
