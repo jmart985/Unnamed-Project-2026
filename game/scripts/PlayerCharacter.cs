@@ -221,7 +221,7 @@ public partial class PlayerCharacter : CharacterBody3D
         _swingLeft = left;
         _swing = AttackSwing.ForTotalDuration(AttackDuration);
         _swing.Begin();
-        _attackCooldownRemaining = AttackCooldown + _swing.TotalSeconds;
+        _attackCooldownRemaining = AttackCooldown;
     }
 
     // Layers the attack pose over the walk cycle: wind-up raises the arm and bends the elbow, the strike
