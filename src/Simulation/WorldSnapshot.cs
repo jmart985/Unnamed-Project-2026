@@ -30,7 +30,8 @@ public sealed record EntitySnapshot(
     string SpeciesId,
     Vector3 Position,
     double Satiety,
-    IReadOnlyDictionary<string, int> Inventory);
+    IReadOnlyDictionary<string, int> Inventory,
+    CreatureCaptivityState CaptivityState = CreatureCaptivityState.Wild);
 
 public sealed record FoodSourceSnapshot(
     string Id,
@@ -54,7 +55,8 @@ public sealed record ResourceContainerSnapshot(
 
 public static class WorldSnapshotSerializer
 {
-    public const int CurrentSchemaVersion = 4;
+    private const int PreviousSchemaVersion = 4;
+    public const int CurrentSchemaVersion = 5;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -78,7 +80,8 @@ public static class WorldSnapshotSerializer
                 entity.SpeciesId,
                 entity.Position,
                 entity.Satiety,
-                new Dictionary<string, int>(entity.Inventory, StringComparer.Ordinal)))
+                new Dictionary<string, int>(entity.Inventory, StringComparer.Ordinal),
+                entity.CaptivityState))
             .ToArray();
         var foodSources = world.FoodSources
             .Select(source => new FoodSourceSnapshot(
@@ -135,6 +138,11 @@ public static class WorldSnapshotSerializer
         catch (JsonException exception)
         {
             throw new InvalidDataException("Snapshot JSON is malformed.", exception);
+        }
+
+        if (snapshot.SchemaVersion == PreviousSchemaVersion)
+        {
+            return snapshot with { SchemaVersion = CurrentSchemaVersion };
         }
 
         if (snapshot.SchemaVersion != CurrentSchemaVersion)
@@ -219,6 +227,14 @@ public static class WorldSnapshotSerializer
             {
                 throw new InvalidDataException(
                     $"Snapshot entity '{entity.Id}' satiety must be finite and within [0, 100].");
+            }
+
+            if (!Enum.IsDefined(entity.CaptivityState)
+                || (entity.CaptivityState == CreatureCaptivityState.Captive
+                    && string.Equals(entity.SpeciesId, "human", StringComparison.Ordinal)))
+            {
+                throw new InvalidDataException(
+                    $"Snapshot entity '{entity.Id}' has an invalid creature captivity state.");
             }
 
             ValidateInventory(entity.Inventory, target.InventoryCapacity, entity.Id);
