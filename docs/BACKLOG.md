@@ -4,6 +4,7 @@ The [GitHub issues](https://github.com/jmart985/Unnamed-Project-2026/issues) are
 
 - [Ant Farm Board](https://github.com/users/jmart985/projects/1)
 - [Milestone 0.1: The Ant Farm](https://github.com/jmart985/Unnamed-Project-2026/milestone/1)
+- [Milestone 1.0: First Real Game](https://github.com/jmart985/Unnamed-Project-2026/milestone/4)
 - [Milestone acceptance scenario](MILESTONE_0_1.md)
 - [Milestone 0.3: Creature Core](MILESTONE_0_3.md)
 
@@ -25,6 +26,21 @@ Only #1 begins Ready. Other tasks begin in Backlog and move to Ready after their
 | [#10](https://github.com/jmart985/Unnamed-Project-2026/issues/10) (C01) | Creatures | Add one data-defined creature species that wanders and eats | [#8](https://github.com/jmart985/Unnamed-Project-2026/issues/8) |
 | [#11](https://github.com/jmart985/Unnamed-Project-2026/issues/11) (S01) | Save/Load | Save and restore durable world state with validation | [#9](https://github.com/jmart985/Unnamed-Project-2026/issues/9), [#10](https://github.com/jmart985/Unnamed-Project-2026/issues/10) |
 | [#12](https://github.com/jmart985/Unnamed-Project-2026/issues/12) (F03) | Foundation | Verify and document the ten-minute Ant Farm acceptance scenario | [#11](https://github.com/jmart985/Unnamed-Project-2026/issues/11) |
+
+## 1.0 First Real Game
+
+The target is the [small player-controlled survival/settlement slice](MILESTONE_1_0.md), not the entire long-term game vision. The existing new-game/session issue is complete; the remaining 1.0 work is:
+
+| Issue | Task | Depends on |
+| --- | --- | --- |
+| [#321](https://github.com/jmart985/Unnamed-Project-2026/issues/321) | Let the player eat from a nearby compatible food source | Completed [#319](https://github.com/jmart985/Unnamed-Project-2026/issues/319) and [#8](https://github.com/jmart985/Unnamed-Project-2026/issues/8) |
+| [#312](https://github.com/jmart985/Unnamed-Project-2026/issues/312) | Add one human squad with move-to, follow-player, and stop orders | Completed [#319](https://github.com/jmart985/Unnamed-Project-2026/issues/319) and [#124](https://github.com/jmart985/Unnamed-Project-2026/issues/124) |
+| [#313](https://github.com/jmart985/Unnamed-Project-2026/issues/313) | Add one friendly, capability-gated creature greeting | Completed [#319](https://github.com/jmart985/Unnamed-Project-2026/issues/319) and [#124](https://github.com/jmart985/Unnamed-Project-2026/issues/124); existing relationship rules |
+| [#322](https://github.com/jmart985/Unnamed-Project-2026/issues/322) | Verify the integrated loop and document actual validation evidence | [#321](https://github.com/jmart985/Unnamed-Project-2026/issues/321), [#312](https://github.com/jmart985/Unnamed-Project-2026/issues/312), and [#313](https://github.com/jmart985/Unnamed-Project-2026/issues/313) |
+
+Completed session bootstrap, existing food/needs, relationship state, World snapshots, and save-slot behavior are reused rather than reimplemented. Broader promises for construction, combat, factions, capture/taming, advanced creature behavior, and world streaming are explicitly deferred.
+
+The issue audit found overlapping open proposals that are deliberately not separate 1.0 tasks: [#303](https://github.com/jmart985/Unnamed-Project-2026/issues/303) duplicates the selected squad scope in #312; [#297](https://github.com/jmart985/Unnamed-Project-2026/issues/297) and [#306](https://github.com/jmart985/Unnamed-Project-2026/issues/306) propose the broader capability work narrowed for #313; [#318](https://github.com/jmart985/Unnamed-Project-2026/issues/318) duplicates the completed new-session work in [#319](https://github.com/jmart985/Unnamed-Project-2026/issues/319). These remain outside the milestone and should be explicitly triaged before being moved to Ready; this planning pass does not silently close or rewrite them.
 
 ## Workflow
 
