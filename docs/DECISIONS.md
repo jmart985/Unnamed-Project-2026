@@ -260,3 +260,21 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: Resources, production chains, markets, and caravans are the milestone promise, but those systems need a bounded integrated outcome rather than open-ended infrastructure or a regional simulation.
 - Consequence: Dynamic prices, supply/demand, multiple settlements, route networks, autonomous caravan travel, advanced finance, economic AI, and player-facing trading are deferred. Economy depth remains outside 1.0 acceptance. Coins use the existing resource-container and snapshot model; durable settlement totals use existing World snapshot behavior, while in-progress caravan visits are transient.
 - Revisit: After the E08d integrated scenario is exercised and its economic signal is observed.
+
+## D030 — Bounded faction foundation
+
+- Date: 2026-10-02
+- Status: Provisional planning decision for Milestone 0.7; implementation pending
+- Decision: Reuse the authoritative World for a small fixed faction catalog and optional entity allegiance. Track entity-to-faction reputation as an explicit bounded value in [0, 100]; represent hostility as a separate directed faction-to-faction value, not as an inference from individual reputation. Add optional faction owner metadata to existing settlement resource containers without enforcing access policy.
+- Reason: The roadmap milestone names allegiance, reputation, hostility, and ownership, but these are foundations for later behavior rather than a requirement to simulate full faction politics now. Separating reputation from hostility avoids silently inventing a policy threshold; metadata on current containers avoids a parallel inventory/property system.
+- Consequence: Allegiance, reputation, hostility, and owner references are durable and validated with existing World snapshot rules. Explicit invalid operations reject without partial mutation. Autonomous reputation changes, diplomacy, law/crime, territory, warfare, ownership enforcement/theft, UI, and faction authoring tools remain out of scope.
+- Revisit: After the F07d scenario is exercised; later behavior must be scoped from observed prototype needs.
+
+## D031 — Vertical integration is an evidence gate
+
+- Date: 2026-10-02
+- Status: Provisional planning decision for Milestone 0.9; implementation pending
+- Decision: Define 0.9 as one deterministic test-region scenario composing accepted 0.3–0.8 systems. It adds only the integration harness and evidence; missing product behavior becomes a separately scoped issue.
+- Reason: “All core systems” is otherwise unbounded and could pull multiple settlements, regional simulation, streaming, or broad AI forward without evidence.
+- Consequence: The milestone verifies existing creature, combat, relationship, faction, settlement, and local economy state together, with repeatability, exact resource accounting, and rejection/recovery checks. It does not expand those systems or turn the long-term vision into a delivery commitment.
+- Revisit: After the one-region scenario has recorded results and limitations.
