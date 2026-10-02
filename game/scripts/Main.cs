@@ -645,7 +645,6 @@ public partial class Main : Node3D
                 ? "Hungry (food requested)"
                 : "Satisfied";
         var species = _speciesCatalog.GetRequired(entity.SpeciesId);
-        var temperament = IndividualTemperament.ForEntity(entity.Id, species.Temperament);
         var capabilities = string.Join(", ", new[]
         {
             species.CanHaul ? "haul" : null,
@@ -661,7 +660,7 @@ public partial class Main : Node3D
         _inspectorLabel.Text =
             $"ID: {entity.Id}\n" +
             $"Species: {species.DisplayName} ({species.BodyCategory}, {species.DietaryProfile})\n" +
-            $"Traits: boldness {temperament.Boldness:0.0}, curiosity {temperament.Curiosity:0.0}, sociability {temperament.Sociability:0.0}\n" +
+            $"Traits: boldness {species.Temperament.Boldness:0.0}, curiosity {species.Temperament.Curiosity:0.0}, sociability {species.Temperament.Sociability:0.0}\n" +
             $"Capabilities: {capabilities}\n" +
             $"Body: {bodyHealth}\n" +
             $"Captivity: {entity.CaptivityState}\n" +

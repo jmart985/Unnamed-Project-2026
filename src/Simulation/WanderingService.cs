@@ -17,8 +17,7 @@ public enum WanderingStatus
 public enum WildBehavior
 {
     CautiousRoaming,
-    CuriousExploration,
-    SocialRoaming
+    CuriousExploration
 }
 
 public sealed record WanderingResult(
@@ -142,18 +141,12 @@ public sealed class WanderingService : ITransientSimulationState
         SpeciesDefinition species,
         long simulationTick)
     {
-        var temperament = IndividualTemperament.ForEntity(entity.Id, species.Temperament);
-        var hasSameSpeciesCompanions = _world.Entities.Any(other =>
-            !string.Equals(other.Id, entity.Id, StringComparison.Ordinal)
-            && string.Equals(other.SpeciesId, species.Id, StringComparison.Ordinal));
-        var behavior = hasSameSpeciesCompanions && temperament.Sociability >= 0.7
-            ? WildBehavior.SocialRoaming
-            : temperament.Boldness + temperament.Curiosity >= 0.68
-                ? WildBehavior.CuriousExploration
-                : WildBehavior.CautiousRoaming;
+        var behavior = species.Temperament.Boldness + species.Temperament.Curiosity >= 1
+            ? WildBehavior.CuriousExploration
+            : WildBehavior.CautiousRoaming;
         var tripCount = _tripCounts.GetValueOrDefault(entity.Id);
         var firstGoalIndex = GetStableStartIndex(entity.Id, simulationTick, tripCount, _goals.Count);
-        var target = SelectGoal(entity, behavior, firstGoalIndex);
+        var target = SelectGoal(entity.Position, behavior, firstGoalIndex);
         _tripCounts[entity.Id] = checked(tripCount + 1);
 
         INavigationAdapter? navigator = null;
@@ -225,19 +218,15 @@ public sealed class WanderingService : ITransientSimulationState
         return new WanderingResult(WanderingStatus.Waiting, trip.Target, entity.WaitingReason, trip.Behavior);
     }
 
-    private Vector3 SelectGoal(EntityRecord entity, WildBehavior behavior, int firstGoalIndex)
+    private Vector3 SelectGoal(Vector3 origin, WildBehavior behavior, int firstGoalIndex)
     {
-        var origin = entity.Position;
-        var groupCenter = behavior == WildBehavior.SocialRoaming
-            ? GetCompanionCenter(entity)
-            : origin;
         var bestGoal = _goals[firstGoalIndex];
         var bestDistance = 0f;
         var foundGoal = false;
         for (var offset = 0; offset < _goals.Count; offset++)
         {
             var candidate = _goals[(firstGoalIndex + offset) % _goals.Count];
-            var candidateDistance = Vector3.DistanceSquared(groupCenter, candidate);
+            var candidateDistance = Vector3.DistanceSquared(origin, candidate);
             if (candidateDistance <= ArrivalTolerance * ArrivalTolerance)
             {
                 continue;
@@ -255,26 +244,6 @@ public sealed class WanderingService : ITransientSimulationState
         }
 
         return bestGoal;
-    }
-
-    private Vector3 GetCompanionCenter(EntityRecord entity)
-    {
-        var companions = _world.Entities
-            .Where(other => !string.Equals(other.Id, entity.Id, StringComparison.Ordinal)
-                            && string.Equals(other.SpeciesId, entity.SpeciesId, StringComparison.Ordinal))
-            .ToArray();
-        if (companions.Length == 0)
-        {
-            return entity.Position;
-        }
-
-        var center = Vector3.Zero;
-        foreach (var companion in companions)
-        {
-            center += companion.Position;
-        }
-
-        return center / companions.Length;
     }
 
     private int GetStableStartIndex(string entityId, long simulationTick, int tripCount, int goalCount)
