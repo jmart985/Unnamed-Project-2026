@@ -294,3 +294,12 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: “All core systems” is otherwise unbounded and could pull multiple settlements, regional simulation, streaming, or broad AI forward without evidence.
 - Consequence: The milestone verifies existing creature, combat, relationship, faction, settlement, and local economy state together, with repeatability, exact resource accounting, and rejection/recovery checks. It does not expand those systems or turn the long-term vision into a delivery commitment.
 - Revisit: After the one-region scenario has recorded results and limitations.
+
+## D032 — Capability-gated creature greeting
+
+- Date: 2026-10-02
+- Status: Implemented for issue #297
+- Decision: Permit the player's selected target to receive a friendly greeting only when its species data enables `canAcceptFriendlyInteraction`. Missing capability data fails closed. Bind the Interact action to `G`, require a maximum distance of 2 world units, and apply the validated `greeted` relationship event only from player to target.
+- Reason: The greeting is the one player-facing creature interaction in the 1.0 slice; explicit capability, range, and directed effects keep the behavior constrained and testable.
+- Consequence: Unsupported, invalid, removed, self, and out-of-range targets produce a rejection without relationship mutation. No capture, taming, recruitment, or general-purpose interaction framework is introduced.
+- Revisit: After the 1.0 integrated acceptance scenario is exercised in Godot.

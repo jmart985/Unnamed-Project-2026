@@ -2,8 +2,18 @@ using System.Numerics;
 
 namespace Simulation;
 
-public enum PlayerCommandKind { Pause, Resume, SetSpeed, SelectEntity, Move }
-public enum PlayerCommandResultCode { Accepted, DeferredWhilePaused, InvalidCommand, InvalidEntity, InvalidSpeed }
+public enum PlayerCommandKind { Pause, Resume, SetSpeed, SelectEntity, Move, Interact }
+public enum PlayerCommandResultCode
+{
+    Accepted,
+    DeferredWhilePaused,
+    InvalidCommand,
+    InvalidEntity,
+    InvalidSpeed,
+    InteractionRejected,
+    UnsupportedInteraction,
+    OutOfRange
+}
 
 public sealed record PlayerCommand(
     PlayerCommandKind Kind,
@@ -18,11 +28,16 @@ public sealed class PlayerCommandBoundary
 {
     private readonly World _world;
     private readonly SimulationClock _clock;
+    private readonly CreatureGreetingService? _creatureGreeting;
 
-    public PlayerCommandBoundary(World world, SimulationClock clock)
+    public PlayerCommandBoundary(
+        World world,
+        SimulationClock clock,
+        CreatureGreetingService? creatureGreeting = null)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        _creatureGreeting = creatureGreeting;
     }
 
     public string? SelectedEntityId { get; private set; }
@@ -51,6 +66,25 @@ public sealed class PlayerCommandBoundary
                 if (command.Target is null || !IsFinite(command.Target.Value)) return new(PlayerCommandResultCode.InvalidCommand, command.EntityId, Reason: "A finite movement target is required.");
                 if (_clock.IsPaused) return new(PlayerCommandResultCode.DeferredWhilePaused, command.EntityId, command.Target, "Movement resumes when simulation is running.");
                 return new(PlayerCommandResultCode.Accepted, command.EntityId, command.Target);
+            case PlayerCommandKind.Interact:
+                if (_creatureGreeting is null)
+                {
+                    return new(PlayerCommandResultCode.InvalidCommand, command.EntityId, Reason: "Friendly interaction is not initialized.");
+                }
+
+                var greeting = _creatureGreeting.Greet(command.EntityId);
+                return greeting.Code switch
+                {
+                    CreatureGreetingResultCode.Greeted =>
+                        new(PlayerCommandResultCode.Accepted, greeting.TargetEntityId, Reason: greeting.Reason),
+                    CreatureGreetingResultCode.TargetNotFound or CreatureGreetingResultCode.PlayerUnavailable =>
+                        new(PlayerCommandResultCode.InvalidEntity, greeting.TargetEntityId, Reason: greeting.Reason),
+                    CreatureGreetingResultCode.UnsupportedSpecies =>
+                        new(PlayerCommandResultCode.UnsupportedInteraction, greeting.TargetEntityId, Reason: greeting.Reason),
+                    CreatureGreetingResultCode.OutOfRange =>
+                        new(PlayerCommandResultCode.OutOfRange, greeting.TargetEntityId, Reason: greeting.Reason),
+                    _ => new(PlayerCommandResultCode.InteractionRejected, greeting.TargetEntityId, Reason: greeting.Reason)
+                };
             default:
                 return new(PlayerCommandResultCode.InvalidCommand, Reason: "Unknown command.");
         }

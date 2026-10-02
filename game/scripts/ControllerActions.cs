@@ -13,6 +13,7 @@ public static class ControllerActions
     public const string AttackLeft = "combat_attack_left";
     public const string AttackRight = "combat_attack_right";
     public const string Collect = "collect";
+    public const string Interact = "interact";
     public const string Inventory = "open_inventory";
     public const string Settlement = "open_settlement";
     public const string CloseMenu = "close_menu";
@@ -21,6 +22,5 @@ public static class ControllerActions
     public const string DebugCancel = "debug_cancel";
     public const string DebugRemoveGoal = "debug_remove_goal";
 }
-
 
 

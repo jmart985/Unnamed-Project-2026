@@ -24,6 +24,8 @@ public partial class Main : Node3D
     private WanderService? _wander;
     private long _simulationTick;
     private SpeciesCatalog _speciesCatalog = null!;
+    private RelationshipEventCatalog _relationshipEventCatalog = null!;
+    private PlayerCommandBoundary? _playerCommands;
     private MeshInstance3D _map = null!;
     private MeshInstance3D _obstacle = null!;
     private NavigationRegion3D _navigationRegion = null!;
@@ -72,6 +74,8 @@ public partial class Main : Node3D
         _saveSlotPath = ProjectSettings.GlobalizePath("user://ant-farm-save.json");
         _speciesCatalog = SpeciesCatalog.LoadFromFile(
             Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
+        _relationshipEventCatalog = RelationshipEventCatalog.LoadFromFile(
+            Path.Combine(AppContext.BaseDirectory, "data", "relationship_events.json"));
         ConfigureCreationChoices();
         _pauseButton.Pressed += TogglePause;
         GetNode<Button>("Controls/Panel/Scroll/Margin/VBox/OneX").Pressed += () => _clock.SetSpeed(SimulationSpeed.OneX);
@@ -158,6 +162,17 @@ public partial class Main : Node3D
             _lastActionMessage = _selectedEntityId is null
                 ? "Combat requested; select an entity first."
                 : $"Combat requested for {_selectedEntityId}.";
+            UpdateStatus();
+            return;
+        }
+
+        if (Input.IsActionJustPressed(ControllerActions.Interact))
+        {
+            SyncPlayerPosition();
+            var result = _playerCommands?.Execute(
+                new PlayerCommand(PlayerCommandKind.Interact, _selectedEntityId));
+            _lastActionMessage = result?.Reason
+                ?? "Friendly interaction is not initialized.";
             UpdateStatus();
             return;
         }
@@ -272,6 +287,10 @@ public partial class Main : Node3D
         ClearEntityViews();
         ClearResourceMarkers();
         _world = session.World;
+        _playerCommands = new PlayerCommandBoundary(
+            _world,
+            _clock,
+            new CreatureGreetingService(_world, _speciesCatalog, _relationshipEventCatalog));
         _playerProfile = profile;
         _sessionSeed = seed;
 
@@ -561,7 +580,7 @@ public partial class Main : Node3D
             $"Wood: ground {groundWood}, carried {carriedWood}, stored {storedWood} (total {totalWood})\n" +
             $"Save/load: {_saveLoadStatus}\n" +
 
-            $"Menu: {_activeMenu ?? "closed"} | WASD move, Space jump, LMB combat, E collect, I inventory, Tab settlement, Esc close\n" +
+            $"Menu: {_activeMenu ?? "closed"} | WASD move, Space jump, LMB combat, E collect, G greet, I inventory, Tab settlement, Esc close\n" +
             $"Last action: {_lastActionMessage}\n" +
             "Select an entity; F5 route, F6 unreachable, F7 cancel, F8 remove goal";
         _pauseButton.Text = _clock.IsPaused ? "Resume" : "Pause";

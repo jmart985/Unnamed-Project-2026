@@ -1,5 +1,12 @@
 [
   {
+    "id": "greeted",
+    "familiarityDelta": 5,
+    "trustDelta": 0,
+    "fearDelta": 0,
+    "loyaltyDelta": 0
+  },
+  {
     "id": "helped",
     "familiarityDelta": 5,
     "trustDelta": 8,

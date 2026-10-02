@@ -26,6 +26,7 @@ public static class PrototypeInputMap
         AddMouseAction(ControllerActions.AttackLeft, MouseButton.Left);
         AddMouseAction(ControllerActions.AttackRight, MouseButton.Right);
         AddKeyboardAction(ControllerActions.Collect, Key.E);
+        AddKeyboardAction(ControllerActions.Interact, Key.G);
         AddKeyboardAction(ControllerActions.Inventory, Key.I);
         AddKeyboardAction(ControllerActions.Settlement, Key.Tab);
         AddKeyboardAction(ControllerActions.CloseMenu, Key.Escape);
@@ -85,6 +86,5 @@ public static class PrototypeInputMap
         InputMap.ActionAddEvent(actionName, new InputEventJoypadMotion { Axis = axis, AxisValue = value });
     }
 }
-
 
 
