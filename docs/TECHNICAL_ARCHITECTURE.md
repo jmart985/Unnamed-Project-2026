@@ -17,10 +17,12 @@ These are planned paths. F01 creates the runnable scaffold. Use a fixed, flat 3D
 ## Ownership and update model
 
 - A World owns entity records identified by stable IDs, resource containers, and simulation time. It owns food sources, haul piles, stockpiles, and new-session metadata (seed, player entity ID, and player profile); entity inventories are bounded resource containers. The Godot PlayerCharacter is the view/controller for the World-owned player record. Use simple composition, not a custom ECS framework.
+- For 1.0, the World owns one player-led squad's durable membership as entity IDs. An entity may belong to at most one squad; membership references must resolve to live human NPCs. Removing an entity removes its membership. Squad orders and navigation are transient and are re-evaluated after load; membership remains durable.
 - Entity IDs are allocated monotonically within a World and are not reused after entity removal or world reset. Reset clears records but preserves the allocator, so stale IDs cannot resolve to new entities; a newly created World starts a new ID sequence.
 - Entity state contains ID, species ID, position, satiety, inventory, and current activity. Views reference IDs; scene-node paths are not save identities.
 - Directed relationship state is keyed by distinct observer and target entity IDs; self-relationships are invalid. Familiarity, trust, fear, and loyalty start at neutral zero, accept explicit finite deltas, and remain bounded to [0, 100]. Social adjustments validate all deltas before applying them atomically. Opposing directions are independent; no implicit decay or autonomous social behavior is introduced by the relationship data type.
 - Explicit relationship events are loaded from validated JSON profiles and update only the directed observer-to-target relationship. Prototype profiles are provisional tuning data; they do not cause events to be selected autonomously.
+- The 1.0 player greeting is one explicit, close-range interaction gated by a species capability. A successful greeting applies the validated `greeted` event profile only to the directed player-to-creature relationship; unsupported or invalid requests do not create or mutate relationship state.
 - Social melee combat composes damage resolution with the required `harmed` relationship profile. Combat routes damage through character health, rejects incapacitated attackers and dead or already-destroyed targets, and applies the social event only when health actually decreases. Rejected or zero-applied-damage attacks leave relationship state unchanged; the reverse direction is independent.
 - A read-only bond classifier derives Stranger, Familiar, Trusted, Loyal, or Fearful from relationship values and a validated threshold profile. Initial thresholds are provisional and do not mutate the underlying relationship.
 - Voluntary recruitment readiness is evaluated from the prospective recruit's directed relationship toward the recruiter. Only the Loyal bond level is eligible in the prototype policy; evaluation does not create or mutate relationship state.
@@ -52,6 +54,8 @@ In the sandbox, select `entity-000001` and press `R` to route around the central
 Use a versioned JSON snapshot of durable state: schema version, simulation time, entity IDs/species/positions/satiety/inventories, durable creature capture/captivity state, food/resource-pile/stockpile containers, directed relationship values, and optional new-session seed/player identity/profile. Validate the complete snapshot before replacing the current world. Unsupported versions or invalid references produce an error without changing the running world.
 
 Save at a tick boundary while simulation is paused. Persist carried items. Jobs, reservations, paths, and current movement are transient: registered simulation services reset only after snapshot validation and re-evaluate actions on the next tick, depositing carried wood first. The first version promises durable-state continuity, not bit-for-bit replay of paths or random wandering. Write through a temporary file and preserve the previous valid save on failure.
+
+The 1.0 snapshot adds validated squad membership to durable state and increments the current schema version from 4 to 5. Squad orders and navigation requests remain transient.
 
 ## Tests and observability
 

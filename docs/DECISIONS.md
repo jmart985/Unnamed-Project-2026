@@ -233,3 +233,12 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: Creature Core needs a distinct, testable gameplay signal while preserving adjacent milestone boundaries: shared character data is established by 0.2, relationships/domestication/recruitment belong to 0.6, player interaction is deferred to 1.0, and advanced creature behavior belongs to 1.2.
 - Consequence: The milestone reuses the existing species catalog and wandering behavior. It does not add cages, capture equipment, player commands, bonds, recruitment, breeding, combat, or advanced ecology. Durable capture/captivity state must participate in snapshot validation and round trips.
 - Revisit: When 1.0 defines player-controlled creature interactions or a later milestone defines housing, release, taming, or escape behavior.
+
+## D027 — First Real Game is a small player-controlled loop
+
+- Date: 2026-10-01
+- Status: Accepted milestone scope; implementation pending
+- Decision: Define 1.0 as one fixed-map survival/settlement slice: direct player movement and eating, one human squad with move/follow/stop orders, and one friendly creature greeting gated by a species capability. Reuse the existing camp, finite resources, stockpile, World state, and durable save/load. A successful greeting applies the validated `greeted` relationship profile (+5 familiarity, zero other deltas) only to the directed player-to-creature relationship.
+- Reason: The original milestone description grouped new-game, squad, survival, creatures, construction, combat, save/load, faction interaction, and regional content without a single end-to-end playable target. A smaller slice combines existing simulation foundations into observable player gameplay.
+- Consequence: Construction, combat, faction play, capture, taming, recruitment, breeding, advanced creature behavior, autonomous social simulation, economy depth, and world streaming are not 1.0 commitments. Squad membership is durable, while orders/navigation reset and are re-evaluated after load; the snapshot schema must increment when membership is implemented. The milestone is accepted only when the deterministic integrated scenario and its documented failure/recovery checks pass.
+- Revisit: After the 1.0 acceptance scenario is implemented and observed in Godot; reassess deferred systems from prototype evidence rather than promoting them automatically.

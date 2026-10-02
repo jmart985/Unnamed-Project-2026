@@ -10,6 +10,7 @@ A systemic open-world colony RPG in which people and creatures share consistent 
 - [Milestone 0.1: The Ant Farm](https://github.com/jmart985/Unnamed-Project-2026/milestone/1)
 - [Milestone 0.5: Combat Prototype](https://github.com/jmart985/Unnamed-Project-2026/milestone/29)
 - [Milestone 0.6: Relationships & Loyalty](https://github.com/jmart985/Unnamed-Project-2026/milestone/30)
+- [Milestone 1.0: First Real Game](https://github.com/jmart985/Unnamed-Project-2026/milestone/4)
 - [All implementation issues](https://github.com/jmart985/Unnamed-Project-2026/issues)
 - **Start here:** [#1 — Create the Godot C# sandbox and build checks](https://github.com/jmart985/Unnamed-Project-2026/issues/1)
 
@@ -22,6 +23,7 @@ A systemic open-world colony RPG in which people and creatures share consistent 
 - [Decisions log](docs/DECISIONS.md)
 - [Milestone scope and acceptance](docs/MILESTONE_0_1.md)
 - [Combat prototype scope and acceptance](docs/MILESTONE_0_5.md)
+- [First Real Game scope and acceptance](docs/MILESTONE_1_0.md)
 - [Work sequence and issue index](docs/BACKLOG.md)
 - [Contribution and AI workflow](CONTRIBUTING.md)
 
