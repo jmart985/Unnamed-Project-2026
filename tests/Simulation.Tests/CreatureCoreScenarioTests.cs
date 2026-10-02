@@ -18,6 +18,11 @@ public sealed class CreatureCoreScenarioTests
     {
         var catalog = SpeciesCatalog.LoadFromFile(
             Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
+        var cautiousSpecies = catalog.GetRequired("creature");
+        var exploratorySpecies = catalog.GetRequired("wolf");
+        Assert.Equal(new TemperamentProfile(0.3, 0.3, 0.5), cautiousSpecies.Temperament);
+        Assert.Equal(new TemperamentProfile(0.85, 0.65, 0.45), exploratorySpecies.Temperament);
+
         var world = new World();
         var cautiousCreature = world.SpawnEntity("creature", Vector3.Zero, satiety: 70);
         var exploratoryCreature = world.SpawnEntity("wolf", Vector3.Zero, satiety: 70);
@@ -31,11 +36,11 @@ public sealed class CreatureCoreScenarioTests
 
         var cautiousTrip = wandering.Advance(
             cautiousCreature,
-            catalog.GetRequired(cautiousCreature.SpeciesId),
+            cautiousSpecies,
             simulationTick: 7);
         var exploratoryTrip = wandering.Advance(
             exploratoryCreature,
-            catalog.GetRequired(exploratoryCreature.SpeciesId),
+            exploratorySpecies,
             simulationTick: 7);
 
         Assert.Equal(WanderingStatus.Traveling, cautiousTrip.Status);
