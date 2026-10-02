@@ -335,6 +335,13 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Every fresh launch starts a new test session. The character-creation form remains in the scene and its regular new-game path is unchanged.
 - Revisit: Set the flag to `false` when character creation should return to the test flow.
 
+## Individual temperament-driven behavior
+
+- Decision: Keep validated species temperament as the baseline, then derive bounded, deterministic individual boldness, curiosity, and sociability from each entity's stable ID. Creatures choose cautious nearby roaming, farther curious exploration, or goals near their same-species group according to those traits. Hauling entities carry a boldness-weighted amount of wood per trip rather than every worker filling the same load.
+- Reason: Make shared needs produce observably different behavior without introducing job frameworks, autonomous social systems, or separate creature rules.
+- Consequence: Individual traits are a read-only projection and need no new save fields; they remain stable while entity IDs remain stable. Food seeking and hunger priority are unchanged. Species temperament and individual variation remain inspectable.
+- Revisit: When traits need to be player-authored, trained, inherited, or changed by memories and relationships; then store them as explicit world state.
+
 ## New-game creature variety
 
 - Decision: Replace the three identical starter creatures in `NewGameSession` with one ape, one wolf, and one cow, each placed in the countryside and validated against the species catalog. Add finite plant and meat food sources near their habitats while retaining the town's human food, wood, and stockpile. Keep `AntFarmScenario`'s three generic creatures unchanged as a historical regression scenario.
