@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/PlayerCharacter.cs" id="1_player"]
 
@@ -6,68 +6,12 @@
 radius = 0.45
 height = 1.8
 
-[sub_resource type="BoxMesh" id="BoxMesh_torso"]
-size = Vector3(0.8, 1, 0.45)
-
-[sub_resource type="SphereMesh" id="SphereMesh_head"]
-radius = 0.32
-height = 0.64
-
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_limb"]
-radius = 0.12
-height = 0.8
-
-[sub_resource type="StandardMaterial3D" id="Material_body"]
-albedo_color = Color(0.18, 0.42, 0.72, 1)
-
-[sub_resource type="StandardMaterial3D" id="Material_skin"]
-albedo_color = Color(0.82, 0.58, 0.42, 1)
-
-[sub_resource type="StandardMaterial3D" id="Material_limb"]
-albedo_color = Color(0.12, 0.25, 0.48, 1)
-
 [node name="PlayerCharacter" type="CharacterBody3D"]
 script = ExtResource("1_player")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 position = Vector3(0, 0.9, 0)
 shape = SubResource("CapsuleShape_player")
-
-[node name="Torso" type="MeshInstance3D" parent="."]
-position = Vector3(0, 1.0, 0)
-mesh = SubResource("BoxMesh_torso")
-material_override = SubResource("Material_body")
-
-[node name="Head" type="MeshInstance3D" parent="."]
-position = Vector3(0, 1.8, 0)
-mesh = SubResource("SphereMesh_head")
-material_override = SubResource("Material_skin")
-
-[node name="LeftShoulder" type="Node3D" parent="."]
-position = Vector3(-0.55, 1.4, 0)
-
-[node name="LeftArm" type="MeshInstance3D" parent="LeftShoulder"]
-position = Vector3(0, -0.4, 0)
-mesh = SubResource("CapsuleMesh_limb")
-material_override = SubResource("Material_limb")
-
-[node name="RightShoulder" type="Node3D" parent="."]
-position = Vector3(0.55, 1.4, 0)
-
-[node name="RightArm" type="MeshInstance3D" parent="RightShoulder"]
-position = Vector3(0, -0.4, 0)
-mesh = SubResource("CapsuleMesh_limb")
-material_override = SubResource("Material_limb")
-
-[node name="LeftLeg" type="MeshInstance3D" parent="."]
-position = Vector3(-0.22, 0.25, 0)
-mesh = SubResource("CapsuleMesh_limb")
-material_override = SubResource("Material_limb")
-
-[node name="RightLeg" type="MeshInstance3D" parent="."]
-position = Vector3(0.22, 0.25, 0)
-mesh = SubResource("CapsuleMesh_limb")
-material_override = SubResource("Material_limb")
 
 [node name="Camera3D" type="Camera3D" parent="."]
 position = Vector3(0, 2.6, 5.5)
