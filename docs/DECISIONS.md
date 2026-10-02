@@ -251,3 +251,12 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: These independent, data-driven dimensions provide a small, explainable basis for later deterministic wild-behavior choices without conflating temperament with needs or relationships.
 - Consequence: Every species definition must provide valid temperament data; later behavior rules consume the existing profile rather than introducing another species registry.
 - Revisit: After the deterministic creature behavior scenario demonstrates how these dimensions produce distinct outcomes.
+
+## D029 — Bounded Economy Prototype scope
+
+- Date: 2026-10-01
+- Status: Accepted milestone scope; implementation pending
+- Decision: Define 0.8 as one deterministic settlement economy slice that reuses existing farming, workstation recipes, storage, World ownership, and resource transfers. Add one known resource ID, `coin`, as the sole currency; each tradeable good has a validated fixed positive integer value in coins. One finite-stock caravan can exchange goods and coins with the settlement market, and trades are atomic across all participating containers.
+- Reason: Resources, production chains, markets, and caravans are the milestone promise, but those systems need a bounded integrated outcome rather than open-ended infrastructure or a regional simulation.
+- Consequence: Dynamic prices, supply/demand, multiple settlements, route networks, autonomous caravan travel, advanced finance, economic AI, and player-facing trading are deferred. Economy depth remains outside 1.0 acceptance. Coins use the existing resource-container and snapshot model; durable settlement totals use existing World snapshot behavior, while in-progress caravan visits are transient.
+- Revisit: After the E08d integrated scenario is exercised and its economic signal is observed.
