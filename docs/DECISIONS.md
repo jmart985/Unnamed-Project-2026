@@ -327,3 +327,10 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 
 - Decision: Player, humans, apes, and creatures use jointed primitive rigs (hips, knees, shoulders, elbows, head, tail) driven by a presentation-only ProceduralGait (walk cycle from observed speed, idle breathing and sway, facing movement direction). Quadrupeds use diagonal gaits; apes lean forward with long arms. Per docs/LONG_TERM_VISION.md, anatomy differs by species and drives how a body moves; final art and animation are deferred.
 - Consequence: No simulation state or save data changes.
+
+## Temporary character-creation bypass
+
+- Decision: For the current play-test phase, the startup scene skips the character-creation form and starts a new game with the default medium, average, female `Test Player` profile. The exported `Main.SkipCharacterCreationForTesting` flag controls this behavior; set it to `false` to restore character creation.
+- Reason: Let play-testing focus on movement and the shared world simulation before the creation flow is ready for broader testing.
+- Consequence: Every fresh launch starts a new test session. The character-creation form remains in the scene and its regular new-game path is unchanged.
+- Revisit: Set the flag to `false` when character creation should return to the test flow.
