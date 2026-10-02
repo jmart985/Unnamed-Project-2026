@@ -21,57 +21,76 @@ public partial class PlayerCharacter : CharacterBody3D
     [Export] public bool RightShieldEquipped { get; set; }
 
     private Vector3 _lastGroundedPosition;
-    private MeshInstance3D _leftArm = null!;
-    private MeshInstance3D _rightArm = null!;
     private double _attackCooldownRemaining;
-    private float _restingArmRotation;
-    private float _restingLeftArmRotation;
-    private readonly List<MeshInstance3D> _chestPlaceholders = [];
-    private readonly ProceduralGait _gait = new() { ReferenceSpeed = 5.0f, BobHeight = 0.0f };
+    private PlayerBodyRig _body = null!;
+    private PlayerCharacterProfile _profile = PlayerCharacterProfile.Create("Player");
+    private readonly ProceduralGait _gait = new() { ReferenceSpeed = 5.0f, BobHeight = 0.03f };
+    private readonly AttackSwing _swing = new();
+    private bool _swingLeft;
+    private float _headPitch;
+    private float _headPitchTarget;
 
-    public bool IsAttacking { get; private set; }
+    public bool IsAttacking => _swing.IsActive;
     public string EntityId { get; private set; } = string.Empty;
+    public string AimedBodyPart => CombatAim.PartForPitch(_headPitch, _swingLeft);
+
+    /// Raised once per swing at the moment of impact: the swinging side and the aimed body part.
+    /// Combat resolution (reach validation, damage to a body part) attaches here; nothing resolves hits yet.
+    public event Action<bool, string>? StrikeReleased;
 
     public override void _Ready()
     {
         PrototypeInputMap.EnsureDefaults();
         _lastGroundedPosition = GlobalPosition;
-        _leftArm = GetNode<MeshInstance3D>("LeftShoulder/LeftArm");
-        _rightArm = GetNode<MeshInstance3D>("RightShoulder/RightArm");
-        _restingLeftArmRotation = _leftArm.Rotation.X;
-        _restingArmRotation = _rightArm.Rotation.X;
-        AddChestPlaceholders();
+        RebuildBody(_profile);
+    }
+
+    // The rig is rebuilt from the profile so character creation changes proportions, not a whole-node scale
+    // (which would also distort the collision capsule and camera).
+    private void RebuildBody(PlayerCharacterProfile profile)
+    {
+        _profile = profile;
+        if (_body is not null)
+        {
+            _body.Root.QueueFree();
+        }
+
+        var proportions = PlayerBodyProportions.From(profile);
+        _body = new PlayerBodyRig(proportions);
+        AddChild(_body.Root);
+
+        var collision = GetNode<CollisionShape3D>("CollisionShape3D");
+        var radius = Mathf.Min(0.4f * proportions.TorsoWidth, proportions.Height * 0.25f);
+        collision.Shape = new CapsuleShape3D { Radius = radius, Height = proportions.Height };
+        collision.Position = new Vector3(0, proportions.Height * 0.5f, 0);
+        var camera = GetNode<Camera3D>("Camera3D");
+        camera.Position = new Vector3(0, proportions.Height * 1.45f, 5.5f);
+
         BuildGait();
     }
 
-    // Legs are re-parented under hip pivots and arms swing from their shoulder pivots so the walk cycle
-    // does not disturb the attack swing, which rotates the arm meshes directly.
+    // Walk drives hips, knees, shoulders, elbows, head and torso; an attack layer overrides the swinging arm
+    // and adds a torso twist after the gait step, so locomotion and combat share joints without fighting.
     private void BuildGait()
     {
+        _gait.Limbs.Clear();
         _gait.ReferenceSpeed = MovementSpeed;
-        foreach (var (name, phase) in new[] { ("LeftLeg", 0f), ("RightLeg", Mathf.Pi) })
+        _gait.Body = _body.Root;
+        var leg = new[] { (_body.LeftHip, _body.LeftKnee, 0f), (_body.RightHip, _body.RightKnee, Mathf.Pi) };
+        foreach (var (hip, knee, phase) in leg)
         {
-            var leg = GetNode<MeshInstance3D>(name);
-            var hip = new Node3D { Name = name + "Hip", Position = leg.Position + new Vector3(0, 0.4f, 0) };
-            AddChild(hip);
-            RemoveChild(leg);
-            hip.AddChild(leg);
-            leg.Position = new Vector3(0, -0.4f, 0);
             _gait.Limbs.Add(new ProceduralGait.Limb { Pivot = hip, Phase = phase, Amplitude = 0.6f });
+            _gait.Limbs.Add(new ProceduralGait.Limb { Pivot = knee, Phase = phase + Mathf.Pi * 0.5f, Amplitude = -0.9f, Rectify = true });
         }
 
-        _gait.Limbs.Add(new ProceduralGait.Limb
+        var arm = new[] { (_body.LeftShoulder, _body.LeftElbow, Mathf.Pi), (_body.RightShoulder, _body.RightElbow, 0f) };
+        foreach (var (shoulder, elbow, phase) in arm)
         {
-            Pivot = GetNode<Node3D>("LeftShoulder"), Phase = Mathf.Pi, Amplitude = 0.5f, IdleAmplitude = 0.03f, IdleFrequency = 1.1f
-        });
-        _gait.Limbs.Add(new ProceduralGait.Limb
-        {
-            Pivot = GetNode<Node3D>("RightShoulder"), Phase = 0, Amplitude = 0.5f, IdleAmplitude = 0.03f, IdleFrequency = 1.1f
-        });
-        _gait.Limbs.Add(new ProceduralGait.Limb
-        {
-            Pivot = GetNode<Node3D>("Head"), Axis = Vector3.Up, Amplitude = 0.04f, IdleAmplitude = 0.15f, IdleFrequency = 0.6f
-        });
+            _gait.Limbs.Add(new ProceduralGait.Limb { Pivot = shoulder, Phase = phase, Amplitude = 0.5f, IdleAmplitude = 0.03f, IdleFrequency = 1.1f });
+            _gait.Limbs.Add(new ProceduralGait.Limb { Pivot = elbow, Phase = phase, Amplitude = 0.25f, Bias = 0.2f, Rectify = true });
+        }
+
+        _gait.Limbs.Add(new ProceduralGait.Limb { Pivot = _body.Torso, Axis = Vector3.Up, Phase = 0, Amplitude = 0.08f, IdleAmplitude = 0.02f, IdleFrequency = 0.5f });
     }
 
     public void BindPlayer(string entityId, PlayerCharacterProfile profile, float movementSpeed)
@@ -95,53 +114,14 @@ public partial class PlayerCharacter : CharacterBody3D
         EntityId = entityId;
         MovementSpeed = movementSpeed;
         _lastGroundedPosition = GlobalPosition;
-        _gait.ReferenceSpeed = movementSpeed;
-        var heightScale = profile.Height switch
-        {
-            PlayerHeight.Small => 0.88f,
-            PlayerHeight.Medium => 1.0f,
-            PlayerHeight.Tall => 1.12f,
-            _ => throw new ArgumentOutOfRangeException(nameof(profile))
-        };
-        var (widthScale, depthScale) = profile.BodyType switch
-        {
-            PlayerBodyType.Lean => (0.84f, 0.86f),
-            PlayerBodyType.Athletic => (0.96f, 0.94f),
-            PlayerBodyType.Average => (1.0f, 1.0f),
-            PlayerBodyType.Stocky => (1.12f, 1.08f),
-            PlayerBodyType.Thick => (1.24f, 1.18f),
-            _ => throw new ArgumentOutOfRangeException(nameof(profile))
-        };
-        Scale = new Vector3(widthScale, heightScale, depthScale);
-        foreach (var placeholder in _chestPlaceholders)
-        {
-            placeholder.Visible = profile.Sex == PlayerSex.Female;
-        }
+        RebuildBody(profile);
     }
-
-    private void AddChestPlaceholders()
-    {
-        var material = new StandardMaterial3D { AlbedoColor = new Color(0.82f, 0.58f, 0.42f) };
-        foreach (var x in new[] { -0.17f, 0.17f })
-        {
-            var placeholder = new MeshInstance3D
-            {
-                Name = x < 0 ? "ChestLeft" : "ChestRight",
-                Mesh = new SphereMesh { Radius = 0.13f, Height = 0.22f },
-                Position = new Vector3(x, 1.12f, -0.26f),
-                MaterialOverride = material,
-                Visible = false
-            };
-            AddChild(placeholder);
-            _chestPlaceholders.Add(placeholder);
-        }
-    }
-
     public override void _UnhandledInput(InputEvent @event)
     {
         if (@event is InputEventMouseMotion motion)
         {
             RotateY(-motion.Relative.X * MouseSensitivity);
+            _headPitchTarget = Mathf.Clamp(_headPitchTarget - motion.Relative.Y * MouseSensitivity, -0.6f, 0.6f);
             return;
         }
 
@@ -159,11 +139,11 @@ public partial class PlayerCharacter : CharacterBody3D
         {
             if (mouseButton.ButtonIndex == MouseButton.Left)
             {
-                StartAttackSwing(_leftArm, _restingLeftArmRotation, LeftShieldEquipped);
+                StartAttackSwing(true, LeftShieldEquipped);
             }
             else if (mouseButton.ButtonIndex == MouseButton.Right)
             {
-                StartAttackSwing(_rightArm, _restingArmRotation, RightShieldEquipped);
+                StartAttackSwing(false, RightShieldEquipped);
             }
 
             return;
@@ -171,11 +151,11 @@ public partial class PlayerCharacter : CharacterBody3D
 
         if (Input.IsActionPressed(ControllerActions.AttackLeft))
         {
-            StartAttackSwing(_leftArm, _restingLeftArmRotation, LeftShieldEquipped);
+            StartAttackSwing(true, LeftShieldEquipped);
         }
         else if (Input.IsActionPressed(ControllerActions.AttackRight))
         {
-            StartAttackSwing(_rightArm, _restingArmRotation, RightShieldEquipped);
+            StartAttackSwing(false, RightShieldEquipped);
         }
     }
 
@@ -213,6 +193,12 @@ public partial class PlayerCharacter : CharacterBody3D
 
         MoveAndSlide();
         _gait.Advance(physicsDelta, IsOnFloor() ? new Vector2(Velocity.X, Velocity.Z).Length() : 0f);
+        if (_swing.Advance(physicsDelta))
+        {
+            StrikeReleased?.Invoke(_swingLeft, CombatAim.PartForPitch(_headPitch, _swingLeft));
+        }
+
+        ApplyAttackPose();
 
         if (IsOnFloor())
         {
@@ -225,19 +211,36 @@ public partial class PlayerCharacter : CharacterBody3D
         }
     }
 
-    private void StartAttackSwing(MeshInstance3D arm, float restingRotation, bool shieldEquipped)
+    private void StartAttackSwing(bool left, bool shieldEquipped)
     {
-        if (shieldEquipped || IsAttacking || _attackCooldownRemaining > 0.0)
+        if (shieldEquipped || _swing.IsActive || _attackCooldownRemaining > 0.0)
         {
             return;
         }
 
-        IsAttacking = true;
-        _attackCooldownRemaining = AttackCooldown;
-        var tween = CreateTween();
-        tween.SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.Out);
-        tween.TweenProperty(arm, "rotation:x", restingRotation - Mathf.Pi * 0.75f, AttackDuration * 0.45f);
-        tween.TweenProperty(arm, "rotation:x", restingRotation, AttackDuration * 0.55f);
-        tween.Finished += () => IsAttacking = false;
+        _swingLeft = left;
+        _swing.Begin();
+        _attackCooldownRemaining = AttackCooldown + _swing.TotalSeconds;
+    }
+
+    // Layers the attack pose over the walk cycle: wind-up raises the arm and bends the elbow, the strike
+    // chops down through the aim, recovery returns. The torso twists into the swing.
+    private void ApplyAttackPose()
+    {
+        var pose = _swing.Pose;
+        var shoulder = _swingLeft ? _body.LeftShoulder : _body.RightShoulder;
+        var elbow = _swingLeft ? _body.LeftElbow : _body.RightElbow;
+        if (_swing.IsActive)
+        {
+            var raise = pose >= 0 ? 2.2f * pose : 0.9f * pose;
+            shoulder.Rotation = new Vector3(raise, 0, 0);
+            elbow.Rotation = new Vector3(0.3f + 0.9f * Mathf.Max(0, pose), 0, 0);
+            var twist = (_swingLeft ? -1f : 1f) * pose * 0.3f;
+            _body.Torso.Rotation = new Vector3(0, twist, 0);
+        }
+
+        // Head follows aim pitch; sits on top of the idle sway applied by the gait.
+        _headPitch = Mathf.Lerp(_headPitch, _headPitchTarget, 0.2f);
+        _body.Head.Rotation = new Vector3(_headPitch, _body.Head.Rotation.Y, 0);
     }
 }

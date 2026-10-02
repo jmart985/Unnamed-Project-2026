@@ -348,3 +348,10 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: Make the species differences already modeled by anatomy, diet, capabilities, and temperament visible in the playable session, consistent with the long-term vision's ecological species roles.
 - Consequence: A new session still has three creatures, but each species has distinct behavior, needs, visual form, and accessible compatible food. The 1.0 setup acceptance now names the starter species.
 - Revisit: Adjust population or food quantities when the integrated Godot scenario provides evidence about survival or resource balance.
+
+## Player body rig and combat groundwork
+
+- Decision: Replace the player's whole-node scale with a code-built jointed humanoid rig (`PlayerBodyRig`) generated from `PlayerBodyProportions`, a pure simulation-side mapping of character-creation height, body type, and sex to limb lengths, torso/limb thickness, shoulder/hip balance, and chest. The collision capsule and camera height follow the proportions instead of being scaled. The player uses `ProceduralGait` for hips, knees, shoulders, elbows, torso twist, head sway, and breathing like NPCs. Melee input now drives an `AttackSwing` (wind-up, strike, recovery) that layers over the walk, twists the torso, and raises `PlayerCharacter.StrikeReleased(left, bodyPart)` once at impact. Mouse vertical movement tilts the head, and `CombatAim` maps that pitch to Head, Torso, or the swinging side's leg.
+- Reason: User-directed groundwork so the player has the same procedural body as other characters, reflects creation choices, and has independent arm, leg, and head joints for later combat. This is scope beyond Milestone 1.0; no hits, damage, or injuries are resolved yet.
+- Consequence: Nothing is wired to `MeleeCombatService`; the strike event and aimed body part names match `CharacterHealth.CreateHumanoid` so reach validation and damage can attach later. Visuals are unverified in a windowed run.
+- Revisit: When combat is integrated into the playable scene (Milestone 0.5 scope), resolve strikes through the domain combat services and drive poses from equipment and injuries.
