@@ -26,6 +26,7 @@ public sealed class FactionIdentityTests
         Assert.Equal(
             FactionAllegianceResult.UnknownFaction,
             world.SetEntityAllegiance(aligned.Id, "unknown"));
+        Assert.Equal("north-settlement", aligned.AllegianceFactionId);
         Assert.Equal(
             FactionAllegianceResult.EntityNotFound,
             world.SetEntityAllegiance("missing", "river-clan"));
@@ -51,6 +52,7 @@ public sealed class FactionIdentityTests
 
         Assert.True(world.TryRemoveEntity(entity.Id));
         Assert.Empty(world.Entities);
+        Assert.Null(entity.AllegianceFactionId);
         Assert.Contains("town", world.FactionIds);
 
         world.Reset();
