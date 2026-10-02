@@ -33,16 +33,36 @@ public sealed class CreatureCoreScenarioTests
         };
         Vector3[] goals = [new(1, 0, 0), new(3, 0, 0), new(5, 0, 0)];
         var wandering = new WanderingService(world, entity => navigators[entity.Id], goals, decisionSeed: 42);
+        var clock = new SimulationClock();
+        var simulationTick = 0;
+        var trips = new Dictionary<string, WanderingResult>(StringComparer.Ordinal);
+        var processedTicks = clock.Advance(0.7, elapsed =>
+        {
+            simulationTick++;
+            cautiousCreature.Needs.Advance(elapsed, cautiousSpecies.HungerRate);
+            exploratoryCreature.Needs.Advance(elapsed, exploratorySpecies.HungerRate);
+            var cautiousResult = wandering.Advance(cautiousCreature, cautiousSpecies, simulationTick);
+            var exploratoryResult = wandering.Advance(exploratoryCreature, exploratorySpecies, simulationTick);
 
-        var cautiousTrip = wandering.Advance(
-            cautiousCreature,
-            cautiousSpecies,
-            simulationTick: 7);
-        var exploratoryTrip = wandering.Advance(
-            exploratoryCreature,
-            exploratorySpecies,
-            simulationTick: 7);
+            if (simulationTick == 1)
+            {
+                trips.Add(cautiousCreature.Id, cautiousResult);
+                trips.Add(exploratoryCreature.Id, exploratoryResult);
+            }
+            else
+            {
+                Assert.Equal(trips[cautiousCreature.Id], cautiousResult);
+                Assert.Equal(trips[exploratoryCreature.Id], exploratoryResult);
+            }
+        });
+        var cautiousTrip = trips[cautiousCreature.Id];
+        var exploratoryTrip = trips[exploratoryCreature.Id];
 
+        Assert.Equal(7, processedTicks);
+        Assert.Equal(7, simulationTick);
+        Assert.Equal(0.7, clock.SimulationTime, precision: 6);
+        Assert.Equal(69.86, cautiousCreature.Satiety, precision: 6);
+        Assert.Equal(69.86, exploratoryCreature.Satiety, precision: 6);
         Assert.Equal(WanderingStatus.Traveling, cautiousTrip.Status);
         Assert.Equal(WildBehavior.CautiousRoaming, cautiousTrip.Behavior);
         Assert.Equal(goals[0], cautiousTrip.Target);
@@ -56,8 +76,7 @@ public sealed class CreatureCoreScenarioTests
         Assert.Equal(CreatureCaptureResult.TargetNotFound, world.TryCaptureCreature("missing-creature"));
         Assert.Equal(CreatureCaptivityState.Captive, cautiousCreature.CaptivityState);
 
-        const double simulationTime = 0.7;
-        var validSnapshot = WorldSnapshotSerializer.Serialize(world, simulationTime);
+        var validSnapshot = WorldSnapshotSerializer.Serialize(world, clock.SimulationTime);
         var invalidSnapshot = validSnapshot.Replace(
             "\"CaptivityState\": \"Captive\"",
             "\"CaptivityState\": 42",
@@ -80,7 +99,7 @@ public sealed class CreatureCoreScenarioTests
         Assert.NotNull(exploratoryCreature.Actions.Current);
 
         var restoredTime = WorldSnapshotSerializer.Load(world, validSnapshot, catalog, wandering);
-        Assert.Equal(simulationTime, restoredTime);
+        Assert.Equal(clock.SimulationTime, restoredTime);
         Assert.Equal(validSnapshot, WorldSnapshotSerializer.Serialize(world, restoredTime));
 
         var restoredCreatures = world.Entities.OrderBy(entity => entity.Id, StringComparer.Ordinal).ToArray();
