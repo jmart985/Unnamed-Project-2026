@@ -390,6 +390,7 @@ public sealed class World
         {
             entity.Actions.Cancel();
             Reservations.ReleaseForEntity(entity.Id);
+            entity.AllegianceFactionId = null;
         }
 
         _entities.Clear();

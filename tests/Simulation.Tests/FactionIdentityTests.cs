@@ -55,12 +55,15 @@ public sealed class FactionIdentityTests
         Assert.Null(entity.AllegianceFactionId);
         Assert.Contains("town", world.FactionIds);
 
+        var resetEntity = world.SpawnEntity("human", Vector3.UnitX);
+        Assert.Equal(FactionAllegianceResult.Assigned, world.SetEntityAllegiance(resetEntity.Id, "town"));
         world.Reset();
 
         Assert.Empty(world.Entities);
         Assert.Empty(world.FactionIds);
+        Assert.Null(resetEntity.AllegianceFactionId);
         Assert.Equal(FactionDefinitionResult.Defined, world.DefineFaction("town"));
-        Assert.Equal("entity-000002", world.SpawnEntity("human", Vector3.One).Id);
+        Assert.Equal("entity-000003", world.SpawnEntity("human", Vector3.One).Id);
     }
 
     [Fact]
