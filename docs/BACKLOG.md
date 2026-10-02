@@ -59,6 +59,17 @@ Issue [#221](https://github.com/jmart985/Unnamed-Project-2026/issues/221) define
 | [#323](https://github.com/jmart985/Unnamed-Project-2026/issues/323) (C03b) | Creatures | Model durable capture and captivity state | None |
 | [#325](https://github.com/jmart985/Unnamed-Project-2026/issues/325) (C03d) | Validation | Verify the integrated creature-core scenario | [#323](https://github.com/jmart985/Unnamed-Project-2026/issues/323), [#324](https://github.com/jmart985/Unnamed-Project-2026/issues/324), [#326](https://github.com/jmart985/Unnamed-Project-2026/issues/326) |
 
+## 0.8 Economy Prototype
+
+The target is a deterministic, inspectable settlement economy loop: existing farming and workstation systems produce a finite tradeable good, a settlement market exchanges resources at fixed prototype values denominated in one `coin` currency, and one finite-stock caravan completes a visit. Reuse the Basic Settlement and World/inventory foundations; do not make economy depth a 1.0 commitment. See [Milestone 0.8 scope and acceptance](MILESTONE_0_8.md) and planning issue [#223](https://github.com/jmart985/Unnamed-Project-2026/issues/223).
+
+| Issue | Task | Depends on |
+| --- | --- | --- |
+| [#330](https://github.com/jmart985/Unnamed-Project-2026/issues/330) (E08a) | Define validated fixed-value trade goods | None |
+| [#331](https://github.com/jmart985/Unnamed-Project-2026/issues/331) (E08b) | Execute atomic settlement market transactions | [#330](https://github.com/jmart985/Unnamed-Project-2026/issues/330), completed [#4](https://github.com/jmart985/Unnamed-Project-2026/issues/4) and [#144](https://github.com/jmart985/Unnamed-Project-2026/issues/144) |
+| [#332](https://github.com/jmart985/Unnamed-Project-2026/issues/332) (E08c) | Complete one finite caravan market visit | [#331](https://github.com/jmart985/Unnamed-Project-2026/issues/331) |
+| [#333](https://github.com/jmart985/Unnamed-Project-2026/issues/333) (E08d) | Verify the integrated settlement economy scenario | [#330](https://github.com/jmart985/Unnamed-Project-2026/issues/330), [#331](https://github.com/jmart985/Unnamed-Project-2026/issues/331), [#332](https://github.com/jmart985/Unnamed-Project-2026/issues/332), and completed [#150](https://github.com/jmart985/Unnamed-Project-2026/issues/150), [#152](https://github.com/jmart985/Unnamed-Project-2026/issues/152), [#154](https://github.com/jmart985/Unnamed-Project-2026/issues/154), and [#156](https://github.com/jmart985/Unnamed-Project-2026/issues/156) |
+
 ## Deferred design topics
 
 Capture/domestication, relationships, combat, injuries, construction, production, factions, economy, breeding, and world streaming remain outside 0.1. Refine these after the Ant Farm acceptance scenario passes; future ideas do not become milestone commitments automatically.
