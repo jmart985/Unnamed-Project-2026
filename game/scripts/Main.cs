@@ -10,11 +10,20 @@ public partial class Main : Node3D
     private World _world = new();
     private static readonly System.Numerics.Vector3[] CreatureWanderGoals =
     [
-        new(-7f, 0, -2f),
-        new(-3f, 0, 6f),
-        new(4f, 0, -6f),
-        new(7f, 0, 3f)
+        new(70f, 0, 50f),
+        new(110f, 0, 80f),
+        new(150f, 0, 40f),
+        new(90f, 0, 140f),
+        new(-60f, 0, 150f),
+        new(-140f, 0, 90f)
     ];
+    private const float WorldHalfExtent = 200f;
+    private const float TownHalfExtent = 60f;
+    private static readonly float[] NavigationGridLines =
+        [-200f, -120f, -60f, -38f, -30f, -22f, -14f, -1f, 1f, 14f, 22f, 30f, 38f, 60f, 120f, 200f];
+    private static readonly (float Min, float Max)[] BuildingBands =
+        [(-38f, -30f), (-22f, -14f), (14f, 22f), (30f, 38f)];
+    private Node3D? _scenery;
     private readonly Dictionary<string, EntityView> _entityViews = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Button> _entityButtons = new(StringComparer.Ordinal);
     private readonly List<MeshInstance3D> _resourceMarkers = [];
@@ -294,7 +303,9 @@ public partial class Main : Node3D
         _playerProfile = profile;
         _sessionSeed = seed;
 
-        _map.Mesh = new PlaneMesh { Size = new Vector2(20, 20) };
+        _map.Mesh = new PlaneMesh { Size = new Vector2(WorldHalfExtent * 2, WorldHalfExtent * 2) };
+        _map.MaterialOverride = CreateMaterial(new Color(0.32f, 0.5f, 0.24f));
+        BuildScenery();
         _obstacle.Mesh = new BoxMesh { Size = new Vector3(2, 1, 2) };
         _obstacle.Position = new Vector3(0, 0.5f, 0);
         _navigationRegion.NavigationMesh = CreateNavigationMesh();
@@ -306,7 +317,10 @@ public partial class Main : Node3D
             [
                 new System.Numerics.Vector3(-5, 0, -3),
                 new System.Numerics.Vector3(4, 0, 3),
-                new System.Numerics.Vector3(7, 0, -5)
+                new System.Numerics.Vector3(7, 0, -5),
+                new System.Numerics.Vector3(-26, 0, 26),
+                new System.Numerics.Vector3(26, 0, -26),
+                new System.Numerics.Vector3(26, 0, 26)
             ],
             _sessionSeed);
         _woodHauling = new WoodHaulingService(_world, GetNavigationAdapter);
@@ -737,6 +751,104 @@ public partial class Main : Node3D
 
 
 
+    private static bool IsBlockedCell(float minX, float maxX, float minZ, float maxZ)
+    {
+        if (minX == -1f && maxX == 1f && minZ == -1f && maxZ == 1f)
+        {
+            return true;
+        }
+
+        return IsBuildingBand(minX, maxX) && IsBuildingBand(minZ, maxZ);
+    }
+
+    private static bool IsBuildingBand(float min, float max) =>
+        BuildingBands.Any(band => band.Min == min && band.Max == max);
+
+    private static StandardMaterial3D CreateMaterial(Color color) => new() { AlbedoColor = color };
+
+    private void AddScenery(string name, Vector3 size, Vector3 position, Color color)
+    {
+        _scenery!.AddChild(new MeshInstance3D
+        {
+            Name = name,
+            Mesh = new BoxMesh { Size = size },
+            Position = position,
+            MaterialOverride = CreateMaterial(color)
+        });
+    }
+
+    // Town: paved ground, crossing roads, and building blocks matching the navigation grid holes.
+    // Countryside: field patches and tree clumps scattered beyond the town edge.
+    private void BuildScenery()
+    {
+        if (_scenery is not null)
+        {
+            RemoveChild(_scenery);
+            _scenery.QueueFree();
+        }
+
+        _scenery = new Node3D { Name = "Scenery" };
+        AddChild(_scenery);
+
+        AddScenery("TownGround", new Vector3(TownHalfExtent * 2, 0.05f, TownHalfExtent * 2),
+            new Vector3(0, 0.03f, 0), new Color(0.62f, 0.62f, 0.6f));
+        AddScenery("RoadEastWest", new Vector3(TownHalfExtent * 2, 0.05f, 8), new Vector3(0, 0.07f, 0),
+            new Color(0.2f, 0.2f, 0.22f));
+        AddScenery("RoadNorthSouth", new Vector3(8, 0.05f, TownHalfExtent * 2), new Vector3(0, 0.08f, 0),
+            new Color(0.2f, 0.2f, 0.22f));
+        AddScenery("CountryRoadEast", new Vector3(WorldHalfExtent - TownHalfExtent, 0.05f, 6),
+            new Vector3((WorldHalfExtent + TownHalfExtent) / 2, 0.04f, 0), new Color(0.5f, 0.4f, 0.28f));
+        AddScenery("CountryRoadWest", new Vector3(WorldHalfExtent - TownHalfExtent, 0.05f, 6),
+            new Vector3(-(WorldHalfExtent + TownHalfExtent) / 2, 0.04f, 0), new Color(0.5f, 0.4f, 0.28f));
+
+        var index = 0;
+        foreach (var (minX, maxX) in BuildingBands)
+        {
+            foreach (var (minZ, maxZ) in BuildingBands)
+            {
+                var height = 6f + ((index * 7) % 5) * 3f;
+                AddScenery($"Building_{index}", new Vector3(maxX - minX, height, maxZ - minZ),
+                    new Vector3((minX + maxX) / 2, height / 2, (minZ + maxZ) / 2),
+                    new Color(0.55f + (index % 3) * 0.08f, 0.5f, 0.45f));
+                index++;
+            }
+        }
+
+        var random = new RandomNumberGenerator { Seed = 2026 };
+        for (var field = 0; field < 24; field++)
+        {
+            var position = RuralPoint(random);
+            AddScenery($"Field_{field}", new Vector3(random.RandfRange(14, 30), 0.04f, random.RandfRange(14, 30)),
+                new Vector3(position.X, 0.03f, position.Y),
+                field % 2 == 0 ? new Color(0.72f, 0.64f, 0.25f) : new Color(0.2f, 0.42f, 0.18f));
+        }
+
+        for (var tree = 0; tree < 120; tree++)
+        {
+            var position = RuralPoint(random);
+            AddScenery($"TreeTrunk_{tree}", new Vector3(0.6f, 3, 0.6f),
+                new Vector3(position.X, 1.5f, position.Y), new Color(0.35f, 0.22f, 0.1f));
+            AddScenery($"TreeCrown_{tree}", new Vector3(3, 3, 3),
+                new Vector3(position.X, 4.2f, position.Y), new Color(0.1f, 0.35f, 0.12f));
+        }
+    }
+
+    // Keeps rural props off the town and the country roads so they never sit on spawn/travel areas.
+    private static Vector2 RuralPoint(RandomNumberGenerator random)
+    {
+        while (true)
+        {
+            var point = new Vector2(
+                random.RandfRange(-WorldHalfExtent + 8, WorldHalfExtent - 8),
+                random.RandfRange(-WorldHalfExtent + 8, WorldHalfExtent - 8));
+            if ((Mathf.Abs(point.X) > TownHalfExtent + 12 || Mathf.Abs(point.Y) > TownHalfExtent + 12)
+                && Mathf.Abs(point.Y) > 8)
+            {
+                return point;
+            }
+        }
+    }
+
     private static NavigationMesh CreateNavigationMesh()
     {
         var mesh = new NavigationMesh();
@@ -769,15 +881,22 @@ public partial class Main : Node3D
             ]);
         }
 
-        AddRectangle(-10, -1, -10, -1);
-        AddRectangle(-1, 1, -10, -1);
-        AddRectangle(1, 10, -10, -1);
-        AddRectangle(-10, -1, -1, 1);
-        AddRectangle(1, 10, -1, 1);
-        AddRectangle(-10, -1, 1, 10);
-        AddRectangle(-1, 1, 1, 10);
-        AddRectangle(1, 10, 1, 10);
+        for (var xi = 0; xi < NavigationGridLines.Length - 1; xi++)
+        {
+            for (var zi = 0; zi < NavigationGridLines.Length - 1; zi++)
+            {
+                var minX = (int)NavigationGridLines[xi];
+                var maxX = (int)NavigationGridLines[xi + 1];
+                var minZ = (int)NavigationGridLines[zi];
+                var maxZ = (int)NavigationGridLines[zi + 1];
+                if (IsBlockedCell(minX, maxX, minZ, maxZ))
+                {
+                    continue;
+                }
 
+                AddRectangle(minX, maxX, minZ, maxZ);
+            }
+        }
         mesh.SetVertices(vertices.ToArray());
         foreach (var polygon in polygons)
         {

@@ -312,3 +312,8 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: The greeting is the one player-facing creature interaction in the 1.0 slice; explicit capability, range, and directed effects keep the behavior constrained and testable.
 - Consequence: Unsupported, invalid, removed, self, and out-of-range targets produce a rejection without relationship mutation. No capture, taming, recruitment, or general-purpose interaction framework is introduced.
 - Revisit: After the 1.0 integrated acceptance scenario is exercised in Godot.
+
+## City-scale world map
+
+- Decision: User-directed scope expansion. The playable map is a flat 400 x 400 m area: a 120 x 120 m central town (roads, building blocks as navigation holes) with countryside beyond (fields, tree clumps, country roads), built from procedural primitives. The navigation mesh is a coarse grid over the whole map with holes for buildings and the central obstacle. Humans, food, wood, and stockpile start in town; creatures start and wander in the countryside.
+- Consequence: Replaces the 20 x 20 placeholder map. Scenery is presentation only and not saved.

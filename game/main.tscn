@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" path="res://player_character.tscn" id="2_player"]
 
 [sub_resource type="BoxShape3D" id="BoxShape_floor"]
-size = Vector3(20, 0.2, 20)
+size = Vector3(400, 0.2, 400)
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_main")
