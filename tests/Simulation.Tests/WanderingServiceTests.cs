@@ -6,6 +6,50 @@ namespace Simulation.Tests;
 public sealed class WanderingServiceTests
 {
     [Fact]
+    public void TemperamentSelectsDistinctRepeatableWildBehaviors()
+    {
+        var catalog = SpeciesCatalog.LoadFromFile(GetSpeciesDataPath());
+        var goals = new[] { new Vector3(1, 0, 0), new Vector3(3, 0, 0), new Vector3(5, 0, 0) };
+
+        var cautious = StartWildTrip(catalog.GetRequired("creature"), goals, seed: 42, tick: 7);
+        var exploratory = StartWildTrip(catalog.GetRequired("wolf"), goals, seed: 42, tick: 7);
+        var repeatedExploratory = StartWildTrip(catalog.GetRequired("wolf"), goals, seed: 42, tick: 7);
+
+        Assert.Equal(WildBehavior.CautiousRoaming, cautious.Behavior);
+        Assert.Equal(goals[0], cautious.Target);
+        Assert.Equal(WildBehavior.CuriousExploration, exploratory.Behavior);
+        Assert.Equal(goals[2], exploratory.Target);
+        Assert.Equal(exploratory, repeatedExploratory);
+    }
+
+    [Fact]
+    public void FailedWanderReleasesActionAndAllowsNextTrip()
+    {
+        var world = new World();
+        var species = GetCreatureSpecies();
+        var navigator = new FakeNavigationAdapter();
+        var goals = new[] { new Vector3(1, 0, 0), new Vector3(3, 0, 0) };
+        var service = new WanderingService(world, _ => navigator, goals, decisionSeed: 42);
+        var creature = world.SpawnEntity(species.Id, Vector3.Zero);
+
+        var started = service.Advance(creature, species, simulationTick: 1);
+        var requestId = navigator.Requests.Keys.Single();
+        Assert.True(navigator.MarkUnreachable(requestId));
+
+        var failed = service.Advance(creature, species, simulationTick: 2);
+
+        Assert.Equal(WanderingStatus.Waiting, failed.Status);
+        Assert.Equal("Wandering target failed: Unreachable.", failed.WaitingReason);
+        Assert.Equal(WildBehavior.CautiousRoaming, failed.Behavior);
+        Assert.Null(creature.Actions.Current);
+
+        var restarted = service.Advance(creature, species, simulationTick: 3);
+        Assert.Equal(WanderingStatus.Traveling, restarted.Status);
+        Assert.NotNull(creature.Actions.Current);
+        Assert.Null(creature.WaitingReason);
+    }
+
+    [Fact]
     public void ThreeCreaturesUseDistinctStableIdsAndSharedWanderingAction()
     {
         var world = new World();
@@ -98,5 +142,17 @@ public sealed class WanderingServiceTests
     private static string GetSpeciesDataPath()
     {
         return Path.Combine(AppContext.BaseDirectory, "data", "species.json");
+    }
+
+    private static WanderingResult StartWildTrip(
+        SpeciesDefinition species,
+        IReadOnlyList<Vector3> goals,
+        int seed,
+        long tick)
+    {
+        var world = new World();
+        var entity = world.SpawnEntity(species.Id, Vector3.Zero);
+        var service = new WanderingService(world, _ => new FakeNavigationAdapter(), goals, seed);
+        return service.Advance(entity, species, tick);
     }
 }
