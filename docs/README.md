@@ -8,11 +8,12 @@ GitHub issues and the active milestone are the source of truth for current work.
 - [Current backlog and issue index](BACKLOG.md)
 - [Creature Core scope issue #221](https://github.com/jmart985/Unnamed-Project-2026/issues/221)
 
-- [Project vision](PROJECT_VISION.md)
+- [Project vision](PROJECT_VISION.md)\n- [Long-term vision and system guidance](LONG_TERM_VISION.md)
 - [Design principles](DESIGN_PRINCIPLES.md)
 - [Gameplay loop](GAMEPLAY_LOOP.md)
 - [Technical architecture](TECHNICAL_ARCHITECTURE.md)
 - [Decisions log](DECISIONS.md)
 - [Milestone 0.1](MILESTONE_0_1.md)
 - [Issue index](BACKLOG.md)
+
 

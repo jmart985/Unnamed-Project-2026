@@ -16,7 +16,7 @@ A systemic open-world colony RPG in which people and creatures share consistent 
 
 ## Start here
 
-- [Project vision](docs/PROJECT_VISION.md)
+- [Project vision](docs/PROJECT_VISION.md)\n- [Long-term vision and system guidance](docs/LONG_TERM_VISION.md)
 - [Design principles](docs/DESIGN_PRINCIPLES.md)
 - [Gameplay loop](docs/GAMEPLAY_LOOP.md)
 - [Technical architecture](docs/TECHNICAL_ARCHITECTURE.md)
@@ -53,6 +53,7 @@ dotnet test tests\Simulation.Tests\Simulation.Tests.csproj --configuration Relea
 The editor opens `game\main.tscn`, a flat placeholder map with an overhead camera. Build and test output should report success; the headless Godot command should exit with code 0. The Godot executable path is an example Windows installation path; use the pinned executable from the local installation when it differs.
 
 The startup scene exposes Pause/Resume, 1x, 4x, and Reset controls. Domain time advances in fixed 0.1-second ticks. A frame processes at most eight ticks; any remaining overflow is discarded to prevent a long-frame catch-up spiral.
+
 
 
 
