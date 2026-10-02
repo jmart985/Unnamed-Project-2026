@@ -260,3 +260,12 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: Resources, production chains, markets, and caravans are the milestone promise, but those systems need a bounded integrated outcome rather than open-ended infrastructure or a regional simulation.
 - Consequence: Dynamic prices, supply/demand, multiple settlements, route networks, autonomous caravan travel, advanced finance, economic AI, and player-facing trading are deferred. Economy depth remains outside 1.0 acceptance. Coins use the existing resource-container and snapshot model; durable settlement totals use existing World snapshot behavior, while in-progress caravan visits are transient.
 - Revisit: After the E08d integrated scenario is exercised and its economic signal is observed.
+
+## D031 — Deterministic temperament-driven roaming
+
+- Date: 2026-10-02
+- Status: Implemented for C03c
+- Decision: Classify roaming as cautious when the mean of boldness and curiosity is below 0.5, otherwise classify it as exploratory. Cautious roaming selects the nearest configured goal; exploratory roaming selects the farthest. Equal-distance choices use a stable hash of the session seed, entity ID, simulation tick, and that entity's trip count.
+- Reason: Creature Core needs explainable behavior differences from existing bounded wandering goals without introducing random state, new ecology systems, or a behavior framework.
+- Consequence: Fixed profiles and inputs produce repeatable goals, and navigation outcomes continue through the existing action lifecycle. Sociability remains profile data for future behavior rather than affecting this roaming decision.
+- Revisit: When the integrated Creature Core scenario is exercised or a later issue introduces explicit social stimuli or additional wild actions.

@@ -24,7 +24,7 @@ This milestone is a domain-core step, not a complete player interaction loop. Th
 ## Acceptance scenario
 
 1. Load the existing validated species catalog with the added temperament profiles. Invalid or incomplete profile data is rejected with a clear error; existing species data and Ant Farm behavior remain valid.
-2. In a fixed-seed test world, spawn at least two creature species with different configured temperaments and advance a fixed number of simulation ticks. The same seed, inputs, and tick count produce the same decisions, while the chosen profiles produce the documented distinct wild-behavior outcomes.
+2. In a fixed-seed test world, spawn at least two creature species with different configured temperaments and advance a fixed number of simulation ticks. The same seed, inputs, and tick count produce the same decisions, while the chosen profiles produce the documented distinct wild-behavior outcomes: lower combined boldness and curiosity favor the nearest bounded goal, while higher combined values favor the farthest.
 3. Exercise the capture/captivity domain transition for one eligible live creature. A duplicate, stale, invalid, or otherwise ineligible request is explicitly rejected and leaves entity/world state unchanged. The other creature continues its wild behavior.
 4. Save and restore while one creature is captive. The creature's identity, species, temperament source, and capture/captivity state remain valid; malformed state is rejected before the running world or transient services are reset.
 5. Confirm existing hunger, eating, navigation, entity identity, and snapshot invariants still hold; record the exact commands, results, and known limitations in the milestone validation record.

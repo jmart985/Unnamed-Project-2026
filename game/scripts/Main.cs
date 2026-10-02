@@ -288,7 +288,8 @@ public partial class Main : Node3D
                 new System.Numerics.Vector3(-5, 0, -3),
                 new System.Numerics.Vector3(4, 0, 3),
                 new System.Numerics.Vector3(7, 0, -5)
-            ]);
+            ],
+            _sessionSeed);
         _woodHauling = new WoodHaulingService(_world, GetNavigationAdapter);
         _wander = new WanderService(_world, GetNavigationAdapter);
 
@@ -474,7 +475,8 @@ public partial class Main : Node3D
 
             _wandering!.Advance(
                 entity,
-                _speciesCatalog.GetRequired(entity.SpeciesId));
+                _speciesCatalog.GetRequired(entity.SpeciesId),
+                _simulationTick);
             var species = _speciesCatalog.GetRequired(entity.SpeciesId);
             if (species.CanHaul)
             {
