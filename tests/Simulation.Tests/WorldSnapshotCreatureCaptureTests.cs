@@ -22,7 +22,7 @@ public sealed class WorldSnapshotCreatureCaptureTests
         Assert.Equal(creature.Id, restored.Id);
         Assert.Equal("creature", restored.SpeciesId);
         Assert.Equal(CreatureCaptivityState.Captive, restored.CaptivityState);
-        Assert.Equal(5, WorldSnapshotSerializer.Deserialize(json).SchemaVersion);
+        Assert.Equal(WorldSnapshotSerializer.CurrentSchemaVersion, WorldSnapshotSerializer.Deserialize(json).SchemaVersion);
     }
 
     [Fact]
@@ -65,7 +65,7 @@ public sealed class WorldSnapshotCreatureCaptureTests
         WorldSnapshotSerializer.Load(target, legacySnapshot.ToJsonString(), GetSpeciesCatalog());
 
         Assert.Equal(CreatureCaptivityState.Wild, Assert.Single(target.Entities).CaptivityState);
-        Assert.Equal(5, WorldSnapshotSerializer.Capture(target, 3).SchemaVersion);
+        Assert.Equal(WorldSnapshotSerializer.CurrentSchemaVersion, WorldSnapshotSerializer.Capture(target, 3).SchemaVersion);
     }
 
     [Fact]
