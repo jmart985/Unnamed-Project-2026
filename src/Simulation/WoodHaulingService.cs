@@ -121,7 +121,7 @@ public sealed class WoodHaulingService : ITransientSimulationState
 
         return hasCarriedWood
             ? BeginDelivery(entity, simulationTick)
-            : BeginPickup(entity, simulationTick);
+            : BeginPickup(entity, species, simulationTick);
     }
 
     public void Reset()
@@ -147,7 +147,10 @@ public sealed class WoodHaulingService : ITransientSimulationState
         _waitingContexts.Clear();
     }
 
-    private WoodHaulingResult BeginPickup(EntityRecord entity, long simulationTick)
+    private WoodHaulingResult BeginPickup(
+        EntityRecord entity,
+        SpeciesDefinition species,
+        long simulationTick)
     {
         var sourceCandidates = _world.ResourcePiles
             .Where(source => source.Contents.Counts.GetValueOrDefault(ItemIds.Wood) > 0)
@@ -160,7 +163,9 @@ public sealed class WoodHaulingService : ITransientSimulationState
             return Wait(entity, "No wood is available.", simulationTick, waitingForDelivery: false);
         }
 
-        var remainingCapacity = RemainingCargoCapacity(entity);
+        var individualTemperament = IndividualTemperament.ForEntity(entity.Id, species.Temperament);
+        var preferredLoad = 1 + (int)Math.Round(individualTemperament.Boldness * 9, MidpointRounding.AwayFromZero);
+        var remainingCapacity = Math.Min(RemainingCargoCapacity(entity), preferredLoad);
         if (remainingCapacity <= 0)
         {
             return Wait(entity, "No inventory capacity available for wood.", simulationTick, waitingForDelivery: false);

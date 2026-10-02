@@ -6,6 +6,33 @@ namespace Simulation.Tests;
 public sealed class WoodHaulingServiceTests
 {
     [Fact]
+    public void IndividualBoldnessProducesDifferentDeterministicWoodLoads()
+    {
+        var world = new World(inventoryCapacity: 10);
+        var first = world.SpawnEntity("human", Vector3.Zero);
+        var second = world.SpawnEntity("human", Vector3.One);
+        var source = AddLocation(world.AddResourcePile, "wood-pile", Vector3.UnitX, capacity: 100, wood: 100);
+        AddLocation(world.AddStockpile, "stockpile", new Vector3(2, 0, 0), capacity: 100);
+        var navigators = new Dictionary<string, FakeNavigationAdapter>(StringComparer.Ordinal)
+        {
+            [first.Id] = new FakeNavigationAdapter(),
+            [second.Id] = new FakeNavigationAdapter()
+        };
+        var service = new WoodHaulingService(world, entity => navigators[entity.Id]);
+        var species = GetSpecies("human");
+
+        var firstTrip = service.Advance(first, species, simulationTick: 0);
+        var secondTrip = service.Advance(second, species, simulationTick: 0);
+
+        Assert.Equal(WoodHaulingStatus.TravelingToSource, firstTrip.Status);
+        Assert.Equal(WoodHaulingStatus.TravelingToSource, secondTrip.Status);
+        Assert.NotEqual(firstTrip.Amount, secondTrip.Amount);
+        Assert.InRange(firstTrip.Amount, 1, 10);
+        Assert.InRange(secondTrip.Amount, 1, 10);
+        Assert.Equal(firstTrip.Amount, service.Advance(first, species, simulationTick: 1).Amount);
+    }
+
+    [Fact]
     public void HaulerPicksUpAndDepositsOnlyReservedWoodWithinCapacity()
     {
         var world = new World(inventoryCapacity: 3);
