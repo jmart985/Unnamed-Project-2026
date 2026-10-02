@@ -15,7 +15,8 @@
     "canOpenDoors": true,
     "canTrack": false,
     "canHaul": true,
-    "bodyCategory": "humanoid"
+    "bodyCategory": "humanoid",
+    "temperament": { "boldness": 0.5, "curiosity": 0.4, "sociability": 0.6 }
   },
   {
     "id": "creature",
@@ -33,7 +34,8 @@
     "canOpenDoors": false,
     "canTrack": false,
     "canHaul": false,
-    "bodyCategory": "quadruped"
+    "bodyCategory": "quadruped",
+    "temperament": { "boldness": 0.5, "curiosity": 0.5, "sociability": 0.5 }
   },
   {
     "id": "ape",
@@ -51,7 +53,8 @@
     "canOpenDoors": true,
     "canTrack": true,
     "canHaul": true,
-    "bodyCategory": "upright_creature"
+    "bodyCategory": "upright_creature",
+    "temperament": { "boldness": 0.75, "curiosity": 0.9, "sociability": 0.8 }
   },
   {
     "id": "cow",
@@ -69,7 +72,8 @@
     "canOpenDoors": false,
     "canTrack": false,
     "canHaul": true,
-    "bodyCategory": "quadruped"
+    "bodyCategory": "quadruped",
+    "temperament": { "boldness": 0.35, "curiosity": 0.25, "sociability": 0.9 }
   },
   {
     "id": "wolf",
@@ -87,6 +91,7 @@
     "canOpenDoors": false,
     "canTrack": true,
     "canHaul": false,
-    "bodyCategory": "quadruped"
+    "bodyCategory": "quadruped",
+    "temperament": { "boldness": 0.85, "curiosity": 0.65, "sociability": 0.45 }
   }
 ]

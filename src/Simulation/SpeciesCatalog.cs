@@ -95,7 +95,25 @@ public sealed class SpeciesCatalog
             var endurance = ValidateStat(id, entry.Endurance ?? 1, nameof(entry.Endurance));
             var dexterity = ValidateStat(id, entry.Dexterity ?? 1, nameof(entry.Dexterity));
             var smellRange = ValidateStat(id, entry.SmellRange ?? 1, nameof(entry.SmellRange));
-            definitions.Add(new SpeciesDefinition(id, displayName, movementSpeed, hungerRate, diet, canHaul, bodyCategory, dietaryProfile, maxHealth, strength, endurance, dexterity, smellRange, entry.CanUseTools ?? false, entry.CanOpenDoors ?? false, entry.CanTrack ?? false));
+            var temperament = ValidateTemperament(id, entry.Temperament);
+            definitions.Add(new SpeciesDefinition(
+                id,
+                displayName,
+                movementSpeed,
+                hungerRate,
+                diet,
+                canHaul,
+                bodyCategory,
+                dietaryProfile,
+                maxHealth,
+                strength,
+                endurance,
+                dexterity,
+                smellRange,
+                entry.CanUseTools ?? false,
+                entry.CanOpenDoors ?? false,
+                entry.CanTrack ?? false,
+                temperament));
         }
 
         return new SpeciesCatalog(definitions);
@@ -200,6 +218,35 @@ public sealed class SpeciesCatalog
         return diet;
     }
 
+    private static TemperamentProfile ValidateTemperament(string speciesId, TemperamentData? temperament)
+    {
+        if (temperament is null)
+        {
+            throw new InvalidDataException($"Species '{speciesId}' must define temperament.");
+        }
+
+        return new TemperamentProfile(
+            ValidateTemperamentValue(speciesId, "boldness", temperament.Boldness),
+            ValidateTemperamentValue(speciesId, "curiosity", temperament.Curiosity),
+            ValidateTemperamentValue(speciesId, "sociability", temperament.Sociability));
+    }
+
+    private static double ValidateTemperamentValue(string speciesId, string fieldName, double? value)
+    {
+        if (value is null)
+        {
+            throw new InvalidDataException($"Species '{speciesId}' must define temperament.{fieldName}.");
+        }
+
+        if (!double.IsFinite(value.Value) || value.Value is < 0 or > 1)
+        {
+            throw new InvalidDataException(
+                $"Species '{speciesId}' temperament.{fieldName} must be finite and between 0 and 1.");
+        }
+
+        return value.Value;
+    }
+
     private static double ValidateStat(string speciesId, double value, string fieldName)
     {
         if (!double.IsFinite(value) || value <= 0) throw new InvalidDataException($"Species '{speciesId}' {fieldName} must be finite and greater than zero.");
@@ -246,5 +293,18 @@ public sealed class SpeciesCatalog
         public bool? CanUseTools { get; init; }
         public bool? CanOpenDoors { get; init; }
         public bool? CanTrack { get; init; }
+        public TemperamentData? Temperament { get; init; }
+    }
+
+    private sealed class TemperamentData
+    {
+        [JsonNumberHandling(JsonNumberHandling.AllowNamedFloatingPointLiterals)]
+        public double? Boldness { get; init; }
+
+        [JsonNumberHandling(JsonNumberHandling.AllowNamedFloatingPointLiterals)]
+        public double? Curiosity { get; init; }
+
+        [JsonNumberHandling(JsonNumberHandling.AllowNamedFloatingPointLiterals)]
+        public double? Sociability { get; init; }
     }
 }

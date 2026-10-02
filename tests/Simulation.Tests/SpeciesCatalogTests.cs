@@ -26,6 +26,8 @@ public sealed class SpeciesCatalogTests
         Assert.True(catalog.GetRequired("wolf").SmellRange > catalog.GetRequired("cow").SmellRange);
         Assert.Equal(DietaryProfile.Herbivore, catalog.GetRequired("cow").DietaryProfile);
         Assert.Equal(DietaryProfile.Carnivore, catalog.GetRequired("wolf").DietaryProfile);
+        Assert.Equal(new TemperamentProfile(0.75, 0.9, 0.8), catalog.GetRequired("ape").Temperament);
+        Assert.NotEqual(catalog.GetRequired("ape").Temperament, catalog.GetRequired("cow").Temperament);
     }
 
     [Theory]
@@ -34,7 +36,7 @@ public sealed class SpeciesCatalogTests
     public void RequiredLookupRejectsInvalidSpeciesReferences(string speciesId, string expectedMessage)
     {
         var catalog = Load("""
-            [{"id":"human","movementSpeed":3,"hungerRate":0.2,"diet":["food"],"canHaul":true}]
+            [{"id":"human","movementSpeed":3,"hungerRate":0.2,"diet":["food"],"canHaul":true,"temperament":{"boldness":0.5,"curiosity":0.5,"sociability":0.5}}]
             """);
 
         var exception = Assert.Throws<KeyNotFoundException>(() => catalog.GetRequired(speciesId));
@@ -48,7 +50,7 @@ public sealed class SpeciesCatalogTests
     public void RejectsNonpositiveMovementSpeed(double movementSpeed)
     {
         var json = $$"""
-            [{"id":"human","movementSpeed":{{movementSpeed}},"hungerRate":0.2,"diet":["food"],"canHaul":true}]
+            [{"id":"human","movementSpeed":{{movementSpeed}},"hungerRate":0.2,"diet":["food"],"canHaul":true,"temperament":{"boldness":0.5,"curiosity":0.5,"sociability":0.5}}]
             """;
 
         var exception = Assert.Throws<InvalidDataException>(() => Load(json));
@@ -60,7 +62,7 @@ public sealed class SpeciesCatalogTests
     public void RejectsUnknownDietItemIds()
     {
         var exception = Assert.Throws<InvalidDataException>(() =>
-            Load("""[{"id":"creature","movementSpeed":2,"hungerRate":0.2,"diet":["grain"],"canHaul":false}]"""));
+            Load("""[{"id":"creature","movementSpeed":2,"hungerRate":0.2,"diet":["grain"],"canHaul":false,"temperament":{"boldness":0.5,"curiosity":0.5,"sociability":0.5}}]"""));
 
         Assert.Contains("references unknown diet item ID 'grain'", exception.Message);
     }
@@ -71,8 +73,8 @@ public sealed class SpeciesCatalogTests
         var exception = Assert.Throws<InvalidDataException>(() =>
             Load("""
                 [
-                  {"id":"human","movementSpeed":3,"hungerRate":0.2,"diet":["food"],"canHaul":true},
-                  {"id":"human","movementSpeed":2,"hungerRate":0.2,"diet":["food"],"canHaul":false}
+                  {"id":"human","movementSpeed":3,"hungerRate":0.2,"diet":["food"],"canHaul":true,"temperament":{"boldness":0.5,"curiosity":0.5,"sociability":0.5}},
+                  {"id":"human","movementSpeed":2,"hungerRate":0.2,"diet":["food"],"canHaul":false,"temperament":{"boldness":0.5,"curiosity":0.5,"sociability":0.5}}
                 ]
                 """));
 
@@ -83,12 +85,42 @@ public sealed class SpeciesCatalogTests
     public void RejectsMissingRequiredFieldsAndInvalidHungerRates()
     {
         var missingField = Assert.Throws<InvalidDataException>(() =>
-            Load("""[{"id":"human","hungerRate":0.2,"diet":["food"],"canHaul":true}]"""));
+            Load("""[{"id":"human","hungerRate":0.2,"diet":["food"],"canHaul":true,"temperament":{"boldness":0.5,"curiosity":0.5,"sociability":0.5}}]"""));
         var invalidHunger = Assert.Throws<InvalidDataException>(() =>
-            Load("""[{"id":"human","movementSpeed":3,"hungerRate":-0.1,"diet":["food"],"canHaul":true}]"""));
+            Load("""[{"id":"human","movementSpeed":3,"hungerRate":-0.1,"diet":["food"],"canHaul":true,"temperament":{"boldness":0.5,"curiosity":0.5,"sociability":0.5}}]"""));
 
         Assert.Contains("must define movementSpeed", missingField.Message);
         Assert.Contains("hungerRate must be finite and nonnegative", invalidHunger.Message);
+    }
+
+    [Theory]
+    [InlineData("""{"boldness":0.5,"curiosity":0.5}""", "must define temperament.sociability")]
+    [InlineData("""{"boldness":0.5,"curiosity":"unknown","sociability":0.5}""", "valid species records")]
+    [InlineData("""{"boldness":"NaN","curiosity":0.5,"sociability":0.5}""", "temperament.boldness must be finite")]
+    [InlineData("""{"boldness":"Infinity","curiosity":0.5,"sociability":0.5}""", "temperament.boldness must be finite")]
+    [InlineData("""{"boldness":-0.1,"curiosity":0.5,"sociability":0.5}""", "temperament.boldness must be finite")]
+    [InlineData("""{"boldness":1.1,"curiosity":0.5,"sociability":0.5}""", "temperament.boldness must be finite")]
+    public void RejectsInvalidTemperamentWithoutPublishingPartialCatalog(string temperamentJson, string expectedMessage)
+    {
+        var json = $$"""
+            [
+              {"id":"human","movementSpeed":3,"hungerRate":0.2,"diet":["food"],"canHaul":true,"temperament":{"boldness":0.5,"curiosity":0.5,"sociability":0.5}},
+              {"id":"creature","movementSpeed":2,"hungerRate":0.2,"diet":["food"],"canHaul":false,"temperament":{{temperamentJson}}}
+            ]
+            """;
+
+        var exception = Assert.Throws<InvalidDataException>(() => Load(json));
+
+        Assert.Contains(expectedMessage, exception.Message);
+    }
+
+    [Fact]
+    public void RejectsMissingTemperamentProfile()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            Load("""[{"id":"human","movementSpeed":3,"hungerRate":0.2,"diet":["food"],"canHaul":true}]"""));
+
+        Assert.Contains("Species 'human' must define temperament", exception.Message);
     }
 
     private static SpeciesCatalog Load(string json)
