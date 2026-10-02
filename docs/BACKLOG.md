@@ -5,6 +5,7 @@ The [GitHub issues](https://github.com/jmart985/Unnamed-Project-2026/issues) are
 - [Ant Farm Board](https://github.com/users/jmart985/projects/1)
 - [Milestone 0.1: The Ant Farm](https://github.com/jmart985/Unnamed-Project-2026/milestone/1)
 - [Milestone acceptance scenario](MILESTONE_0_1.md)
+- [Milestone 0.3: Creature Core](MILESTONE_0_3.md)
 
 ## Initial work sequence
 
@@ -31,7 +32,17 @@ Ideas → Backlog → Ready → In Progress → Testing → Done.
 
 Keep each implementation issue focused enough for one reviewable PR. Split work further if needed and preserve links to the parent task. Acceptance checkboxes are not complete until verified. See [CONTRIBUTING.md](../CONTRIBUTING.md) for the AI-assisted workflow.
 
+## Follow-on milestone scope
+
+Issue [#221](https://github.com/jmart985/Unnamed-Project-2026/issues/221) defines the 0.3 Creature Core target and links its focused implementation issues. This work reuses the completed Ant Farm species catalog and wandering foundations; it does not reopen Milestone 0.1 or pull player-driven creature interactions forward from 1.0.
+
+| Issue | Area | Task | Depends on |
+| --- | --- | --- | --- |
+| [#324](https://github.com/jmart985/Unnamed-Project-2026/issues/324) (C03a) | Creatures | Add validated temperament profiles to creature species | None |
+| [#326](https://github.com/jmart985/Unnamed-Project-2026/issues/326) (C03c) | Creatures | Drive deterministic wild behavior from temperament | [#324](https://github.com/jmart985/Unnamed-Project-2026/issues/324) |
+| [#323](https://github.com/jmart985/Unnamed-Project-2026/issues/323) (C03b) | Creatures | Model durable capture and captivity state | None |
+| [#325](https://github.com/jmart985/Unnamed-Project-2026/issues/325) (C03d) | Validation | Verify the integrated creature-core scenario | [#323](https://github.com/jmart985/Unnamed-Project-2026/issues/323), [#324](https://github.com/jmart985/Unnamed-Project-2026/issues/324), [#326](https://github.com/jmart985/Unnamed-Project-2026/issues/326) |
+
 ## Deferred design topics
 
 Capture/domestication, relationships, combat, injuries, construction, production, factions, economy, breeding, and world streaming remain outside 0.1. Refine these after the Ant Farm acceptance scenario passes; future ideas do not become milestone commitments automatically.
-
