@@ -486,46 +486,46 @@ public sealed class World
         }
     }
 
+    internal static bool IsValidFactionId(string? factionId)
+    {
+        if (string.IsNullOrWhiteSpace(factionId)
+            || factionId[0] == '-'
+            || factionId[^1] == '-')
+        {
+            return false;
+        }
+
+        var previousWasSeparator = false;
+        foreach (var character in factionId)
+        {
+            if (character == '-')
+            {
+                if (previousWasSeparator)
+                {
+                    return false;
+                }
+
+                previousWasSeparator = true;
+                continue;
+            }
+
+            if (character is not (>= 'a' and <= 'z') and not (>= '0' and <= '9'))
+            {
+                return false;
+            }
+
+            previousWasSeparator = false;
+        }
+
+        return true;
+    }
+
     private static ResourceContainer RestoreContainer(ResourceContainerSnapshot snapshot)
     {
         var contents = new ResourceContainer(snapshot.Name, snapshot.Capacity);
         foreach (var item in snapshot.Counts)
         {
             contents.AddKnown(item.Key, item.Value);
-        }
-
-        internal static bool IsValidFactionId(string? factionId)
-        {
-            if (string.IsNullOrWhiteSpace(factionId)
-                || factionId[0] == '-'
-                || factionId[^1] == '-')
-            {
-                return false;
-            }
-
-            var previousWasSeparator = false;
-            foreach (var character in factionId)
-            {
-                if (character == '-')
-                {
-                    if (previousWasSeparator)
-                    {
-                        return false;
-                    }
-
-                    previousWasSeparator = true;
-                    continue;
-                }
-
-                if (character is not (>= 'a' and <= 'z') and not (>= '0' and <= '9'))
-                {
-                    return false;
-                }
-
-                previousWasSeparator = false;
-            }
-
-            return true;
         }
 
         return contents;
