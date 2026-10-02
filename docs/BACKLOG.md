@@ -7,6 +7,9 @@ The [GitHub issues](https://github.com/jmart985/Unnamed-Project-2026/issues) are
 - [Milestone 1.0: First Real Game](https://github.com/jmart985/Unnamed-Project-2026/milestone/4)
 - [Milestone acceptance scenario](MILESTONE_0_1.md)
 - [Milestone 0.3: Creature Core](MILESTONE_0_3.md)
+- [Milestone 0.7: Factions](MILESTONE_0_7.md)
+- [Milestone 0.8: Economy Prototype](MILESTONE_0_8.md)
+- [Milestone 0.9: Vertical Integration](MILESTONE_0_9.md)
 
 ## Historical 0.1 implementation sequence
 
@@ -61,7 +64,18 @@ Issue [#221](https://github.com/jmart985/Unnamed-Project-2026/issues/221) define
 
 ## Roadmap boundaries
 
-These topics belong to later milestones. They may be implemented when their concrete issues are active and their dependencies are complete; do not use this historical list to block current milestone work.
+These topics belong to later milestones. They may be implemented when their concrete issues are active and their dependencies are complete; do not use this historical list to block current milestone work. Milestones beyond the currently accepted playable slices remain roadmap horizons, not a promise to ship every idea in the long-term vision. Decompose a later milestone into implementation work only after its objective is reconciled with completed evidence and its scope is made testable.
+
+## 0.7 Factions
+
+The accepted target is a small durable faction foundation in the existing World: fixed faction identities, optional entity allegiance, bounded explicit reputation, directed faction hostility, and optional ownership metadata on existing settlement containers. This does not add faction AI, diplomacy, laws/crime, territorial control, warfare, ownership enforcement, or a new faction framework. See [Milestone 0.7 scope and acceptance](MILESTONE_0_7.md) and planning issue [#222](https://github.com/jmart985/Unnamed-Project-2026/issues/222).
+
+| Issue | Task | Depends on |
+| --- | --- | --- |
+| [#337](https://github.com/jmart985/Unnamed-Project-2026/issues/337) (F07a) | Add faction identities and durable allegiance | Accepted [#325](https://github.com/jmart985/Unnamed-Project-2026/issues/325); completed #3, #11, #138 |
+| [#338](https://github.com/jmart985/Unnamed-Project-2026/issues/338) (F07b) | Track faction reputation and directed hostility | #337; accepted #325 |
+| [#339](https://github.com/jmart985/Unnamed-Project-2026/issues/339) (F07c) | Add durable ownership metadata to settlement containers | #337; completed #144; accepted #325 |
+| [#340](https://github.com/jmart985/Unnamed-Project-2026/issues/340) (F07d) | Verify the faction foundation and snapshot recovery | #337, #338, #339 |
 
 ## 0.8 Economy Prototype
 
@@ -74,3 +88,25 @@ The target is a deterministic, inspectable settlement economy loop: existing far
 | [#332](https://github.com/jmart985/Unnamed-Project-2026/issues/332) (E08c) | Complete one finite caravan market visit | [#331](https://github.com/jmart985/Unnamed-Project-2026/issues/331) |
 | [#333](https://github.com/jmart985/Unnamed-Project-2026/issues/333) (E08d) | Verify the integrated settlement economy scenario | [#330](https://github.com/jmart985/Unnamed-Project-2026/issues/330), [#331](https://github.com/jmart985/Unnamed-Project-2026/issues/331), [#332](https://github.com/jmart985/Unnamed-Project-2026/issues/332), and completed [#150](https://github.com/jmart985/Unnamed-Project-2026/issues/150), [#152](https://github.com/jmart985/Unnamed-Project-2026/issues/152), [#154](https://github.com/jmart985/Unnamed-Project-2026/issues/154), and [#156](https://github.com/jmart985/Unnamed-Project-2026/issues/156) |
 
+## 0.9 Vertical Integration
+
+The target is one repeatable integration scenario in one test region, composing accepted creature, combat, relationship, faction, settlement, and local economy foundations. Add only scenario harness and evidence; missing gameplay is tracked separately. No multi-settlement or regional simulation is committed here. See [Milestone 0.9 scope and acceptance](MILESTONE_0_9.md) and planning issue [#224](https://github.com/jmart985/Unnamed-Project-2026/issues/224).
+
+| Issue | Task | Depends on |
+| --- | --- | --- |
+| [#341](https://github.com/jmart985/Unnamed-Project-2026/issues/341) (V09a) | Verify one-region faction and economy integration | Accepted #340, #333, #325; completed #184 and #197 |
+
+## Future backlog audit
+
+Milestones 1.1 and later are still roadmap horizons: their planning issues do not yet specify implementation-level outcomes, rejection/recovery cases, or validation evidence. Do not mark those planning issues Ready or convert the entire vision into committed delivery. Groom each next slice after the 0.9/1.0 evidence establishes which systems are valuable.
+
+The open, unassigned proposals below were checked while reconciling the later roadmap. Keep them out of Ready until their overlap and scope are resolved; this audit does not silently close or rewrite them:
+
+| Existing issues | Current relationship | Triage |
+| --- | --- | --- |
+| [#301](https://github.com/jmart985/Unnamed-Project-2026/issues/301), [#310](https://github.com/jmart985/Unnamed-Project-2026/issues/310), [#318](https://github.com/jmart985/Unnamed-Project-2026/issues/318) | Duplicate the completed deterministic new-game/session work in [#319](https://github.com/jmart985/Unnamed-Project-2026/issues/319). | Do not start; close/redirect only through explicit duplicate triage. |
+| [#300](https://github.com/jmart985/Unnamed-Project-2026/issues/300), [#309](https://github.com/jmart985/Unnamed-Project-2026/issues/309), [#314](https://github.com/jmart985/Unnamed-Project-2026/issues/314) | Overlap the completed-scope foundation in [#323](https://github.com/jmart985/Unnamed-Project-2026/issues/323), but propose additional domestication/release/death transitions beyond its bounded 0.3 capture/captivity model. | Preserve as unassigned future proposals; do not duplicate the 0.3 task or pull the expanded 1.3 scope forward. |
+| [#307](https://github.com/jmart985/Unnamed-Project-2026/issues/307), [#316](https://github.com/jmart985/Unnamed-Project-2026/issues/316) | Overlap temperament work in [#324](https://github.com/jmart985/Unnamed-Project-2026/issues/324), but list different dimensions and have no dependency ordering. | Do not run in parallel; reconcile any genuinely new traits during a future creature-behavior scope. |
+| [#308](https://github.com/jmart985/Unnamed-Project-2026/issues/308), [#317](https://github.com/jmart985/Unnamed-Project-2026/issues/317) | Overlap the bounded deterministic behavior task [#326](https://github.com/jmart985/Unnamed-Project-2026/issues/326) while also proposing additional flee/pursue/return behavior. | Keep unassigned until 1.2 is concretely scoped; do not broaden 0.3. |
+| [#302](https://github.com/jmart985/Unnamed-Project-2026/issues/302), [#311](https://github.com/jmart985/Unnamed-Project-2026/issues/311), [#315](https://github.com/jmart985/Unnamed-Project-2026/issues/315) | Repeated player-position persistence proposals overlap existing durable entity-position snapshots; some fields (such as facing) need an explicit product requirement before expansion. | Do not create duplicate save work; verify any claimed gap against current snapshots before assigning. |
+| [#305](https://github.com/jmart985/Unnamed-Project-2026/issues/305) | Proposes smell/tracking perception queries but is not assigned to a milestone and lacks a scoped behavior consumer. | Do not build perception infrastructure speculatively; reconsider with a bounded 1.2 hunting/tracking behavior. |
