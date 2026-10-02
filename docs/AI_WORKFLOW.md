@@ -5,7 +5,7 @@ This document defines how AI-assisted work should move the project forward.
 ## Choose current work
 
 1. Read the repository instructions, the active milestone, the parent issue, and the complete assigned issue.
-2. Select the smallest independent issue marked Ready (or clearly available for implementation).
+2. Select the smallest independent implementation issue marked Ready. If no suitable issue is Ready, report the dependency or decision blocking progress rather than selecting a Backlog issue.
 3. Verify dependencies against the current `main` branch. Do not implement a parent or planning issue when its child issues are the actionable work.
 4. Work on one issue per branch and pull request. Keep changes limited to the issue's acceptance criteria.
 

@@ -74,5 +74,3 @@ The target is a deterministic, inspectable settlement economy loop: existing far
 | [#332](https://github.com/jmart985/Unnamed-Project-2026/issues/332) (E08c) | Complete one finite caravan market visit | [#331](https://github.com/jmart985/Unnamed-Project-2026/issues/331) |
 | [#333](https://github.com/jmart985/Unnamed-Project-2026/issues/333) (E08d) | Verify the integrated settlement economy scenario | [#330](https://github.com/jmart985/Unnamed-Project-2026/issues/330), [#331](https://github.com/jmart985/Unnamed-Project-2026/issues/331), [#332](https://github.com/jmart985/Unnamed-Project-2026/issues/332), and completed [#150](https://github.com/jmart985/Unnamed-Project-2026/issues/150), [#152](https://github.com/jmart985/Unnamed-Project-2026/issues/152), [#154](https://github.com/jmart985/Unnamed-Project-2026/issues/154), and [#156](https://github.com/jmart985/Unnamed-Project-2026/issues/156) |
 
-## Deferred design topics
-

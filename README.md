@@ -28,9 +28,9 @@ A systemic open-world colony RPG in which people and creatures share consistent 
 - [Contribution and AI workflow](CONTRIBUTING.md)
 - [AI contributor workflow](docs/AI_WORKFLOW.md)
 
-## First playable target
+## Completed 0.1 baseline
 
-One fixed rectangular map, 10 human NPCs, 3 individuals of one creature species, one separately controlled human player, food and wood, one stockpile, hunger, eating, hauling, wandering, basic inspection, and manual save/load. Placeholder shapes are enough. A ten-minute unattended run should show NPCs eating and humans hauling without duplicated items, stuck jobs, or crashes.
+The original 0.1 target was one fixed rectangular map, 10 human NPCs, 3 individuals of one creature species, one separately controlled human player, food and wood, one stockpile, hunger, eating, hauling, wandering, basic inspection, and manual save/load. Its ten-minute unattended run remains a regression scenario for the completed foundation.
 
 The 0.1 acceptance documents remain useful for regression checks against the original foundation. Their scope exclusions apply only to 0.1 work; they do not block implementation in later milestones.
 
@@ -53,6 +53,5 @@ dotnet test tests\Simulation.Tests\Simulation.Tests.csproj --configuration Relea
 The editor opens `game\main.tscn`, a flat placeholder map with an overhead camera. Build and test output should report success; the headless Godot command should exit with code 0. The Godot executable path is an example Windows installation path; use the pinned executable from the local installation when it differs.
 
 The startup scene exposes Pause/Resume, 1x, 4x, and Reset controls. Domain time advances in fixed 0.1-second ticks. A frame processes at most eight ticks; any remaining overflow is discarded to prevent a long-frame catch-up spiral.
-
 
 
