@@ -27,7 +27,7 @@ A systemic open-world colony RPG in which people and creatures share consistent 
 
 ## First playable target
 
-One fixed rectangular map, 10 humans, 3 individuals of one creature species, food and wood, one stockpile, hunger, eating, hauling, wandering, basic inspection, and manual save/load. Placeholder shapes are enough. A ten-minute unattended run should show entities eating and humans hauling without duplicated items, stuck jobs, or crashes.
+One fixed rectangular map, 10 human NPCs, 3 individuals of one creature species, one separately controlled human player, food and wood, one stockpile, hunger, eating, hauling, wandering, basic inspection, and manual save/load. Placeholder shapes are enough. A ten-minute unattended run should show NPCs eating and humans hauling without duplicated items, stuck jobs, or crashes.
 
 Combat, injuries, factions, capture, domestication, breeding, relationships, construction, crafting, economy, and world streaming are later design topics. They are excluded from 0.1.
 

@@ -15,7 +15,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 
 - Date: 2026-09-27
 - Status: Initial scope baseline
-- Decision: One fixed map, 10 humans, 3 individuals of one creature species, two resource types, eating, hauling, wandering, inspection, and save/load.
+- Decision: One fixed map, 10 human NPCs, 3 individuals of one creature species, two resource types, eating, hauling, wandering, inspection, and save/load. D025 adds one separately identified player character.
 - Reason: Prove one complete autonomous loop before adding content.
 - Consequence: Earlier brainstorming about combat, factions, relationships, and captivity is deferred. No deadline is asserted.
 - Revisit: After the milestone acceptance scenario passes.
@@ -121,7 +121,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 
 - Date: 2026-09-27
 - Status: Provisional; implemented for S01a and extended by C06c
-- Decision: Capture simulation time, the entity ID allocator position, entity durable state, carried inventory, food/resource-pile/stockpile containers, and directed relationship values in a versioned JSON snapshot. Runtime actions, reservations, navigation requests, and engine nodes remain transient. Snapshot schema version 3 restores durable state, then resets registered transient services before replacing the world so their next tick rebuilds valid work.
+- Decision: Capture simulation time, the entity ID allocator position, entity durable state, carried inventory, food/resource-pile/stockpile containers, and directed relationship values in a versioned JSON snapshot. Runtime actions, reservations, navigation requests, and engine nodes remain transient. Snapshot schema version 3 restored durable state, then reset registered transient services before replacing the world so their next tick rebuilt valid work; D025 adds seed and player profile state in schema version 4.
 - Reason: Save/load needs a stable, engine-independent boundary that can be validated before a later restore operation replaces the running world.
 - Consequence: Snapshot schema changes require an explicit version update; transient work is rebuilt rather than serialized.
 - Revisit: When S01b adds atomic validation and world restoration.
@@ -215,3 +215,12 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: Combat state and social memory must reflect actual world consequences; attacks on incapacitated actors, corpses, destroyed body parts, or below-precision amounts must not appear to succeed.
 - Consequence: Invalid combatants cannot mutate health or relationship values through melee resolution. `CharacterHealth.TryDamage` can report the actual health change to combat callers.
 - Revisit: When non-damaging attack outcomes such as blocks, misses, or intimidation are modeled as explicit events.
+
+## D025 — Deterministic player creation and session bootstrap
+
+- Date: 2026-10-01
+- Status: Provisional; implemented for issue #319
+- Decision: Create a new game through one simulation-owned bootstrap containing 10 human NPCs, 3 individuals of one creature species, and one additional World-owned human player. The player starts with empty carried inventory; initial food and wood remain in world resource piles. The default seed is 2026, and the player spawn position is selected deterministically from the seed. Before the world starts, a creation form requires a name and offers Small/Medium/Tall height, Lean/Athletic/Average/Stocky/Thick body type, and Female/Male sex, defaulting to Medium/Average/Female. Stats use the existing human defaults.
+- Reason: A repeatable new game needs an explicit player identity and appearance without duplicating the authoritative World or changing the existing NPC population.
+- Consequence: The player entity is bound to the existing Godot PlayerCharacter view/controller. Placeholder geometry reflects height/body type and uses simple chest primitives for Female; final art is deferred. Seed and player profile are durable snapshot state, so the snapshot schema advances to version 4. The milestone's 10 humans are now explicitly 10 NPCs plus the player; player-directed survival actions remain outside this issue.
+- Revisit: When player-controlled eating/actions or final character art are scoped.

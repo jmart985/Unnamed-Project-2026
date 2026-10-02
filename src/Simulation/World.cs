@@ -49,6 +49,37 @@ public sealed class World
     public ReservationService Reservations { get; }
     public int InventoryCapacity { get; }
     public CharacterStats DefaultCharacterStats { get; }
+    public int? SessionSeed { get; private set; }
+    public string? PlayerEntityId { get; private set; }
+    public PlayerCharacterProfile? PlayerProfile { get; private set; }
+
+    internal void SetSessionPlayer(
+        int seed,
+        string playerEntityId,
+        PlayerCharacterProfile profile)
+    {
+        if (seed < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(seed), "The session seed cannot be negative.");
+        }
+
+        ArgumentNullException.ThrowIfNull(profile);
+        if (!profile.IsValid)
+        {
+            throw new ArgumentException("The player profile is invalid.", nameof(profile));
+        }
+
+        if (!TryGetEntity(playerEntityId, out var player)
+            || player is null
+            || !string.Equals(player.SpeciesId, "human", StringComparison.Ordinal))
+        {
+            throw new ArgumentException("A live human entity is required as the session player.", nameof(playerEntityId));
+        }
+
+        SessionSeed = seed;
+        PlayerEntityId = playerEntityId;
+        PlayerProfile = profile;
+    }
 
     public FoodSource AddFoodSource(string id, Vector3 position, ResourceContainer contents)
     {
@@ -259,7 +290,18 @@ public sealed class World
         entity.Actions.Cancel();
         Reservations.ReleaseForEntity(id);
         RemoveRelationshipsForEntity(id);
-        return _entities.Remove(id);
+        if (!_entities.Remove(id))
+        {
+            return false;
+        }
+
+        if (string.Equals(id, PlayerEntityId, StringComparison.Ordinal))
+        {
+            PlayerEntityId = null;
+            PlayerProfile = null;
+        }
+
+        return true;
     }
 
     public bool TrySetEntityPosition(string? id, Vector3 position)
@@ -293,6 +335,9 @@ public sealed class World
         _stockpiles.Clear();
         _targetIds.Clear();
         Reservations.Reset();
+        SessionSeed = null;
+        PlayerEntityId = null;
+        PlayerProfile = null;
     }
 
     internal void ApplySnapshot(WorldSnapshot snapshot)
@@ -355,6 +400,12 @@ public sealed class World
         }
 
         _lastEntityId = snapshot.LastAllocatedEntityId;
+        if (snapshot.SessionSeed is { } seed
+            && snapshot.PlayerEntityId is { } playerEntityId
+            && snapshot.PlayerProfile is { } playerProfile)
+        {
+            SetSessionPlayer(seed, playerEntityId, playerProfile);
+        }
     }
 
     private static ResourceContainer RestoreContainer(ResourceContainerSnapshot snapshot)

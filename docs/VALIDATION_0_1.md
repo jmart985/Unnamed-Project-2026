@@ -104,3 +104,27 @@ Focused acceptance tests: 2 passed. Full suite: 155 passed. Release build: 0 err
 ## Report summary
 
 The child reports now cover food depletion, final-unit contention, full storage, removed targets, the 600-second acceptance loop, and save/load recovery. Failures are recorded as bounded waiting states with preserved resources and retry delays; no child report identifies a required feature implementation outside Milestone 0.1. Pinned project versions remain Godot 4.7.2 .NET and .NET SDK 10.0.401.
+
+## Issue #319: Deterministic new game and character creation
+
+**Date:** 2026-10-01
+
+### Commands and results
+
+```powershell
+dotnet build UnnamedProject2026.slnx --configuration Release
+```
+
+Passed: 0 warnings, 0 errors.
+
+```powershell
+dotnet test tests\Simulation.Tests\Simulation.Tests.csproj --configuration Release --no-restore /p:UseSharedCompilation=false
+```
+
+Passed: 318 tests, 0 failures, 0 skips. Coverage includes deterministic initial session contents and spawn position, profile validation/defaults, snapshot round-trip, and rejection of invalid player metadata without replacing the current world.
+
+```powershell
+& "C:\Developement\Godot\Godot_v4.7.2-stable_mono_win64\Godot_v4.7.2-stable_mono_win64.exe" --path game --headless --quit
+```
+
+Passed: exit code 0. This verifies headless project startup and scene loading; it does not verify the character-creation controls through interactive input or art quality. The full 600-second Milestone 0.1 scenario was not rerun for this issue.

@@ -7,7 +7,7 @@ public partial class Main : Node3D
 {
     private readonly SimulationClock _clock = new();
     private readonly SaveSlotStore _saveSlotStore = new();
-    private readonly World _world = new();
+    private World _world = new();
     private static readonly System.Numerics.Vector3[] CreatureWanderGoals =
     [
         new(-7f, 0, -2f),
@@ -18,10 +18,10 @@ public partial class Main : Node3D
     private readonly Dictionary<string, EntityView> _entityViews = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Button> _entityButtons = new(StringComparer.Ordinal);
     private readonly List<MeshInstance3D> _resourceMarkers = [];
-    private FoodConsumptionService _foodConsumption = null!;
-    private WanderingService _wandering = null!;
-    private WoodHaulingService _woodHauling = null!;
-    private WanderService _wander = null!;
+    private FoodConsumptionService? _foodConsumption;
+    private WanderingService? _wandering;
+    private WoodHaulingService? _woodHauling;
+    private WanderService? _wander;
     private long _simulationTick;
     private SpeciesCatalog _speciesCatalog = null!;
     private MeshInstance3D _map = null!;
@@ -37,6 +37,16 @@ public partial class Main : Node3D
     private string? _selectedEntityId;
     private CanvasLayer _controls = null!;
     private Control _controlsPanel = null!;
+    private PlayerCharacter _playerCharacter = null!;
+    private CanvasLayer _characterCreation = null!;
+    private LineEdit _playerNameInput = null!;
+    private OptionButton _heightChoice = null!;
+    private OptionButton _bodyTypeChoice = null!;
+    private OptionButton _sexChoice = null!;
+    private Label _creationError = null!;
+    private PlayerCharacterProfile? _playerProfile;
+    private int _sessionSeed = NewGameSession.DefaultSeed;
+    private bool _sessionActive;
     private string? _activeMenu;
     private string _lastActionMessage = "No action requested.";
 
@@ -47,6 +57,13 @@ public partial class Main : Node3D
         _navigationRegion = GetNode<NavigationRegion3D>("NavigationRegion3D");
         _controls = GetNode<CanvasLayer>("Controls");
         _controlsPanel = GetNode<Control>("Controls/Panel");
+        _playerCharacter = GetNode<PlayerCharacter>("PlayerCharacter");
+        _characterCreation = GetNode<CanvasLayer>("CharacterCreation");
+        _playerNameInput = GetNode<LineEdit>("CharacterCreation/Panel/Form/Name");
+        _heightChoice = GetNode<OptionButton>("CharacterCreation/Panel/Form/Height");
+        _bodyTypeChoice = GetNode<OptionButton>("CharacterCreation/Panel/Form/BodyType");
+        _sexChoice = GetNode<OptionButton>("CharacterCreation/Panel/Form/Sex");
+        _creationError = GetNode<Label>("CharacterCreation/Panel/Form/Error");
         _statusLabel = GetNode<Label>("Controls/Panel/Scroll/Margin/VBox/Status");
         _pauseButton = GetNode<Button>("Controls/Panel/Scroll/Margin/VBox/Pause");
         _entityList = GetNode<VBoxContainer>("Controls/Panel/Scroll/Margin/VBox/EntityList");
@@ -55,17 +72,7 @@ public partial class Main : Node3D
         _saveSlotPath = ProjectSettings.GlobalizePath("user://ant-farm-save.json");
         _speciesCatalog = SpeciesCatalog.LoadFromFile(
             Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
-        _foodConsumption = new FoodConsumptionService(_world, GetNavigationAdapter);
-        _wandering = new WanderingService(
-            _world,
-            GetNavigationAdapter,
-            [
-                new System.Numerics.Vector3(-5, 0, -3),
-                new System.Numerics.Vector3(4, 0, 3),
-                new System.Numerics.Vector3(7, 0, -5)
-            ]);
-        _woodHauling = new WoodHaulingService(_world, GetNavigationAdapter);
-        _wander = new WanderService(_world, GetNavigationAdapter);
+        ConfigureCreationChoices();
         _pauseButton.Pressed += TogglePause;
         GetNode<Button>("Controls/Panel/Scroll/Margin/VBox/OneX").Pressed += () => _clock.SetSpeed(SimulationSpeed.OneX);
         GetNode<Button>("Controls/Panel/Scroll/Margin/VBox/FourX").Pressed += () => _clock.SetSpeed(SimulationSpeed.FourX);
@@ -73,19 +80,35 @@ public partial class Main : Node3D
         GetNode<Button>("Controls/Panel/Scroll/Margin/VBox/Save").Pressed += SaveScenario;
         GetNode<Button>("Controls/Panel/Scroll/Margin/VBox/Load").Pressed += LoadScenario;
         _removeSelectedButton.Pressed += RemoveSelectedEntity;
-        ResetScenario();
-        UpdateStatus();
+        GetNode<Button>("CharacterCreation/Panel/Form/Start").Pressed += StartNewGame;
+        _controls.Visible = false;
+        _playerCharacter.Visible = false;
+        _playerCharacter.SetPhysicsProcess(false);
+        _playerCharacter.SetProcessUnhandledInput(false);
+        _characterCreation.Visible = true;
+        _playerNameInput.GrabFocus();
     }
 
     public override void _Process(double delta)
     {
+        if (!_sessionActive)
+        {
+            return;
+        }
+
         _clock.Advance(delta, AdvanceSimulationTick);
+        SyncPlayerPosition();
         SyncEntityViews();
         UpdateStatus();
     }
 
     public override void _UnhandledInput(InputEvent @event)
     {
+        if (!_sessionActive)
+        {
+            return;
+        }
+
         if (@event is InputEventKey key && (!key.Pressed || key.Echo))
         {
             return;
@@ -181,72 +204,135 @@ public partial class Main : Node3D
     private void TogglePause()
     {
         _clock.SetPaused(!_clock.IsPaused);
+        _playerCharacter.SetPhysicsProcess(!_clock.IsPaused);
         UpdateStatus();
     }
 
     private void ResetScenario()
     {
-        _clock.Reset();
-        _foodConsumption.Reset();
-        _wandering.Reset();
-        _woodHauling.Reset();
-        _wander.Reset();
-        _simulationTick = 0;
-        _world.Reset();
-        ClearEntityViews();
-        ClearResourceMarkers();
-        if (_map is not null)
+        if (_playerProfile is not { } profile)
         {
-            _map.Mesh = new PlaneMesh { Size = new Vector2(20, 20) };
+            return;
         }
 
+        StartSession(profile, _sessionSeed, "Scenario reset; save slot unchanged.");
+    }
+
+    private void ConfigureCreationChoices()
+    {
+        foreach (var value in Enum.GetNames<PlayerHeight>())
+        {
+            _heightChoice.AddItem(value);
+        }
+
+        foreach (var value in Enum.GetNames<PlayerBodyType>())
+        {
+            _bodyTypeChoice.AddItem(value);
+        }
+
+        foreach (var value in Enum.GetNames<PlayerSex>())
+        {
+            _sexChoice.AddItem(value);
+        }
+
+        _heightChoice.Select((int)PlayerHeight.Medium);
+        _bodyTypeChoice.Select((int)PlayerBodyType.Average);
+        _sexChoice.Select((int)PlayerSex.Female);
+    }
+
+    private void StartNewGame()
+    {
+        try
+        {
+            var profile = PlayerCharacterProfile.Create(
+                _playerNameInput.Text,
+                (PlayerHeight)_heightChoice.Selected,
+                (PlayerBodyType)_bodyTypeChoice.Selected,
+                (PlayerSex)_sexChoice.Selected);
+            StartSession(profile, NewGameSession.DefaultSeed, "New game started.");
+            _creationError.Text = string.Empty;
+        }
+        catch (ArgumentException exception)
+        {
+            _creationError.Text = exception.Message;
+        }
+    }
+
+    private void StartSession(
+        PlayerCharacterProfile profile,
+        int seed,
+        string saveLoadMessage)
+    {
+        var session = NewGameSession.Create(_speciesCatalog, profile, seed);
+        _sessionActive = false;
+        _playerCharacter.SetPhysicsProcess(false);
+        ResetTransientServices();
+        _clock.Reset();
+        _simulationTick = 0;
+        ClearEntityViews();
+        ClearResourceMarkers();
+        _world = session.World;
+        _playerProfile = profile;
+        _sessionSeed = seed;
+
+        _map.Mesh = new PlaneMesh { Size = new Vector2(20, 20) };
         _obstacle.Mesh = new BoxMesh { Size = new Vector3(2, 1, 2) };
         _obstacle.Position = new Vector3(0, 0.5f, 0);
         _navigationRegion.NavigationMesh = CreateNavigationMesh();
 
-        var foodContents = new ResourceContainer("food-pile-1", 100);
-        if (foodContents.TryAdd(ItemIds.Food, 100) != ResourceMutationResult.Success)
-        {
-            throw new InvalidOperationException("Unable to seed the initial food pile.");
-        }
+        _foodConsumption = new FoodConsumptionService(_world, GetNavigationAdapter);
+        _wandering = new WanderingService(
+            _world,
+            GetNavigationAdapter,
+            [
+                new System.Numerics.Vector3(-5, 0, -3),
+                new System.Numerics.Vector3(4, 0, 3),
+                new System.Numerics.Vector3(7, 0, -5)
+            ]);
+        _woodHauling = new WoodHaulingService(_world, GetNavigationAdapter);
+        _wander = new WanderService(_world, GetNavigationAdapter);
 
-        _world.AddFoodSource(
-            "food-pile-1",
-            new System.Numerics.Vector3(-8, 0, -8),
-            foodContents);
-
-        var woodContents = new ResourceContainer("wood-pile-1", 100);
-        if (woodContents.TryAdd(ItemIds.Wood, 100) != ResourceMutationResult.Success)
-        {
-            throw new InvalidOperationException("Unable to seed the initial wood pile.");
-        }
-
-        var woodPile = _world.AddResourcePile(
-            "wood-pile-1",
-            new System.Numerics.Vector3(8, 0, -8),
-            woodContents);
-        var stockpile = _world.AddStockpile(
-            "stockpile-1",
-            new System.Numerics.Vector3(-8, 0, 8),
-            new ResourceContainer("stockpile-1", 100));
+        var woodPile = _world.ResourcePiles.Single();
+        var stockpile = _world.Stockpiles.Single();
         AddResourceMarker("WoodPile", woodPile.Position, new Color(0.45f, 0.25f, 0.1f));
         AddResourceMarker("Stockpile", stockpile.Position, new Color(0.2f, 0.45f, 0.25f));
 
-        for (var index = 0; index < 10; index++)
-        {
-            var entity = _world.SpawnEntity("human", new System.Numerics.Vector3(index - 4.5f, 0, 0));
-            AddEntityView(entity);
-        }
+        var player = session.Player;
+        _playerCharacter.GlobalPosition = new Vector3(
+            player.Position.X,
+            player.Position.Y,
+            player.Position.Z);
+        _playerCharacter.BindPlayer(
+            player.Id,
+            profile,
+            (float)_speciesCatalog.GetRequired(player.SpeciesId).MovementSpeed);
+        _playerCharacter.Visible = true;
+        _playerCharacter.SetProcessUnhandledInput(true);
+        _playerCharacter.SetPhysicsProcess(true);
 
-        foreach (var speciesId in new[] { "ape", "cow", "wolf" })
+        foreach (var entity in _world.Entities)
         {
-            var entity = _world.SpawnEntity(speciesId, new System.Numerics.Vector3(_world.Entities.Count - 10, 0, 4));
-            AddEntityView(entity);
+            if (!string.Equals(entity.Id, session.PlayerEntityId, StringComparison.Ordinal))
+            {
+                AddEntityView(entity);
+            }
         }
 
         _selectedEntityId = null;
-        _saveLoadStatus = "Scenario reset; save slot unchanged.";
+        _activeMenu = null;
+        _saveLoadStatus = saveLoadMessage;
+        _sessionActive = true;
+        _characterCreation.Visible = false;
+        _controls.Visible = true;
         UpdateStatus();
+    }
+
+    private void ResetTransientServices()
+    {
+        _foodConsumption?.Reset();
+        _wandering?.Reset();
+        _woodHauling?.Reset();
+        _wander?.Reset();
     }
 
     private void AddEntityView(EntityRecord entity)
@@ -277,7 +363,12 @@ public partial class Main : Node3D
     {
         foreach (var entity in _world.Entities)
         {
-            _woodHauling.Advance(
+            if (string.Equals(entity.Id, _world.PlayerEntityId, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            _woodHauling!.Advance(
                 entity,
                 _speciesCatalog.GetRequired(entity.SpeciesId),
                 _simulationTick);
@@ -315,6 +406,19 @@ public partial class Main : Node3D
         }
     }
 
+    private void SyncPlayerPosition()
+    {
+        if (_world.PlayerEntityId is not { } playerId)
+        {
+            return;
+        }
+
+        var position = _playerCharacter.GlobalPosition;
+        _world.TrySetEntityPosition(
+            playerId,
+            new System.Numerics.Vector3(position.X, position.Y, position.Z));
+    }
+
     private void AdvanceSimulationTick(double tickSeconds)
     {
         _simulationTick = checked(_simulationTick + 1);
@@ -347,7 +451,12 @@ public partial class Main : Node3D
     {
         foreach (var entity in _world.Entities)
         {
-            _foodConsumption.Advance(
+            if (string.Equals(entity.Id, _world.PlayerEntityId, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            _foodConsumption!.Advance(
                 entity,
                 _speciesCatalog.GetRequired(entity.SpeciesId),
                 _simulationTick);
@@ -358,7 +467,12 @@ public partial class Main : Node3D
     {
         foreach (var entity in _world.Entities)
         {
-            _wandering.Advance(
+            if (string.Equals(entity.Id, _world.PlayerEntityId, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            _wandering!.Advance(
                 entity,
                 _speciesCatalog.GetRequired(entity.SpeciesId));
             var species = _speciesCatalog.GetRequired(entity.SpeciesId);
@@ -367,7 +481,7 @@ public partial class Main : Node3D
                 continue;
             }
 
-            _wander.Advance(entity, species, CreatureWanderGoals);
+            _wander!.Advance(entity, species, CreatureWanderGoals);
         }
     }
 
@@ -433,9 +547,15 @@ public partial class Main : Node3D
         var storedWood = _world.Stockpiles.Sum(
             target => (long)target.Contents.Counts.GetValueOrDefault(ItemIds.Wood));
         var totalWood = groundWood + carriedWood + storedWood;
+        var foodConsumption = _foodConsumption
+            ?? throw new InvalidOperationException("Food simulation is not initialized for the active session.");
+        var playerStatus = _world.PlayerProfile is { } profile
+            ? $"Player: {profile.Name} ({profile.Height}, {profile.BodyType}, {profile.Sex})\n"
+            : string.Empty;
         _statusLabel.Text =
             $"Simulation time: {_clock.SimulationTime:0.0}s\nState: {state}\nSpeed: {(int)_clock.Speed}x\n" +
-            $"Food: {_foodConsumption.FoodUnitsRemaining} remaining, {_foodConsumption.FoodUnitsConsumed} consumed\n" +
+            playerStatus +
+            $"Food: {foodConsumption.FoodUnitsRemaining} remaining, {foodConsumption.FoodUnitsConsumed} consumed\n" +
             $"Wood: ground {groundWood}, carried {carriedWood}, stored {storedWood} (total {totalWood})\n" +
             $"Save/load: {_saveLoadStatus}\n" +
 
@@ -495,6 +615,7 @@ public partial class Main : Node3D
     private void SaveScenario()
     {
         _clock.SetPaused(true);
+        _playerCharacter.SetPhysicsProcess(false);
         try
         {
             _saveSlotStore.Save(
@@ -513,6 +634,7 @@ public partial class Main : Node3D
     private void LoadScenario()
     {
         _clock.SetPaused(true);
+        _playerCharacter.SetPhysicsProcess(false);
         try
         {
             var json = _saveSlotStore.Load(_saveSlotPath);
@@ -520,10 +642,10 @@ public partial class Main : Node3D
                 _world,
                 json,
                 _speciesCatalog,
-                _foodConsumption,
-                _wandering,
-                _woodHauling,
-                _wander);
+                _foodConsumption!,
+                _wandering!,
+                _woodHauling!,
+                _wander!);
             _clock.Restore(restoredTime);
             _simulationTick = checked((long)Math.Round(
                 restoredTime / SimulationClock.TickIntervalSeconds,
@@ -543,6 +665,31 @@ public partial class Main : Node3D
     {
         ClearEntityViews();
         ClearResourceMarkers();
+        _playerProfile = _world.PlayerProfile;
+        _sessionSeed = _world.SessionSeed ?? NewGameSession.DefaultSeed;
+        if (_world.PlayerEntityId is { } playerId
+            && _world.TryGetEntity(playerId, out var player)
+            && player is not null
+            && _playerProfile is { } profile)
+        {
+            _playerCharacter.GlobalPosition = new Vector3(
+                player.Position.X,
+                player.Position.Y,
+                player.Position.Z);
+            _playerCharacter.BindPlayer(
+                player.Id,
+                profile,
+                (float)_speciesCatalog.GetRequired(player.SpeciesId).MovementSpeed);
+            _playerCharacter.Visible = true;
+            _playerCharacter.SetProcessUnhandledInput(true);
+            _playerCharacter.SetPhysicsProcess(false);
+        }
+        else
+        {
+            _playerCharacter.Visible = false;
+            _playerCharacter.SetProcessUnhandledInput(false);
+        }
+
         foreach (var source in _world.FoodSources)
         {
             AddResourceMarker($"Food_{source.Id}", source.Position, new Color(0.75f, 0.6f, 0.15f));
@@ -560,7 +707,10 @@ public partial class Main : Node3D
 
         foreach (var entity in _world.Entities)
         {
-            AddEntityView(entity);
+            if (!string.Equals(entity.Id, _world.PlayerEntityId, StringComparison.Ordinal))
+            {
+                AddEntityView(entity);
+            }
         }
     }
 
