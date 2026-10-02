@@ -10,6 +10,9 @@ A systemic open-world colony RPG in which people and creatures share consistent 
 - [Milestone 0.1: The Ant Farm](https://github.com/jmart985/Unnamed-Project-2026/milestone/1)
 - [Milestone 0.5: Combat Prototype](https://github.com/jmart985/Unnamed-Project-2026/milestone/29)
 - [Milestone 0.6: Relationships & Loyalty](https://github.com/jmart985/Unnamed-Project-2026/milestone/30)
+- [Milestone 0.7: Factions](https://github.com/jmart985/Unnamed-Project-2026/milestone/31)
+- [Milestone 0.8: Economy Prototype](https://github.com/jmart985/Unnamed-Project-2026/milestone/32)
+- [Milestone 0.9: Vertical Integration](https://github.com/jmart985/Unnamed-Project-2026/milestone/33)
 - [Milestone 1.0: First Real Game](https://github.com/jmart985/Unnamed-Project-2026/milestone/4)
 - [All implementation issues](https://github.com/jmart985/Unnamed-Project-2026/issues)
 - **Start here:** choose the earliest independent **Ready** implementation issue in the active milestone; [#221](https://github.com/jmart985/Unnamed-Project-2026/issues/221) tracks the current Creature Core scope and its implementable child issues.
@@ -53,5 +56,3 @@ dotnet test tests\Simulation.Tests\Simulation.Tests.csproj --configuration Relea
 The editor opens `game\main.tscn`, a flat placeholder map with an overhead camera. Build and test output should report success; the headless Godot command should exit with code 0. The Godot executable path is an example Windows installation path; use the pinned executable from the local installation when it differs.
 
 The startup scene exposes Pause/Resume, 1x, 4x, and Reset controls. Domain time advances in fixed 0.1-second ticks. A frame processes at most eight ticks; any remaining overflow is discarded to prevent a long-frame catch-up spiral.
-
-
