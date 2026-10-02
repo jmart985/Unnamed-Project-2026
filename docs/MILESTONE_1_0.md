@@ -8,7 +8,7 @@ This is a playable vertical slice, not a promise to implement the entire long-te
 
 ## Included
 
-- A deterministic new session using the existing fixed map, player profile, population, food/wood sources, and stockpile.
+- A deterministic new session using the existing fixed map, player profile, 10 human NPCs, one ape, one wolf, one cow, species-compatible starter food sources, wood, and a stockpile.
 - Direct player movement, inspection, and an explicit action to eat compatible food from a nearby source. Player hunger, consumed food, and resource counts use the authoritative World state.
 - One human squad with membership plus move-to, follow-player, and stop orders.
 - One friendly creature greeting, invoked with the dedicated Interact action (`G`) for the selected target within 2 world units and permitted by an explicit species capability. A successful greeting applies the validated `greeted` relationship profile (+5 familiarity, zero other deltas) only to the directed player-to-creature relationship; an unsupported or invalid interaction changes nothing.
@@ -23,7 +23,7 @@ Existing systems may be reused where they satisfy the included behavior. Do not 
 
 ## Acceptance scenario
 
-1. Start a new session with a nonblank player profile and a known seed. Confirm the existing setup contains 10 human NPCs, 3 creatures, one separately identified human player, finite food and wood, and one stockpile.
+1. Start a new session with a nonblank player profile and a known seed. Confirm the existing setup contains 10 human NPCs, one ape, one wolf, one cow, one separately identified human player, finite human and species-compatible creature food, finite wood, and one stockpile.
 2. Move and inspect the player. Advance simulation ticks and verify the player's satiety changes in the World-owned record, not a presentation-only copy.
 3. Move within the documented range of a compatible food source and request one eating action. Exactly one food unit is consumed and the configured nutrition is applied once, clamped to the existing satiety range. Out-of-range, empty-source, and incompatible-food attempts report rejection and change neither satiety nor resources.
 4. Add at least two human NPCs to the single squad. Issue move-to, follow-player, and stop orders. Verify membership does not duplicate, positions and order results remain authoritative, and invalid or removed targets cannot leave partial membership or stale orders.
