@@ -630,11 +630,24 @@ public partial class Main : Node3D
             : entity.Needs.IsHungry
                 ? "Hungry (food requested)"
                 : "Satisfied";
+        var species = _speciesCatalog.GetRequired(entity.SpeciesId);
+        var capabilities = string.Join(", ", new[]
+        {
+            species.CanHaul ? "haul" : null,
+            species.CanUseTools ? "tools" : null,
+            species.CanOpenDoors ? "doors" : null,
+            species.CanTrack ? "track" : null,
+            species.CanAcceptFriendlyInteraction ? "friendly" : null
+        }.Where(name => name is not null));
+        if (capabilities.Length == 0) capabilities = "none";
         var inspection = EntityInspectionReadModel.Create(_world, entity);
         var relationships = EntityInspectionReadModel.FormatOutgoingRelationships(inspection);
         _inspectorLabel.Text =
             $"ID: {entity.Id}\n" +
-            $"Species: {entity.SpeciesId}\n" +
+            $"Species: {species.DisplayName} ({species.BodyCategory}, {species.DietaryProfile})\n" +
+            $"Traits: boldness {species.Temperament.Boldness:0.0}, curiosity {species.Temperament.Curiosity:0.0}, sociability {species.Temperament.Sociability:0.0}\n" +
+            $"Capabilities: {capabilities}\n" +
+            $"Strength/Endurance/Dexterity: {species.Strength:0.0}/{species.Endurance:0.0}/{species.Dexterity:0.0}\n" +
             $"Position: {entity.Position}\n" +
             $"Satiety: {entity.Satiety:0.0}\n" +
             $"Needs: {needState}\n" +
