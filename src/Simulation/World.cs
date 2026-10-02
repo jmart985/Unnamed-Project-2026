@@ -10,6 +10,7 @@ public sealed class World
 
     private readonly Dictionary<string, EntityRecord> _entities = new(StringComparer.Ordinal);
     private readonly Dictionary<(string ObserverId, string TargetId), RelationshipState> _relationships = [];
+    private readonly HashSet<string> _factionIds = new(StringComparer.Ordinal);
     private readonly List<FoodSource> _foodSources = [];
     private readonly ReadOnlyCollection<FoodSource> _foodSourceView;
     private readonly List<ResourceLocation> _resourcePiles = [];
@@ -39,6 +40,8 @@ public sealed class World
     }
 
     public IReadOnlyCollection<EntityRecord> Entities => _entities.Values;
+    public IReadOnlyCollection<string> FactionIds =>
+        Array.AsReadOnly(_factionIds.Order(StringComparer.Ordinal).ToArray());
     public IReadOnlyCollection<RelationshipState> Relationships =>
         Array.AsReadOnly(_relationships.Values.ToArray());
     public IReadOnlyList<FoodSource> FoodSources => _foodSourceView;
@@ -233,6 +236,40 @@ public sealed class World
         return CreatureCaptureResult.Captured;
     }
 
+    public FactionDefinitionResult DefineFaction(string? factionId)
+    {
+        if (!IsValidFactionId(factionId))
+        {
+            return FactionDefinitionResult.InvalidId;
+        }
+
+        return _factionIds.Add(factionId!)
+            ? FactionDefinitionResult.Defined
+            : FactionDefinitionResult.DuplicateId;
+    }
+
+    public FactionAllegianceResult SetEntityAllegiance(string? entityId, string? factionId)
+    {
+        if (!TryGetEntity(entityId, out var entity) || entity is null)
+        {
+            return FactionAllegianceResult.EntityNotFound;
+        }
+
+        if (factionId is null)
+        {
+            entity.AllegianceFactionId = null;
+            return FactionAllegianceResult.Removed;
+        }
+
+        if (!_factionIds.Contains(factionId))
+        {
+            return FactionAllegianceResult.UnknownFaction;
+        }
+
+        entity.AllegianceFactionId = factionId;
+        return FactionAllegianceResult.Assigned;
+    }
+
     public bool TryGetRelationship(
         string? observerEntityId,
         string? targetEntityId,
@@ -356,6 +393,7 @@ public sealed class World
 
         _entities.Clear();
         _relationships.Clear();
+        _factionIds.Clear();
         _foodSources.Clear();
         _resourcePiles.Clear();
         _stockpiles.Clear();
@@ -382,6 +420,19 @@ public sealed class World
             foreach (var item in entity.Inventory)
             {
                 restored.TryAddCarried(item.Key, item.Value);
+            }
+        }
+
+        foreach (var factionId in snapshot.FactionIds!)
+        {
+            DefineFaction(factionId);
+        }
+
+        foreach (var entity in snapshot.Entities)
+        {
+            if (entity.AllegianceFactionId is { } factionId)
+            {
+                SetEntityAllegiance(entity.Id, factionId);
             }
         }
 
@@ -441,6 +492,40 @@ public sealed class World
         foreach (var item in snapshot.Counts)
         {
             contents.AddKnown(item.Key, item.Value);
+        }
+
+        internal static bool IsValidFactionId(string? factionId)
+        {
+            if (string.IsNullOrWhiteSpace(factionId)
+                || factionId[0] == '-'
+                || factionId[^1] == '-')
+            {
+                return false;
+            }
+
+            var previousWasSeparator = false;
+            foreach (var character in factionId)
+            {
+                if (character == '-')
+                {
+                    if (previousWasSeparator)
+                    {
+                        return false;
+                    }
+
+                    previousWasSeparator = true;
+                    continue;
+                }
+
+                if (character is not (>= 'a' and <= 'z') and not (>= '0' and <= '9'))
+                {
+                    return false;
+                }
+
+                previousWasSeparator = false;
+            }
+
+            return true;
         }
 
         return contents;
