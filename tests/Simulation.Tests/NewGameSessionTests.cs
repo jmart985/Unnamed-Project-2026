@@ -30,10 +30,25 @@ public sealed class NewGameSessionTests
             session.World.Entities.Count(entity =>
                 entity.SpeciesId == "human" && entity.Id != player.Id));
         Assert.Equal(NewGameSession.CreatureCount,
-            session.World.Entities.Count(entity => entity.SpeciesId == NewGameSession.CreatureSpeciesId));
+            session.World.Entities.Count(entity => NewGameSession.StarterCreatureSpeciesIds.Contains(entity.SpeciesId)));
+        Assert.Equal(
+            NewGameSession.StarterCreatureSpeciesIds.OrderBy(speciesId => speciesId, StringComparer.Ordinal),
+            session.World.Entities
+                .Where(entity => NewGameSession.StarterCreatureSpeciesIds.Contains(entity.SpeciesId))
+                .Select(entity => entity.SpeciesId)
+                .OrderBy(speciesId => speciesId, StringComparer.Ordinal));
         Assert.Equal(NewGameSession.HumanNpcCount + NewGameSession.CreatureCount + 1,
             session.World.Entities.Count);
-        Assert.Equal(100, session.World.FoodSources.Single().Contents.Counts[ItemIds.Food]);
+        Assert.Equal(4, session.World.FoodSources.Count);
+        Assert.All(session.World.FoodSources, source => Assert.Equal(100, source.Contents.Counts.Values.Sum()));
+        foreach (var speciesId in NewGameSession.StarterCreatureSpeciesIds)
+        {
+            var species = GetSpeciesCatalog().GetRequired(speciesId);
+            Assert.Contains(session.World.FoodSources, source =>
+                source.Contents.Counts.Keys.Any(species.Eats));
+        }
+        Assert.Equal(100, session.World.FoodSources.Single(source =>
+            source.Contents.Counts.ContainsKey(ItemIds.Food)).Contents.Counts[ItemIds.Food]);
         Assert.Equal(100, session.World.ResourcePiles.Single().Contents.Counts[ItemIds.Wood]);
         Assert.Equal(100, session.World.Stockpiles.Single().Contents.Capacity);
         Assert.Empty(session.World.Stockpiles.Single().Contents.Counts);

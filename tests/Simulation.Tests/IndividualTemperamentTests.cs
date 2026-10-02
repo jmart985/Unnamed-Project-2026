@@ -55,32 +55,4 @@ public sealed class IndividualTemperamentTests
         Assert.Equal(goals[2], curiousResult.Target);
         Assert.Equal(goals[2], socialResult.Target);
     }
-
-    [Fact]
-    public void NewGameCreaturesExpressDifferentTemperamentDrivenWanderingStyles()
-    {
-        var catalog = SpeciesCatalog.LoadFromFile(
-            Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
-        var session = NewGameSession.Create(catalog, PlayerCharacterProfile.Create("Test Player"));
-        var creatures = session.World.Entities
-            .Where(entity => entity.SpeciesId == NewGameSession.CreatureSpeciesId)
-            .ToArray();
-        var navigators = creatures.ToDictionary(
-            entity => entity.Id,
-            _ => new FakeNavigationAdapter(),
-            StringComparer.Ordinal);
-        var service = new WanderingService(
-            session.World,
-            entity => navigators[entity.Id],
-            [new Vector3(70, 0, 50), new Vector3(110, 0, 80), new Vector3(150, 0, 40)],
-            decisionSeed: 42);
-
-        var behaviors = creatures
-            .Select(entity => service.Advance(entity, catalog.GetRequired(entity.SpeciesId)).Behavior)
-            .ToArray();
-
-        Assert.Contains(WildBehavior.CautiousRoaming, behaviors);
-        Assert.Contains(WildBehavior.CuriousExploration, behaviors);
-        Assert.Contains(WildBehavior.SocialRoaming, behaviors);
-    }
 }

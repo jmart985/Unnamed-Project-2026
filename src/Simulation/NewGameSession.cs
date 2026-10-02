@@ -6,8 +6,15 @@ public sealed class NewGameSession
 {
     public const int DefaultSeed = AntFarmScenario.DefaultSeed;
     public const int HumanNpcCount = 10;
-    public const int CreatureCount = 3;
-    public const string CreatureSpeciesId = "creature";
+    private static readonly (string SpeciesId, Vector3 Position)[] StarterCreatureSpawns =
+    [
+        ("ape", new Vector3(90, 0, 60)),
+        ("wolf", new Vector3(150, 0, 40)),
+        ("cow", new Vector3(-60, 0, 150))
+    ];
+    public static int CreatureCount => StarterCreatureSpawns.Length;
+    public static IReadOnlyList<string> StarterCreatureSpeciesIds { get; } =
+        Array.AsReadOnly(StarterCreatureSpawns.Select(spawn => spawn.SpeciesId).ToArray());
 
     private static readonly Vector3[] PlayerSpawnPositions =
     [
@@ -53,7 +60,10 @@ public sealed class NewGameSession
         }
 
         catalog.GetRequired("human");
-        catalog.GetRequired(CreatureSpeciesId);
+        foreach (var speciesId in StarterCreatureSpeciesIds)
+        {
+            catalog.GetRequired(speciesId);
+        }
 
         var world = new World();
         AddContainer(
@@ -61,6 +71,24 @@ public sealed class NewGameSession
             "food-pile-1",
             new(-8, 0, -8),
             ItemIds.Food,
+            100);
+        AddContainer(
+            (id, position, contents) => world.AddFoodSource(id, position, contents),
+            "forage-pile-ape",
+            new(90, 0, 70),
+            ItemIds.Plant,
+            100);
+        AddContainer(
+            (id, position, contents) => world.AddFoodSource(id, position, contents),
+            "forage-pile-cow",
+            new(-65, 0, 145),
+            ItemIds.Plant,
+            100);
+        AddContainer(
+            (id, position, contents) => world.AddFoodSource(id, position, contents),
+            "prey-pile-wolf",
+            new(150, 0, 45),
+            ItemIds.Meat,
             100);
         AddContainer(
             (id, position, contents) => world.AddResourcePile(id, position, contents),
@@ -80,11 +108,9 @@ public sealed class NewGameSession
                 new Vector3(index - 4.5f, 0, 0));
         }
 
-        for (var index = 0; index < CreatureCount; index++)
+        foreach (var creature in StarterCreatureSpawns)
         {
-            world.SpawnEntity(
-                CreatureSpeciesId,
-                new Vector3(90 + index * 4, 0, 60));
+            world.SpawnEntity(creature.SpeciesId, creature.Position);
         }
 
         var player = world.SpawnEntity("human", GetPlayerSpawnPosition(seed));
