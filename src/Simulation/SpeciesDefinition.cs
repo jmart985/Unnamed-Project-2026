@@ -20,12 +20,12 @@ public sealed class SpeciesDefinition
         double maxHealth,
         double strength,
         double endurance,
+        TemperamentProfile temperament,
         double dexterity = 1,
         double smellRange = 1,
         bool canUseTools = false,
         bool canOpenDoors = false,
-        bool canTrack = false,
-        TemperamentProfile temperament)
+        bool canTrack = false)
     {
         Id = id;
         DisplayName = displayName;
