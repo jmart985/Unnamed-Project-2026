@@ -1,8 +1,8 @@
 # Unnamed Project 2026
 
-A systemic open-world colony RPG in which people and creatures share consistent simulation rules. The first deliverable is **0.1: The Ant Farm**, a tiny autonomous simulation sandbox.
+A systemic open-world colony RPG in which people and creatures share consistent simulation rules. **0.1: The Ant Farm** is the historical foundation baseline; active work follows the current GitHub milestone and its concrete implementation issues.
 
-**Status:** 0.6 Relationships & Loyalty in progress. **Pinned stack:** Godot 4.7.2 .NET (Mono) + .NET SDK 10.0.401; revisit after the prototype if evidence warrants it.
+**Status:** The roadmap is progressing through later milestones, with active work tracked on GitHub. **Pinned stack:** Godot 4.7.2 .NET (Mono) + .NET SDK 10.0.401; revisit after the prototype if evidence warrants it.
 
 ## Work on GitHub
 
@@ -12,7 +12,7 @@ A systemic open-world colony RPG in which people and creatures share consistent 
 - [Milestone 0.6: Relationships & Loyalty](https://github.com/jmart985/Unnamed-Project-2026/milestone/30)
 - [Milestone 1.0: First Real Game](https://github.com/jmart985/Unnamed-Project-2026/milestone/4)
 - [All implementation issues](https://github.com/jmart985/Unnamed-Project-2026/issues)
-- **Start here:** [#1 — Create the Godot C# sandbox and build checks](https://github.com/jmart985/Unnamed-Project-2026/issues/1)
+- **Start here:** choose the earliest independent **Ready** implementation issue in the active milestone; [#221](https://github.com/jmart985/Unnamed-Project-2026/issues/221) tracks the current Creature Core scope and its implementable child issues.
 
 ## Start here
 
@@ -26,14 +26,15 @@ A systemic open-world colony RPG in which people and creatures share consistent 
 - [First Real Game scope and acceptance](docs/MILESTONE_1_0.md)
 - [Work sequence and issue index](docs/BACKLOG.md)
 - [Contribution and AI workflow](CONTRIBUTING.md)
+- [AI contributor workflow](docs/AI_WORKFLOW.md)
 
 ## First playable target
 
 One fixed rectangular map, 10 human NPCs, 3 individuals of one creature species, one separately controlled human player, food and wood, one stockpile, hunger, eating, hauling, wandering, basic inspection, and manual save/load. Placeholder shapes are enough. A ten-minute unattended run should show NPCs eating and humans hauling without duplicated items, stuck jobs, or crashes.
 
-Combat, injuries, factions, capture, domestication, breeding, relationships, construction, crafting, economy, and world streaming are later design topics. They are excluded from 0.1.
+The 0.1 acceptance documents remain useful for regression checks against the original foundation. Their scope exclusions apply only to 0.1 work; they do not block implementation in later milestones.
 
-Begin with **F01: Create the Godot C# sandbox and build checks** in the backlog.
+Start with the earliest independent Ready implementation issue in the active milestone.
 
 ## Local setup
 
@@ -52,3 +53,6 @@ dotnet test tests\Simulation.Tests\Simulation.Tests.csproj --configuration Relea
 The editor opens `game\main.tscn`, a flat placeholder map with an overhead camera. Build and test output should report success; the headless Godot command should exit with code 0. The Godot executable path is an example Windows installation path; use the pinned executable from the local installation when it differs.
 
 The startup scene exposes Pause/Resume, 1x, 4x, and Reset controls. Domain time advances in fixed 0.1-second ticks. A frame processes at most eight ticks; any remaining overflow is discarded to prevent a long-frame catch-up spiral.
+
+
+

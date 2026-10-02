@@ -8,9 +8,9 @@ The [GitHub issues](https://github.com/jmart985/Unnamed-Project-2026/issues) are
 - [Milestone acceptance scenario](MILESTONE_0_1.md)
 - [Milestone 0.3: Creature Core](MILESTONE_0_3.md)
 
-## Initial work sequence
+## Historical 0.1 implementation sequence
 
-Only #1 begins Ready. Other tasks begin in Backlog and move to Ready after their dependencies are complete. The board tracks current status.
+This table records the original 0.1 sequence for historical reference and regression checks. It is not the current queue; use the active GitHub milestone and Ready implementation issues.
 
 | Issue | Area | Task | Depends on |
 | --- | --- | --- | --- |
@@ -59,6 +59,8 @@ Issue [#221](https://github.com/jmart985/Unnamed-Project-2026/issues/221) define
 | [#323](https://github.com/jmart985/Unnamed-Project-2026/issues/323) (C03b) | Creatures | Model durable capture and captivity state | None |
 | [#325](https://github.com/jmart985/Unnamed-Project-2026/issues/325) (C03d) | Validation | Verify the integrated creature-core scenario | [#323](https://github.com/jmart985/Unnamed-Project-2026/issues/323), [#324](https://github.com/jmart985/Unnamed-Project-2026/issues/324), [#326](https://github.com/jmart985/Unnamed-Project-2026/issues/326) |
 
-## Deferred design topics
+## Roadmap boundaries
 
-Capture/domestication, relationships, combat, injuries, construction, production, factions, economy, breeding, and world streaming remain outside 0.1. Refine these after the Ant Farm acceptance scenario passes; future ideas do not become milestone commitments automatically.
+These topics belong to later milestones. They may be implemented when their concrete issues are active and their dependencies are complete; do not use this historical list to block current milestone work.
+
+
