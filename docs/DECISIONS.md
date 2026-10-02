@@ -322,3 +322,8 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 
 - Decision: Humans, apes, and creatures get procedural primitive bodies (head, eyes, limbs, species features, per-entity color variation) and the inspector shows species traits, diet, temperament, and capabilities from the species catalog, following the long-term vision of people and creatures with diets, temperaments, and capabilities.
 - Consequence: Presentation only; no new simulation state. Guided by docs/LONG_TERM_VISION.md (origin/docs-ai-guidance, 3e9de38): Character layer detail (body parts, captivity, personality) and anatomy-driven creature capabilities.
+
+## Procedural movement and jointed models
+
+- Decision: Player, humans, apes, and creatures use jointed primitive rigs (hips, knees, shoulders, elbows, head, tail) driven by a presentation-only ProceduralGait (walk cycle from observed speed, idle breathing and sway, facing movement direction). Quadrupeds use diagonal gaits; apes lean forward with long arms. Per docs/LONG_TERM_VISION.md, anatomy differs by species and drives how a body moves; final art and animation are deferred.
+- Consequence: No simulation state or save data changes.

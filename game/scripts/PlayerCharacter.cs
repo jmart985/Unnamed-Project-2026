@@ -27,6 +27,7 @@ public partial class PlayerCharacter : CharacterBody3D
     private float _restingArmRotation;
     private float _restingLeftArmRotation;
     private readonly List<MeshInstance3D> _chestPlaceholders = [];
+    private readonly ProceduralGait _gait = new() { ReferenceSpeed = 5.0f, BobHeight = 0.0f };
 
     public bool IsAttacking { get; private set; }
     public string EntityId { get; private set; } = string.Empty;
@@ -40,6 +41,37 @@ public partial class PlayerCharacter : CharacterBody3D
         _restingLeftArmRotation = _leftArm.Rotation.X;
         _restingArmRotation = _rightArm.Rotation.X;
         AddChestPlaceholders();
+        BuildGait();
+    }
+
+    // Legs are re-parented under hip pivots and arms swing from their shoulder pivots so the walk cycle
+    // does not disturb the attack swing, which rotates the arm meshes directly.
+    private void BuildGait()
+    {
+        _gait.ReferenceSpeed = MovementSpeed;
+        foreach (var (name, phase) in new[] { ("LeftLeg", 0f), ("RightLeg", Mathf.Pi) })
+        {
+            var leg = GetNode<MeshInstance3D>(name);
+            var hip = new Node3D { Name = name + "Hip", Position = leg.Position + new Vector3(0, 0.4f, 0) };
+            AddChild(hip);
+            RemoveChild(leg);
+            hip.AddChild(leg);
+            leg.Position = new Vector3(0, -0.4f, 0);
+            _gait.Limbs.Add(new ProceduralGait.Limb { Pivot = hip, Phase = phase, Amplitude = 0.6f });
+        }
+
+        _gait.Limbs.Add(new ProceduralGait.Limb
+        {
+            Pivot = GetNode<Node3D>("LeftShoulder"), Phase = Mathf.Pi, Amplitude = 0.5f, IdleAmplitude = 0.03f, IdleFrequency = 1.1f
+        });
+        _gait.Limbs.Add(new ProceduralGait.Limb
+        {
+            Pivot = GetNode<Node3D>("RightShoulder"), Phase = 0, Amplitude = 0.5f, IdleAmplitude = 0.03f, IdleFrequency = 1.1f
+        });
+        _gait.Limbs.Add(new ProceduralGait.Limb
+        {
+            Pivot = GetNode<Node3D>("Head"), Axis = Vector3.Up, Amplitude = 0.04f, IdleAmplitude = 0.15f, IdleFrequency = 0.6f
+        });
     }
 
     public void BindPlayer(string entityId, PlayerCharacterProfile profile, float movementSpeed)
@@ -63,6 +95,7 @@ public partial class PlayerCharacter : CharacterBody3D
         EntityId = entityId;
         MovementSpeed = movementSpeed;
         _lastGroundedPosition = GlobalPosition;
+        _gait.ReferenceSpeed = movementSpeed;
         var heightScale = profile.Height switch
         {
             PlayerHeight.Small => 0.88f,
@@ -179,6 +212,7 @@ public partial class PlayerCharacter : CharacterBody3D
             Mathf.MoveToward(Velocity.Z, target.Z, rate * physicsDelta));
 
         MoveAndSlide();
+        _gait.Advance(physicsDelta, IsOnFloor() ? new Vector2(Velocity.X, Velocity.Z).Length() : 0f);
 
         if (IsOnFloor())
         {
