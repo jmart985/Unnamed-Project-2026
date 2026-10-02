@@ -286,6 +286,15 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Allegiance, reputation, hostility, and owner references are durable and validated with existing World snapshot rules. Explicit invalid operations reject without partial mutation. Autonomous reputation changes, diplomacy, law/crime, territory, warfare, ownership enforcement/theft, UI, and faction authoring tools remain out of scope.
 - Revisit: After the F07d scenario is exercised; later behavior must be scoped from observed prototype needs.
 
+## D032 — Bounded creature perception queries
+
+- Date: 2026-10-02
+- Status: Provisional; implemented for issue #296
+- Decision: Provide read-only nearby-food, nearby-entity, and nearby-track queries in the existing simulation domain. The observer species' smell range bounds all three; food must be available and compatible with the observer's diet, nearby-entity results exclude the observer, and tracks are queryable only when the species has tracking capability. Results sort by distance and then stable identifiers.
+- Reason: Make existing smell-range and tracking capability data usable through deterministic, directly testable query behavior without coupling perception to rendering or a speculative behavior framework.
+- Consequence: Tracks are explicit immutable observations supplied to the query and are not generated, aged, or persisted by this feature. Queries do not reserve food, mutate World state, or introduce hunting/tracking behavior.
+- Revisit: When a bounded hunting/tracking consumer defines observation creation, expiry, and persistence requirements.
+
 ## D031 — Vertical integration is an evidence gate
 
 - Date: 2026-10-02
