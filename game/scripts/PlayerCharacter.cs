@@ -25,7 +25,7 @@ public partial class PlayerCharacter : CharacterBody3D
     private PlayerBodyRig _body = null!;
     private PlayerCharacterProfile _profile = PlayerCharacterProfile.Create("Player");
     private readonly ProceduralGait _gait = new() { ReferenceSpeed = 5.0f, BobHeight = 0.03f };
-    private readonly AttackSwing _swing = new();
+    private AttackSwing _swing = new();
     private bool _swingLeft;
     private float _headPitch;
     private float _headPitchTarget;
@@ -219,6 +219,7 @@ public partial class PlayerCharacter : CharacterBody3D
         }
 
         _swingLeft = left;
+        _swing = AttackSwing.ForTotalDuration(AttackDuration);
         _swing.Begin();
         _attackCooldownRemaining = AttackCooldown + _swing.TotalSeconds;
     }
