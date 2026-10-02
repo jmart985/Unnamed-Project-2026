@@ -14,10 +14,11 @@ The intended scales are individual, squad, settlement, and world. We will earn e
 
 An entity becomes hungry, finds accessible food, travels to it, consumes a real item, and returns to useful activity. Humans haul wood. Creatures wander and eat using the same foundations. Saving and loading preserves durable state without duplicating resources.
 
-The current milestone is a technical and design experiment, not a promise of open-world scope or production quality. Success means the behavior is observable, explainable, and repeatable enough to improve.
+The Ant Farm foundation is the completed baseline. Current work should follow the active GitHub milestone and its concrete implementation issues, expanding the simulation in small, testable increments. Success means the behavior is observable, explainable, and repeatable enough to improve.
 
-See [Milestone 0.1](MILESTONE_0_1.md) for the foundational sandbox scope and [Milestone 0.5](MILESTONE_0_5.md) for combat prototype acceptance. Earlier conversation examples included broader combat, relationships, and factions; milestone documents define the current commitment.
+See [AI contributor workflow](AI_WORKFLOW.md) and [the backlog](BACKLOG.md) for current handoff rules. Milestone 0.1 remains a regression reference, not a permanent scope ceiling.
 
 ## Development Philosophy
 
 Prototype first. Replace placeholder systems only after gameplay proves they are valuable.
+
