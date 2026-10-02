@@ -269,3 +269,28 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: Creature Core needs durable capture state without a separate registry or player-facing capture workflow, and existing saves should remain loadable when the new state is introduced.
 - Consequence: Missing, non-creature, dead, or already-captive targets are rejected without changing entity state. Invalid captivity values are rejected during complete snapshot validation before transient services or the live World are reset.
 - Revisit: When a later milestone defines player-controlled capture eligibility, release, or captive housing.
+## D031 — Deterministic temperament-driven roaming
+
+- Date: 2026-10-02
+- Status: Implemented for C03c
+- Decision: Classify roaming as cautious when the mean of boldness and curiosity is below 0.5, otherwise classify it as exploratory. Cautious roaming selects the nearest configured goal; exploratory roaming selects the farthest. Goals already within arrival tolerance are skipped when another goal is available. Equal-distance choices use a stable hash of the session seed, entity ID, simulation tick, and that entity's trip count.
+- Reason: Creature Core needs explainable behavior differences from existing bounded wandering goals without introducing random state, new ecology systems, or a behavior framework.
+- Consequence: Fixed profiles and inputs produce repeatable goals, and navigation outcomes continue through the existing action lifecycle. Sociability remains profile data for future behavior rather than affecting this roaming decision.
+- Revisit: When the integrated Creature Core scenario is exercised or a later issue introduces explicit social stimuli or additional wild actions.
+## D030 — Bounded faction foundation
+
+- Date: 2026-10-02
+- Status: Provisional planning decision for Milestone 0.7; implementation pending
+- Decision: Reuse the authoritative World for a small fixed faction catalog and optional entity allegiance. Track entity-to-faction reputation as an explicit bounded value in [0, 100]; represent hostility as a separate directed faction-to-faction value, not as an inference from individual reputation. Add optional faction owner metadata to existing settlement resource containers without enforcing access policy.
+- Reason: The roadmap milestone names allegiance, reputation, hostility, and ownership, but these are foundations for later behavior rather than a requirement to simulate full faction politics now. Separating reputation from hostility avoids silently inventing a policy threshold; metadata on current containers avoids a parallel inventory/property system.
+- Consequence: Allegiance, reputation, hostility, and owner references are durable and validated with existing World snapshot rules. Explicit invalid operations reject without partial mutation. Autonomous reputation changes, diplomacy, law/crime, territory, warfare, ownership enforcement/theft, UI, and faction authoring tools remain out of scope.
+- Revisit: After the F07d scenario is exercised; later behavior must be scoped from observed prototype needs.
+
+## D031 — Vertical integration is an evidence gate
+
+- Date: 2026-10-02
+- Status: Provisional planning decision for Milestone 0.9; implementation pending
+- Decision: Define 0.9 as one deterministic test-region scenario composing accepted 0.3–0.8 systems. It adds only the integration harness and evidence; missing product behavior becomes a separately scoped issue.
+- Reason: “All core systems” is otherwise unbounded and could pull multiple settlements, regional simulation, streaming, or broad AI forward without evidence.
+- Consequence: The milestone verifies existing creature, combat, relationship, faction, settlement, and local economy state together, with repeatability, exact resource accounting, and rejection/recovery checks. It does not expand those systems or turn the long-term vision into a delivery commitment.
+- Revisit: After the one-region scenario has recorded results and limitations.

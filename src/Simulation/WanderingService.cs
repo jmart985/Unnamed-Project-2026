@@ -14,26 +14,37 @@ public enum WanderingStatus
     InvalidSpecies
 }
 
+public enum WildBehavior
+{
+    CautiousRoaming,
+    CuriousExploration
+}
+
 public sealed record WanderingResult(
     WanderingStatus Status,
     Vector3? Target = null,
-    string? WaitingReason = null);
+    string? WaitingReason = null,
+    WildBehavior? Behavior = null);
 
 public sealed class WanderingService : ITransientSimulationState
 {
     private const double NavigationTimeoutSeconds = 30;
     private const double ArrivalTolerance = 0.1;
+    private const uint FnvOffsetBasis = 2166136261;
+    private const uint FnvPrime = 16777619;
 
     private readonly World _world;
     private readonly Func<EntityRecord, INavigationAdapter> _navigationForEntity;
     private readonly IReadOnlyList<Vector3> _goals;
+    private readonly int _decisionSeed;
     private readonly Dictionary<string, ActiveTrip> _activeTrips = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, int> _nextGoalIndexes = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, int> _tripCounts = new(StringComparer.Ordinal);
 
     public WanderingService(
         World world,
         Func<EntityRecord, INavigationAdapter> navigationForEntity,
-        IEnumerable<Vector3> goals)
+        IEnumerable<Vector3> goals,
+        int decisionSeed = 0)
     {
         ArgumentNullException.ThrowIfNull(world);
         ArgumentNullException.ThrowIfNull(navigationForEntity);
@@ -54,9 +65,13 @@ public sealed class WanderingService : ITransientSimulationState
 
         _world = world;
         _navigationForEntity = navigationForEntity;
+        _decisionSeed = decisionSeed;
     }
 
-    public WanderingResult Advance(EntityRecord entity, SpeciesDefinition species)
+    public WanderingResult Advance(
+        EntityRecord entity,
+        SpeciesDefinition species,
+        long simulationTick = 0)
     {
         ArgumentNullException.ThrowIfNull(entity);
         ArgumentNullException.ThrowIfNull(species);
@@ -100,7 +115,7 @@ public sealed class WanderingService : ITransientSimulationState
             return new WanderingResult(WanderingStatus.ActionRejected);
         }
 
-        return BeginTrip(entity);
+        return BeginTrip(entity, species, simulationTick);
     }
 
     public void Reset()
@@ -118,14 +133,21 @@ public sealed class WanderingService : ITransientSimulationState
         }
 
         _activeTrips.Clear();
-        _nextGoalIndexes.Clear();
+        _tripCounts.Clear();
     }
 
-    private WanderingResult BeginTrip(EntityRecord entity)
+    private WanderingResult BeginTrip(
+        EntityRecord entity,
+        SpeciesDefinition species,
+        long simulationTick)
     {
-        var goalIndex = _nextGoalIndexes.GetValueOrDefault(entity.Id);
-        var target = _goals[goalIndex];
-        _nextGoalIndexes[entity.Id] = (goalIndex + 1) % _goals.Count;
+        var behavior = species.Temperament.Boldness + species.Temperament.Curiosity >= 1
+            ? WildBehavior.CuriousExploration
+            : WildBehavior.CautiousRoaming;
+        var tripCount = _tripCounts.GetValueOrDefault(entity.Id);
+        var firstGoalIndex = GetStableStartIndex(entity.Id, simulationTick, tripCount, _goals.Count);
+        var target = SelectGoal(entity.Position, behavior, firstGoalIndex);
+        _tripCounts[entity.Id] = checked(tripCount + 1);
 
         INavigationAdapter? navigator = null;
         string? requestId = null;
@@ -142,20 +164,20 @@ public sealed class WanderingService : ITransientSimulationState
                 throw new InvalidOperationException("The navigation adapter returned an empty request ID.");
             }
 
-            var actionId = $"wander-{entity.Id}-{goalIndex}";
+            var actionId = $"wander-{entity.Id}-{tripCount}";
             var startResult = entity.Actions.TryStart(
                 new ActionCandidate(actionId, ActionKind.Wander),
                 () => navigator.Cancel(requestId));
             if (startResult is not (ActionStartResult.Started or ActionStartResult.Preempted))
             {
                 navigator.Cancel(requestId);
-                return new WanderingResult(WanderingStatus.ActionRejected, target);
+                return new WanderingResult(WanderingStatus.ActionRejected, target, Behavior: behavior);
             }
 
-            _activeTrips[entity.Id] = new ActiveTrip(actionId, target, navigator, requestId);
+            _activeTrips[entity.Id] = new ActiveTrip(actionId, target, behavior, navigator, requestId);
             entity.Activity = "Wandering";
             entity.WaitingReason = null;
-            return new WanderingResult(WanderingStatus.Traveling, target);
+            return new WanderingResult(WanderingStatus.Traveling, target, Behavior: behavior);
         }
         catch
         {
@@ -167,7 +189,8 @@ public sealed class WanderingService : ITransientSimulationState
             return new WanderingResult(
                 WanderingStatus.Waiting,
                 target,
-                "Wandering navigation could not be started.");
+                "Wandering navigation could not be started.",
+                behavior);
         }
     }
 
@@ -176,7 +199,7 @@ public sealed class WanderingService : ITransientSimulationState
         var outcome = trip.Navigator.Poll(trip.NavigationRequestId, 0);
         if (outcome == NavigationOutcome.InProgress)
         {
-            return new WanderingResult(WanderingStatus.Traveling, trip.Target);
+            return new WanderingResult(WanderingStatus.Traveling, trip.Target, Behavior: trip.Behavior);
         }
 
         if (outcome == NavigationOutcome.Arrived
@@ -186,13 +209,75 @@ public sealed class WanderingService : ITransientSimulationState
             entity.Actions.Complete();
             entity.Activity = "Idle";
             entity.WaitingReason = null;
-            return new WanderingResult(WanderingStatus.Arrived, trip.Target);
+            return new WanderingResult(WanderingStatus.Arrived, trip.Target, Behavior: trip.Behavior);
         }
 
         CancelTrip(entity);
         entity.Activity = "Waiting";
         entity.WaitingReason = $"Wandering target failed: {outcome}.";
-        return new WanderingResult(WanderingStatus.Waiting, trip.Target, entity.WaitingReason);
+        return new WanderingResult(WanderingStatus.Waiting, trip.Target, entity.WaitingReason, trip.Behavior);
+    }
+
+    private Vector3 SelectGoal(Vector3 origin, WildBehavior behavior, int firstGoalIndex)
+    {
+        var bestGoal = _goals[firstGoalIndex];
+        var bestDistance = 0f;
+        var foundGoal = false;
+        for (var offset = 0; offset < _goals.Count; offset++)
+        {
+            var candidate = _goals[(firstGoalIndex + offset) % _goals.Count];
+            var candidateDistance = Vector3.DistanceSquared(origin, candidate);
+            if (candidateDistance <= ArrivalTolerance * ArrivalTolerance)
+            {
+                continue;
+            }
+
+            if (!foundGoal
+                || (behavior == WildBehavior.CuriousExploration
+                    ? candidateDistance > bestDistance
+                    : candidateDistance < bestDistance))
+            {
+                bestGoal = candidate;
+                bestDistance = candidateDistance;
+                foundGoal = true;
+            }
+        }
+
+        return bestGoal;
+    }
+
+    private int GetStableStartIndex(string entityId, long simulationTick, int tripCount, int goalCount)
+    {
+        var hash = FnvOffsetBasis;
+        AddToHash(unchecked((uint)_decisionSeed), ref hash);
+        AddToHash(unchecked((ulong)simulationTick), ref hash);
+        AddToHash(unchecked((uint)tripCount), ref hash);
+        foreach (var character in entityId)
+        {
+            AddToHash(character, ref hash);
+        }
+
+        return (int)(hash % (uint)goalCount);
+    }
+
+    private static void AddToHash(uint value, ref uint hash)
+    {
+        AddToHash((ulong)value, ref hash);
+    }
+
+    private static void AddToHash(ulong value, ref uint hash)
+    {
+        for (var byteIndex = 0; byteIndex < sizeof(ulong); byteIndex++)
+        {
+            hash = unchecked((hash ^ (byte)value) * FnvPrime);
+            value >>= 8;
+        }
+    }
+
+    private static void AddToHash(char value, ref uint hash)
+    {
+        hash = unchecked((hash ^ (byte)value) * FnvPrime);
+        hash = unchecked((hash ^ (byte)(value >> 8)) * FnvPrime);
     }
 
     private void CancelTrip(EntityRecord entity)
@@ -215,6 +300,7 @@ public sealed class WanderingService : ITransientSimulationState
     private sealed record ActiveTrip(
         string ActionId,
         Vector3 Target,
+        WildBehavior Behavior,
         INavigationAdapter Navigator,
         string NavigationRequestId);
 }
