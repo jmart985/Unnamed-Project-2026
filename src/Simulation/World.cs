@@ -11,6 +11,8 @@ public sealed class World
     private readonly Dictionary<string, EntityRecord> _entities = new(StringComparer.Ordinal);
     private readonly Dictionary<(string ObserverId, string TargetId), RelationshipState> _relationships = [];
     private readonly HashSet<string> _factionIds = new(StringComparer.Ordinal);
+    private readonly Dictionary<(string EntityId, string FactionId), double> _factionReputations = [];
+    private readonly Dictionary<(string SourceFactionId, string TargetFactionId), bool> _factionHostilities = [];
     private readonly List<FoodSource> _foodSources = [];
     private readonly ReadOnlyCollection<FoodSource> _foodSourceView;
     private readonly List<ResourceLocation> _resourcePiles = [];
@@ -42,6 +44,21 @@ public sealed class World
     public IReadOnlyCollection<EntityRecord> Entities => _entities.Values;
     public IReadOnlyCollection<string> FactionIds =>
         Array.AsReadOnly(_factionIds.Order(StringComparer.Ordinal).ToArray());
+    public IReadOnlyCollection<FactionReputationState> FactionReputations =>
+        Array.AsReadOnly(_factionReputations
+            .OrderBy(pair => pair.Key.EntityId, StringComparer.Ordinal)
+            .ThenBy(pair => pair.Key.FactionId, StringComparer.Ordinal)
+            .Select(pair => new FactionReputationState(pair.Key.EntityId, pair.Key.FactionId, pair.Value))
+            .ToArray());
+    public IReadOnlyCollection<FactionHostilityState> FactionHostilities =>
+        Array.AsReadOnly(_factionHostilities
+            .OrderBy(pair => pair.Key.SourceFactionId, StringComparer.Ordinal)
+            .ThenBy(pair => pair.Key.TargetFactionId, StringComparer.Ordinal)
+            .Select(pair => new FactionHostilityState(
+                pair.Key.SourceFactionId,
+                pair.Key.TargetFactionId,
+                pair.Value))
+            .ToArray());
     public IReadOnlyCollection<RelationshipState> Relationships =>
         Array.AsReadOnly(_relationships.Values.ToArray());
     public IReadOnlyList<FoodSource> FoodSources => _foodSourceView;
@@ -270,6 +287,95 @@ public sealed class World
         return FactionAllegianceResult.Assigned;
     }
 
+    public bool TryGetFactionReputation(
+        string? entityId,
+        string? factionId,
+        out double reputation)
+    {
+        reputation = 0;
+        if (string.IsNullOrWhiteSpace(entityId)
+            || string.IsNullOrWhiteSpace(factionId)
+            || !_entities.ContainsKey(entityId)
+            || !_factionIds.Contains(factionId))
+        {
+            return false;
+        }
+
+        return _factionReputations.TryGetValue((entityId, factionId), out reputation);
+    }
+
+    public FactionReputationResult AdjustFactionReputation(
+        string? entityId,
+        string? factionId,
+        double delta)
+    {
+        if (string.IsNullOrWhiteSpace(entityId) || !_entities.ContainsKey(entityId))
+        {
+            return FactionReputationResult.EntityNotFound;
+        }
+
+        if (string.IsNullOrWhiteSpace(factionId) || !_factionIds.Contains(factionId))
+        {
+            return FactionReputationResult.UnknownFaction;
+        }
+
+        if (!double.IsFinite(delta))
+        {
+            return FactionReputationResult.InvalidDelta;
+        }
+
+        var key = (entityId, factionId);
+        _factionReputations.TryGetValue(key, out var currentValue);
+        var updatedValue = currentValue + delta;
+        if (updatedValue is < 0 or > 100 || !double.IsFinite(updatedValue))
+        {
+            return FactionReputationResult.OutOfRange;
+        }
+
+        _factionReputations[key] = updatedValue;
+        return FactionReputationResult.Applied;
+    }
+
+    public bool TryGetFactionHostility(
+        string? sourceFactionId,
+        string? targetFactionId,
+        out bool isHostile)
+    {
+        isHostile = false;
+        if (string.IsNullOrWhiteSpace(sourceFactionId)
+            || string.IsNullOrWhiteSpace(targetFactionId)
+            || string.Equals(sourceFactionId, targetFactionId, StringComparison.Ordinal)
+            || !_factionIds.Contains(sourceFactionId)
+            || !_factionIds.Contains(targetFactionId))
+        {
+            return false;
+        }
+
+        return _factionHostilities.TryGetValue((sourceFactionId, targetFactionId), out isHostile);
+    }
+
+    public FactionHostilityResult SetFactionHostility(
+        string? sourceFactionId,
+        string? targetFactionId,
+        bool isHostile)
+    {
+        if (string.IsNullOrWhiteSpace(sourceFactionId)
+            || string.IsNullOrWhiteSpace(targetFactionId)
+            || !_factionIds.Contains(sourceFactionId)
+            || !_factionIds.Contains(targetFactionId))
+        {
+            return FactionHostilityResult.UnknownFaction;
+        }
+
+        if (string.Equals(sourceFactionId, targetFactionId, StringComparison.Ordinal))
+        {
+            return FactionHostilityResult.SameFaction;
+        }
+
+        _factionHostilities[(sourceFactionId, targetFactionId)] = isHostile;
+        return FactionHostilityResult.Updated;
+    }
+
     public bool TryGetRelationship(
         string? observerEntityId,
         string? targetEntityId,
@@ -353,6 +459,7 @@ public sealed class World
         entity.Actions.Cancel();
         Reservations.ReleaseForEntity(id);
         RemoveRelationshipsForEntity(id);
+        RemoveFactionReputationsForEntity(id);
         entity.AllegianceFactionId = null;
         if (!_entities.Remove(id))
         {
@@ -396,6 +503,8 @@ public sealed class World
         _entities.Clear();
         _relationships.Clear();
         _factionIds.Clear();
+        _factionReputations.Clear();
+        _factionHostilities.Clear();
         _foodSources.Clear();
         _resourcePiles.Clear();
         _stockpiles.Clear();
@@ -436,6 +545,18 @@ public sealed class World
             {
                 SetEntityAllegiance(entity.Id, factionId);
             }
+        }
+
+        foreach (var reputation in snapshot.FactionReputations!)
+        {
+            _factionReputations.Add((reputation.EntityId, reputation.FactionId), reputation.Value);
+        }
+
+        foreach (var hostility in snapshot.FactionHostilities!)
+        {
+            _factionHostilities.Add(
+                (hostility.SourceFactionId, hostility.TargetFactionId),
+                hostility.IsHostile);
         }
 
         foreach (var source in snapshot.FoodSources)
@@ -569,6 +690,17 @@ public sealed class World
         foreach (var pair in relatedPairs)
         {
             _relationships.Remove(pair);
+        }
+    }
+
+    private void RemoveFactionReputationsForEntity(string entityId)
+    {
+        var reputationKeys = _factionReputations.Keys
+            .Where(key => string.Equals(key.EntityId, entityId, StringComparison.Ordinal))
+            .ToArray();
+        foreach (var key in reputationKeys)
+        {
+            _factionReputations.Remove(key);
         }
     }
 

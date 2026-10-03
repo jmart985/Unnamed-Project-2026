@@ -16,7 +16,9 @@ public sealed record WorldSnapshot(
     int? SessionSeed,
     string? PlayerEntityId,
     PlayerCharacterProfile? PlayerProfile,
-    IReadOnlyList<string>? FactionIds = null);
+    IReadOnlyList<string>? FactionIds = null,
+    IReadOnlyList<FactionReputationSnapshot>? FactionReputations = null,
+    IReadOnlyList<FactionHostilitySnapshot>? FactionHostilities = null);
 
 public sealed record RelationshipSnapshot(
     string ObserverEntityId,
@@ -25,6 +27,16 @@ public sealed record RelationshipSnapshot(
     double Trust,
     double Fear,
     double Loyalty);
+
+public sealed record FactionReputationSnapshot(
+    string EntityId,
+    string FactionId,
+    double Value);
+
+public sealed record FactionHostilitySnapshot(
+    string SourceFactionId,
+    string TargetFactionId,
+    bool IsHostile);
 
 public sealed record EntitySnapshot(
     string Id,
@@ -59,7 +71,8 @@ public static class WorldSnapshotSerializer
 {
     private const int LegacySchemaVersion = 4;
     private const int PreviousSchemaVersion = 5;
-    public const int CurrentSchemaVersion = 6;
+    private const int FactionIdentitySchemaVersion = 6;
+    public const int CurrentSchemaVersion = 7;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -106,6 +119,18 @@ public static class WorldSnapshotSerializer
                 relationship.Fear,
                 relationship.Loyalty))
             .ToArray();
+        var factionReputations = world.FactionReputations
+            .Select(reputation => new FactionReputationSnapshot(
+                reputation.EntityId,
+                reputation.FactionId,
+                reputation.Value))
+            .ToArray();
+        var factionHostilities = world.FactionHostilities
+            .Select(hostility => new FactionHostilitySnapshot(
+                hostility.SourceFactionId,
+                hostility.TargetFactionId,
+                hostility.IsHostile))
+            .ToArray();
 
         return new WorldSnapshot(
             CurrentSchemaVersion,
@@ -119,7 +144,9 @@ public static class WorldSnapshotSerializer
             world.SessionSeed,
             world.PlayerEntityId,
             world.PlayerProfile,
-            world.FactionIds.ToArray());
+            world.FactionIds.ToArray(),
+            factionReputations,
+            factionHostilities);
     }
 
     public static string Serialize(World world, double simulationTime)
@@ -145,12 +172,14 @@ public static class WorldSnapshotSerializer
             throw new InvalidDataException("Snapshot JSON is malformed.", exception);
         }
 
-        if (snapshot.SchemaVersion is LegacySchemaVersion or PreviousSchemaVersion)
+        if (snapshot.SchemaVersion is LegacySchemaVersion or PreviousSchemaVersion or FactionIdentitySchemaVersion)
         {
             return snapshot with
             {
                 SchemaVersion = CurrentSchemaVersion,
-                FactionIds = snapshot.FactionIds ?? Array.Empty<string>()
+                FactionIds = snapshot.FactionIds ?? Array.Empty<string>(),
+                FactionReputations = Array.Empty<FactionReputationSnapshot>(),
+                FactionHostilities = Array.Empty<FactionHostilitySnapshot>()
             };
         }
 
@@ -214,6 +243,11 @@ public static class WorldSnapshotSerializer
         if (snapshot.FactionIds is null)
         {
             throw new InvalidDataException("Snapshot faction IDs are required.");
+        }
+
+        if (snapshot.FactionReputations is null || snapshot.FactionHostilities is null)
+        {
+            throw new InvalidDataException("Snapshot faction reputation and hostility lists are required.");
         }
 
         var factionIds = new HashSet<string>(StringComparer.Ordinal);
@@ -302,6 +336,68 @@ public static class WorldSnapshotSerializer
         ValidateLocations(snapshot.ResourcePiles, "resource pile", foodSourceIds);
         ValidateLocations(snapshot.Stockpiles, "stockpile", foodSourceIds);
         ValidateRelationships(snapshot.Relationships, entityIds);
+        ValidateFactionReputations(snapshot.FactionReputations, entityIds, factionIds);
+        ValidateFactionHostilities(snapshot.FactionHostilities, factionIds);
+    }
+
+    private static void ValidateFactionReputations(
+        IReadOnlyList<FactionReputationSnapshot> reputations,
+        HashSet<string> entityIds,
+        HashSet<string> factionIds)
+    {
+        var reputationKeys = new HashSet<(string EntityId, string FactionId)>();
+        foreach (var reputation in reputations)
+        {
+            if (reputation is null
+                || string.IsNullOrWhiteSpace(reputation.EntityId)
+                || !entityIds.Contains(reputation.EntityId)
+                || string.IsNullOrWhiteSpace(reputation.FactionId)
+                || !factionIds.Contains(reputation.FactionId))
+            {
+                throw new InvalidDataException("Snapshot faction reputation references an unknown entity or faction.");
+            }
+
+            if (!double.IsFinite(reputation.Value) || reputation.Value is < 0 or > 100)
+            {
+                throw new InvalidDataException(
+                    $"Snapshot faction reputation for entity '{reputation.EntityId}' and faction '{reputation.FactionId}' must be finite and within [0, 100].");
+            }
+
+            if (!reputationKeys.Add((reputation.EntityId, reputation.FactionId)))
+            {
+                throw new InvalidDataException(
+                    $"Snapshot contains duplicate faction reputation for entity '{reputation.EntityId}' and faction '{reputation.FactionId}'.");
+            }
+        }
+    }
+
+    private static void ValidateFactionHostilities(
+        IReadOnlyList<FactionHostilitySnapshot> hostilities,
+        HashSet<string> factionIds)
+    {
+        var hostilityKeys = new HashSet<(string SourceFactionId, string TargetFactionId)>();
+        foreach (var hostility in hostilities)
+        {
+            if (hostility is null
+                || string.IsNullOrWhiteSpace(hostility.SourceFactionId)
+                || !factionIds.Contains(hostility.SourceFactionId)
+                || string.IsNullOrWhiteSpace(hostility.TargetFactionId)
+                || !factionIds.Contains(hostility.TargetFactionId))
+            {
+                throw new InvalidDataException("Snapshot faction hostility references an unknown faction.");
+            }
+
+            if (string.Equals(hostility.SourceFactionId, hostility.TargetFactionId, StringComparison.Ordinal))
+            {
+                throw new InvalidDataException("Snapshot faction hostility cannot target the same faction.");
+            }
+
+            if (!hostilityKeys.Add((hostility.SourceFactionId, hostility.TargetFactionId)))
+            {
+                throw new InvalidDataException(
+                    $"Snapshot contains duplicate faction hostility from '{hostility.SourceFactionId}' to '{hostility.TargetFactionId}'.");
+            }
+        }
     }
 
     private static void ValidateSessionPlayer(

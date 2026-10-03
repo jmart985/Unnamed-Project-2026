@@ -280,7 +280,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 ## D030 — Bounded faction foundation
 
 - Date: 2026-10-02
-- Status: Provisional planning decision for Milestone 0.7; implementation pending
+- Status: Implemented for F07a and F07b
 - Decision: Reuse the authoritative World for a small fixed faction catalog and optional entity allegiance. Track entity-to-faction reputation as an explicit bounded value in [0, 100]; represent hostility as a separate directed faction-to-faction value, not as an inference from individual reputation. Add optional faction owner metadata to existing settlement resource containers without enforcing access policy.
 - Reason: The roadmap milestone names allegiance, reputation, hostility, and ownership, but these are foundations for later behavior rather than a requirement to simulate full faction politics now. Separating reputation from hostility avoids silently inventing a policy threshold; metadata on current containers avoids a parallel inventory/property system.
 - Consequence: Allegiance, reputation, hostility, and owner references are durable and validated with existing World snapshot rules. Explicit invalid operations reject without partial mutation. Autonomous reputation changes, diplomacy, law/crime, territory, warfare, ownership enforcement/theft, UI, and faction authoring tools remain out of scope.
