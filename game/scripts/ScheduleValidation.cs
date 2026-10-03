@@ -9,6 +9,7 @@ public partial class Main
     {
         try
         {
+            var integrated = OS.GetCmdlineUserArgs().Contains("--validate-schedule-integration");
             StartSession(PlayerCharacterProfile.Create("Schedule validation"), 42, "Schedule validation session.");
             _clock.SetPaused(true);
             _playerCharacter.SetPhysicsProcess(false);
@@ -46,6 +47,33 @@ public partial class Main
                 SyncEntityViews();
             }
             Require(npc.Inventory.GetValueOrDefault(ItemIds.Wood) > 0, "next day resumes and picks up through navigation");
+            if (integrated)
+            {
+                var cargo = npc.Inventory[ItemIds.Wood];
+                var carrying = WorldSnapshotSerializer.Serialize(_world, _clock.SimulationTime);
+                var bad = System.Text.Json.Nodes.JsonNode.Parse(carrying)!;
+                bad["WorkSchedules"] = new System.Text.Json.Nodes.JsonArray(new System.Text.Json.Nodes.JsonObject
+                {
+                    ["EntityId"] = npc.Id, ["StartHour"] = 6, ["EndHour"] = 6
+                });
+                try
+                {
+                    WorldSnapshotSerializer.Load(_world, bad.ToJsonString(), _speciesCatalog, _foodConsumption!, _woodHauling!, _squad!);
+                    throw new InvalidOperationException("invalid schedule accepted");
+                }
+                catch (InvalidDataException) { }
+                Require(WorldSnapshotSerializer.Serialize(_world, _clock.SimulationTime) == carrying, "invalid hours preserve carried snapshot");
+                Require(_entityViews[npc.Id].NavigationAdapter is GodotNavigationAdapter { HasActiveRequest: true }, "invalid load preserves delivery navigation");
+                var carryingTime = WorldSnapshotSerializer.Load(_world, carrying, _speciesCatalog, _foodConsumption!, _wandering!, _woodHauling!, _wander!, _squad!);
+                _clock.Restore(carryingTime);
+                Require(_entityViews[npc.Id].NavigationAdapter is GodotNavigationAdapter { HasActiveRequest: false }, "valid load cancels old delivery navigation");
+                var npcId = npc.Id;
+                RebuildPresentationFromWorld();
+                npc = _world.Entities.Single(entity => entity.Id == npcId);
+                SelectEntity(npc.Id);
+                Require(npc.Inventory[ItemIds.Wood] == cargo && npc.Actions.Current is null, "carried inventory survives load without stale action");
+                await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
+            }
             _clock.Restore(340);
             for (var tick = 0; tick < 600 && npc.Inventory.GetValueOrDefault(ItemIds.Wood) > 0; tick++)
             {
@@ -69,6 +97,7 @@ public partial class Main
             Require(_workStart.Value == 22 && _workEnd.Value == 6, "loaded hours populate controls");
             Require(_inspectorLabel.Text.Contains("Schedule: Rest | Next: 22:00 in 40.0s"), "loaded phase projection");
             Require(WorldSnapshotSerializer.Serialize(_world, time) == json, "durable round trip");
+            if (integrated) await ValidateScheduleOverrides(npc.Id);
             var screenshotArgument = OS.GetCmdlineUserArgs().FirstOrDefault(argument => argument.StartsWith("--schedule-screenshot=", StringComparison.Ordinal));
             if (screenshotArgument is not null)
             {
@@ -81,6 +110,11 @@ public partial class Main
                 Require(GetViewport().GetTexture().GetImage().SavePng(Path.Combine(Path.GetDirectoryName(output)!, "schedule-inspector.png")) == Error.Ok, "inspector screenshot");
             }
             GD.Print("SCHEDULE VALIDATION PASSED: inspector edits/rejection, boundary cancellation, next-day pickup, rest delivery, schema 10 round trip, wood 100.");
+            if (integrated)
+            {
+                await ValidateNaturalDayLoop();
+                GD.Print("SCHEDULE INTEGRATION PASSED: carried-load recovery, hunger/squad overrides during rest, natural day progression, pause/4x, food conservation, wood 100.");
+            }
             GetTree().Quit();
         }
         catch (Exception exception)

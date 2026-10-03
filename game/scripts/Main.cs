@@ -129,6 +129,8 @@ public partial class Main : Node3D
             Callable.From(RunFirstGameValidation).CallDeferred();
         else if (OS.GetCmdlineUserArgs().Contains("--validate-schedules"))
             Callable.From(RunScheduleValidation).CallDeferred();
+        else if (OS.GetCmdlineUserArgs().Contains("--validate-schedule-integration"))
+            Callable.From(RunScheduleValidation).CallDeferred();
     }
 
     public override void _Process(double delta)
