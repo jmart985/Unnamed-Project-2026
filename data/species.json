@@ -17,7 +17,7 @@
     "canAcceptFriendlyInteraction": false,
     "canHaul": true,
     "bodyCategory": "humanoid",
-    "temperament": { "boldness": 0.5, "curiosity": 0.4, "sociability": 0.6 }
+    "temperament": { "boldness": 0.5, "aggression": 0.25, "fear": 0.5, "curiosity": 0.4, "sociability": 0.6, "territoriality": 0.2 }
   },
   {
     "id": "creature",
@@ -37,7 +37,7 @@
     "canAcceptFriendlyInteraction": true,
     "canHaul": false,
     "bodyCategory": "quadruped",
-    "temperament": { "boldness": 0.3, "curiosity": 0.3, "sociability": 0.5 }
+    "temperament": { "boldness": 0.3, "aggression": 0.15, "fear": 0.75, "curiosity": 0.3, "sociability": 0.5, "territoriality": 0.35 }
   },
   {
     "id": "ape",
@@ -57,7 +57,7 @@
     "canAcceptFriendlyInteraction": true,
     "canHaul": true,
     "bodyCategory": "upright_creature",
-    "temperament": { "boldness": 0.75, "curiosity": 0.9, "sociability": 0.8 }
+    "temperament": { "boldness": 0.75, "aggression": 0.55, "fear": 0.3, "curiosity": 0.9, "sociability": 0.8, "territoriality": 0.65 }
   },
   {
     "id": "cow",
@@ -77,7 +77,7 @@
     "canAcceptFriendlyInteraction": true,
     "canHaul": true,
     "bodyCategory": "quadruped",
-    "temperament": { "boldness": 0.35, "curiosity": 0.25, "sociability": 0.9 }
+    "temperament": { "boldness": 0.35, "aggression": 0.1, "fear": 0.7, "curiosity": 0.25, "sociability": 0.9, "territoriality": 0.2 }
   },
   {
     "id": "wolf",
@@ -97,6 +97,6 @@
     "canAcceptFriendlyInteraction": false,
     "canHaul": false,
     "bodyCategory": "quadruped",
-    "temperament": { "boldness": 0.85, "curiosity": 0.65, "sociability": 0.45 }
+    "temperament": { "boldness": 0.85, "aggression": 0.75, "fear": 0.25, "curiosity": 0.65, "sociability": 0.45, "territoriality": 0.8 }
   }
 ]

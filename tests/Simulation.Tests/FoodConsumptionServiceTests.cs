@@ -90,7 +90,7 @@ public sealed class FoodConsumptionServiceTests
         var world = new World();
         var entity = world.SpawnEntity("wood-eater", Vector3.Zero, satiety: 20);
         var species = LoadSpecies(
-            """[{"id":"wood-eater","movementSpeed":1,"hungerRate":0.2,"diet":["wood"],"canHaul":false,"temperament":{"boldness":0.5,"curiosity":0.5,"sociability":0.5}}]""",
+            """[{"id":"wood-eater","movementSpeed":1,"hungerRate":0.2,"diet":["wood"],"canHaul":false,"temperament":{"boldness":0.5,"aggression":0.5,"fear":0.5,"curiosity":0.5,"sociability":0.5,"territoriality":0.5}}]""",
             "wood-eater");
         var source = AddSource(world, "logpile", Vector3.UnitX, (ItemIds.Wood, 2));
         var navigator = new FakeNavigationAdapter();

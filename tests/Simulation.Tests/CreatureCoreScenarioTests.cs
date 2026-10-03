@@ -20,8 +20,8 @@ public sealed class CreatureCoreScenarioTests
             Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
         var cautiousSpecies = catalog.GetRequired("creature");
         var exploratorySpecies = catalog.GetRequired("wolf");
-        Assert.Equal(new TemperamentProfile(0.3, 0.3, 0.5), cautiousSpecies.Temperament);
-        Assert.Equal(new TemperamentProfile(0.85, 0.65, 0.45), exploratorySpecies.Temperament);
+        Assert.Equal(new TemperamentProfile(0.3, 0.15, 0.75, 0.3, 0.5, 0.35), cautiousSpecies.Temperament);
+        Assert.Equal(new TemperamentProfile(0.85, 0.75, 0.25, 0.65, 0.45, 0.8), exploratorySpecies.Temperament);
 
         var world = new World();
         var cautiousCreature = world.SpawnEntity("creature", Vector3.Zero, satiety: 70);

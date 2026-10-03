@@ -246,10 +246,10 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 ## D028 — Bounded creature temperament profile
 
 - Date: 2026-10-02
-- Status: Provisional; implemented for C03a
-- Decision: Represent species temperament with immutable boldness, curiosity, and sociability values, each finite and normalized to [0, 1]. Require all three values in the existing species catalog.
+- Status: Provisional; implemented for C03a and extended for #298
+- Decision: Represent species temperament with immutable boldness, aggression, fear, curiosity, sociability, and territoriality values, each finite and normalized to [0, 1]. Require all six values in the existing species catalog.
 - Reason: These independent, data-driven dimensions provide a small, explainable basis for later deterministic wild-behavior choices without conflating temperament with needs or relationships.
-- Consequence: Every species definition must provide valid temperament data; later behavior rules consume the existing profile rather than introducing another species registry.
+- Consequence: Every species definition must provide valid temperament data; deterministic behavior continues using boldness, curiosity, and sociability. Aggression, fear, and territoriality are data only until a separate issue defines and tests their behavior; reuse this profile rather than introducing another species registry.
 - Revisit: After the deterministic creature behavior scenario demonstrates how these dimensions produce distinct outcomes.
 
 ## D029 — Bounded Economy Prototype scope
@@ -346,7 +346,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 
 ## Individual temperament-driven behavior
 
-- Decision: Keep validated species temperament as the baseline, then derive bounded, deterministic individual boldness, curiosity, and sociability from each entity's stable ID. Creatures choose cautious nearby roaming, farther curious exploration, or goals near their same-species group according to those traits. Hauling entities carry a boldness-weighted amount of wood per trip rather than every worker filling the same load.
+- Decision: Keep validated species temperament as the baseline, then derive bounded, deterministic individual values for all six temperament traits from each entity's stable ID. Current behavior continues to use boldness, curiosity, and sociability: creatures choose cautious nearby roaming, farther curious exploration, or goals near their same-species group according to those traits, and hauling entities carry a boldness-weighted amount of wood per trip rather than every worker filling the same load. Aggression, fear, and territoriality remain unused by behavior systems.
 - Reason: Make shared needs produce observably different behavior without introducing job frameworks, autonomous social systems, or separate creature rules.
 - Consequence: Individual traits are a read-only projection and need no new save fields; they remain stable while entity IDs remain stable. Food seeking and hunger priority are unchanged. Species temperament and individual variation remain inspectable.
 - Revisit: When traits need to be player-authored, trained, inherited, or changed by memories and relationships; then store them as explicit world state.
