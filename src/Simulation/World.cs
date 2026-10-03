@@ -118,11 +118,14 @@ public sealed class World
         return pile;
     }
 
+    public ResourceLocation AddStockpile(string id, Vector3 position, ResourceContainer contents) =>
+        AddStockpile(id, position, contents, null);
+
     public ResourceLocation AddStockpile(
         string id,
         Vector3 position,
         ResourceContainer contents,
-        string? factionOwnerId = null)
+        string? factionOwnerId)
     {
         if (factionOwnerId is not null && !_factionIds.Contains(factionOwnerId))
         {
