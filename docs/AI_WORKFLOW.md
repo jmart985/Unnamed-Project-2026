@@ -5,7 +5,7 @@ This document defines how AI-assisted work should move the project forward.
 ## Choose current work
 
 1. Read the repository instructions, the active milestone, the parent issue, and the complete assigned issue.
-2. Select the smallest independent implementation issue marked Ready. If no suitable issue is Ready, report the dependency or decision blocking progress rather than selecting a Backlog issue.
+2. Select the smallest independent implementation issue marked Ready in the earliest active milestone. If none is Ready, inspect Backlog dependencies and board instructions; promote concrete, eligible work whose prerequisites and acceptance criteria are satisfied. If the milestone is complete, inspect the next incomplete milestone. Report a genuine unresolved product decision or dependency instead of implementing vague or blocked work.
 3. Verify dependencies against the current `main` branch. Do not implement a parent or planning issue when its child issues are the actionable work.
 4. Work on one issue per branch and pull request. Keep changes limited to the issue's acceptance criteria.
 
@@ -23,4 +23,8 @@ The active milestone changes as the roadmap advances. Do not assume Milestone 0.
 
 Review the diff for unrelated edits, commit the branch, push it, and open a pull request that links the issue. Leave the issue open until its acceptance criteria are verified and the pull request is merged. After merging, return to the latest `main` and select the next independent Ready issue.
 
-When no independent Ready issue remains, report the dependency or decision that is blocking progress instead of inventing substitute architecture or silently widening scope.
+When no independent Ready issue remains after the readiness/dependency audit, report the dependency or decision blocking progress instead of inventing substitute architecture or silently widening scope.
+
+## Current accepted slices
+
+The 1.0 integrated game loop is documented in `docs/VALIDATION_1_0.md`. The user selected daily work/rest schedules for 1.1 in #200: feature #380 then acceptance gate #381, with evidence in `docs/VALIDATION_1.1.md`. After that gate merges, inspect #201 (1.2 Advanced Creature Behavior) and current Project #1 before selecting more work; it is a planning issue that needs a concrete minimum playable target. Deferred #302/#306/#369 retain their scope boundaries.

@@ -102,7 +102,7 @@ public partial class Main
                 var inspectorPath = Path.Combine(Path.GetDirectoryName(screenshotArgument["--squad-screenshot=".Length..])!, "squad-inspector.png");
                 Require(GetViewport().GetTexture().GetImage().SavePng(inspectorPath) == Error.Ok, "inspector screenshot");
             }
-            if (!firstGame) GD.Print($"SQUAD VALIDATION PASSED: {string.Join(", ", ids)}; move/follow/stop, authoritative positions, inspector, schema 9 load.");
+            if (!firstGame) GD.Print($"SQUAD VALIDATION PASSED: {string.Join(", ", ids)}; move/follow/stop, authoritative positions, inspector, schema {WorldSnapshotSerializer.CurrentSchemaVersion} load.");
             GetTree().Quit();
         }
         catch (Exception exception)

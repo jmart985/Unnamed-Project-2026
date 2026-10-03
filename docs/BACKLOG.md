@@ -98,7 +98,7 @@ The target is one repeatable integration scenario in one test region, composing 
 
 ## Future backlog audit
 
-Milestones 1.1 and later are still roadmap horizons: their planning issues do not yet specify implementation-level outcomes, rejection/recovery cases, or validation evidence. Do not mark those planning issues Ready or convert the entire vision into committed delivery. Groom each next slice after the 0.9/1.0 evidence establishes which systems are valuable.
+Milestone 1.1 selected human NPC daily work/rest schedules in #200, implemented by #380 and accepted through the dependent #381 gate. See [1.1 validation](VALIDATION_1.1.md). Milestones 1.2 and later remain roadmap horizons: their planning issues do not yet specify implementation-level outcomes, rejection/recovery cases, or validation evidence. Do not mark those planning issues Ready or convert the entire vision into committed delivery. Scope the next slice using the accepted gameplay evidence.
 
 The open, unassigned proposals below were checked while reconciling the later roadmap. Keep them out of Ready until their overlap and scope are resolved; this audit does not silently close or rewrite them:
 
