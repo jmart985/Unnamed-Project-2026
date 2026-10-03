@@ -364,3 +364,12 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: User-directed groundwork so the player has the same procedural body as other characters, reflects creation choices, and has independent arm, leg, and head joints for later combat. This is scope beyond Milestone 1.0; no hits, damage, or injuries are resolved yet.
 - Consequence: Nothing is wired to `MeleeCombatService`; the strike event and aimed body part names match `CharacterHealth.CreateHumanoid` so reach validation and damage can attach later. Visuals are unverified in a windowed run.
 - Revisit: When combat is integrated into the playable scene (Milestone 0.5 scope), resolve strikes through the domain combat services and drive poses from equipment and injuries.
+
+## Issue #299 — Minimal wild-creature decision policy
+
+- Date: 2026-10-02
+- Status: Implemented for issue #299
+- Decision: Add a deterministic, read-only policy over explicitly supplied stimuli. Prioritize flee from a detected threat, seek compatible available food when hungry, return to a supplied area target when outside the area, pursue a supplied target, then idle. Use the long-term vision (`origin/docs-ai-guidance`, `3e9de38abf0bfd07849a612bbedc4e01c977ba71`) as direction, not as permission to broaden this implementation.
+- Reason: Establish an explainable decision signal using the existing entity needs and perception foundation without adding another world owner or behavior framework.
+- Consequence: The caller supplies already-resolved food, threat, pursuit, and area inputs. The policy does not sense threats, select targets from candidate sets, mutate the World, or execute navigation, fleeing movement, pursuit/combat, hunting, or territory behavior. Those execution systems remain deferred and must be scoped separately; existing temperament-driven roaming remains unchanged.
+- Revisit: When a later issue defines how these decisions connect to fixed-tick action execution, threat classification, target selection, and area ownership.
