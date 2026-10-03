@@ -21,6 +21,28 @@ public sealed class World
     private readonly ReadOnlyCollection<ResourceLocation> _stockpileView;
     private readonly HashSet<string> _targetIds = new(StringComparer.Ordinal);
     private long _lastEntityId;
+    private readonly HashSet<string> _squadMembers = new(StringComparer.Ordinal);
+    public IReadOnlyCollection<string> SquadMemberIds => Array.AsReadOnly(_squadMembers.Order(StringComparer.Ordinal).ToArray());
+
+    public SquadResult AddSquadMember(string? id)
+    {
+        if (!TryGetEntity(id, out var entity) || entity is null) return SquadResult.InvalidEntity;
+        if (entity.SpeciesId != "human" || entity.Id == PlayerEntityId || entity.Health.IsDead) return SquadResult.IneligibleEntity;
+        return _squadMembers.Add(entity.Id) ? SquadResult.Accepted : SquadResult.Unchanged;
+    }
+
+    public SquadResult RemoveSquadMember(string? id)
+    {
+        if (!TryGetEntity(id, out var entity) || entity is null) return SquadResult.InvalidEntity;
+        if (!_squadMembers.Remove(entity.Id)) return SquadResult.NotMember;
+        if (entity.Actions.Current?.Kind == ActionKind.SquadMove)
+        {
+            entity.Actions.Cancel();
+            entity.Activity = "Idle";
+            entity.WaitingReason = null;
+        }
+        return SquadResult.Accepted;
+    }
 
     public World(
         NeedsTuning? needsTuning = null,
@@ -558,6 +580,7 @@ public sealed class World
 
         entity.Actions.Cancel();
         Reservations.ReleaseForEntity(id);
+        _squadMembers.Remove(id);
         RemoveRelationshipsForEntity(id);
         RemoveFactionReputationsForEntity(id);
         entity.AllegianceFactionId = null;
@@ -606,6 +629,7 @@ public sealed class World
         }
 
         _entities.Clear();
+        _squadMembers.Clear();
         _relationships.Clear();
         _factionIds.Clear();
         _factionReputations.Clear();
@@ -719,6 +743,7 @@ public sealed class World
         {
             SetSessionPlayer(seed, playerEntityId, playerProfile);
         }
+        foreach (var id in snapshot.SquadMemberIds!) _squadMembers.Add(id);
     }
 
     internal static bool IsValidFactionId(string? factionId)

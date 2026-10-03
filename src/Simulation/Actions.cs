@@ -5,7 +5,8 @@ public enum ActionKind
     Idle,
     Wander,
     Haul,
-    Eat
+    Eat,
+    SquadMove
 }
 
 public enum ActionStatus
@@ -50,6 +51,7 @@ public sealed class ActionCandidate
     public int Priority => Kind switch
     {
         ActionKind.Eat => 300,
+        ActionKind.SquadMove => 250,
         ActionKind.Haul => 200,
         ActionKind.Wander => 100,
         ActionKind.Idle => 0,

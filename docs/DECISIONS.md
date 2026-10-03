@@ -391,3 +391,12 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: A compensating rollback could leave partial state; whole-operation prevalidation keeps one authoritative inventory and no partial fills.
 - Consequence: Rejections return explicit statuses and leave all counts unchanged. The counterparty is any `ResourceContainer`; caravan wiring is deferred to E08c. No dynamic pricing, credit, or UI.
 - Revisit: After E08c/E08d show how counterparties are modeled.
+
+## D036 — World-owned squad membership, transient movement orders
+
+- Date: 2026-10-03
+- Status: Implemented for #312
+- Decision: Keep one squad's stable human NPC IDs in World and schema 9. A transient SquadOrderService owns move/follow/stop and uses existing navigation and action cleanup. Movement priority 250 sits between hunger 300 and hauling 200. Orders suppress member hauling/roaming; hunger preempts and movement resumes afterward. Stop permits hunger response. Follow retargets after one unit of player movement; arrival tolerance is 0.5 units.
+- Reason: Reuse authoritative positions and reservation/cancellation rules without persisting live navigation.
+- Consequence: Schema 4–8 migrates to empty membership while preserving schema 8 ownership. Invalid member IDs reject before changing live state. Failed navigation waits for a changed order, avoiding request churn. No formations, creature recruitment, multiple squads, or tactical AI.
+- Revisit: When a scoped issue requires spacing, recruitment eligibility, or persistent orders.

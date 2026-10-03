@@ -18,7 +18,8 @@ public sealed record WorldSnapshot(
     PlayerCharacterProfile? PlayerProfile,
     IReadOnlyList<string>? FactionIds = null,
     IReadOnlyList<FactionReputationSnapshot>? FactionReputations = null,
-    IReadOnlyList<FactionHostilitySnapshot>? FactionHostilities = null);
+    IReadOnlyList<FactionHostilitySnapshot>? FactionHostilities = null,
+    IReadOnlyList<string>? SquadMemberIds = null);
 
 public sealed record RelationshipSnapshot(
     string ObserverEntityId,
@@ -74,7 +75,8 @@ public static class WorldSnapshotSerializer
     private const int PreviousSchemaVersion = 5;
     private const int FactionIdentitySchemaVersion = 6;
     private const int FactionRelationsSchemaVersion = 7;
-    public const int CurrentSchemaVersion = 8;
+    private const int OwnershipSchemaVersion = 8;
+    public const int CurrentSchemaVersion = 9;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -148,7 +150,8 @@ public static class WorldSnapshotSerializer
             world.PlayerProfile,
             world.FactionIds.ToArray(),
             factionReputations,
-            factionHostilities);
+            factionHostilities,
+            world.SquadMemberIds.ToArray());
     }
 
     public static string Serialize(World world, double simulationTime)
@@ -182,6 +185,7 @@ public static class WorldSnapshotSerializer
             return snapshot with
             {
                 SchemaVersion = CurrentSchemaVersion,
+                SquadMemberIds = Array.Empty<string>(),
                 FactionIds = snapshot.FactionIds ?? Array.Empty<string>(),
                 FactionReputations = snapshot.SchemaVersion == FactionRelationsSchemaVersion
                     ? snapshot.FactionReputations
@@ -193,6 +197,9 @@ public static class WorldSnapshotSerializer
                     stockpile is null ? null! : stockpile with { FactionOwnerId = null }).ToArray()!
             };
         }
+
+        if (snapshot.SchemaVersion == OwnershipSchemaVersion)
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, SquadMemberIds = Array.Empty<string>() };
 
         if (snapshot.SchemaVersion != CurrentSchemaVersion)
         {
@@ -327,6 +334,15 @@ public static class WorldSnapshotSerializer
         }
 
         ValidateSessionPlayer(snapshot, entityIds);
+        if (snapshot.SquadMemberIds is null) throw new InvalidDataException("Snapshot squad membership is required.");
+        var memberIds = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var id in snapshot.SquadMemberIds)
+        {
+            if (string.IsNullOrWhiteSpace(id) || !memberIds.Add(id)
+                || id == snapshot.PlayerEntityId
+                || !snapshot.Entities.Any(entity => entity.Id == id && entity.SpeciesId == "human"))
+                throw new InvalidDataException("Snapshot squad members must be distinct live human NPCs.");
+        }
         var foodSourceIds = new HashSet<string>(StringComparer.Ordinal);
         foreach (var source in snapshot.FoodSources)
         {
