@@ -340,10 +340,7 @@ public partial class Main : Node3D
         _woodHauling = new WoodHaulingService(_world, GetNavigationAdapter);
         _wander = new WanderService(_world, GetNavigationAdapter);
 
-        var woodPile = _world.ResourcePiles.Single();
-        var stockpile = _world.Stockpiles.Single();
-        AddResourceMarker("WoodPile", woodPile.Position, new Color(0.45f, 0.25f, 0.1f));
-        AddResourceMarker("Stockpile", stockpile.Position, new Color(0.2f, 0.45f, 0.25f));
+        RebuildResourceMarkersFromWorld();
 
         var player = session.Player;
         _playerCharacter.GlobalPosition = new Vector3(
@@ -568,6 +565,24 @@ public partial class Main : Node3D
         _resourceMarkers.Clear();
     }
 
+    private void RebuildResourceMarkersFromWorld()
+    {
+        foreach (var source in _world.FoodSources)
+        {
+            AddResourceMarker($"Food_{source.Id}", source.Position, new Color(0.75f, 0.6f, 0.15f));
+        }
+
+        foreach (var source in _world.ResourcePiles)
+        {
+            AddResourceMarker($"Resource_{source.Id}", source.Position, new Color(0.45f, 0.25f, 0.1f));
+        }
+
+        foreach (var stockpile in _world.Stockpiles)
+        {
+            AddResourceMarker($"Stockpile_{stockpile.Id}", stockpile.Position, new Color(0.2f, 0.45f, 0.25f));
+        }
+    }
+
     private void AddResourceMarker(string name, System.Numerics.Vector3 position, Color color)
     {
         var marker = new MeshInstance3D
@@ -731,6 +746,7 @@ public partial class Main : Node3D
     {
         ClearEntityViews();
         ClearResourceMarkers();
+        RebuildResourceMarkersFromWorld();
         _playerProfile = _world.PlayerProfile;
         _sessionSeed = _world.SessionSeed ?? NewGameSession.DefaultSeed;
         if (_world.PlayerEntityId is { } playerId
@@ -754,21 +770,6 @@ public partial class Main : Node3D
         {
             _playerCharacter.Visible = false;
             _playerCharacter.SetProcessUnhandledInput(false);
-        }
-
-        foreach (var source in _world.FoodSources)
-        {
-            AddResourceMarker($"Food_{source.Id}", source.Position, new Color(0.75f, 0.6f, 0.15f));
-        }
-
-        foreach (var source in _world.ResourcePiles)
-        {
-            AddResourceMarker($"Resource_{source.Id}", source.Position, new Color(0.45f, 0.25f, 0.1f));
-        }
-
-        foreach (var stockpile in _world.Stockpiles)
-        {
-            AddResourceMarker($"Stockpile_{stockpile.Id}", stockpile.Position, new Color(0.2f, 0.45f, 0.25f));
         }
 
         foreach (var entity in _world.Entities)

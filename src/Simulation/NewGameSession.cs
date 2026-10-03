@@ -75,19 +75,19 @@ public sealed class NewGameSession
         AddContainer(
             (id, position, contents) => world.AddFoodSource(id, position, contents),
             "forage-pile-ape",
-            new(90, 0, 70),
+            new(90, 0, 61),
             ItemIds.Plant,
             100);
         AddContainer(
             (id, position, contents) => world.AddFoodSource(id, position, contents),
             "forage-pile-cow",
-            new(-65, 0, 145),
+            new(-59, 0, 150),
             ItemIds.Plant,
             100);
         AddContainer(
             (id, position, contents) => world.AddFoodSource(id, position, contents),
             "prey-pile-wolf",
-            new(150, 0, 45),
+            new(152, 0, 40),
             ItemIds.Meat,
             100);
         AddContainer(
