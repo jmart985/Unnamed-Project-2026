@@ -303,7 +303,7 @@ public static class WorldSnapshotSerializer
             }
 
             if (!Enum.IsDefined(entity.CaptivityState)
-                || (entity.CaptivityState == CreatureCaptivityState.Captive
+                || (entity.CaptivityState != CreatureCaptivityState.Wild
                     && string.Equals(entity.SpeciesId, "human", StringComparison.Ordinal)))
             {
                 throw new InvalidDataException(

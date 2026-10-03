@@ -30,7 +30,7 @@ Prove that selected accepted core systems can coexist in one deterministic test 
 
 ## Handoffs and dependencies
 
-- Depends on the accepted 0.3 creature-core scenario (#325), accepted 0.7 faction verification (#340), and accepted 0.8 economy scenario (#333). Combat and relationship acceptance records are complete (#184 and #197).
+- Depends on acceptance of the 0.3 creature-core scenario (#325), 0.7 faction verification (#340), and 0.8 economy scenario (#333). All three prerequisite verification issues are currently open; #341 must remain blocked and must not be marked Ready until they are accepted. Combat and relationship acceptance records are complete (#184 and #197).
 - The sole scoped issue is [#341](https://github.com/jmart985/Unnamed-Project-2026/issues/341); it is limited to integration testing and evidence.
 - Planning issue: [#224](https://github.com/jmart985/Unnamed-Project-2026/issues/224).
 

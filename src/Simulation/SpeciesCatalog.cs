@@ -230,8 +230,11 @@ public sealed class SpeciesCatalog
 
         return new TemperamentProfile(
             ValidateTemperamentValue(speciesId, "boldness", temperament.Boldness),
+            ValidateTemperamentValue(speciesId, "aggression", temperament.Aggression),
+            ValidateTemperamentValue(speciesId, "fear", temperament.Fear),
             ValidateTemperamentValue(speciesId, "curiosity", temperament.Curiosity),
-            ValidateTemperamentValue(speciesId, "sociability", temperament.Sociability));
+            ValidateTemperamentValue(speciesId, "sociability", temperament.Sociability),
+            ValidateTemperamentValue(speciesId, "territoriality", temperament.Territoriality));
     }
 
     private static double ValidateTemperamentValue(string speciesId, string fieldName, double? value)
@@ -306,9 +309,18 @@ public sealed class SpeciesCatalog
         public double? Boldness { get; init; }
 
         [JsonNumberHandling(JsonNumberHandling.AllowNamedFloatingPointLiterals)]
+        public double? Aggression { get; init; }
+
+        [JsonNumberHandling(JsonNumberHandling.AllowNamedFloatingPointLiterals)]
+        public double? Fear { get; init; }
+
+        [JsonNumberHandling(JsonNumberHandling.AllowNamedFloatingPointLiterals)]
         public double? Curiosity { get; init; }
 
         [JsonNumberHandling(JsonNumberHandling.AllowNamedFloatingPointLiterals)]
         public double? Sociability { get; init; }
+
+        [JsonNumberHandling(JsonNumberHandling.AllowNamedFloatingPointLiterals)]
+        public double? Territoriality { get; init; }
     }
 }
