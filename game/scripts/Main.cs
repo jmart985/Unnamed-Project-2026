@@ -61,7 +61,7 @@ public partial class Main : Node3D
     private PlayerCharacterProfile? _playerProfile;
     private int _sessionSeed = NewGameSession.DefaultSeed;
     private bool _sessionActive;
-    private string? _activeMenu;
+    private readonly PlayerMenuState _menuState = new();
     private string _lastActionMessage = "No action requested.";
 
     public override void _Ready()
@@ -153,7 +153,7 @@ public partial class Main : Node3D
 
         if (Input.IsActionPressed(ControllerActions.CloseMenu))
         {
-            _activeMenu = null;
+            _menuState.Close();
             _controls.Visible = false;
             UpdateStatus();
             return;
@@ -161,20 +161,19 @@ public partial class Main : Node3D
 
         if (Input.IsActionPressed(ControllerActions.Inventory))
         {
-            ToggleMenu("Inventory");
+            ToggleMenu(PlayerMenu.Inventory);
             return;
         }
 
         if (Input.IsActionPressed(ControllerActions.Settlement))
         {
-            ToggleMenu("Settlement");
+            ToggleMenu(PlayerMenu.Settlement);
             return;
         }
 
-        if (Input.IsActionPressed(ControllerActions.Collect))
+        if (Input.IsActionJustPressed(ControllerActions.Collect))
         {
-            _activeMenu = "Collection";
-            _controls.Visible = true;
+            _lastActionMessage = "Collection action requested.";
             UpdateStatus();
             return;
         }
@@ -230,11 +229,9 @@ public partial class Main : Node3D
         UpdateStatus();
     }
 
-    private void ToggleMenu(string menuName)
+    private void ToggleMenu(PlayerMenu menu)
     {
-        _activeMenu = string.Equals(_activeMenu, menuName, StringComparison.Ordinal)
-            ? null
-            : menuName;
+        _menuState.Toggle(menu);
         _controls.Visible = true;
         UpdateStatus();
     }
@@ -364,7 +361,7 @@ public partial class Main : Node3D
         }
 
         _selectedEntityId = null;
-        _activeMenu = null;
+        _menuState.Close();
         _saveLoadStatus = saveLoadMessage;
         _sessionActive = true;
         _characterCreation.Visible = false;
@@ -623,7 +620,7 @@ public partial class Main : Node3D
             $"Wood: ground {groundWood}, carried {carriedWood}, stored {storedWood} (total {totalWood})\n" +
             $"Save/load: {_saveLoadStatus}\n" +
 
-            $"Menu: {_activeMenu ?? "closed"} | WASD move, Space jump, LMB combat, E collect, G greet, I inventory, Tab settlement, Esc close\n" +
+            $"Menu: {_menuState.ActiveMenu?.ToString() ?? "closed"} | WASD move, Space jump, LMB combat, E collect, G greet, I inventory, Tab settlement, Esc close\n" +
             $"Last action: {_lastActionMessage}\n" +
             "Select an entity; F5 route, F6 unreachable, F7 cancel, F8 remove goal";
         _pauseButton.Text = _clock.IsPaused ? "Resume" : "Pause";
