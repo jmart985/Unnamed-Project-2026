@@ -70,9 +70,7 @@ public sealed class SettlementMarket
             return Reject(MarketTransactionStatus.InvalidRequest);
         }
 
-        // Resolved on every call so a removed market stockpile is rejected, not mutated.
-        var market = _world.Stockpiles.FirstOrDefault(pile =>
-            string.Equals(pile.Id, _marketLocationId, StringComparison.Ordinal))?.Contents;
+        var market = FindMarketContainer();
         if (market is null)
         {
             return Reject(MarketTransactionStatus.InvalidMarket);
@@ -136,6 +134,19 @@ public sealed class SettlementMarket
             ? new MarketTransactionResult(status, request.Quantity, coinAmount)
             : Reject(status);
     }
+
+    internal bool IsAvailable => FindMarketContainer() is not null;
+
+    internal bool IsValidCounterparty(ResourceContainer? counterparty)
+    {
+        var market = FindMarketContainer();
+        return counterparty is not null && market is not null && !ReferenceEquals(counterparty, market);
+    }
+
+    internal bool IsTradeable(string? resourceId) => _catalog.IsTradeable(resourceId);
+
+    private ResourceContainer? FindMarketContainer() => _world.Stockpiles.FirstOrDefault(pile =>
+        string.Equals(pile.Id, _marketLocationId, StringComparison.Ordinal))?.Contents;
 
     private static MarketTransactionResult Reject(MarketTransactionStatus status) => new(status, 0, 0);
 }
