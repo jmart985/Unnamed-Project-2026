@@ -94,7 +94,7 @@ The target is one repeatable integration scenario in one test region, composing 
 
 | Issue | Task | Depends on |
 | --- | --- | --- |
-| [#341](https://github.com/jmart985/Unnamed-Project-2026/issues/341) (V09a) | Verify one-region faction and economy integration | Acceptance of #340, #333, and #325; accepted #184 and #197. #341 is blocked until the three open prerequisites are accepted. |
+| [#341](https://github.com/jmart985/Unnamed-Project-2026/issues/341) (V09a) | Verify one-region faction and economy integration | Accepted #340, #333, #325, #184, and #197. See [validation evidence](VALIDATION_0_9.md). |
 
 ## Future backlog audit
 
