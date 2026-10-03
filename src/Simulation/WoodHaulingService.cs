@@ -15,7 +15,8 @@ public enum WoodHaulingStatus
     RetryDeferred,
     ActionRejected,
     InvalidEntity,
-    InvalidSpecies
+    InvalidSpecies,
+    Resting
 }
 
 public sealed record WoodHaulingResult(
@@ -52,7 +53,7 @@ public sealed class WoodHaulingService : ITransientSimulationState
         _retryScheduler = new RetryScheduler(retryDelayTicks);
     }
 
-    public WoodHaulingResult Advance(EntityRecord entity, SpeciesDefinition species, long simulationTick)
+    public WoodHaulingResult Advance(EntityRecord entity, SpeciesDefinition species, long simulationTick, double simulationTime = 0)
     {
         ArgumentNullException.ThrowIfNull(entity);
         ArgumentNullException.ThrowIfNull(species);
@@ -76,10 +77,13 @@ public sealed class WoodHaulingService : ITransientSimulationState
             return new WoodHaulingResult(WoodHaulingStatus.NotHauler);
         }
 
+        var resting = ReconcileSchedule(entity, simulationTime);
+
         if (entity.Needs.IsHungry)
         {
             return new WoodHaulingResult(WoodHaulingStatus.NeedsFood, WaitingReason: entity.WaitingReason);
         }
+        if (resting) return new WoodHaulingResult(WoodHaulingStatus.Resting);
 
         if (_activeTrips.TryGetValue(entity.Id, out var trip))
         {
@@ -122,6 +126,28 @@ public sealed class WoodHaulingService : ITransientSimulationState
         return hasCarriedWood
             ? BeginDelivery(entity, simulationTick)
             : BeginPickup(entity, species, simulationTick);
+    }
+
+    // Call before navigation advances so an off-shift pickup cannot move or collect on the boundary tick.
+    public bool ReconcileSchedule(EntityRecord entity, double simulationTime)
+    {
+        ArgumentNullException.ThrowIfNull(entity);
+        if (!OwnsEntity(entity)) return false;
+        var resting = _world.HasDailySchedule(entity) && !_world.GetWorkSchedule(entity.Id).Evaluate(simulationTime).IsWorking;
+        if (!resting)
+        {
+            if (entity.Activity == "Resting") entity.Activity = "Idle";
+            return false;
+        }
+        if (entity.Inventory.GetValueOrDefault(ItemIds.Wood) > 0) return false;
+        if (entity.Actions.Current?.Kind == ActionKind.Haul) entity.Actions.Cancel();
+        ClearWaitingState(entity.Id);
+        if (entity.Actions.Current is null && !entity.Needs.IsHungry)
+        {
+            entity.Activity = "Resting";
+            entity.WaitingReason = null;
+        }
+        return true;
     }
 
     public void Reset()

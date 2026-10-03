@@ -400,3 +400,10 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: Reuse authoritative positions and reservation/cancellation rules without persisting live navigation.
 - Consequence: Schema 4–8 migrates to empty membership while preserving schema 8 ownership. Invalid member IDs reject before changing live state. Failed navigation waits for a changed order, avoiding request churn. No formations, creature recruitment, multiple squads, or tactical AI.
 - Revisit: When a scoped issue requires spacing, recruitment eligibility, or persistent orders.
+
+## 1.1 daily work/rest slice (2026-10-03, #200 / #380)
+
+- Decision: Deliver configurable daily schedules for human NPCs as the user-selected 1.1 slice. Use one World-owned work window per NPC and the existing simulation clock: a 240-second day beginning at 08:00, default work 08:00-18:00, inclusive start and exclusive end, overnight windows supported.
+- Consequence: Rest cancels new/unfinished pickups before navigation advances; carried wood can finish delivery. Hunger and squad orders retain priority. Schema 10 stores overrides and migrates schemas 4-9 to defaults. No fatigue, sleep infrastructure, job priorities or new jobs are introduced.
+- Validation: Focused behavioral invariants and actual Godot inspector/navigation evidence are in docs/NPC_SCHEDULES.md; #381 accepts the combined milestone.
+- Revisit: Tune day length and default hours from gameplay evidence; future job systems can consume this policy without another clock or duplicate world state.

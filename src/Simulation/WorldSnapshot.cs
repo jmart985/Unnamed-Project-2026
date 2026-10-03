@@ -19,7 +19,8 @@ public sealed record WorldSnapshot(
     IReadOnlyList<string>? FactionIds = null,
     IReadOnlyList<FactionReputationSnapshot>? FactionReputations = null,
     IReadOnlyList<FactionHostilitySnapshot>? FactionHostilities = null,
-    IReadOnlyList<string>? SquadMemberIds = null);
+    IReadOnlyList<string>? SquadMemberIds = null,
+    IReadOnlyList<NpcScheduleSetting>? WorkSchedules = null);
 
 public sealed record RelationshipSnapshot(
     string ObserverEntityId,
@@ -76,7 +77,8 @@ public static class WorldSnapshotSerializer
     private const int FactionIdentitySchemaVersion = 6;
     private const int FactionRelationsSchemaVersion = 7;
     private const int OwnershipSchemaVersion = 8;
-    public const int CurrentSchemaVersion = 9;
+    private const int SquadSchemaVersion = 9;
+    public const int CurrentSchemaVersion = 10;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -151,7 +153,8 @@ public static class WorldSnapshotSerializer
             world.FactionIds.ToArray(),
             factionReputations,
             factionHostilities,
-            world.SquadMemberIds.ToArray());
+            world.SquadMemberIds.ToArray(),
+            world.WorkSchedules.ToArray());
     }
 
     public static string Serialize(World world, double simulationTime)
@@ -186,6 +189,7 @@ public static class WorldSnapshotSerializer
             {
                 SchemaVersion = CurrentSchemaVersion,
                 SquadMemberIds = Array.Empty<string>(),
+                WorkSchedules = Array.Empty<NpcScheduleSetting>(),
                 FactionIds = snapshot.FactionIds ?? Array.Empty<string>(),
                 FactionReputations = snapshot.SchemaVersion == FactionRelationsSchemaVersion
                     ? snapshot.FactionReputations
@@ -199,7 +203,10 @@ public static class WorldSnapshotSerializer
         }
 
         if (snapshot.SchemaVersion == OwnershipSchemaVersion)
-            return snapshot with { SchemaVersion = CurrentSchemaVersion, SquadMemberIds = Array.Empty<string>() };
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, SquadMemberIds = Array.Empty<string>(), WorkSchedules = Array.Empty<NpcScheduleSetting>() };
+
+        if (snapshot.SchemaVersion == SquadSchemaVersion)
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, WorkSchedules = Array.Empty<NpcScheduleSetting>() };
 
         if (snapshot.SchemaVersion != CurrentSchemaVersion)
         {
@@ -342,6 +349,16 @@ public static class WorldSnapshotSerializer
                 || id == snapshot.PlayerEntityId
                 || !snapshot.Entities.Any(entity => entity.Id == id && entity.SpeciesId == "human"))
                 throw new InvalidDataException("Snapshot squad members must be distinct live human NPCs.");
+        }
+        if (snapshot.WorkSchedules is null) throw new InvalidDataException("Snapshot work schedules are required.");
+        var scheduleIds = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var setting in snapshot.WorkSchedules)
+        {
+            if (setting is null || string.IsNullOrWhiteSpace(setting.EntityId)
+                || !scheduleIds.Add(setting.EntityId) || setting.EntityId == snapshot.PlayerEntityId
+                || !snapshot.Entities.Any(entity => entity.Id == setting.EntityId && entity.SpeciesId == "human")
+                || !new NpcWorkSchedule(setting.StartHour, setting.EndHour).IsValid)
+                throw new InvalidDataException("Snapshot work schedules must reference distinct human NPCs with valid work hours.");
         }
         var foodSourceIds = new HashSet<string>(StringComparer.Ordinal);
         foreach (var source in snapshot.FoodSources)

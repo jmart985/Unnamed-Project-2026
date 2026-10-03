@@ -22,6 +22,27 @@ public sealed class World
     private readonly HashSet<string> _targetIds = new(StringComparer.Ordinal);
     private long _lastEntityId;
     private readonly HashSet<string> _squadMembers = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, NpcWorkSchedule> _workSchedules = new(StringComparer.Ordinal);
+    public IReadOnlyCollection<NpcScheduleSetting> WorkSchedules => Array.AsReadOnly(_workSchedules
+        .OrderBy(pair => pair.Key, StringComparer.Ordinal)
+        .Select(pair => new NpcScheduleSetting(pair.Key, pair.Value.StartHour, pair.Value.EndHour)).ToArray());
+
+    public bool HasDailySchedule(EntityRecord entity) => entity.SpeciesId == "human" && entity.Id != PlayerEntityId
+        && TryGetEntity(entity.Id, out var owned) && ReferenceEquals(entity, owned);
+
+    public NpcWorkSchedule GetWorkSchedule(string entityId) => _workSchedules.GetValueOrDefault(entityId, NpcWorkSchedule.Default);
+
+    public ScheduleUpdateResult SetWorkSchedule(string? id, int startHour, int endHour)
+    {
+        if (!TryGetEntity(id, out var entity) || entity is null) return ScheduleUpdateResult.InvalidEntity;
+        if (!HasDailySchedule(entity) || entity.Health.IsDead) return ScheduleUpdateResult.IneligibleEntity;
+        var schedule = new NpcWorkSchedule(startHour, endHour);
+        if (!schedule.IsValid) return ScheduleUpdateResult.InvalidHours;
+        if (GetWorkSchedule(entity.Id) == schedule) return ScheduleUpdateResult.Unchanged;
+        if (schedule == NpcWorkSchedule.Default) _workSchedules.Remove(entity.Id);
+        else _workSchedules[entity.Id] = schedule;
+        return ScheduleUpdateResult.Accepted;
+    }
     public IReadOnlyCollection<string> SquadMemberIds => Array.AsReadOnly(_squadMembers.Order(StringComparer.Ordinal).ToArray());
 
     public SquadResult AddSquadMember(string? id)
@@ -581,6 +602,7 @@ public sealed class World
         entity.Actions.Cancel();
         Reservations.ReleaseForEntity(id);
         _squadMembers.Remove(id);
+        _workSchedules.Remove(id);
         RemoveRelationshipsForEntity(id);
         RemoveFactionReputationsForEntity(id);
         entity.AllegianceFactionId = null;
@@ -630,6 +652,7 @@ public sealed class World
 
         _entities.Clear();
         _squadMembers.Clear();
+        _workSchedules.Clear();
         _relationships.Clear();
         _factionIds.Clear();
         _factionReputations.Clear();
@@ -744,6 +767,8 @@ public sealed class World
             SetSessionPlayer(seed, playerEntityId, playerProfile);
         }
         foreach (var id in snapshot.SquadMemberIds!) _squadMembers.Add(id);
+        foreach (var setting in snapshot.WorkSchedules!)
+            _workSchedules.Add(setting.EntityId, new(setting.StartHour, setting.EndHour));
     }
 
     internal static bool IsValidFactionId(string? factionId)
