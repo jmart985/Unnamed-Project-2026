@@ -35,6 +35,9 @@ Reuse existing World ownership, settlement resources, work orders, recipes, atom
 
 ## Handoffs and dependencies
 
+The integrated E08d test inputs, exact totals, rejection/recovery checks, executed
+commands, and limits are recorded in [the 0.8 validation record](VALIDATION_0_8.md).
+
 - **0.1 The Ant Farm:** reuse the World, fixed-tick, resource-container, atomic-transfer, and snapshot foundations. Do not reopen its completed acceptance scope.
 - **0.2 Character Core, 0.3 Creature Core, 0.5 Combat Prototype, and 0.6 Relationships & Loyalty:** reuse only where applicable; no character, creature, combat, or relationship expansion is required for this economy slice.
 - **0.4 Basic Settlement:** reuse completed storage/stockpiles, farming, workstation recipes, work orders, recipe execution, material transfer, and construction-site foundations (including #144, #150, #152, #154, #156, #158, and #160). Do not rebuild these systems.
