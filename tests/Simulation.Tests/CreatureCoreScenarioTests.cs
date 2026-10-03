@@ -71,6 +71,10 @@ public sealed class CreatureCoreScenarioTests
         Assert.Equal(goals[2], exploratoryTrip.Target);
 
         Assert.Equal(CreatureCaptureResult.Captured, world.TryCaptureCreature(cautiousCreature.Id));
+        Assert.Equal(CreatureCaptivityState.Captured, cautiousCreature.CaptivityState);
+        Assert.Equal(
+            CreatureLifecycleTransitionResult.Transitioned,
+            world.TryTransitionCreatureState(cautiousCreature.Id, CreatureCaptivityState.Captive));
         Assert.Equal(CreatureCaptivityState.Captive, cautiousCreature.CaptivityState);
         Assert.Equal(CreatureCaptureResult.AlreadyCaptive, world.TryCaptureCreature(cautiousCreature.Id));
         Assert.Equal(CreatureCaptureResult.TargetNotFound, world.TryCaptureCreature("missing-creature"));
