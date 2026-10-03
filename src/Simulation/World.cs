@@ -290,28 +290,67 @@ public sealed class World
 
     public CreatureCaptureResult TryCaptureCreature(string? entityId)
     {
+        var result = TryTransitionCreatureState(entityId, CreatureCaptivityState.Captured);
+        return result switch
+        {
+            CreatureLifecycleTransitionResult.Transitioned => CreatureCaptureResult.Captured,
+            CreatureLifecycleTransitionResult.AlreadyInState => CreatureCaptureResult.AlreadyCaptured,
+            CreatureLifecycleTransitionResult.TargetNotFound => CreatureCaptureResult.TargetNotFound,
+            CreatureLifecycleTransitionResult.NotCreature => CreatureCaptureResult.NotCreature,
+            CreatureLifecycleTransitionResult.TargetDead => CreatureCaptureResult.TargetDead,
+            CreatureLifecycleTransitionResult.InvalidTransition
+                when TryGetEntity(entityId, out var entity)
+                    && entity?.CaptivityState == CreatureCaptivityState.Captive
+                => CreatureCaptureResult.AlreadyCaptive,
+            _ => CreatureCaptureResult.InvalidTransition
+        };
+    }
+
+    public CreatureLifecycleTransitionResult TryTransitionCreatureState(
+        string? entityId,
+        CreatureCaptivityState targetState)
+    {
         if (!TryGetEntity(entityId, out var entity) || entity is null)
         {
-            return CreatureCaptureResult.TargetNotFound;
+            return CreatureLifecycleTransitionResult.TargetNotFound;
         }
 
         if (string.Equals(entity.SpeciesId, "human", StringComparison.Ordinal))
         {
-            return CreatureCaptureResult.NotCreature;
+            return CreatureLifecycleTransitionResult.NotCreature;
         }
 
         if (entity.Health.IsDead)
         {
-            return CreatureCaptureResult.TargetDead;
+            return CreatureLifecycleTransitionResult.TargetDead;
         }
 
-        if (entity.CaptivityState == CreatureCaptivityState.Captive)
+        if (!Enum.IsDefined(targetState))
         {
-            return CreatureCaptureResult.AlreadyCaptive;
+            return CreatureLifecycleTransitionResult.InvalidTransition;
         }
 
-        entity.CaptivityState = CreatureCaptivityState.Captive;
-        return CreatureCaptureResult.Captured;
+        if (entity.CaptivityState == targetState)
+        {
+            return CreatureLifecycleTransitionResult.AlreadyInState;
+        }
+
+        var isAllowed = (entity.CaptivityState, targetState) switch
+        {
+            (CreatureCaptivityState.Wild, CreatureCaptivityState.Captured) => true,
+            (CreatureCaptivityState.Captured, CreatureCaptivityState.Captive) => true,
+            (CreatureCaptivityState.Captive, CreatureCaptivityState.Domesticated) => true,
+            (CreatureCaptivityState.Captured or CreatureCaptivityState.Captive
+                or CreatureCaptivityState.Domesticated, CreatureCaptivityState.Wild) => true,
+            _ => false
+        };
+        if (!isAllowed)
+        {
+            return CreatureLifecycleTransitionResult.InvalidTransition;
+        }
+
+        entity.CaptivityState = targetState;
+        return CreatureLifecycleTransitionResult.Transitioned;
     }
 
     public FactionDefinitionResult DefineFaction(string? factionId)

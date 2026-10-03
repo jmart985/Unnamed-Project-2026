@@ -21,8 +21,43 @@ public sealed class WorldSnapshotCreatureCaptureTests
         Assert.Equal(3, restoredTime);
         Assert.Equal(creature.Id, restored.Id);
         Assert.Equal("creature", restored.SpeciesId);
-        Assert.Equal(CreatureCaptivityState.Captive, restored.CaptivityState);
+        Assert.Equal(CreatureCaptivityState.Captured, restored.CaptivityState);
         Assert.Equal(WorldSnapshotSerializer.CurrentSchemaVersion, WorldSnapshotSerializer.Deserialize(json).SchemaVersion);
+    }
+
+    [Fact]
+    public void SnapshotRoundTripPreservesEveryCreatureLifecycleState()
+    {
+        var source = new World();
+        var captured = source.SpawnEntity("creature", Vector3.Zero);
+        var captive = source.SpawnEntity("wolf", Vector3.One);
+        var domesticated = source.SpawnEntity("cow", Vector3.UnitX * 2);
+        Assert.Equal(CreatureCaptureResult.Captured, source.TryCaptureCreature(captured.Id));
+        Assert.Equal(CreatureCaptureResult.Captured, source.TryCaptureCreature(captive.Id));
+        Assert.Equal(CreatureCaptureResult.Captured, source.TryCaptureCreature(domesticated.Id));
+        Assert.Equal(
+            CreatureLifecycleTransitionResult.Transitioned,
+            source.TryTransitionCreatureState(captive.Id, CreatureCaptivityState.Captive));
+        Assert.Equal(
+            CreatureLifecycleTransitionResult.Transitioned,
+            source.TryTransitionCreatureState(domesticated.Id, CreatureCaptivityState.Captive));
+        Assert.Equal(
+            CreatureLifecycleTransitionResult.Transitioned,
+            source.TryTransitionCreatureState(domesticated.Id, CreatureCaptivityState.Domesticated));
+        var json = WorldSnapshotSerializer.Serialize(source, 3);
+
+        var target = new World();
+        WorldSnapshotSerializer.Load(target, json, GetSpeciesCatalog());
+        var restored = target.Entities.OrderBy(entity => entity.Id, StringComparer.Ordinal).ToArray();
+
+        Assert.Equal(
+            [
+                CreatureCaptivityState.Captured,
+                CreatureCaptivityState.Captive,
+                CreatureCaptivityState.Domesticated
+            ],
+            restored.Select(entity => entity.CaptivityState));
+        Assert.Equal(json, WorldSnapshotSerializer.Serialize(target, 3));
     }
 
     [Fact]
@@ -32,7 +67,7 @@ public sealed class WorldSnapshotCreatureCaptureTests
         var creature = source.SpawnEntity("creature", Vector3.One);
         Assert.Equal(CreatureCaptureResult.Captured, source.TryCaptureCreature(creature.Id));
         var invalidJson = WorldSnapshotSerializer.Serialize(source, 3)
-            .Replace("\"CaptivityState\": \"Captive\"", "\"CaptivityState\": 42", StringComparison.Ordinal);
+            .Replace("\"CaptivityState\": \"Captured\"", "\"CaptivityState\": 42", StringComparison.Ordinal);
 
         var target = new World();
         var existingEntity = target.SpawnEntity("human", Vector3.Zero);
@@ -68,13 +103,16 @@ public sealed class WorldSnapshotCreatureCaptureTests
         Assert.Equal(WorldSnapshotSerializer.CurrentSchemaVersion, WorldSnapshotSerializer.Capture(target, 3).SchemaVersion);
     }
 
-    [Fact]
-    public void CaptiveHumanSnapshotIsRejectedBeforeReplacingWorld()
+    [Theory]
+    [InlineData("Captured")]
+    [InlineData("Captive")]
+    [InlineData("Domesticated")]
+    public void NonWildHumanSnapshotIsRejectedBeforeReplacingWorld(string lifecycleState)
     {
         var source = new World();
         var human = source.SpawnEntity("human", Vector3.One);
         var json = WorldSnapshotSerializer.Serialize(source, 3)
-            .Replace("\"CaptivityState\": \"Wild\"", "\"CaptivityState\": \"Captive\"", StringComparison.Ordinal);
+            .Replace("\"CaptivityState\": \"Wild\"", $"\"CaptivityState\": \"{lifecycleState}\"", StringComparison.Ordinal);
 
         var target = new World();
         var existingEntity = target.SpawnEntity("creature", Vector3.Zero);

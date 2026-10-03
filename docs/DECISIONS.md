@@ -230,8 +230,8 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Date: 2026-10-01
 - Status: Provisional planning decision for Milestone 0.3
 - Decision: Extend the existing creature foundation with validated temperament data, deterministic wild behavior, and durable domain capture/captivity state. Validate these as a simulation scenario without adding player-facing capture controls or a taming loop.
-- Reason: Creature Core needs a distinct, testable gameplay signal while preserving adjacent milestone boundaries: shared character data is established by 0.2, relationships/domestication/recruitment belong to 0.6, player interaction is deferred to 1.0, and advanced creature behavior belongs to 1.2.
-- Consequence: The milestone reuses the existing species catalog and wandering behavior. It does not add cages, capture equipment, player commands, bonds, recruitment, breeding, combat, or advanced ecology. Durable capture/captivity state must participate in snapshot validation and round trips.
+- Reason: Creature Core needs a distinct, testable gameplay signal while preserving adjacent milestone boundaries: shared character data is established by 0.2, relationship-driven domestication/recruitment belong to 0.6, player interaction is deferred to 1.0, and advanced creature behavior belongs to 1.2. D033 authorizes only the additional entity lifecycle state transitions.
+- Consequence: The milestone reuses the existing species catalog and wandering behavior. It does not add cages, capture equipment, player commands, bonds, recruitment, breeding, combat, or advanced ecology. Durable creature lifecycle state must participate in snapshot validation and round trips.
 - Revisit: When 1.0 defines player-controlled creature interactions or a later milestone defines housing, release, taming, or escape behavior.
 
 ## D027 — First Real Game is a small player-controlled loop
@@ -265,10 +265,19 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 
 - Date: 2026-10-02
 - Status: Implemented for C03b
-- Decision: Store creature captivity on the authoritative entity, permit one capture transition for a live non-human entity, and persist the state in snapshot schema version 5. Migrate version 4 snapshots by defaulting entities to wild.
+- Decision: Store creature captivity on the authoritative entity, permit one capture transition for a live non-human entity, and persist the state in snapshot schema version 5. Migrate version 4 snapshots by defaulting entities to wild. D033 narrowly extends the lifecycle.
 - Reason: Creature Core needs durable capture state without a separate registry or player-facing capture workflow, and existing saves should remain loadable when the new state is introduced.
 - Consequence: Missing, non-creature, dead, or already-captive targets are rejected without changing entity state. Invalid captivity values are rejected during complete snapshot validation before transient services or the live World are reset.
 - Revisit: When a later milestone defines player-controlled capture eligibility, release, or captive housing.
+
+## D033 — User-directed creature lifecycle expansion
+
+- Date: 2026-10-02
+- Status: Implemented for issue #300
+- Decision: Extend durable non-human creature lifecycle state through `Wild → Captured → Captive → Domesticated`. Explicit release from Captured, Captive, or Domesticated returns the creature to Wild. Keep death authoritative in `CharacterHealth.IsDead` rather than duplicating it in lifecycle state; dead creatures cannot transition. Preserve the existing snapshot shape and schema version because the existing state field carries the additional lifecycle values.
+- Reason: Issue #300 explicitly requests capture, captivity, domestication, release, and death transitions. The user authorized this as a narrow expansion beyond the accepted 0.3 foundation, guided by the long-term vision in `docs/LONG_TERM_VISION.md` at `origin/docs-ai-guidance` commit `3e9de38abf0bfd07849a612bbedc4e01c977ba71`.
+- Consequence: Release is an operation that returns state to Wild, not a separate durable state. Death remains the existing health signal and is not added to snapshots; health persistence, capture methods/equipment, housing, escape behavior, relationship-driven bonding, taming progression, UI, and autonomous creature behavior remain deferred.
+- Revisit: When a later issue defines health persistence or player-facing capture, housing, escape, or domestication behavior.
 ## D031 — Deterministic temperament-driven roaming
 
 - Date: 2026-10-02
