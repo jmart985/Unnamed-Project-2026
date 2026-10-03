@@ -36,6 +36,7 @@ public sealed class World
         InventoryCapacity = inventoryCapacity;
         DefaultCharacterStats = defaultCharacterStats ?? CharacterStats.Default;
         Reservations = new ReservationService(IsActionActive);
+        CaravanVisits = new CaravanVisitService(this);
         _foodSourceView = _foodSources.AsReadOnly();
         _resourcePileView = _resourcePiles.AsReadOnly();
         _stockpileView = _stockpiles.AsReadOnly();
@@ -67,6 +68,7 @@ public sealed class World
     public IReadOnlyList<ResourceLocation> Stockpiles => _stockpileView;
     public NeedsTuning NeedsTuning { get; }
     public ReservationService Reservations { get; }
+    public CaravanVisitService CaravanVisits { get; }
     public int InventoryCapacity { get; }
     public CharacterStats DefaultCharacterStats { get; }
     public int? SessionSeed { get; private set; }
@@ -615,6 +617,7 @@ public sealed class World
         _stockpiles.Clear();
         _targetIds.Clear();
         Reservations.Reset();
+        CaravanVisits.Reset();
         SessionSeed = null;
         PlayerEntityId = null;
         PlayerProfile = null;

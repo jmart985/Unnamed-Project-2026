@@ -63,6 +63,12 @@ public sealed class SettlementMarket
         _marketLocationId = marketLocationId;
     }
 
+    internal bool IsAvailableFor(World world) =>
+        ReferenceEquals(_world, world) && ResolveMarketContents() is not null;
+
+    internal bool IsMarketContainer(ResourceContainer? container) =>
+        container is not null && ReferenceEquals(ResolveMarketContents(), container);
+
     public MarketTransactionResult TryExecute(MarketTransactionRequest? request)
     {
         if (request is null || !Enum.IsDefined(request.Side))
@@ -71,8 +77,7 @@ public sealed class SettlementMarket
         }
 
         // Resolved on every call so a removed market stockpile is rejected, not mutated.
-        var market = _world.Stockpiles.FirstOrDefault(pile =>
-            string.Equals(pile.Id, _marketLocationId, StringComparison.Ordinal))?.Contents;
+        var market = ResolveMarketContents();
         if (market is null)
         {
             return Reject(MarketTransactionStatus.InvalidMarket);
@@ -136,6 +141,10 @@ public sealed class SettlementMarket
             ? new MarketTransactionResult(status, request.Quantity, coinAmount)
             : Reject(status);
     }
+
+    private ResourceContainer? ResolveMarketContents() =>
+        _world.Stockpiles.FirstOrDefault(pile =>
+            string.Equals(pile.Id, _marketLocationId, StringComparison.Ordinal))?.Contents;
 
     private static MarketTransactionResult Reject(MarketTransactionStatus status) => new(status, 0, 0);
 }
