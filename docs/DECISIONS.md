@@ -301,7 +301,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Status: Provisional planning decision for Milestone 0.9; implementation pending
 - Decision: Define 0.9 as one deterministic test-region scenario composing accepted 0.3–0.8 systems. It adds only the integration harness and evidence; missing product behavior becomes a separately scoped issue.
 - Reason: “All core systems” is otherwise unbounded and could pull multiple settlements, regional simulation, streaming, or broad AI forward without evidence.
-- Consequence: The milestone verifies existing creature, combat, relationship, faction, settlement, and local economy state together, with repeatability, exact resource accounting, and rejection/recovery checks. It does not expand those systems or turn the long-term vision into a delivery commitment.
+- Consequence: The milestone verifies existing creature, combat, relationship, faction, settlement, and local economy state together, with repeatability, exact resource accounting, and rejection/recovery checks. It does not expand those systems or turn the long-term vision into a delivery commitment. Issue #341 is gated on acceptance of prerequisites #325, #333, and #340.
 - Revisit: After the one-region scenario has recorded results and limitations.
 
 ## D032 — Capability-gated creature greeting
