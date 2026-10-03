@@ -27,3 +27,5 @@ A human claims a wood transfer from a ground pile to the stockpile, reserves ava
 ## Player controls for 0.1
 
 Start/reset scenario, pause/resume, run at 1x or 4x, select an entity to inspect state, save, and load. Supply is finite; automatic production is deferred. The acceptance scenario begins with enough food for ten minutes.
+
+The prototype keeps Inventory (`I`) and Settlement (`Tab`) as distinct menu states. Collection (`E`) is an action request, not a menu; it does not change the selected menu.
