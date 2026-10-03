@@ -189,7 +189,8 @@ public static class WorldSnapshotSerializer
                 FactionHostilities = snapshot.SchemaVersion == FactionRelationsSchemaVersion
                     ? snapshot.FactionHostilities
                     : Array.Empty<FactionHostilitySnapshot>(),
-                Stockpiles = snapshot.Stockpiles?.Select(stockpile => stockpile with { FactionOwnerId = null }).ToArray()!
+                Stockpiles = snapshot.Stockpiles?.Select(stockpile =>
+                    stockpile is null ? null! : stockpile with { FactionOwnerId = null }).ToArray()!
             };
         }
 
