@@ -55,7 +55,8 @@ public sealed record FoodSourceSnapshot(
 public sealed record ResourceLocationSnapshot(
     string Id,
     Vector3 Position,
-    ResourceContainerSnapshot Contents);
+    ResourceContainerSnapshot Contents,
+    string? FactionOwnerId = null);
 
 public interface ITransientSimulationState
 {
@@ -72,7 +73,8 @@ public static class WorldSnapshotSerializer
     private const int LegacySchemaVersion = 4;
     private const int PreviousSchemaVersion = 5;
     private const int FactionIdentitySchemaVersion = 6;
-    public const int CurrentSchemaVersion = 7;
+    private const int FactionRelationsSchemaVersion = 7;
+    public const int CurrentSchemaVersion = 8;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -172,14 +174,20 @@ public static class WorldSnapshotSerializer
             throw new InvalidDataException("Snapshot JSON is malformed.", exception);
         }
 
-        if (snapshot.SchemaVersion is LegacySchemaVersion or PreviousSchemaVersion or FactionIdentitySchemaVersion)
+        if (snapshot.SchemaVersion is LegacySchemaVersion
+            or PreviousSchemaVersion
+            or FactionIdentitySchemaVersion
+            or FactionRelationsSchemaVersion)
         {
             return snapshot with
             {
                 SchemaVersion = CurrentSchemaVersion,
                 FactionIds = snapshot.FactionIds ?? Array.Empty<string>(),
-                FactionReputations = Array.Empty<FactionReputationSnapshot>(),
-                FactionHostilities = Array.Empty<FactionHostilitySnapshot>()
+                FactionReputations = snapshot.FactionReputations ?? Array.Empty<FactionReputationSnapshot>(),
+                FactionHostilities = snapshot.FactionHostilities ?? Array.Empty<FactionHostilitySnapshot>(),
+                Stockpiles = snapshot.Stockpiles
+                    .Select(stockpile => stockpile with { FactionOwnerId = null })
+                    .ToArray()
             };
         }
 
@@ -333,8 +341,8 @@ public static class WorldSnapshotSerializer
             ValidateContainer(source.Contents, source.Id);
         }
 
-        ValidateLocations(snapshot.ResourcePiles, "resource pile", foodSourceIds);
-        ValidateLocations(snapshot.Stockpiles, "stockpile", foodSourceIds);
+        ValidateLocations(snapshot.ResourcePiles, "resource pile", foodSourceIds, factionIds, allowFactionOwner: false);
+        ValidateLocations(snapshot.Stockpiles, "stockpile", foodSourceIds, factionIds, allowFactionOwner: true);
         ValidateRelationships(snapshot.Relationships, entityIds);
         ValidateFactionReputations(snapshot.FactionReputations, entityIds, factionIds);
         ValidateFactionHostilities(snapshot.FactionHostilities, factionIds);
@@ -488,7 +496,9 @@ public static class WorldSnapshotSerializer
     private static void ValidateLocations(
         IReadOnlyList<ResourceLocationSnapshot> locations,
         string kind,
-        HashSet<string> targetIds)
+        HashSet<string> targetIds,
+        HashSet<string> factionIds,
+        bool allowFactionOwner)
     {
         foreach (var location in locations)
         {
@@ -496,6 +506,13 @@ public static class WorldSnapshotSerializer
                 || !targetIds.Add(location.Id))
             {
                 throw new InvalidDataException($"Snapshot contains an invalid or duplicate {kind} ID.");
+            }
+
+            if (location.FactionOwnerId is { } factionId
+                && (!allowFactionOwner || !factionIds.Contains(factionId)))
+            {
+                throw new InvalidDataException(
+                    $"Snapshot {kind} '{location.Id}' references an unknown or invalid faction owner.");
             }
 
             ValidatePosition(location.Position, $"{kind} '{location.Id}' position");
@@ -596,5 +613,5 @@ public static class WorldSnapshotSerializer
     }
 
     private static ResourceLocationSnapshot CaptureLocation(ResourceLocation location) =>
-        new(location.Id, location.Position, CaptureContainer(location.Contents));
+        new(location.Id, location.Position, CaptureContainer(location.Contents), location.FactionOwnerId);
 }
