@@ -382,3 +382,12 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: The first economy slice needs deterministic, inspectable values without introducing dynamic pricing or a second item registry.
 - Consequence: Each catalog load exposes the same fixed values and sorted resource IDs. These values are prototype tuning, not a claim about balanced market behavior.
 - Revisit: After the E08d integrated market scenario records exchange outcomes.
+
+## D035 — Atomic fixed-price market exchange
+
+- Date: 2026-10-03
+- Status: Provisional; implemented for E08b
+- Decision: `SettlementMarket` resolves a World stockpile on each request and prices one catalog good in `coin` with checked integer arithmetic. Purchase and sale share one rule that calls `ResourceTransferService.TryExchange`, which prevalidates both legs (stock, and capacity after the legs net out) before mutating either container.
+- Reason: A compensating rollback could leave partial state; whole-operation prevalidation keeps one authoritative inventory and no partial fills.
+- Consequence: Rejections return explicit statuses and leave all counts unchanged. The counterparty is any `ResourceContainer`; caravan wiring is deferred to E08c. No dynamic pricing, credit, or UI.
+- Revisit: After E08c/E08d show how counterparties are modeled.
