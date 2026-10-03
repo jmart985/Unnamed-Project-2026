@@ -43,7 +43,7 @@ public sealed class CreatureSpawner
             return new CreatureSpawnResult(CreatureSpawnStatus.OccupiedHabitat);
         }
 
-        var entity = _world.SpawnEntity(species.Id, request.Position);
+        var entity = _world.SpawnEntity(species, request.Position);
         _habitats[request.HabitatId] = entity.Id;
         return new CreatureSpawnResult(CreatureSpawnStatus.Spawned, entity);
     }

@@ -43,12 +43,12 @@ public sealed class AntFarmScenario
         {
             var x = (i % 5) - 2 + ((_seed % 3) * 0.1f);
             var z = (i / 5) - 1;
-            World.SpawnEntity("human", new(x, 0, z));
+            World.SpawnEntity(_catalog.GetRequired("human"), new(x, 0, z));
         }
 
         for (var i = 0; i < CreatureCount; i++)
         {
-            World.SpawnEntity("creature", new(i - 1, 0, 4));
+            World.SpawnEntity(_catalog.GetRequired("creature"), new(i - 1, 0, 4));
         }
     }
 

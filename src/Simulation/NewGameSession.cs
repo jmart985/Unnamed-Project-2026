@@ -104,16 +104,16 @@ public sealed class NewGameSession
         for (var index = 0; index < HumanNpcCount; index++)
         {
             world.SpawnEntity(
-                "human",
+                catalog.GetRequired("human"),
                 new Vector3(index - 4.5f, 0, 0));
         }
 
         foreach (var creature in StarterCreatureSpawns)
         {
-            world.SpawnEntity(creature.SpeciesId, creature.Position);
+            world.SpawnEntity(catalog.GetRequired(creature.SpeciesId), creature.Position);
         }
 
-        var player = world.SpawnEntity("human", GetPlayerSpawnPosition(seed));
+        var player = world.SpawnEntity(catalog.GetRequired("human"), GetPlayerSpawnPosition(seed));
         world.SetSessionPlayer(seed, player.Id, playerProfile);
         return new NewGameSession(world, seed, player.Id);
     }

@@ -68,6 +68,21 @@ public sealed class SpeciesDefinition
     public bool CanAcceptFriendlyInteraction { get; }
     public TemperamentProfile Temperament { get; }
 
+    public CharacterStats CreateCharacterStats(CharacterStats defaults)
+    {
+        ArgumentNullException.ThrowIfNull(defaults);
+
+        return new CharacterStats(
+            health: MaxHealth,
+            stamina: defaults.MaxStamina,
+            movementSpeed: MovementSpeed,
+            carryCapacity: defaults.CarryCapacity,
+            perception: defaults.Perception,
+            defense: defaults.Defense,
+            strength: Strength,
+            endurance: Endurance);
+    }
+
     public bool Eats(string? itemId)
     {
         return itemId is not null && _dietItems.Contains(itemId);
