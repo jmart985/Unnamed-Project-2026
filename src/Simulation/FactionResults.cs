@@ -14,3 +14,29 @@ public enum FactionAllegianceResult
     EntityNotFound,
     UnknownFaction
 }
+
+public enum FactionReputationResult
+{
+    Applied,
+    EntityNotFound,
+    UnknownFaction,
+    InvalidDelta,
+    OutOfRange
+}
+
+public enum FactionHostilityResult
+{
+    Updated,
+    UnknownFaction,
+    SameFaction
+}
+
+public sealed record FactionReputationState(
+    string EntityId,
+    string FactionId,
+    double Value);
+
+public sealed record FactionHostilityState(
+    string SourceFactionId,
+    string TargetFactionId,
+    bool IsHostile);
