@@ -104,6 +104,7 @@ public partial class Main : Node3D
         GetNode<Button>("Controls/Panel/Scroll/Margin/VBox/Load").Pressed += LoadScenario;
         _removeSelectedButton.Pressed += RemoveSelectedEntity;
         ConfigureSquadControls();
+        ConfigureScheduleControls();
         GetNode<Button>("CharacterCreation/Panel/Form/Start").Pressed += StartNewGame;
         _controls.Visible = false;
         _playerCharacter.Visible = false;
@@ -126,6 +127,8 @@ public partial class Main : Node3D
             Callable.From(RunSquadValidation).CallDeferred();
         else if (OS.GetCmdlineUserArgs().Contains("--validate-first-game"))
             Callable.From(RunFirstGameValidation).CallDeferred();
+        else if (OS.GetCmdlineUserArgs().Contains("--validate-schedules"))
+            Callable.From(RunScheduleValidation).CallDeferred();
     }
 
     public override void _Process(double delta)
@@ -407,6 +410,7 @@ public partial class Main : Node3D
         if (_world.TryGetEntity(entityId, out _))
         {
             _selectedEntityId = entityId;
+            ShowSelectedSchedule(entityId);
             UpdateInspector();
         }
     }
@@ -470,7 +474,7 @@ public partial class Main : Node3D
             _woodHauling!.Advance(
                 entity,
                 _speciesCatalog.GetRequired(entity.SpeciesId),
-                _simulationTick);
+                _simulationTick, _clock.SimulationTime);
         }
     }
 
@@ -522,6 +526,8 @@ public partial class Main : Node3D
     {
         _simulationTick = checked(_simulationTick + 1);
         AdvanceNeeds(tickSeconds);
+        foreach (var entity in _world.Entities)
+            _woodHauling!.ReconcileSchedule(entity, _clock.SimulationTime);
         AdvanceNavigationTick(tickSeconds);
         AdvanceFoodConsumption();
         _squad!.Advance();
@@ -697,7 +703,7 @@ public partial class Main : Node3D
             ? $"Player: {profile.Name} ({profile.Height}, {profile.BodyType}, {profile.Sex})\n"
             : string.Empty;
         _statusLabel.Text =
-            $"Simulation time: {_clock.SimulationTime:0.0}s\nState: {state}\nSpeed: {(int)_clock.Speed}x\n" +
+            $"Simulation time: {_clock.SimulationTime:0.0}s | Day time: {ScheduleTime(DailyScheduleState.DaySeconds(_clock.SimulationTime) / DailyScheduleState.SecondsPerHour)}\nState: {state}\nSpeed: {(int)_clock.Speed}x\n" +
             playerStatus +
             $"Food: {foodConsumption.FoodUnitsRemaining} remaining, {foodConsumption.FoodUnitsConsumed} consumed\n" +
             $"Wood: ground {groundWood}, carried {carriedWood}, stored {storedWood} (total {totalWood})\n" +
@@ -724,6 +730,7 @@ public partial class Main : Node3D
         {
             _inspectorLabel.Text = "Select an entity to inspect.";
             _removeSelectedButton.Disabled = true;
+            _applySchedule.Disabled = true;
             return;
         }
 
@@ -754,6 +761,17 @@ public partial class Main : Node3D
         var bodyHealth = string.Join(", ", entity.Health.Parts.Select(part => $"{part.Name} {part.CurrentHealth:0}/{part.MaximumHealth:0}"));
         var inspection = EntityInspectionReadModel.Create(_world, entity);
         var relationships = EntityInspectionReadModel.FormatOutgoingRelationships(inspection);
+        var scheduled = _world.HasDailySchedule(entity);
+        _applySchedule.Disabled = !scheduled || entity.Health.IsDead;
+        var scheduleText = "Schedule: not applicable\n";
+        if (scheduled)
+        {
+            var schedule = _world.GetWorkSchedule(entity.Id);
+            var phase = schedule.Evaluate(_clock.SimulationTime);
+            scheduleText = $"Work hours: {schedule.StartHour:00}:00–{schedule.EndHour:00}:00\n" +
+                $"Schedule: {(phase.IsWorking ? "Work" : "Rest")} | Next: {ScheduleTime(phase.NextTransitionHour)} in {phase.SecondsUntilTransition:0.0}s\n" +
+                "Hunger and squad orders take priority; carried wood can finish delivery.\n";
+        }
         _inspectorLabel.Text =
             $"ID: {entity.Id}\n" +
             $"Species: {species.DisplayName} ({species.BodyCategory}, {species.DietaryProfile})\n" +
@@ -767,6 +785,7 @@ public partial class Main : Node3D
             $"Satiety: {entity.Satiety:0.0}\n" +
             $"Needs: {needState}\n" +
             $"Activity: {entity.Activity}\n" +
+            scheduleText +
             $"Squad member: {_world.SquadMemberIds.Contains(entity.Id)} | Order: {_squad?.Order}\n" +
             $"Target: {target}\n" +
             $"Navigation: {navigationStatus}\n" +

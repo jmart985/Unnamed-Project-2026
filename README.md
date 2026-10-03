@@ -14,8 +14,9 @@ A systemic open-world colony RPG in which people and creatures share consistent 
 - [Milestone 0.8: Economy Prototype](https://github.com/jmart985/Unnamed-Project-2026/milestone/32)
 - [Milestone 0.9: Vertical Integration](https://github.com/jmart985/Unnamed-Project-2026/milestone/33)
 - [Milestone 1.0: First Real Game](https://github.com/jmart985/Unnamed-Project-2026/milestone/4)
+- [Milestone 1.1: Job Intelligence](https://github.com/jmart985/Unnamed-Project-2026/milestone/5)
 - [All implementation issues](https://github.com/jmart985/Unnamed-Project-2026/issues)
-- **Start here:** choose the earliest independent **Ready** implementation issue in the active milestone; [#221](https://github.com/jmart985/Unnamed-Project-2026/issues/221) tracks the current Creature Core scope and its implementable child issues.
+- **Start here:** choose the earliest independent **Ready** implementation issue in the active milestone. [#200](https://github.com/jmart985/Unnamed-Project-2026/issues/200) defines the selected 1.1 daily work/rest slice: feature #380 followed by integration gate #381.
 
 ## Start here
 
@@ -28,6 +29,7 @@ A systemic open-world colony RPG in which people and creatures share consistent 
 - [Combat prototype scope and acceptance](docs/MILESTONE_0_5.md)
 - [First Real Game scope and acceptance](docs/MILESTONE_1_0.md)
 - [Squad controls and validation](docs/VALIDATION_SQUAD.md)
+- [NPC daily schedules and validation](docs/NPC_SCHEDULES.md)
 - [First Real Game integrated validation](docs/VALIDATION_1_0.md)
 - [Work sequence and issue index](docs/BACKLOG.md)
 - [Contribution and AI workflow](CONTRIBUTING.md)

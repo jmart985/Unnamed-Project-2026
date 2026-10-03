@@ -67,3 +67,7 @@ Unit tests cover tick-driven hunger, entity identity, atomic inventory operation
 ## Revisit criteria
 
 After 0.1, reassess engine, presentation, and architecture using prototype results. Consider changes if measured simulation or navigation cost, C# tooling friction, or concrete rendering/world-streaming requirements cannot be addressed simply. Do not build world streaming, distributed simulation, multiplayer, or production-scale ECS in 0.1.
+
+## Daily schedules (1.1)
+
+World owns per-human-NPC work-hour overrides; phase derives from SimulationClock with a 240-second day beginning at 08:00. WoodHaulingService reconciles rest before navigation, cancels empty pickup trips through ActionLifecycle, and allows carried delivery. Food and squad priorities remain higher. Schema 10 adds validated WorkSchedules; schemas 4-9 use defaults. See docs/NPC_SCHEDULES.md for boundaries, precedence and validation.

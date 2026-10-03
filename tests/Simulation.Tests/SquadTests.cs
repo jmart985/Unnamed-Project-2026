@@ -156,7 +156,7 @@ public sealed class SquadTests
         WorldSnapshotSerializer.Load(world, json.ToJsonString(), Catalog());
         Assert.Empty(world.SquadMemberIds);
         Assert.Equal(version == 8 ? "settlers" : null, world.Stockpiles[0].FactionOwnerId);
-        Assert.Equal(9, WorldSnapshotSerializer.Capture(world, 0).SchemaVersion);
+        Assert.Equal(WorldSnapshotSerializer.CurrentSchemaVersion, WorldSnapshotSerializer.Capture(world, 0).SchemaVersion);
     }
 
     [Fact]
