@@ -22,8 +22,27 @@ public sealed record FoodConsumptionResult(
     string? WaitingReason = null,
     bool IsHungryAfterEating = false);
 
+public enum PlayerEatStatus
+{
+    Ate,
+    PlayerUnavailable,
+    SourceNotFound,
+    OutOfRange,
+    SourceEmpty,
+    IncompatibleFood
+}
+
+public sealed record PlayerEatResult(
+    PlayerEatStatus Status,
+    string Reason,
+    string? SourceId = null,
+    string? ItemId = null,
+    double Satiety = 0);
+
 public sealed class FoodConsumptionService : ITransientSimulationState
 {
+    public const double PlayerEatReach = 2.0;
+
     private const double NavigationTimeoutSeconds = 30;
 
     private readonly World _world;
@@ -153,6 +172,87 @@ public sealed class FoodConsumptionService : ITransientSimulationState
 
         return BeginSelection(entity, species, simulationTick);
     }
+
+    /// <summary>Eats one compatible unit from a food source within reach for the World-owned player.</summary>
+    public PlayerEatResult TryPlayerEat(string? sourceId, double maximumReach = PlayerEatReach)
+    {
+        ArgumentNullException.ThrowIfNull(_catalog);
+        if (!double.IsFinite(maximumReach) || maximumReach < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maximumReach));
+        }
+
+        if (_world.PlayerEntityId is not { } playerId
+            || !_world.TryGetEntity(playerId, out var player)
+            || player is null
+            || !_catalog.TryGet(player.SpeciesId, out var species)
+            || species is null)
+        {
+            return new(PlayerEatStatus.PlayerUnavailable, "The session player is unavailable.");
+        }
+
+        if (!TryGetFoodSource(sourceId, out var source) || source is null)
+        {
+            return Reject(PlayerEatStatus.SourceNotFound, "No food source was found to eat from.", player, sourceId);
+        }
+
+        if (MeleeReachValidator.Validate(player.Position, source.Position, maximumReach) != MeleeReachResult.InRange)
+        {
+            return Reject(PlayerEatStatus.OutOfRange, "Move closer to the food source before eating.", player, source.Id);
+        }
+
+        string? itemId = null;
+        var hasFood = false;
+        foreach (var entry in source.Contents.Counts)
+        {
+            if (entry.Value > 0 && ItemIds.IsEdibleFood(entry.Key))
+            {
+                hasFood = true;
+            }
+        }
+
+        if (!hasFood)
+        {
+            return Reject(PlayerEatStatus.SourceEmpty, "This food source is empty.", player, source.Id);
+        }
+
+        foreach (var diet in species.Diet)
+        {
+            if (ItemIds.IsEdibleFood(diet) && source.Contents.TryGetCount(diet, out var count) && count > 0)
+            {
+                itemId = diet;
+                break;
+            }
+        }
+
+        if (itemId is null)
+        {
+            return Reject(PlayerEatStatus.IncompatibleFood, "This food is not compatible with the player's diet.", player, source.Id);
+        }
+
+        var nextConsumedCount = checked(FoodUnitsConsumed + 1);
+        var removal = source.Contents.TryRemove(itemId, 1);
+        if (removal != ResourceMutationResult.Success)
+        {
+            return Reject(PlayerEatStatus.SourceEmpty, "This food source is empty.", player, source.Id);
+        }
+
+        player.Needs.AddNutrition(player.Needs.NutritionPerUnit);
+        FoodUnitsConsumed = nextConsumedCount;
+        return new(PlayerEatStatus.Ate, "Ate one unit of food.", source.Id, itemId, player.Needs.Satiety);
+    }
+
+    private bool TryGetFoodSource(string? sourceId, out FoodSource? source)
+    {
+        source = null;
+        return !string.IsNullOrWhiteSpace(sourceId) && _world.TryGetFoodSource(sourceId, out source);
+    }
+
+    private static PlayerEatResult Reject(
+        PlayerEatStatus status,
+        string reason,
+        EntityRecord player,
+        string? sourceId) => new(status, reason, sourceId, Satiety: player.Needs.Satiety);
 
     public void Reset()
     {
