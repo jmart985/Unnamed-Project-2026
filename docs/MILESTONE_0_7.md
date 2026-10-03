@@ -47,7 +47,7 @@ dotnet test tests\Simulation.Tests\Simulation.Tests.csproj --configuration Relea
 dotnet build UnnamedProject2026.slnx --configuration Release
 ```
 
-Do not claim an engine/UI run for domain-only changes. The final validation issue records the exact commands and results actually observed.
+The deterministic integrated scenario and the commands/results actually observed are recorded in [Faction validation](VALIDATION_0_7.md). Do not claim an engine/UI run for domain-only changes.
 
 ## Design references
 
@@ -55,4 +55,4 @@ Do not claim an engine/UI run for domain-only changes. The final validation issu
 - [Technical architecture](TECHNICAL_ARCHITECTURE.md): authoritative World ownership, stable IDs, and validated snapshots.
 - [Decisions log](DECISIONS.md): D030 records the provisional faction boundaries.
 
-This milestone is accepted when every linked task is accepted, snapshot rejection preserves the live World, and no unmet acceptance check is left without an explicit follow-up or deferral.
+This milestone is accepted when every linked task is accepted, the [recorded faction scenario](VALIDATION_0_7.md) passes, snapshot rejection preserves the live World, and no unmet acceptance check is left without an explicit follow-up or deferral.
