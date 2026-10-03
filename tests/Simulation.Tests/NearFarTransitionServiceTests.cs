@@ -15,6 +15,12 @@ public sealed class NearFarTransitionServiceTests
 
         var near = transitions.Promote("grove", Vector3.Zero);
         Assert.Equal(2, near.Count);
+        Assert.All(near, entity =>
+        {
+            Assert.Equal(80, entity.BaseStats.MaxHealth);
+            Assert.Equal(2, entity.BaseStats.MovementSpeed);
+            Assert.Equal(1.2, entity.BaseStats.Endurance);
+        });
         Assert.Empty(transitions.FarRecords);
         Assert.True(transitions.Demote("grove"));
         Assert.Empty(world.Entities);

@@ -182,6 +182,28 @@ public sealed class World
         Vector3 position,
         double satiety = 60)
     {
+        return SpawnEntityCore(speciesId, position, satiety, DefaultCharacterStats);
+    }
+
+    public EntityRecord SpawnEntity(
+        SpeciesDefinition species,
+        Vector3 position,
+        double satiety = 60)
+    {
+        ArgumentNullException.ThrowIfNull(species);
+        return SpawnEntityCore(
+            species.Id,
+            position,
+            satiety,
+            species.CreateCharacterStats(DefaultCharacterStats));
+    }
+
+    private EntityRecord SpawnEntityCore(
+        string speciesId,
+        Vector3 position,
+        double satiety,
+        CharacterStats baseStats)
+    {
         if (string.IsNullOrWhiteSpace(speciesId))
         {
             throw new ArgumentException("A species ID is required.", nameof(speciesId));
@@ -211,7 +233,7 @@ public sealed class World
             InventoryCapacity,
             NeedsTuning,
             Reservations,
-            DefaultCharacterStats);
+            baseStats);
         _entities.Add(id, entity);
         return entity;
     }
@@ -515,18 +537,21 @@ public sealed class World
         PlayerProfile = null;
     }
 
-    internal void ApplySnapshot(WorldSnapshot snapshot)
+    internal void ApplySnapshot(WorldSnapshot snapshot, SpeciesCatalog speciesCatalog)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
+        ArgumentNullException.ThrowIfNull(speciesCatalog);
 
         Reset();
         foreach (var entity in snapshot.Entities)
         {
+            var species = speciesCatalog.GetRequired(entity.SpeciesId);
             var restored = SpawnEntityWithId(
                 entity.Id,
                 entity.SpeciesId,
                 entity.Position,
-                entity.Satiety);
+                entity.Satiety,
+                species.CreateCharacterStats(DefaultCharacterStats));
             restored.CaptivityState = entity.CaptivityState;
             foreach (var item in entity.Inventory)
             {
@@ -658,7 +683,8 @@ public sealed class World
         string id,
         string speciesId,
         Vector3 position,
-        double satiety)
+        double satiety,
+        CharacterStats baseStats)
     {
         var entity = new EntityRecord(
             id,
@@ -668,7 +694,7 @@ public sealed class World
             InventoryCapacity,
             NeedsTuning,
             Reservations,
-            DefaultCharacterStats);
+            baseStats);
         _entities.Add(id, entity);
         return entity;
     }
