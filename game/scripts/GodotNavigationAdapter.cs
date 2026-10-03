@@ -7,7 +7,7 @@ namespace UnnamedProject2026;
 
 public sealed class GodotNavigationAdapter : INavigationAdapter
 {
-    private sealed class RequestState(string id, NavigationRequest request)
+    private sealed class RequestState(string id, NavigationRequest request) : INavigationRequestRecord
     {
         public string Id { get; } = id;
         public NavigationRequest Request { get; } = request;
@@ -19,10 +19,9 @@ public sealed class GodotNavigationAdapter : INavigationAdapter
 
     private readonly Node3D _owner;
     private readonly NavigationAgent3D _agent;
-    private readonly Dictionary<string, RequestState> _requests = new(StringComparer.Ordinal);
+    private readonly NavigationRequestRegistry<RequestState> _requests = new("godot-navigation-");
     private RequestState? _activeRequest;
     private RequestState? _lastRequest;
-    private int _nextRequestId;
 
     public GodotNavigationAdapter(Node3D owner, NavigationAgent3D agent)
     {
@@ -45,16 +44,15 @@ public sealed class GodotNavigationAdapter : INavigationAdapter
             Cancel(current.Id);
         }
 
-        var id = $"godot-navigation-{++_nextRequestId:D6}";
-        var state = new RequestState(id, request);
-        _requests.Add(id, state);
+        var state = _requests.Add(id => new RequestState(id, request));
+        _requests.PruneTerminal(null);
         _activeRequest = state;
         _lastRequest = state;
 
         _agent.TargetDesiredDistance = (float)request.ArrivalTolerance;
         _agent.PathDesiredDistance = (float)request.ArrivalTolerance;
         _agent.TargetPosition = ToGodot(request.Target);
-        return id;
+        return state.Id;
     }
 
     public NavigationOutcome Poll(string requestId, double elapsedSeconds)
@@ -64,13 +62,14 @@ public sealed class GodotNavigationAdapter : INavigationAdapter
             throw new ArgumentOutOfRangeException(nameof(elapsedSeconds));
         }
 
-        if (!_requests.TryGetValue(requestId, out var state))
+        if (!_requests.TryGet(requestId, out var state))
         {
             return NavigationOutcome.Removed;
         }
 
         if (state.Outcome != NavigationOutcome.InProgress)
         {
+            _requests.RetireIfTerminal(state);
             return state.Outcome;
         }
 
@@ -78,6 +77,7 @@ public sealed class GodotNavigationAdapter : INavigationAdapter
         if (state.ElapsedSeconds >= state.Request.TimeoutSeconds)
         {
             Finish(state, NavigationOutcome.TimedOut);
+            _requests.RetireIfTerminal(state);
             return state.Outcome;
         }
 
@@ -95,6 +95,7 @@ public sealed class GodotNavigationAdapter : INavigationAdapter
             }
         }
 
+        _requests.RetireIfTerminal(state);
         return state.Outcome;
     }
 
@@ -145,7 +146,7 @@ public sealed class GodotNavigationAdapter : INavigationAdapter
 
     private bool TryFinish(string requestId, NavigationOutcome outcome)
     {
-        if (!_requests.TryGetValue(requestId, out var state)
+        if (!_requests.TryGet(requestId, out var state)
             || state.Outcome != NavigationOutcome.InProgress)
         {
             return false;
@@ -162,6 +163,8 @@ public sealed class GodotNavigationAdapter : INavigationAdapter
         {
             _activeRequest = null;
         }
+
+        _requests.PruneTerminal(state);
     }
 
     private static GodotVector3 ToGodot(NumericsVector3 position)
