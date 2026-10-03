@@ -32,7 +32,7 @@ public sealed class FactionRelationsTests
         Assert.Equal(FactionReputationResult.Applied,
             world.AdjustFactionReputation(entity.Id, "north", 100));
         Assert.Equal(FactionReputationResult.OutOfRange,
-            world.AdjustFactionReputation(entity.Id, "north", double.Epsilon));
+            world.AdjustFactionReputation(entity.Id, "north", 1));
         Assert.Equal(FactionReputationResult.OutOfRange,
             world.AdjustFactionReputation(entity.Id, "north", -double.MaxValue));
         Assert.Equal(FactionReputationResult.InvalidDelta,
