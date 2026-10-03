@@ -9,7 +9,7 @@ This is a playable vertical slice, not a promise to implement the entire long-te
 ## Included
 
 - A deterministic new session using the existing fixed map, player profile, 10 human NPCs, one ape, one wolf, one cow, species-compatible starter food sources, wood, and a stockpile.
-- Direct player movement, inspection, and an explicit `H` action to eat one compatible unit from the nearest available food source within 2 world units. Player hunger, consumed food, and resource counts use the authoritative World state.
+- Direct player movement, inspection, and an explicit action to eat compatible food from a nearby source. Player hunger, consumed food, and resource counts use the authoritative World state.
 - One human squad with membership plus move-to, follow-player, and stop orders.
 - One friendly creature greeting, invoked with the dedicated Interact action (`G`) for the selected target within 2 world units and permitted by an explicit species capability. A successful greeting applies the validated `greeted` relationship profile (+5 familiarity, zero other deltas) only to the directed player-to-creature relationship; an unsupported or invalid interaction changes nothing.
 - Paused save/load for the durable state exercised by this loop, including player position and needs, squad membership, relationship values, simulation time, and resource quantities.
