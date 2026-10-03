@@ -124,4 +124,65 @@ public static class ResourceTransferService
         destination.AddKnown(knownItemId, amount);
         return ResourceMutationResult.Success;
     }
-}
+
+    /// <summary>
+    /// Atomically swaps two different items between two containers: <paramref name="firstItemId"/>
+    /// moves from <paramref name="first"/> to <paramref name="second"/> while
+    /// <paramref name="secondItemId"/> moves the opposite way. Every leg is validated, including
+    /// capacity after both legs net out, before any container is mutated.
+    /// </summary>
+    public static ResourceExchangeResult TryExchange(
+        ResourceContainer first,
+        ResourceContainer second,
+        string? firstItemId,
+        int firstAmount,
+        string? secondItemId,
+        int secondAmount)
+    {
+        ArgumentNullException.ThrowIfNull(first);
+        ArgumentNullException.ThrowIfNull(second);
+
+        if (ReferenceEquals(first, second))
+        {
+            return ResourceExchangeResult.InvalidDestination;
+        }
+
+        if (!ItemIds.IsKnown(firstItemId) || !ItemIds.IsKnown(secondItemId))
+        {
+            return ResourceExchangeResult.UnknownItem;
+        }
+
+        if (firstAmount <= 0 || secondAmount <= 0 || firstItemId == secondItemId)
+        {
+            return ResourceExchangeResult.InvalidAmount;
+        }
+
+        var firstItem = firstItemId!;
+        var secondItem = secondItemId!;
+        if (!first.HasQuantity(firstItem, firstAmount))
+        {
+            return ResourceExchangeResult.InsufficientFirst;
+        }
+
+        if (!second.HasQuantity(secondItem, secondAmount))
+        {
+            return ResourceExchangeResult.InsufficientSecond;
+        }
+
+        // Compare in long so the net capacity check cannot itself overflow.
+        if ((long)secondAmount - firstAmount > first.RemainingCapacity)
+        {
+            return ResourceExchangeResult.CapacityExceededFirst;
+        }
+
+        if ((long)firstAmount - secondAmount > second.RemainingCapacity)
+        {
+            return ResourceExchangeResult.CapacityExceededSecond;
+        }
+
+        first.RemoveKnown(firstItem, firstAmount);
+        second.RemoveKnown(secondItem, secondAmount);
+        first.AddKnown(secondItem, secondAmount);
+        second.AddKnown(firstItem, firstAmount);
+        return ResourceExchangeResult.Success;
+    }}
