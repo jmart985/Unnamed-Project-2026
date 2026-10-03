@@ -1,0 +1,7 @@
+[
+  { "id": "food", "coinValue": 1 },
+  { "id": "fruit", "coinValue": 2 },
+  { "id": "meat", "coinValue": 3 },
+  { "id": "plant", "coinValue": 1 },
+  { "id": "wood", "coinValue": 2 }
+]
