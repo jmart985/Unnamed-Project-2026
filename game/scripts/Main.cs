@@ -34,6 +34,9 @@ public partial class Main : Node3D
     private WanderingService? _wandering;
     private WoodHaulingService? _woodHauling;
     private WanderService? _wander;
+    private SquadOrderService? _squad;
+    private SpinBox _squadX = null!;
+    private SpinBox _squadZ = null!;
     private long _simulationTick;
     private SpeciesCatalog _speciesCatalog = null!;
     private RelationshipEventCatalog _relationshipEventCatalog = null!;
@@ -82,6 +85,10 @@ public partial class Main : Node3D
         _pauseButton = GetNode<Button>("Controls/Panel/Scroll/Margin/VBox/Pause");
         _entityList = GetNode<VBoxContainer>("Controls/Panel/Scroll/Margin/VBox/EntityList");
         _inspectorLabel = GetNode<Label>("Controls/Panel/Scroll/Margin/VBox/Inspector");
+        _statusLabel.AutowrapMode = TextServer.AutowrapMode.WordSmart;
+        _inspectorLabel.AutowrapMode = TextServer.AutowrapMode.WordSmart;
+        _statusLabel.CustomMinimumSize = new Vector2(300, 0);
+        _inspectorLabel.CustomMinimumSize = new Vector2(300, 0);
         _removeSelectedButton = GetNode<Button>("Controls/Panel/Scroll/Margin/VBox/RemoveSelected");
         _saveSlotPath = ProjectSettings.GlobalizePath("user://ant-farm-save.json");
         _speciesCatalog = SpeciesCatalog.LoadFromFile(
@@ -96,6 +103,7 @@ public partial class Main : Node3D
         GetNode<Button>("Controls/Panel/Scroll/Margin/VBox/Save").Pressed += SaveScenario;
         GetNode<Button>("Controls/Panel/Scroll/Margin/VBox/Load").Pressed += LoadScenario;
         _removeSelectedButton.Pressed += RemoveSelectedEntity;
+        ConfigureSquadControls();
         GetNode<Button>("CharacterCreation/Panel/Form/Start").Pressed += StartNewGame;
         _controls.Visible = false;
         _playerCharacter.Visible = false;
@@ -114,6 +122,8 @@ public partial class Main : Node3D
             _characterCreation.Visible = true;
             _playerNameInput.GrabFocus();
         }
+        if (OS.GetCmdlineUserArgs().Contains("--validate-squad"))
+            Callable.From(RunSquadValidation).CallDeferred();
     }
 
     public override void _Process(double delta)
@@ -336,6 +346,7 @@ public partial class Main : Node3D
             _sessionSeed);
         _woodHauling = new WoodHaulingService(_world, GetNavigationAdapter);
         _wander = new WanderService(_world, GetNavigationAdapter);
+        _squad = new SquadOrderService(_world, GetNavigationAdapter);
 
         RebuildResourceMarkersFromWorld();
 
@@ -375,6 +386,7 @@ public partial class Main : Node3D
         _wandering?.Reset();
         _woodHauling?.Reset();
         _wander?.Reset();
+        _squad?.Reset();
     }
 
     private void AddEntityView(EntityRecord entity)
@@ -401,11 +413,58 @@ public partial class Main : Node3D
         }
     }
 
+    private void ConfigureSquadControls()
+    {
+        var controls = GetNode<VBoxContainer>("Controls/Panel/Scroll/Margin/VBox");
+        var heading = new Label { Text = "Squad: select human NPCs, then add/remove", AutowrapMode = TextServer.AutowrapMode.WordSmart };
+        controls.AddChild(heading);
+        controls.MoveChild(heading, 7);
+        var row = new HBoxContainer();
+        controls.AddChild(row);
+        controls.MoveChild(row, 8);
+        foreach (var add in new[] { true, false })
+        {
+            var button = new Button { Text = add ? "Add selected" : "Remove member" };
+            button.Pressed += () =>
+            {
+                var result = add ? _world.AddSquadMember(_selectedEntityId) : _world.RemoveSquadMember(_selectedEntityId);
+                _lastActionMessage = $"Squad membership: {result}.";
+                UpdateStatus();
+            };
+            row.AddChild(button);
+        }
+        var targetRow = new HBoxContainer();
+        controls.AddChild(targetRow);
+        controls.MoveChild(targetRow, 9);
+        targetRow.AddChild(new Label { Text = "Move X/Z:" });
+        _squadX = new SpinBox { MinValue = -WorldHalfExtent, MaxValue = WorldHalfExtent, Value = 4 };
+        _squadZ = new SpinBox { MinValue = -WorldHalfExtent, MaxValue = WorldHalfExtent, Value = 3 };
+        targetRow.AddChild(_squadX);
+        targetRow.AddChild(_squadZ);
+        var orders = new HBoxContainer();
+        controls.AddChild(orders);
+        controls.MoveChild(orders, 10);
+        foreach (var order in new[] { SquadOrderKind.MoveTo, SquadOrderKind.FollowPlayer, SquadOrderKind.Stop })
+        {
+            var button = new Button { Text = order switch { SquadOrderKind.MoveTo => "Move to", SquadOrderKind.FollowPlayer => "Follow player", _ => "Stop" } };
+            button.Pressed += () => IssueSquadOrder(order);
+            orders.AddChild(button);
+        }
+    }
+
+    private void IssueSquadOrder(SquadOrderKind order)
+    {
+        var target = new System.Numerics.Vector3((float)_squadX.Value, 0, (float)_squadZ.Value);
+        _lastActionMessage = _squad!.Execute(order, target).Reason;
+        UpdateStatus();
+    }
+
     private void AdvanceWoodHauling()
     {
         foreach (var entity in _world.Entities)
         {
-            if (string.Equals(entity.Id, _world.PlayerEntityId, StringComparison.Ordinal))
+            if (string.Equals(entity.Id, _world.PlayerEntityId, StringComparison.Ordinal)
+                || (_squad?.Order != SquadOrderKind.None && _world.SquadMemberIds.Contains(entity.Id)))
             {
                 continue;
             }
@@ -467,6 +526,7 @@ public partial class Main : Node3D
         AdvanceNeeds(tickSeconds);
         AdvanceNavigationTick(tickSeconds);
         AdvanceFoodConsumption();
+        _squad!.Advance();
         AdvanceWoodHauling();
         AdvanceWandering();
     }
@@ -509,7 +569,8 @@ public partial class Main : Node3D
     {
         foreach (var entity in _world.Entities)
         {
-            if (string.Equals(entity.Id, _world.PlayerEntityId, StringComparison.Ordinal))
+            if (string.Equals(entity.Id, _world.PlayerEntityId, StringComparison.Ordinal)
+                || (_squad?.Order != SquadOrderKind.None && _world.SquadMemberIds.Contains(entity.Id)))
             {
                 continue;
             }
@@ -639,6 +700,7 @@ public partial class Main : Node3D
 
             $"Menu: {_menuState.ActiveMenu?.ToString() ?? "closed"} | WASD move, Space jump, LMB combat, E collect, G greet, I inventory, Tab settlement, Esc close\n" +
             $"Last action: {_lastActionMessage}\n" +
+            $"Squad: {string.Join(", ", _world.SquadMemberIds)} | {_squad?.Order}\n" +
             "Select an entity; F5 route, F6 unreachable, F7 cancel, F8 remove goal";
         _pauseButton.Text = _clock.IsPaused ? "Resume" : "Pause";
         UpdateInspector();
@@ -700,6 +762,7 @@ public partial class Main : Node3D
             $"Satiety: {entity.Satiety:0.0}\n" +
             $"Needs: {needState}\n" +
             $"Activity: {entity.Activity}\n" +
+            $"Squad member: {_world.SquadMemberIds.Contains(entity.Id)} | Order: {_squad?.Order}\n" +
             $"Target: {target}\n" +
             $"Navigation: {navigationStatus}\n" +
             $"Inventory: {inventory}\n" +
@@ -741,13 +804,15 @@ public partial class Main : Node3D
                 _foodConsumption!,
                 _wandering!,
                 _woodHauling!,
-                _wander!);
+                _wander!,
+                _squad!);
             _clock.Restore(restoredTime);
             _simulationTick = checked((long)Math.Round(
                 restoredTime / SimulationClock.TickIntervalSeconds,
                 MidpointRounding.AwayFromZero));
             RebuildPresentationFromWorld();
             _saveLoadStatus = $"Loaded {_clock.SimulationTime:0.0}s; paused for inspection.";
+            _lastActionMessage = "Loaded squad membership; movement orders reset.";
         }
         catch (Exception exception) when (exception is IOException or InvalidDataException or UnauthorizedAccessException)
         {

@@ -27,6 +27,7 @@ A systemic open-world colony RPG in which people and creatures share consistent 
 - [Milestone scope and acceptance](docs/MILESTONE_0_1.md)
 - [Combat prototype scope and acceptance](docs/MILESTONE_0_5.md)
 - [First Real Game scope and acceptance](docs/MILESTONE_1_0.md)
+- [Squad controls and validation](docs/VALIDATION_SQUAD.md)
 - [Work sequence and issue index](docs/BACKLOG.md)
 - [Contribution and AI workflow](CONTRIBUTING.md)
 - [AI contributor workflow](docs/AI_WORKFLOW.md)
