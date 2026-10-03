@@ -52,6 +52,62 @@ public interface INavigationAdapter
     bool RemoveTarget(string requestId);
 }
 
+public interface INavigationRequestRecord
+{
+    string Id { get; }
+    NavigationOutcome Outcome { get; }
+}
+
+/// <summary>
+/// Retains navigation request records only while they are active or still awaiting a terminal poll.
+/// Request IDs are never reused, so a retired ID resolves as <see cref="NavigationOutcome.Removed"/>.
+/// </summary>
+public sealed class NavigationRequestRegistry<T>(string idPrefix) where T : class, INavigationRequestRecord
+{
+    private readonly Dictionary<string, T> _records = new(StringComparer.Ordinal);
+    private int _nextRequestId;
+
+    public int Count => _records.Count;
+
+    public T Add(Func<string, T> create)
+    {
+        ArgumentNullException.ThrowIfNull(create);
+        var record = create($"{idPrefix}{++_nextRequestId:D6}");
+        _records.Add(record.Id, record);
+        return record;
+    }
+
+    public bool TryGet(string requestId, out T record)
+    {
+        if (requestId is not null && _records.TryGetValue(requestId, out var found))
+        {
+            record = found;
+            return true;
+        }
+
+        record = null!;
+        return false;
+    }
+
+    /// <summary>Retires the record once its terminal outcome has been reported to the consumer.</summary>
+    public void RetireIfTerminal(T record)
+    {
+        if (record.Outcome != NavigationOutcome.InProgress)
+        {
+            _records.Remove(record.Id);
+        }
+    }
+
+    /// <summary>Retires terminal records other than <paramref name="keep"/>, which stays pollable once.</summary>
+    public void PruneTerminal(T? keep)
+    {
+        foreach (var record in _records.Values.Where(r => r.Outcome != NavigationOutcome.InProgress && !ReferenceEquals(r, keep)).ToList())
+        {
+            _records.Remove(record.Id);
+        }
+    }
+}
+
 public sealed class FakeNavigationAdapter : INavigationAdapter
 {
     private sealed class RequestState(NavigationRequest request)

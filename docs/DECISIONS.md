@@ -373,3 +373,21 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: Establish an explainable decision signal using the existing entity needs and perception foundation without adding another world owner or behavior framework.
 - Consequence: The caller supplies already-resolved food, threat, pursuit, and area inputs. The policy does not sense threats, select targets from candidate sets, mutate the World, or execute navigation, fleeing movement, pursuit/combat, hunting, or territory behavior. Those execution systems remain deferred and must be scoped separately; existing temperament-driven roaming remains unchanged.
 - Revisit: When a later issue defines how these decisions connect to fixed-tick action execution, threat classification, target selection, and area ownership.
+
+## D034 â€” Fixed prototype trade-good values
+
+- Date: 2026-10-03
+- Status: Provisional; implemented for E08a
+- Decision: Store the known tradeable resource values in `data/trade_goods.json`; start with food 2, fruit 3, meat 4, plant 1, and wood 2 coins. Keep `coin` known to the resource model but reserved from the priced-good catalog.
+- Reason: The first economy slice needs deterministic, inspectable values without introducing dynamic pricing or a second item registry.
+- Consequence: Each catalog load exposes the same fixed values and sorted resource IDs. These values are prototype tuning, not a claim about balanced market behavior.
+- Revisit: After the E08d integrated market scenario records exchange outcomes.
+
+## D035 — Atomic fixed-price market exchange
+
+- Date: 2026-10-03
+- Status: Provisional; implemented for E08b
+- Decision: `SettlementMarket` resolves a World stockpile on each request and prices one catalog good in `coin` with checked integer arithmetic. Purchase and sale share one rule that calls `ResourceTransferService.TryExchange`, which prevalidates both legs (stock, and capacity after the legs net out) before mutating either container.
+- Reason: A compensating rollback could leave partial state; whole-operation prevalidation keeps one authoritative inventory and no partial fills.
+- Consequence: Rejections return explicit statuses and leave all counts unchanged. The counterparty is any `ResourceContainer`; caravan wiring is deferred to E08c. No dynamic pricing, credit, or UI.
+- Revisit: After E08c/E08d show how counterparties are modeled.

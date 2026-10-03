@@ -173,7 +173,7 @@ public partial class Main : Node3D
 
         if (Input.IsActionJustPressed(ControllerActions.Collect))
         {
-            _lastActionMessage = "Collection action requested.";
+            _lastActionMessage = TryPlayerEat();
             UpdateStatus();
             return;
         }
@@ -591,6 +591,23 @@ public partial class Main : Node3D
         };
         AddChild(marker);
         _resourceMarkers.Add(marker);
+    }
+
+    private string TryPlayerEat()
+    {
+        if (_foodConsumption is null || _world.PlayerEntityId is not { } playerId
+            || !_world.TryGetEntity(playerId, out var player) || player is null)
+        {
+            return "Eating is unavailable.";
+        }
+
+        var nearest = _world.FoodSources
+            .OrderBy(source => System.Numerics.Vector3.Distance(player.Position, source.Position))
+            .FirstOrDefault();
+        var result = _foodConsumption.TryPlayerEat(nearest?.Id);
+        return result.Status == PlayerEatStatus.Ate
+            ? $"{result.Reason} Satiety {result.Satiety:0.#}."
+            : result.Reason;
     }
 
     private void UpdateStatus()
