@@ -124,6 +124,8 @@ public partial class Main : Node3D
         }
         if (OS.GetCmdlineUserArgs().Contains("--validate-squad"))
             Callable.From(RunSquadValidation).CallDeferred();
+        else if (OS.GetCmdlineUserArgs().Contains("--validate-first-game"))
+            Callable.From(RunFirstGameValidation).CallDeferred();
     }
 
     public override void _Process(double delta)
@@ -200,11 +202,7 @@ public partial class Main : Node3D
 
         if (Input.IsActionJustPressed(ControllerActions.Interact))
         {
-            SyncPlayerPosition();
-            var result = _playerCommands?.Execute(
-                new PlayerCommand(PlayerCommandKind.Interact, _selectedEntityId));
-            _lastActionMessage = result?.Reason
-                ?? "Friendly interaction is not initialized.";
+            _lastActionMessage = GreetSelectedEntity();
             UpdateStatus();
             return;
         }
@@ -331,7 +329,7 @@ public partial class Main : Node3D
         _obstacle.Position = new Vector3(0, 0.5f, 0);
         _navigationRegion.NavigationMesh = CreateNavigationMesh();
 
-        _foodConsumption = new FoodConsumptionService(_world, GetNavigationAdapter);
+        _foodConsumption = new FoodConsumptionService(_world, _speciesCatalog, GetNavigationAdapter);
         _wandering = new WanderingService(
             _world,
             GetNavigationAdapter,
@@ -669,6 +667,13 @@ public partial class Main : Node3D
         return result.Status == PlayerEatStatus.Ate
             ? $"{result.Reason} Satiety {result.Satiety:0.#}."
             : result.Reason;
+    }
+
+    private string GreetSelectedEntity()
+    {
+        SyncPlayerPosition();
+        return _playerCommands?.Execute(new PlayerCommand(PlayerCommandKind.Interact, _selectedEntityId)).Reason
+            ?? "Friendly interaction is not initialized.";
     }
 
     private void UpdateStatus()
