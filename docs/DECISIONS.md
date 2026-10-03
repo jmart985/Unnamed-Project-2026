@@ -230,8 +230,8 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Date: 2026-10-01
 - Status: Provisional planning decision for Milestone 0.3
 - Decision: Extend the existing creature foundation with validated temperament data, deterministic wild behavior, and durable domain capture/captivity state. Validate these as a simulation scenario without adding player-facing capture controls or a taming loop.
-- Reason: Creature Core needs a distinct, testable gameplay signal while preserving adjacent milestone boundaries: shared character data is established by 0.2, relationships/domestication/recruitment belong to 0.6, player interaction is deferred to 1.0, and advanced creature behavior belongs to 1.2.
-- Consequence: The milestone reuses the existing species catalog and wandering behavior. It does not add cages, capture equipment, player commands, bonds, recruitment, breeding, combat, or advanced ecology. Durable capture/captivity state must participate in snapshot validation and round trips.
+- Reason: Creature Core needs a distinct, testable gameplay signal while preserving adjacent milestone boundaries: shared character data is established by 0.2, relationship-driven domestication/recruitment belong to 0.6, player interaction is deferred to 1.0, and advanced creature behavior belongs to 1.2. D033 authorizes only the additional entity lifecycle state transitions.
+- Consequence: The milestone reuses the existing species catalog and wandering behavior. It does not add cages, capture equipment, player commands, bonds, recruitment, breeding, combat, or advanced ecology. Durable creature lifecycle state must participate in snapshot validation and round trips.
 - Revisit: When 1.0 defines player-controlled creature interactions or a later milestone defines housing, release, taming, or escape behavior.
 
 ## D027 — First Real Game is a small player-controlled loop
@@ -246,10 +246,10 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 ## D028 — Bounded creature temperament profile
 
 - Date: 2026-10-02
-- Status: Provisional; implemented for C03a
-- Decision: Represent species temperament with immutable boldness, curiosity, and sociability values, each finite and normalized to [0, 1]. Require all three values in the existing species catalog.
+- Status: Provisional; implemented for C03a and extended for #298
+- Decision: Represent species temperament with immutable boldness, aggression, fear, curiosity, sociability, and territoriality values, each finite and normalized to [0, 1]. Require all six values in the existing species catalog.
 - Reason: These independent, data-driven dimensions provide a small, explainable basis for later deterministic wild-behavior choices without conflating temperament with needs or relationships.
-- Consequence: Every species definition must provide valid temperament data; later behavior rules consume the existing profile rather than introducing another species registry.
+- Consequence: Every species definition must provide valid temperament data; deterministic behavior continues using boldness, curiosity, and sociability. Aggression, fear, and territoriality are data only until a separate issue defines and tests their behavior; reuse this profile rather than introducing another species registry.
 - Revisit: After the deterministic creature behavior scenario demonstrates how these dimensions produce distinct outcomes.
 
 ## D029 — Bounded Economy Prototype scope
@@ -265,10 +265,19 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 
 - Date: 2026-10-02
 - Status: Implemented for C03b
-- Decision: Store creature captivity on the authoritative entity, permit one capture transition for a live non-human entity, and persist the state in snapshot schema version 5. Migrate version 4 snapshots by defaulting entities to wild.
+- Decision: Store creature captivity on the authoritative entity, permit one capture transition for a live non-human entity, and persist the state in snapshot schema version 5. Migrate version 4 snapshots by defaulting entities to wild. D033 narrowly extends the lifecycle.
 - Reason: Creature Core needs durable capture state without a separate registry or player-facing capture workflow, and existing saves should remain loadable when the new state is introduced.
 - Consequence: Missing, non-creature, dead, or already-captive targets are rejected without changing entity state. Invalid captivity values are rejected during complete snapshot validation before transient services or the live World are reset.
 - Revisit: When a later milestone defines player-controlled capture eligibility, release, or captive housing.
+
+## D033 — User-directed creature lifecycle expansion
+
+- Date: 2026-10-02
+- Status: Implemented for issue #300
+- Decision: Extend durable non-human creature lifecycle state through `Wild → Captured → Captive → Domesticated`. Explicit release from Captured, Captive, or Domesticated returns the creature to Wild. Keep death authoritative in `CharacterHealth.IsDead` rather than duplicating it in lifecycle state; dead creatures cannot transition. Preserve the existing snapshot shape and schema version because the existing state field carries the additional lifecycle values.
+- Reason: Issue #300 explicitly requests capture, captivity, domestication, release, and death transitions. The user authorized this as a narrow expansion beyond the accepted 0.3 foundation, guided by the long-term vision in `docs/LONG_TERM_VISION.md` at `origin/docs-ai-guidance` commit `3e9de38abf0bfd07849a612bbedc4e01c977ba71`.
+- Consequence: Release is an operation that returns state to Wild, not a separate durable state. Death remains the existing health signal and is not added to snapshots; health persistence, capture methods/equipment, housing, escape behavior, relationship-driven bonding, taming progression, UI, and autonomous creature behavior remain deferred.
+- Revisit: When a later issue defines health persistence or player-facing capture, housing, escape, or domestication behavior.
 ## D031 — Deterministic temperament-driven roaming
 
 - Date: 2026-10-02
@@ -280,7 +289,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 ## D030 — Bounded faction foundation
 
 - Date: 2026-10-02
-- Status: Implemented for F07a–F07c
+- Status: Implemented for F07a–F07d
 - Decision: Reuse the authoritative World for a small fixed faction catalog and optional entity allegiance. Track entity-to-faction reputation as an explicit bounded value in [0, 100]; represent hostility as a separate directed faction-to-faction value, not as an inference from individual reputation. Add optional faction owner metadata to existing settlement resource containers without enforcing access policy.
 - Reason: The roadmap milestone names allegiance, reputation, hostility, and ownership, but these are foundations for later behavior rather than a requirement to simulate full faction politics now. Separating reputation from hostility avoids silently inventing a policy threshold; metadata on current containers avoids a parallel inventory/property system.
 - Consequence: Allegiance, reputation, hostility, and stockpile owner references are durable and validated with existing World snapshot rules. Snapshot schema version 8 adds optional stockpile ownership; versions 4–7 migrate with stockpiles unowned. Explicit invalid operations reject without partial mutation. Autonomous reputation changes, diplomacy, law/crime, territory, warfare, ownership enforcement/theft, UI, and faction authoring tools remain out of scope.
@@ -301,7 +310,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Status: Provisional planning decision for Milestone 0.9; implementation pending
 - Decision: Define 0.9 as one deterministic test-region scenario composing accepted 0.3–0.8 systems. It adds only the integration harness and evidence; missing product behavior becomes a separately scoped issue.
 - Reason: “All core systems” is otherwise unbounded and could pull multiple settlements, regional simulation, streaming, or broad AI forward without evidence.
-- Consequence: The milestone verifies existing creature, combat, relationship, faction, settlement, and local economy state together, with repeatability, exact resource accounting, and rejection/recovery checks. It does not expand those systems or turn the long-term vision into a delivery commitment.
+- Consequence: The milestone verifies existing creature, combat, relationship, faction, settlement, and local economy state together, with repeatability, exact resource accounting, and rejection/recovery checks. It does not expand those systems or turn the long-term vision into a delivery commitment. Issue #341 is gated on acceptance of prerequisites #325, #333, and #340.
 - Revisit: After the one-region scenario has recorded results and limitations.
 
 ## D032 — Capability-gated creature greeting
@@ -337,7 +346,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 
 ## Individual temperament-driven behavior
 
-- Decision: Keep validated species temperament as the baseline, then derive bounded, deterministic individual boldness, curiosity, and sociability from each entity's stable ID. Creatures choose cautious nearby roaming, farther curious exploration, or goals near their same-species group according to those traits. Hauling entities carry a boldness-weighted amount of wood per trip rather than every worker filling the same load.
+- Decision: Keep validated species temperament as the baseline, then derive bounded, deterministic individual values for all six temperament traits from each entity's stable ID. Current behavior continues to use boldness, curiosity, and sociability: creatures choose cautious nearby roaming, farther curious exploration, or goals near their same-species group according to those traits, and hauling entities carry a boldness-weighted amount of wood per trip rather than every worker filling the same load. Aggression, fear, and territoriality remain unused by behavior systems.
 - Reason: Make shared needs produce observably different behavior without introducing job frameworks, autonomous social systems, or separate creature rules.
 - Consequence: Individual traits are a read-only projection and need no new save fields; they remain stable while entity IDs remain stable. Food seeking and hunger priority are unchanged. Species temperament and individual variation remain inspectable.
 - Revisit: When traits need to be player-authored, trained, inherited, or changed by memories and relationships; then store them as explicit world state.
@@ -355,3 +364,12 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: User-directed groundwork so the player has the same procedural body as other characters, reflects creation choices, and has independent arm, leg, and head joints for later combat. This is scope beyond Milestone 1.0; no hits, damage, or injuries are resolved yet.
 - Consequence: Nothing is wired to `MeleeCombatService`; the strike event and aimed body part names match `CharacterHealth.CreateHumanoid` so reach validation and damage can attach later. Visuals are unverified in a windowed run.
 - Revisit: When combat is integrated into the playable scene (Milestone 0.5 scope), resolve strikes through the domain combat services and drive poses from equipment and injuries.
+
+## Issue #299 — Minimal wild-creature decision policy
+
+- Date: 2026-10-02
+- Status: Implemented for issue #299
+- Decision: Add a deterministic, read-only policy over explicitly supplied stimuli. Prioritize flee from a detected threat, seek compatible available food when hungry, return to a supplied area target when outside the area, pursue a supplied target, then idle. Use the long-term vision (`origin/docs-ai-guidance`, `3e9de38abf0bfd07849a612bbedc4e01c977ba71`) as direction, not as permission to broaden this implementation.
+- Reason: Establish an explainable decision signal using the existing entity needs and perception foundation without adding another world owner or behavior framework.
+- Consequence: The caller supplies already-resolved food, threat, pursuit, and area inputs. The policy does not sense threats, select targets from candidate sets, mutate the World, or execute navigation, fleeing movement, pursuit/combat, hunting, or territory behavior. Those execution systems remain deferred and must be scoped separately; existing temperament-driven roaming remains unchanged.
+- Revisit: When a later issue defines how these decisions connect to fixed-tick action execution, threat classification, target selection, and area ownership.

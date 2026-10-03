@@ -12,7 +12,7 @@ The domain scenario loads `data/species.json`, creates a new World, and spawns a
 
 - The creature temperament is `(boldness 0.3, curiosity 0.3, sociability 0.5)` and selects cautious roaming toward `(1, 0, 0)`.
 - The wolf temperament is `(boldness 0.85, curiosity 0.65, sociability 0.45)` and selects curious exploration toward `(5, 0, 0)`.
-- Capturing the creature succeeds once; repeat capture returns `AlreadyCaptive`, and an unknown creature ID returns `TargetNotFound` without changing the captive state.
+- Capturing the creature moves it from `Wild` to `Captured`; an explicit transition moves it to `Captive`, after which repeat capture returns `AlreadyCaptive`. An unknown creature ID returns `TargetNotFound` without changing its state.
 - An invalid captivity enum in a snapshot is rejected before replacing either entity or resetting active navigation/actions.
 - Loading the valid snapshot at simulation time `0.7` preserves both creature states and durable JSON. Transient trips/actions are canceled rather than restored.
 - Running the same fixed inputs and operations twice produces equal behavior results and serialized durable state.
