@@ -676,7 +676,8 @@ public partial class Main : Node3D
         _inspectorLabel.Text =
             $"ID: {entity.Id}\n" +
             $"Species: {species.DisplayName} ({species.BodyCategory}, {species.DietaryProfile})\n" +
-            $"Traits: boldness {temperament.Boldness:0.0}, curiosity {temperament.Curiosity:0.0}, sociability {temperament.Sociability:0.0}\n" +
+            $"Traits: boldness {temperament.Boldness:0.0}, aggression {temperament.Aggression:0.0}, fear {temperament.Fear:0.0}, " +
+            $"curiosity {temperament.Curiosity:0.0}, sociability {temperament.Sociability:0.0}, territoriality {temperament.Territoriality:0.0}\n" +
             $"Capabilities: {capabilities}\n" +
             $"Body: {bodyHealth}\n" +
             $"Captivity: {entity.CaptivityState}\n" +

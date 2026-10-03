@@ -87,7 +87,7 @@ public sealed class FoodSelectionServiceTests
         var world = new World();
         var entity = SpawnHungryEntity(world, "wood-eater");
         var species = LoadSpecies(
-            """[{"id":"wood-eater","movementSpeed":1,"hungerRate":0.2,"diet":["wood"],"canHaul":false,"temperament":{"boldness":0.5,"curiosity":0.5,"sociability":0.5}}]""",
+            """[{"id":"wood-eater","movementSpeed":1,"hungerRate":0.2,"diet":["wood"],"canHaul":false,"temperament":{"boldness":0.5,"aggression":0.5,"fear":0.5,"curiosity":0.5,"sociability":0.5,"territoriality":0.5}}]""",
             "wood-eater");
         var incompatible = CreateFoodSource("berries", Vector3.UnitX, (ItemIds.Food, 1));
         var compatible = CreateFoodSource("logpile", new Vector3(2, 0, 0), (ItemIds.Wood, 1));
@@ -226,7 +226,7 @@ public sealed class FoodSelectionServiceTests
         var entity = SpawnHungryEntity(world);
         var service = new FoodSelectionService(world);
         var woodOnlySpecies = LoadSpecies(
-            """[{"id":"human","movementSpeed":1,"hungerRate":0.2,"diet":["wood"],"canHaul":true,"temperament":{"boldness":0.5,"curiosity":0.5,"sociability":0.5}}]""",
+            """[{"id":"human","movementSpeed":1,"hungerRate":0.2,"diet":["wood"],"canHaul":true,"temperament":{"boldness":0.5,"aggression":0.5,"fear":0.5,"curiosity":0.5,"sociability":0.5,"territoriality":0.5}}]""",
             "human");
         var food = CreateFoodSource("food", Vector3.UnitX, amount: 1);
 
@@ -252,7 +252,7 @@ public sealed class FoodSelectionServiceTests
         var entity = SpawnHungryEntity(world);
         var service = new FoodSelectionService(world);
         var woodOnlySpecies = LoadSpecies(
-            """[{"id":"human","movementSpeed":1,"hungerRate":0.2,"diet":["wood"],"canHaul":true,"temperament":{"boldness":0.5,"curiosity":0.5,"sociability":0.5}}]""",
+            """[{"id":"human","movementSpeed":1,"hungerRate":0.2,"diet":["wood"],"canHaul":true,"temperament":{"boldness":0.5,"aggression":0.5,"fear":0.5,"curiosity":0.5,"sociability":0.5,"territoriality":0.5}}]""",
             "human");
 
         var waiting = service.TrySelect(entity, woodOnlySpecies, [], simulationTick: 0);
@@ -329,7 +329,7 @@ public sealed class FoodSelectionServiceTests
         var world = new World();
         var entity = SpawnHungryEntity(world);
         var species = LoadSpecies(
-            """[{"id":"wood-eater","movementSpeed":1,"hungerRate":0.2,"diet":["wood"],"canHaul":false,"temperament":{"boldness":0.5,"curiosity":0.5,"sociability":0.5}}]""",
+            """[{"id":"wood-eater","movementSpeed":1,"hungerRate":0.2,"diet":["wood"],"canHaul":false,"temperament":{"boldness":0.5,"aggression":0.5,"fear":0.5,"curiosity":0.5,"sociability":0.5,"territoriality":0.5}}]""",
             "wood-eater");
         var service = new FoodSelectionService(world);
 

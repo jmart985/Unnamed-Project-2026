@@ -8,7 +8,7 @@ public sealed class IndividualTemperamentTests
     [Fact]
     public void TemperamentVariesByStableEntityIdWithinTraitBounds()
     {
-        var species = new TemperamentProfile(0.5, 0.4, 0.6);
+        var species = new TemperamentProfile(0.5, 0.3, 0.4, 0.4, 0.6, 0.2);
 
         var first = IndividualTemperament.ForEntity("entity-000001", species);
         var repeated = IndividualTemperament.ForEntity("entity-000001", species);
@@ -17,7 +17,11 @@ public sealed class IndividualTemperamentTests
         Assert.Equal(first, repeated);
         Assert.NotEqual(first, second);
         Assert.All(
-            new[] { first.Boldness, first.Curiosity, first.Sociability, second.Boldness, second.Curiosity, second.Sociability },
+            new[]
+            {
+                first.Boldness, first.Aggression, first.Fear, first.Curiosity, first.Sociability, first.Territoriality,
+                second.Boldness, second.Aggression, second.Fear, second.Curiosity, second.Sociability, second.Territoriality
+            },
             trait => Assert.InRange(trait, 0, 1));
     }
 

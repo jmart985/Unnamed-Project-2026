@@ -14,8 +14,11 @@ public static class IndividualTemperament
 
         return new TemperamentProfile(
             Adjust(speciesTemperament.Boldness, entityId, "boldness"),
+            Adjust(speciesTemperament.Aggression, entityId, "aggression"),
+            Adjust(speciesTemperament.Fear, entityId, "fear"),
             Adjust(speciesTemperament.Curiosity, entityId, "curiosity"),
-            Adjust(speciesTemperament.Sociability, entityId, "sociability"));
+            Adjust(speciesTemperament.Sociability, entityId, "sociability"),
+            Adjust(speciesTemperament.Territoriality, entityId, "territoriality"));
     }
 
     private static double Adjust(double baseline, string entityId, string trait)
