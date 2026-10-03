@@ -28,7 +28,8 @@ public sealed class NearFarTransitionService
     {
         if (!_farByRegion.Remove(regionId, out var record)) return [];
         var entities = new List<EntityRecord>(record.Count);
-        for (var index = 0; index < record.Count; index++) entities.Add(_world.SpawnEntity(record.SpeciesId, position, record.AverageSatiety));
+        var species = _catalog.GetRequired(record.SpeciesId);
+        for (var index = 0; index < record.Count; index++) entities.Add(_world.SpawnEntity(species, position, record.AverageSatiety));
         _nearByRegion[regionId] = entities.Select(entity => entity.Id).ToList();
         return entities;
     }

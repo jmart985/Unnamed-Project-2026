@@ -225,7 +225,7 @@ public static class WorldSnapshotSerializer
             state.Reset();
         }
 
-        target.ApplySnapshot(snapshot);
+        target.ApplySnapshot(snapshot, speciesCatalog);
         return snapshot.SimulationTime;
     }
 

@@ -52,6 +52,10 @@ public sealed class NewGameSessionTests
         {
             var species = GetSpeciesCatalog().GetRequired(speciesId);
             var creature = starterCreatures.Single(entity => entity.SpeciesId == speciesId);
+            Assert.Equal(species.MaxHealth, creature.BaseStats.MaxHealth);
+            Assert.Equal(species.MovementSpeed, creature.BaseStats.MovementSpeed);
+            Assert.Equal(species.Strength, creature.BaseStats.Strength);
+            Assert.Equal(species.Endurance, creature.BaseStats.Endurance);
             Assert.Contains(session.World.FoodSources, source =>
                 source.Contents.Counts.Any(item => item.Value > 0 && species.Eats(item.Key))
                 && Vector3.DistanceSquared(creature.Position, source.Position)
