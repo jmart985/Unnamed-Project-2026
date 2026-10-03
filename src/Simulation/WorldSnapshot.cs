@@ -15,7 +15,8 @@ public sealed record WorldSnapshot(
     IReadOnlyList<RelationshipSnapshot> Relationships,
     int? SessionSeed,
     string? PlayerEntityId,
-    PlayerCharacterProfile? PlayerProfile);
+    PlayerCharacterProfile? PlayerProfile,
+    IReadOnlyList<string>? FactionIds = null);
 
 public sealed record RelationshipSnapshot(
     string ObserverEntityId,
@@ -31,7 +32,8 @@ public sealed record EntitySnapshot(
     Vector3 Position,
     double Satiety,
     IReadOnlyDictionary<string, int> Inventory,
-    CreatureCaptivityState CaptivityState = CreatureCaptivityState.Wild);
+    CreatureCaptivityState CaptivityState = CreatureCaptivityState.Wild,
+    string? AllegianceFactionId = null);
 
 public sealed record FoodSourceSnapshot(
     string Id,
@@ -55,8 +57,9 @@ public sealed record ResourceContainerSnapshot(
 
 public static class WorldSnapshotSerializer
 {
-    private const int PreviousSchemaVersion = 4;
-    public const int CurrentSchemaVersion = 5;
+    private const int LegacySchemaVersion = 4;
+    private const int PreviousSchemaVersion = 5;
+    public const int CurrentSchemaVersion = 6;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -81,7 +84,8 @@ public static class WorldSnapshotSerializer
                 entity.Position,
                 entity.Satiety,
                 new Dictionary<string, int>(entity.Inventory, StringComparer.Ordinal),
-                entity.CaptivityState))
+                entity.CaptivityState,
+                entity.AllegianceFactionId))
             .ToArray();
         var foodSources = world.FoodSources
             .Select(source => new FoodSourceSnapshot(
@@ -114,7 +118,8 @@ public static class WorldSnapshotSerializer
             relationships,
             world.SessionSeed,
             world.PlayerEntityId,
-            world.PlayerProfile);
+            world.PlayerProfile,
+            world.FactionIds.ToArray());
     }
 
     public static string Serialize(World world, double simulationTime)
@@ -140,9 +145,13 @@ public static class WorldSnapshotSerializer
             throw new InvalidDataException("Snapshot JSON is malformed.", exception);
         }
 
-        if (snapshot.SchemaVersion == PreviousSchemaVersion)
+        if (snapshot.SchemaVersion is LegacySchemaVersion or PreviousSchemaVersion)
         {
-            return snapshot with { SchemaVersion = CurrentSchemaVersion };
+            return snapshot with
+            {
+                SchemaVersion = CurrentSchemaVersion,
+                FactionIds = snapshot.FactionIds ?? Array.Empty<string>()
+            };
         }
 
         if (snapshot.SchemaVersion != CurrentSchemaVersion)
@@ -202,6 +211,25 @@ public static class WorldSnapshotSerializer
             throw new InvalidDataException("Snapshot entity, resource, and relationship lists are required.");
         }
 
+        if (snapshot.FactionIds is null)
+        {
+            throw new InvalidDataException("Snapshot faction IDs are required.");
+        }
+
+        var factionIds = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var factionId in snapshot.FactionIds)
+        {
+            if (!World.IsValidFactionId(factionId))
+            {
+                throw new InvalidDataException("Snapshot faction IDs must be valid lowercase faction IDs.");
+            }
+
+            if (!factionIds.Add(factionId))
+            {
+                throw new InvalidDataException($"Snapshot contains duplicate faction ID '{factionId}'.");
+            }
+        }
+
         var entityIds = new HashSet<string>(StringComparer.Ordinal);
         var highestEntityId = 0L;
         foreach (var entity in snapshot.Entities)
@@ -235,6 +263,12 @@ public static class WorldSnapshotSerializer
             {
                 throw new InvalidDataException(
                     $"Snapshot entity '{entity.Id}' has an invalid creature captivity state.");
+            }
+
+            if (entity.AllegianceFactionId is { } factionId && !factionIds.Contains(factionId))
+            {
+                throw new InvalidDataException(
+                    $"Snapshot entity '{entity.Id}' references unknown faction '{factionId}'.");
             }
 
             ValidateInventory(entity.Inventory, target.InventoryCapacity, entity.Id);
