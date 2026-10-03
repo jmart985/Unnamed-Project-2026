@@ -1,7 +1,7 @@
 [
-  { "id": "food", "coinValue": 1 },
-  { "id": "fruit", "coinValue": 2 },
-  { "id": "meat", "coinValue": 3 },
-  { "id": "plant", "coinValue": 1 },
-  { "id": "wood", "coinValue": 2 }
+  { "resourceId": "food", "coinValue": 2 },
+  { "resourceId": "fruit", "coinValue": 3 },
+  { "resourceId": "meat", "coinValue": 4 },
+  { "resourceId": "plant", "coinValue": 1 },
+  { "resourceId": "wood", "coinValue": 2 }
 ]
