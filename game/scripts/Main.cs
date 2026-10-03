@@ -38,6 +38,7 @@ public partial class Main : Node3D
     private SpeciesCatalog _speciesCatalog = null!;
     private RelationshipEventCatalog _relationshipEventCatalog = null!;
     private PlayerCommandBoundary? _playerCommands;
+    private PlayerFoodConsumptionService? _playerFoodConsumption;
     private MeshInstance3D _map = null!;
     private MeshInstance3D _obstacle = null!;
     private NavigationRegion3D _navigationRegion = null!;
@@ -178,6 +179,15 @@ public partial class Main : Node3D
             return;
         }
 
+        if (Input.IsActionJustPressed(ControllerActions.Eat))
+        {
+            SyncPlayerPosition();
+            var result = _playerCommands?.Execute(new PlayerCommand(PlayerCommandKind.Eat));
+            _lastActionMessage = result?.Reason ?? "Player food action is not initialized.";
+            UpdateStatus();
+            return;
+        }
+
         if (Input.IsActionPressed(ControllerActions.Attack))
         {
             // Combat is an immediate world action; it must not open a menu.
@@ -307,10 +317,12 @@ public partial class Main : Node3D
         ClearEntityViews();
         ClearResourceMarkers();
         _world = session.World;
+        _playerFoodConsumption = new PlayerFoodConsumptionService(_world, _speciesCatalog);
         _playerCommands = new PlayerCommandBoundary(
             _world,
             _clock,
-            new CreatureGreetingService(_world, _speciesCatalog, _relationshipEventCatalog));
+            new CreatureGreetingService(_world, _speciesCatalog, _relationshipEventCatalog),
+            _playerFoodConsumption);
         _playerProfile = profile;
         _sessionSeed = seed;
 
@@ -372,6 +384,7 @@ public partial class Main : Node3D
     private void ResetTransientServices()
     {
         _foodConsumption?.Reset();
+        _playerFoodConsumption?.Reset();
         _wandering?.Reset();
         _woodHauling?.Reset();
         _wander?.Reset();
@@ -610,17 +623,24 @@ public partial class Main : Node3D
         var totalWood = groundWood + carriedWood + storedWood;
         var foodConsumption = _foodConsumption
             ?? throw new InvalidOperationException("Food simulation is not initialized for the active session.");
+        var consumedFood = foodConsumption.FoodUnitsConsumed + (_playerFoodConsumption?.FoodUnitsConsumed ?? 0);
+        var playerNeedsStatus = _world.PlayerEntityId is { } playerId
+            && _world.TryGetEntity(playerId, out var player)
+            && player is not null
+                ? $"Player satiety: {player.Satiety:0.0}/100 ({(player.Needs.IsStarving ? "Starving" : player.Needs.IsHungry ? "Hungry" : "Satisfied")})\n"
+                : string.Empty;
         var playerStatus = _world.PlayerProfile is { } profile
             ? $"Player: {profile.Name} ({profile.Height}, {profile.BodyType}, {profile.Sex})\n"
             : string.Empty;
         _statusLabel.Text =
             $"Simulation time: {_clock.SimulationTime:0.0}s\nState: {state}\nSpeed: {(int)_clock.Speed}x\n" +
             playerStatus +
-            $"Food: {foodConsumption.FoodUnitsRemaining} remaining, {foodConsumption.FoodUnitsConsumed} consumed\n" +
+            playerNeedsStatus +
+            $"Food: {foodConsumption.FoodUnitsRemaining} remaining, {consumedFood} consumed\n" +
             $"Wood: ground {groundWood}, carried {carriedWood}, stored {storedWood} (total {totalWood})\n" +
             $"Save/load: {_saveLoadStatus}\n" +
 
-            $"Menu: {_menuState.ActiveMenu?.ToString() ?? "closed"} | WASD move, Space jump, LMB combat, E collect, G greet, I inventory, Tab settlement, Esc close\n" +
+            $"Menu: {_menuState.ActiveMenu?.ToString() ?? "closed"} | WASD move, Space jump, LMB combat, E collect, H eat, G greet, I inventory, Tab settlement, Esc close\n" +
             $"Last action: {_lastActionMessage}\n" +
             "Select an entity; F5 route, F6 unreachable, F7 cancel, F8 remove goal";
         _pauseButton.Text = _clock.IsPaused ? "Resume" : "Pause";
@@ -722,6 +742,7 @@ public partial class Main : Node3D
                 json,
                 _speciesCatalog,
                 _foodConsumption!,
+                _playerFoodConsumption!,
                 _wandering!,
                 _woodHauling!,
                 _wander!);

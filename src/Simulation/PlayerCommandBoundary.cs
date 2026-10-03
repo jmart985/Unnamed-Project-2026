@@ -2,7 +2,7 @@ using System.Numerics;
 
 namespace Simulation;
 
-public enum PlayerCommandKind { Pause, Resume, SetSpeed, SelectEntity, Move, Interact }
+public enum PlayerCommandKind { Pause, Resume, SetSpeed, SelectEntity, Move, Interact, Eat }
 public enum PlayerCommandResultCode
 {
     Accepted,
@@ -12,7 +12,8 @@ public enum PlayerCommandResultCode
     InvalidSpeed,
     InteractionRejected,
     UnsupportedInteraction,
-    OutOfRange
+    OutOfRange,
+    FoodRejected
 }
 
 public sealed record PlayerCommand(
@@ -29,15 +30,18 @@ public sealed class PlayerCommandBoundary
     private readonly World _world;
     private readonly SimulationClock _clock;
     private readonly CreatureGreetingService? _creatureGreeting;
+    private readonly PlayerFoodConsumptionService? _playerFoodConsumption;
 
     public PlayerCommandBoundary(
         World world,
         SimulationClock clock,
-        CreatureGreetingService? creatureGreeting = null)
+        CreatureGreetingService? creatureGreeting = null,
+        PlayerFoodConsumptionService? playerFoodConsumption = null)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _creatureGreeting = creatureGreeting;
+        _playerFoodConsumption = playerFoodConsumption;
     }
 
     public string? SelectedEntityId { get; private set; }
@@ -85,6 +89,16 @@ public sealed class PlayerCommandBoundary
                         new(PlayerCommandResultCode.OutOfRange, greeting.TargetEntityId, Reason: greeting.Reason),
                     _ => new(PlayerCommandResultCode.InteractionRejected, greeting.TargetEntityId, Reason: greeting.Reason)
                 };
+            case PlayerCommandKind.Eat:
+                if (_playerFoodConsumption is null)
+                {
+                    return new(PlayerCommandResultCode.InvalidCommand, Reason: "Player food action is not initialized.");
+                }
+
+                var eating = _playerFoodConsumption.EatNearby();
+                return eating.Status == PlayerFoodConsumptionStatus.Ate
+                    ? new(PlayerCommandResultCode.Accepted, eating.Source?.Id, Reason: eating.Reason)
+                    : new(PlayerCommandResultCode.FoodRejected, eating.Source?.Id, Reason: eating.Reason);
             default:
                 return new(PlayerCommandResultCode.InvalidCommand, Reason: "Unknown command.");
         }
