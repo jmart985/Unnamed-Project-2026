@@ -183,11 +183,13 @@ public static class WorldSnapshotSerializer
             {
                 SchemaVersion = CurrentSchemaVersion,
                 FactionIds = snapshot.FactionIds ?? Array.Empty<string>(),
-                FactionReputations = snapshot.FactionReputations ?? Array.Empty<FactionReputationSnapshot>(),
-                FactionHostilities = snapshot.FactionHostilities ?? Array.Empty<FactionHostilitySnapshot>(),
-                Stockpiles = snapshot.Stockpiles
-                    .Select(stockpile => stockpile with { FactionOwnerId = null })
-                    .ToArray()
+                FactionReputations = snapshot.SchemaVersion == FactionRelationsSchemaVersion
+                    ? snapshot.FactionReputations
+                    : Array.Empty<FactionReputationSnapshot>(),
+                FactionHostilities = snapshot.SchemaVersion == FactionRelationsSchemaVersion
+                    ? snapshot.FactionHostilities
+                    : Array.Empty<FactionHostilitySnapshot>(),
+                Stockpiles = snapshot.Stockpiles?.Select(stockpile => stockpile with { FactionOwnerId = null }).ToArray()!
             };
         }
 
