@@ -118,9 +118,21 @@ public sealed class World
         return pile;
     }
 
-    public ResourceLocation AddStockpile(string id, Vector3 position, ResourceContainer contents)
+    public ResourceLocation AddStockpile(
+        string id,
+        Vector3 position,
+        ResourceContainer contents,
+        string? factionOwnerId = null)
     {
+        if (factionOwnerId is not null && !_factionIds.Contains(factionOwnerId))
+        {
+            throw new ArgumentException(
+                $"Stockpile faction owner '{factionOwnerId}' is not defined in this world.",
+                nameof(factionOwnerId));
+        }
+
         var stockpile = new ResourceLocation(id, position, contents);
+        stockpile.FactionOwnerId = factionOwnerId;
         AddTargetId(stockpile.Id, nameof(id));
         _stockpiles.Add(stockpile);
         return stockpile;
@@ -172,9 +184,33 @@ public sealed class World
             return false;
         }
 
+        stockpile.FactionOwnerId = null;
         _stockpiles.Remove(stockpile);
         Reservations.RemoveTarget(stockpile.Id);
         return true;
+    }
+
+    public FactionOwnershipResult SetStockpileFactionOwner(string? stockpileId, string? factionId)
+    {
+        var stockpile = FindTarget(_stockpiles, stockpileId);
+        if (stockpile is null)
+        {
+            return FactionOwnershipResult.ContainerNotFound;
+        }
+
+        if (factionId is null)
+        {
+            stockpile.FactionOwnerId = null;
+            return FactionOwnershipResult.Removed;
+        }
+
+        if (!_factionIds.Contains(factionId))
+        {
+            return FactionOwnershipResult.UnknownFaction;
+        }
+
+        stockpile.FactionOwnerId = factionId;
+        return FactionOwnershipResult.Assigned;
     }
 
     public EntityRecord SpawnEntity(
@@ -493,6 +529,11 @@ public sealed class World
 
     public void Reset()
     {
+        foreach (var stockpile in _stockpiles)
+        {
+            stockpile.FactionOwnerId = null;
+        }
+
         foreach (var entity in _entities.Values)
         {
             entity.Actions.Cancel();
@@ -579,7 +620,11 @@ public sealed class World
 
         foreach (var stockpile in snapshot.Stockpiles)
         {
-            AddStockpile(stockpile.Id, stockpile.Position, RestoreContainer(stockpile.Contents));
+            AddStockpile(
+                stockpile.Id,
+                stockpile.Position,
+                RestoreContainer(stockpile.Contents),
+                stockpile.FactionOwnerId);
         }
 
         foreach (var savedRelationship in snapshot.Relationships)

@@ -31,6 +31,14 @@ public enum FactionHostilityResult
     SameFaction
 }
 
+public enum FactionOwnershipResult
+{
+    Assigned,
+    Removed,
+    ContainerNotFound,
+    UnknownFaction
+}
+
 public sealed record FactionReputationState(
     string EntityId,
     string FactionId,

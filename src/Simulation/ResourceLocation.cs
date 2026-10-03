@@ -26,4 +26,5 @@ public sealed class ResourceLocation
     public string Id { get; }
     public Vector3 Position { get; }
     public ResourceContainer Contents { get; }
+    public string? FactionOwnerId { get; internal set; }
 }
