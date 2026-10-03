@@ -39,6 +39,7 @@ public sealed class EntityRecord
     public SkillSet Skills { get; }
     public ActionLifecycle Actions { get; }
     public CreatureCaptivityState CaptivityState { get; internal set; }
+    public string? AllegianceFactionId { get; internal set; }
     public double Satiety => Needs.Satiety;
     public IReadOnlyDictionary<string, int> Inventory => _inventoryView;
     public int InventoryCapacity { get; }
