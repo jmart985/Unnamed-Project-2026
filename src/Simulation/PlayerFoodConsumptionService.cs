@@ -62,45 +62,28 @@ public sealed class PlayerFoodConsumptionService : ITransientSimulationState
             return new(PlayerFoodConsumptionStatus.InvalidSpecies, Reason: "The player's species is unavailable.");
         }
 
-        var compatibleSources = _world.FoodSources
+        var candidates = _world.FoodSources
             .SelectMany(source => species.Diet.Select((itemId, index) => new
             {
                 Source = source,
                 ItemId = itemId,
                 DietOrder = index,
                 DistanceSquared = DistanceSquared(player.Position, source.Position),
-                Count = source.Contents.Counts.GetValueOrDefault(itemId),
                 Available = _world.Reservations.GetAvailableResourceQuantity(source.Contents, itemId)
             }))
-            .Where(candidate => candidate.Count > 0)
+            .Where(candidate => candidate.Available > 0)
             .OrderBy(candidate => candidate.DistanceSquared)
             .ThenBy(candidate => candidate.Source.Id, StringComparer.Ordinal)
             .ThenBy(candidate => candidate.DietOrder)
             .ToArray();
-        var nearbyCandidates = compatibleSources
-            .Where(candidate =>
-                candidate.Available > 0
-                && candidate.DistanceSquared <= _maximumReach * _maximumReach)
-            .ToArray();
 
-        if (nearbyCandidates.Length == 0)
+        if (candidates.Length == 0)
         {
-            if (compatibleSources.Any(candidate =>
-                    candidate.DistanceSquared <= _maximumReach * _maximumReach)
-                || compatibleSources.Length > 0 && !compatibleSources.Any(candidate => candidate.Available > 0))
+            if (HasCompatibleFood(species))
             {
                 return new(
                     PlayerFoodConsumptionStatus.FoodUnavailable,
                     Reason: "Compatible food is reserved for another action.");
-            }
-
-            if (compatibleSources.Any(candidate => candidate.Available > 0))
-            {
-                var nearest = compatibleSources.First(candidate => candidate.Available > 0);
-                return new(
-                    PlayerFoodConsumptionStatus.OutOfRange,
-                    nearest.Source,
-                    "Move closer to a compatible food source.");
             }
 
             if (_world.FoodSources.Any(source => source.Contents.Counts.Keys.Any(ItemIds.IsEdibleFood)))
@@ -113,7 +96,14 @@ public sealed class PlayerFoodConsumptionService : ITransientSimulationState
             return new(PlayerFoodConsumptionStatus.NoFoodAvailable, Reason: "No food is available.");
         }
 
-        var selected = nearbyCandidates[0];
+        var selected = candidates[0];
+        if (selected.DistanceSquared > _maximumReach * _maximumReach)
+        {
+            return new(
+                PlayerFoodConsumptionStatus.OutOfRange,
+                selected.Source,
+                "Move closer to a compatible food source.");
+        }
 
         var nextConsumedCount = checked(FoodUnitsConsumed + 1);
         var actionId = $"player-eat-{player.Id}-{checked(++_nextActionId):D6}";
@@ -161,6 +151,13 @@ public sealed class PlayerFoodConsumptionService : ITransientSimulationState
     {
         FoodUnitsConsumed = 0;
         _nextActionId = 0;
+    }
+
+    private bool HasCompatibleFood(SpeciesDefinition species)
+    {
+        return _world.FoodSources.Any(source => species.Diet.Any(itemId =>
+            source.Contents.TryGetCount(itemId, out var count)
+            && count > 0));
     }
 
     private static double DistanceSquared(Vector3 first, Vector3 second)
