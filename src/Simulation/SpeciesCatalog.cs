@@ -211,12 +211,6 @@ public sealed class SpeciesCatalog
                     $"Species '{speciesId}' references unknown diet item ID '{itemId}'.");
             }
 
-            if (!ItemIds.IsEdibleFood(itemId))
-            {
-                throw new InvalidDataException(
-                    $"Species '{speciesId}' references non-food diet item ID '{itemId}'.");
-            }
-
             if (!uniqueItems.Add(itemId))
             {
                 throw new InvalidDataException(

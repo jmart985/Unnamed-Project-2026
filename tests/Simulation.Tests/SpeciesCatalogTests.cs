@@ -168,15 +168,6 @@ public sealed class SpeciesCatalogTests
     }
 
     [Fact]
-    public void RejectsKnownNonFoodItemsInSpeciesDiets()
-    {
-        var exception = Assert.Throws<InvalidDataException>(() =>
-            Load("""[{"id":"creature","movementSpeed":2,"hungerRate":0.2,"diet":["coin"],"canHaul":false,"temperament":{"boldness":0.5,"aggression":0.5,"fear":0.5,"curiosity":0.5,"sociability":0.5,"territoriality":0.5}}]"""));
-
-        Assert.Contains("references non-food diet item ID 'coin'", exception.Message);
-    }
-
-    [Fact]
     public void RejectsDuplicateSpeciesIds()
     {
         var exception = Assert.Throws<InvalidDataException>(() =>
