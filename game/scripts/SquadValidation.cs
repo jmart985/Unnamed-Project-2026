@@ -7,7 +7,10 @@ namespace UnnamedProject2026;
 // Opt-in engine integration scenario. Uses the same button handlers and real navigation as play.
 public partial class Main
 {
-    private async void RunSquadValidation()
+    private void RunSquadValidation() => RunGameValidation(false);
+    private void RunFirstGameValidation() => RunGameValidation(true);
+
+    private async void RunGameValidation(bool firstGame)
     {
         try
         {
@@ -16,6 +19,7 @@ public partial class Main
             _playerCharacter.SetPhysicsProcess(false);
             await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
             await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
+            if (firstGame) await ValidatePlayerLoop();
             var ids = _world.Entities.Where(e => e.SpeciesId == "human" && e.Id != _world.PlayerEntityId).Take(2).Select(e => e.Id).ToArray();
             foreach (var id in ids)
             {
@@ -23,8 +27,11 @@ public partial class Main
                 PressSquadButton("Add selected");
             }
             Require(_world.SquadMemberIds.Count == 2, "two members added by UI");
+            PressSquadButton("Add selected");
+            Require(_world.SquadMemberIds.Count == 2, "membership does not duplicate");
             _squadX.Value = 4;
             _squadZ.Value = 3;
+            PressSquadButton("Move to");
             PressSquadButton("Move to");
             await MoveSquadTo(new NumericsVector3(4, 0, 3), ids);
             Require(_inspectorLabel.Text.Contains("Squad member: True"), "inspector membership");
@@ -42,9 +49,31 @@ public partial class Main
             for (var i = 0; i < 10; i++) AdvanceSimulationTick(0.1);
             Require(stopped.SequenceEqual(ids.Select(id => _world.Entities.Single(e => e.Id == id).Position)), "stop holds positions");
             Require(ids.All(id => _entityViews[id].NavigationAdapter is GodotNavigationAdapter { HasActiveRequest: false }), "stop cancels navigation");
+            if (firstGame)
+            {
+                var beforeInvalidOrder = WorldSnapshotSerializer.Serialize(_world, _clock.SimulationTime);
+                Require(_squad!.Execute(SquadOrderKind.MoveTo, new System.Numerics.Vector3(float.NaN, 0, 0)).Code == SquadResult.InvalidTarget, "invalid squad target rejection");
+                Require(_squad.Order == SquadOrderKind.Stop && WorldSnapshotSerializer.Serialize(_world, _clock.SimulationTime) == beforeInvalidOrder, "invalid order preserves state");
+            }
             // Avoid the player's save slot; exercise the same serializer/services/presentation path in memory.
             var json = WorldSnapshotSerializer.Serialize(_world, _clock.SimulationTime);
             PressSquadButton("Follow player");
+            if (firstGame)
+            {
+                var invalid = System.Text.Json.Nodes.JsonNode.Parse(json)!;
+                invalid["SquadMemberIds"] = new System.Text.Json.Nodes.JsonArray("missing");
+                try
+                {
+                    WorldSnapshotSerializer.Load(_world, invalid.ToJsonString(), _speciesCatalog, _squad!);
+                    throw new InvalidOperationException("invalid snapshot accepted");
+                }
+                catch (InvalidDataException) { }
+                Require(WorldSnapshotSerializer.Serialize(_world, _clock.SimulationTime) == json, "invalid load preserves World");
+                // Rebuild from a genuinely different new session before restoring the saved state.
+                StartSession(PlayerCharacterProfile.Create("Reset session"), 43, "Reset before load.");
+                _clock.SetPaused(true);
+                _playerCharacter.SetPhysicsProcess(false);
+            }
             var time = WorldSnapshotSerializer.Load(_world, json, _speciesCatalog, _foodConsumption!, _wandering!, _woodHauling!, _wander!, _squad!);
             _clock.Restore(time);
             RebuildPresentationFromWorld();
@@ -54,6 +83,13 @@ public partial class Main
             Require(_world.SquadMemberIds.SequenceEqual(ids.Order(StringComparer.Ordinal)), "membership round trip");
             Require(_squad!.Order == SquadOrderKind.None, "orders clear on load");
             Require(_inspectorLabel.Text.Contains("Squad member: True | Order: None"), "loaded inspector");
+            if (firstGame)
+            {
+                Require(WorldSnapshotSerializer.Serialize(_world, _clock.SimulationTime) == json, "full durable round trip");
+                Require(_world.Entities.All(entity => entity.Actions.Current is null), "no stale actions after load");
+                Require(FoodTotal() == 399 && WoodTotal() == 100, "food/wood conservation after load");
+                GD.Print("FIRST GAME VALIDATION PASSED: player movement/eating, squad orders, directed greeting, rejection, reset/load, food 399, wood 100.");
+            }
             var screenshotArgument = OS.GetCmdlineUserArgs().FirstOrDefault(argument => argument.StartsWith("--squad-screenshot=", StringComparison.Ordinal));
             if (screenshotArgument is not null)
             {
@@ -66,12 +102,12 @@ public partial class Main
                 var inspectorPath = Path.Combine(Path.GetDirectoryName(screenshotArgument["--squad-screenshot=".Length..])!, "squad-inspector.png");
                 Require(GetViewport().GetTexture().GetImage().SavePng(inspectorPath) == Error.Ok, "inspector screenshot");
             }
-            GD.Print($"SQUAD VALIDATION PASSED: {string.Join(", ", ids)}; move/follow/stop, authoritative positions, inspector, schema 9 load.");
+            if (!firstGame) GD.Print($"SQUAD VALIDATION PASSED: {string.Join(", ", ids)}; move/follow/stop, authoritative positions, inspector, schema 9 load.");
             GetTree().Quit();
         }
         catch (Exception exception)
         {
-            GD.PushError($"SQUAD VALIDATION FAILED: {exception}");
+            GD.PushError($"{(firstGame ? "FIRST GAME" : "SQUAD")} VALIDATION FAILED: {exception}");
             GetTree().Quit(1);
         }
     }
