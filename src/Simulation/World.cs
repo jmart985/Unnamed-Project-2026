@@ -705,6 +705,9 @@ public sealed class World
         }
 
         entity.Actions.Cancel();
+        foreach (var structure in _structures)
+        foreach (var bed in structure.Beds)
+            if (bed.OccupantId == id) { bed.OccupantId = null; bed.IsOccupied = false; }
         Reservations.ReleaseForEntity(id);
         _squadMembers.Remove(id);
         _workSchedules.Remove(id);

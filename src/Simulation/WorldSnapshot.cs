@@ -295,7 +295,11 @@ public static class WorldSnapshotSerializer
             return snapshot with { SchemaVersion = CurrentSchemaVersion, Structures = Array.Empty<StructureSnapshot>(), ConstructionSites = Array.Empty<ConstructionSiteSnapshot>() };
 
         if (snapshot.SchemaVersion == ConstructionSchemaVersion)
-            return snapshot with { SchemaVersion = CurrentSchemaVersion, Structures = snapshot.Structures?.Select(structure => structure with { Beds = Array.Empty<BedSnapshot>() }).ToArray() ?? Array.Empty<StructureSnapshot>() };
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, Structures = snapshot.Structures?.Select(structure => structure with
+            {
+                Beds = structure.Beds is { Count: > 0 } ? structure.Beds : structure.Type == StructureType.Hut
+                    ? new[] { new BedSnapshot($"{structure.Id}-bed-1", 1.0, null) } : Array.Empty<BedSnapshot>()
+            }).ToArray() ?? Array.Empty<StructureSnapshot>() };
 
         if (snapshot.SchemaVersion != CurrentSchemaVersion)
         {
@@ -534,6 +538,25 @@ public static class WorldSnapshotSerializer
             if (structure is null || string.IsNullOrWhiteSpace(structure.Id) || !foodSourceIds.Add(structure.Id))
                 throw new InvalidDataException("Snapshot contains an invalid or duplicate structure.");
             ValidatePosition(structure.Position, $"structure '{structure.Id}' position");
+            var bedIds = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var bed in structure.Beds ?? Array.Empty<BedSnapshot>())
+            {
+                if (bed is null || string.IsNullOrWhiteSpace(bed.Id) || !bedIds.Add(bed.Id)
+                    || bed.RecoveryRateMultiplier <= 0 || !double.IsFinite(bed.RecoveryRateMultiplier)
+                    || (bed.OccupantId is not null && !entityIds.Contains(bed.OccupantId)))
+                    throw new InvalidDataException($"Structure '{structure.Id}' contains an invalid bed.");
+            }
+        }
+        var occupiedBeds = snapshot.Structures.SelectMany(structure => structure.Beds ?? Array.Empty<BedSnapshot>())
+            .Where(bed => bed.OccupantId is not null).ToArray();
+        if (occupiedBeds.GroupBy(bed => bed.OccupantId!, StringComparer.Ordinal).Any(group => group.Count() != 1))
+            throw new InvalidDataException("Snapshot bed occupancy must reference each sleeper at most once.");
+        foreach (var entity in snapshot.Entities)
+        {
+            if (entity.SleepState == SleepState.Sleeping && (entity.BedId is null || !occupiedBeds.Any(bed => bed.Id == entity.BedId && bed.OccupantId == entity.Id)))
+                throw new InvalidDataException($"Sleeping entity '{entity.Id}' must reference its occupied bed.");
+            if (entity.SleepState != SleepState.Sleeping && entity.BedId is not null)
+                throw new InvalidDataException($"Awake entity '{entity.Id}' cannot retain a bed assignment.");
         }
         foreach (var site in snapshot.ConstructionSites)
         {
