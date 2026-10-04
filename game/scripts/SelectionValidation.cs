@@ -35,12 +35,12 @@ public partial class Main
             _world.AddStockpile("selection-stock", new(5, 0, -12), stock);
             ClearResourceMarkers(); RebuildResourceMarkersFromWorld();
             await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
-            Require(VisibleWorldTargets().Count == 5, "five visible gameplay targets, player and hidden entities excluded");
+            Require(VisibleWorldTargets().Count == 6, "six visible gameplay targets, including farm, with player and hidden entities excluded");
             var snapshot = WorldSnapshotSerializer.Serialize(_world, _clock.SimulationTime);
             var strikes = 0; _playerCharacter.StrikeReleased += (_, _) => strikes++;
             var seen = new HashSet<WorldTarget>();
             WorldTarget? first = null;
-            for (var index = 0; index < 5; index++)
+            for (var index = 0; index < 6; index++)
             {
                 SendMenuKey(Key.T);
                 Require(_selectedTarget is not null && seen.Add(_selectedTarget), "cycle selects each visible target once");
@@ -103,6 +103,8 @@ public partial class Main
             _world.TryRemoveFoodSource("selection-food"); UpdateWorldSelection();
             Require(_selectedTarget is null && !_targetRing.Visible, "removed resource clears selection");
             foreach (var view in _entityViews.Values) view.Visible = false;
+            _farmView.Visible = false;
+            _workbench.Visible = false;
             _world.TryRemoveResourcePile("selection-wood"); _world.TryRemoveStockpile("selection-stock");
             SendMenuKey(Key.T);
             Require(_selectedTarget is null && _lastActionMessage.Contains("No visible targets"), "no-target case clears safely");

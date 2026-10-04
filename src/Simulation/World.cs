@@ -845,6 +845,17 @@ public sealed class World
             }
         }
 
+        foreach (var saved in snapshot.Farms!)
+        {
+            var farm = AddFarm(saved.Id, saved.Position);
+            foreach (var savedPlot in saved.Plots)
+            {
+                var plot = new FarmPlot(savedPlot.Id, savedPlot.Capacity);
+                plot.Restore(savedPlot.CropId is null ? null : SettlementCrops.GetRequired(savedPlot.CropId), savedPlot.Growth);
+                farm.AddPlot(plot);
+            }
+        }
+
         foreach (var savedRelationship in snapshot.Relationships)
         {
             // Saved totals are authoritative, including explicit zero/betrayed bonds.

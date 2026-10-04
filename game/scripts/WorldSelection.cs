@@ -5,7 +5,7 @@ namespace UnnamedProject2026;
 
 public partial class Main
 {
-    private enum TargetKind { Entity, Food, ResourcePile, Stockpile, Workstation }
+    private enum TargetKind { Entity, Food, ResourcePile, Stockpile, Workstation, Farm }
     private sealed record WorldTarget(TargetKind Kind, string Id);
     private sealed record TargetView(WorldTarget Target, Node3D Node, Aabb Bounds, Aabb[] Parts, Vector3[] Samples)
     {
@@ -51,6 +51,7 @@ public partial class Main
         TargetKind.ResourcePile => _world.ResourcePiles.Any(pile => pile.Id == target.Id),
         TargetKind.Stockpile => _world.Stockpiles.Any(pile => pile.Id == target.Id),
         TargetKind.Workstation => _world.Workstations.Any(item => item.Id == target.Id),
+        TargetKind.Farm => _world.Farms.Any(item => item.Id == target.Id),
         _ => false
     };
 
@@ -77,12 +78,24 @@ public partial class Main
         foreach (var workstation in _world.Workstations)
         {
             var target = new WorldTarget(TargetKind.Workstation, workstation.Id);
+            if (!TargetExists(target) || !_workbench.IsVisibleInTree() || _workbench.IsQueuedForDeletion()) continue;
             var meshes = _workbench.FindChildren("*", "MeshInstance3D", true, false).OfType<MeshInstance3D>()
                 .Append(_workbench).Where(mesh => mesh.Mesh is not null && mesh.IsVisibleInTree()).ToArray();
             if (meshes.Length == 0) continue;
             var parts = meshes.Select(mesh => mesh.GlobalTransform * mesh.GetAabb()).ToArray();
             var bounds = parts.Aggregate((left, right) => left.Merge(right));
             targets.Add(new(target, _workbench, bounds, parts, meshes.SelectMany(SampleMesh).ToArray()));
+        }
+        foreach (var farm in _world.Farms)
+        {
+            var target = new WorldTarget(TargetKind.Farm, farm.Id);
+            if (!TargetExists(target) || !_farmView.IsVisibleInTree() || _farmView.IsQueuedForDeletion()) continue;
+            var meshes = _farmView.FindChildren("*", "MeshInstance3D", true, false).OfType<MeshInstance3D>()
+                .Where(mesh => mesh.Mesh is not null && mesh.IsVisibleInTree()).ToArray();
+            if (meshes.Length == 0) continue;
+            var parts = meshes.Select(mesh => mesh.GlobalTransform * mesh.GetAabb()).ToArray();
+            targets.Add(new(target, _farmView, parts.Aggregate((left, right) => left.Merge(right)), parts,
+                meshes.SelectMany(SampleMesh).ToArray()));
         }
         return targets;
     }
@@ -109,7 +122,10 @@ public partial class Main
         var benchParts = target.Kind == TargetKind.Workstation
             ? Enumerable.Empty<MeshInstance3D>()
             : _workbench.FindChildren("*", "MeshInstance3D", true, false).OfType<MeshInstance3D>().Append(_workbench);
-        foreach (var mesh in scenery.Append(_map).Concat(benchParts))
+        var farmParts = target.Kind == TargetKind.Farm
+            ? Enumerable.Empty<MeshInstance3D>()
+            : _farmView.FindChildren("*", "MeshInstance3D", true, false).OfType<MeshInstance3D>();
+        foreach (var mesh in scenery.Append(_map).Concat(benchParts).Concat(farmParts))
         {
             if (mesh.Mesh is null || !mesh.IsVisibleInTree()) continue;
             var inverse = mesh.GlobalTransform.AffineInverse();
@@ -191,6 +207,13 @@ public partial class Main
             var recipe = workstation.CurrentRecipe;
             detail = recipe is null ? "Idle · no active recipe" :
                 $"{recipe.Id} · work {recipe.WorkProgress}/{recipe.WorkRequired}\nInputs: {ContainerSummary(workstation.InputStorage)} · Outputs: {ContainerSummary(workstation.OutputStorage)}";
+        }
+        else if (target.Kind == TargetKind.Farm)
+        {
+            var plot = _world.Farms.Single(item => item.Id == target.Id).Plots.First();
+            detail = !plot.IsPlanted ? "Empty plot · plant 1 carried plant" : plot.IsMature
+                ? $"{plot.Crop!.Id} · mature · {plot.Crop.HarvestYield} food ready"
+                : $"{plot.Crop!.Id} · growing {plot.Growth}/{plot.Crop.GrowthRequired}";
         }
         else
         {

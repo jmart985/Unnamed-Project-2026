@@ -255,6 +255,7 @@ public partial class Main
 	private void ApplyMenuState()
 	{
 		CloseWorkstation();
+		CloseFarm();
 		CancelGameplayActions();
 		_captureBinding = null;
 		_controls.Visible = _sessionActive && _menuState.ActiveMenu == PlayerMenu.Settlement;
@@ -273,11 +274,12 @@ public partial class Main
 		if (!_sessionActive) return;
 		if (input is InputEventKey { Pressed: false } or InputEventKey { Echo: true }
 			or InputEventMouseButton { Pressed: false } or InputEventJoypadButton { Pressed: false }) return;
-		if (WorkstationPanelOpen)
+		if (WorkstationPanelOpen || FarmPanelOpen)
 		{
 			if (input.IsActionPressed(ControllerActions.CloseMenu))
 			{
-				CloseWorkstation();
+				if (WorkstationPanelOpen) CloseWorkstation();
+				if (FarmPanelOpen) CloseFarm();
 				GetViewport().SetInputAsHandled();
 			}
 			return;
