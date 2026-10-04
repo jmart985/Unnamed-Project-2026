@@ -39,10 +39,10 @@ public partial class Main
             _playerCharacter.GlobalPosition = new Vector3(7, 0, -3);
             SyncPlayerPosition();
             PressSquadButton("Follow player");
-            await MoveSquadTo(new NumericsVector3(7, 0, -3), ids);
+            await MoveSquadTo(new NumericsVector3(7, 0, -3), ids, following: true);
             _playerCharacter.GlobalPosition = new Vector3(10, 0, -3);
             SyncPlayerPosition();
-            await MoveSquadTo(new NumericsVector3(10, 0, -3), ids);
+            await MoveSquadTo(new NumericsVector3(10, 0, -3), ids, following: true);
             PressSquadButton("Stop");
             AdvanceSimulationTick(0.1);
             var stopped = ids.Select(id => _world.Entities.Single(e => e.Id == id).Position).ToArray();
@@ -121,7 +121,7 @@ public partial class Main
         button.EmitSignal(BaseButton.SignalName.Pressed);
     }
 
-    private async Task MoveSquadTo(NumericsVector3 target, string[] ids)
+    private async Task MoveSquadTo(NumericsVector3 target, string[] ids, bool following = false)
     {
         for (var tick = 0; tick < 600; tick++)
         {
@@ -130,10 +130,114 @@ public partial class Main
             SyncEntityViews();
             UpdateStatus();
             if (ids.All(id => _world.TryGetEntity(id, out var entity) && entity is not null
-                && NumericsVector3.DistanceSquared(entity.Position, target) <= 0.25f)) return;
+                && (following
+                    ? NumericsVector3.DistanceSquared(entity.Position, target) <= SquadOrderService.FollowResumeDistance * SquadOrderService.FollowResumeDistance
+                        && entity.Actions.Current?.Kind != ActionKind.SquadMove
+                    : NumericsVector3.DistanceSquared(entity.Position, target) <= 0.25f))) return;
         }
         throw new InvalidOperationException($"Squad did not reach {target}: " + string.Join("; ", ids.Select(id => $"{id} {_world.Entities.Single(e => e.Id == id).Position} {_entityViews[id].NavigationOutcome}")));
     }
+
+    private async void RunFollowSpacingValidation()
+    {
+        try
+        {
+            StartSession(PlayerCharacterProfile.Create("Follow spacing"), 42, "Follow spacing validation.");
+            SetProcess(false); // Explicit bounded ticks; player physics and actual navigation remain enabled.
+            SetProcessInput(false);
+            SetProcessUnhandledInput(false); // Fixture commands use existing UI handlers, not desktop input.
+            _playerCharacter.SetProcessUnhandledInput(false);
+            _clock.SetPaused(true);
+            _playerCharacter.SetPhysicsProcess(true);
+            _playerCharacter.SetGameplayInputEnabled(false);
+            _playerCharacter.GlobalPosition = new Vector3(0, 0, -6);
+            _playerCharacter.Velocity = Vector3.Zero;
+            var members = _world.Entities.Where(e => e.SpeciesId == "human" && e.Id != _world.PlayerEntityId).ToArray();
+            var ids = members.Select(e => e.Id).ToArray();
+            foreach (var entity in _world.Entities)
+            {
+                entity.Actions.Cancel();
+                _world.TrySetEntityPosition(entity.Id, new(40, 0, 40));
+            }
+            for (var i = 0; i < members.Length; i++)
+            {
+                var angle = Mathf.Tau * i / members.Length;
+                _world.TrySetEntityPosition(members[i].Id, new(6 * Mathf.Cos(angle), 0, -6 + 6 * Mathf.Sin(angle)));
+                members[i].Needs.AddNutrition(100);
+            }
+            SyncPlayerPosition(); SyncEntityViews();
+            var camera = GetNode<Camera3D>("Camera3D"); camera.Current = true;
+            camera.GlobalPosition = new(0, 6, 0); camera.LookAt(new Vector3(0, 0.8f, -6));
+            for (var frame = 0; frame < 10; frame++) await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
+            var initial = _playerCharacter.GlobalPosition;
+            SelectEntity(ids[0]); PressSquadButton("Add selected"); PressSquadButton("Follow player");
+            await MoveSquadTo(new NumericsVector3(initial.X, initial.Y, initial.Z), [ids[0]], following: true);
+            Require(HorizontalDistance(_entityViews[ids[0]].GlobalPosition, _playerCharacter.GlobalPosition) >= 1.999f, "single follower safe stop distance");
+            // Give this follower a real active path, then approach it before its next movement tick.
+            var firstPosition = _entityViews[ids[0]].GlobalPosition;
+            _playerCharacter.GlobalPosition = firstPosition + new Vector3(5, 0, 0);
+            SyncPlayerPosition(); _squad!.Advance();
+            await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
+            await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
+            _playerCharacter.GlobalPosition = firstPosition + new Vector3(1.2f, 0, 0);
+            var approached = _playerCharacter.GlobalPosition;
+            AdvanceNavigationTick(1); // Large step on the stale path, through the actual adapter.
+            Require(_entityViews[ids[0]].GlobalPosition == firstPosition, "approaching player halts stale follow step before collider moves");
+            _squad.Advance();
+            for (var frame = 0; frame < 10; frame++) await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
+            Require(HorizontalDistance(approached, _playerCharacter.GlobalPosition) < 0.01f, "approached follower does not push player");
+            _playerCharacter.GlobalPosition = initial; SyncPlayerPosition();
+            for (var i = 1; i < ids.Length; i++) { SelectEntity(ids[i]); PressSquadButton("Add selected"); }
+            await MoveSquadTo(new NumericsVector3(initial.X, initial.Y, initial.Z), ids, following: true);
+            for (var tick = 0; tick < 200; tick++)
+            {
+                await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
+                AdvanceSimulationTick(0.1); SyncEntityViews();
+                Require(HorizontalDistance(initial, _playerCharacter.GlobalPosition) < 0.01f, "stationary player is not pushed");
+                Require(members.All(e => HorizontalDistance(_entityViews[e.Id].GlobalPosition, _playerCharacter.GlobalPosition) >= 1.999f), "multiple followers stay outside player boundary");
+            }
+            var held = members.Select(e => e.Position).ToArray();
+            for (var tick = 0; tick < 40; tick++) { AdvanceSimulationTick(0.1); SyncEntityViews(); }
+            Require(held.SequenceEqual(members.Select(e => e.Position)), "holding band does not creep");
+            SelectEntity(VisibleWorldTargets().First(candidate => candidate.Target.Kind == TargetKind.Entity && ids.Contains(candidate.Target.Id)).Target.Id);
+            ClosePlayerMenus();
+            UpdateStatus();
+            await CaptureGameplayRefinement("follow-spacing.png");
+            // Move toward a follower while a stale path exists; movement must use live player coordinates.
+            _playerCharacter.GlobalPosition += new Vector3(5, 0, -4);
+            _playerCharacter.Velocity = Vector3.Zero;
+            var moved = _playerCharacter.GlobalPosition;
+            await MoveSquadTo(new(moved.X, moved.Y, moved.Z), ids, following: true);
+            Require(members.Any(e => NumericsVector3.DistanceSquared(e.Position, held[Array.IndexOf(members, e)]) > 1), "following resumes after leader moves");
+            for (var tick = 0; tick < 80; tick++)
+            {
+                await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
+                AdvanceSimulationTick(0.1); SyncEntityViews();
+                Require(HorizontalDistance(moved, _playerCharacter.GlobalPosition) < 0.01f, "resumed squad does not push the player");
+            }
+            // Exercise the real 4x clock's capped multi-tick frame path near the new boundary.
+            _clock.SetPaused(false); _clock.SetSpeed(SimulationSpeed.FourX);
+            _playerCharacter.GlobalPosition += new Vector3(-5, 0, 0);
+            for (var frame = 0; frame < 120; frame++)
+            {
+                await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
+                _clock.Advance(0.1, AdvanceSimulationTick); SyncEntityViews();
+                Require(members.All(e => HorizontalDistance(_entityViews[e.Id].GlobalPosition, _playerCharacter.GlobalPosition) >= 1.999f), "4x bounded steps keep clearance");
+            }
+            PressSquadButton("Stop"); AdvanceSimulationTick(0.1);
+            Require(members.All(e => e.Actions.Current?.Kind != ActionKind.SquadMove), "stop cancels all follow requests");
+            GD.Print($"FOLLOW SPACING VALIDATION PASSED: {ids.Length} followers; single/multiple safe arrival, stationary player <0.01 m drift, holding, resumed follow, live boundary and 4x steps.");
+            GetTree().Quit();
+        }
+        catch (Exception exception)
+        {
+            GD.PushError($"FOLLOW SPACING VALIDATION FAILED: {exception}");
+            GetTree().Quit(1);
+        }
+    }
+
+    private static float HorizontalDistance(Vector3 first, Vector3 second)
+        => new Vector2(first.X - second.X, first.Z - second.Z).Length();
 
     private static void Require(bool condition, string assertion)
     {

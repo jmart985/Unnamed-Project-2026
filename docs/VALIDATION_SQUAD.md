@@ -10,7 +10,7 @@ Orders apply on the next running fixed tick. Repeated identical orders are no-op
 invalid commands preserve the existing order and membership. Status reports
 acceptance/rejection; the inspector shows membership, order, activity, authoritative
 position, navigation, and waiting reason. Follow retargets after the player moves
-more than one world unit. Arrival tolerance is 0.5 units. Failed navigation waits
+more than one world unit, stops at 2 m and resumes beyond 3 m. Move-to arrival tolerance is 0.5 units. Failed navigation waits
 without request churn; stop and issue a new movement order to retry.
 
 Orders suspend autonomous hauling/roaming for members. Hunger retains priority;
@@ -21,6 +21,8 @@ Schema **9** persists membership only. Orders/actions/navigation clear after a
 successfully validated load. Invalid membership rejects before cancelling actions.
 Versions 4–8 migrate with an empty squad; version 8 retains ownership and relations.
 Health persistence remains deferred to existing issue #302.
+
+Current follow clearance and the player-physics regression are documented in [FOLLOW_SPACING.md](FOLLOW_SPACING.md). The historical screenshots and results below describe the original #312 slice.
 
 ## Reproducible engine check
 

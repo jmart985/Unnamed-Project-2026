@@ -11,6 +11,92 @@ public sealed class SquadTests
     private static EntityRecord[] Members(World world) => world.Entities.Where(e => e.SpeciesId == "human" && e.Id != world.PlayerEntityId).Take(2).ToArray();
 
     [Fact]
+    public void FollowStopsOutsidePlayerAndResumesOnlyBeyondOuterBand()
+    {
+        var world = Session();
+        var member = Members(world)[0];
+        world.AddSquadMember(member.Id);
+        world.TrySetEntityPosition(world.PlayerEntityId, Vector3.Zero);
+        world.TrySetEntityPosition(member.Id, new(8, 0, 0));
+        var nav = new FakeNavigationAdapter();
+        var squad = new SquadOrderService(world, _ => nav);
+        squad.Execute(SquadOrderKind.FollowPlayer);
+        squad.Advance();
+        Assert.Equal(ActionKind.SquadMove, member.Actions.Current?.Kind);
+        var stopped = squad.ConstrainFollowStep(member.Id, member.Position, Vector3.Zero);
+        Assert.InRange(stopped.X, 2, 2.001f);
+        world.TrySetEntityPosition(member.Id, stopped);
+        squad.Advance();
+        Assert.Null(member.Actions.Current);
+        Assert.Contains("holding distance", member.Activity);
+        for (var i = 0; i < 100; i++) squad.Advance();
+        Assert.Single(nav.Requests);
+        world.TrySetEntityPosition(world.PlayerEntityId, new(stopped.X - 3, 0, 0));
+        squad.Advance();
+        Assert.Single(nav.Requests); // Exactly 3 m does not resume.
+        world.TrySetEntityPosition(world.PlayerEntityId, new(stopped.X - 3.01f, 0, 0));
+        squad.Advance();
+        Assert.Equal(2, nav.Requests.Count);
+        Assert.Equal(ActionKind.SquadMove, member.Actions.Current?.Kind);
+    }
+
+    [Theory]
+    [InlineData(0, 0)] [InlineData(1, 0)] [InlineData(0, 1)]
+    public void FollowStepClipsCrossingSegmentsAgainstLivePlayer(float playerX, float playerZ)
+    {
+        var world = Session();
+        var member = Members(world)[0];
+        world.AddSquadMember(member.Id);
+        world.TrySetEntityPosition(world.PlayerEntityId, Vector3.Zero);
+        world.TrySetEntityPosition(member.Id, new(10, 0, 0));
+        var squad = new SquadOrderService(world, _ => new FakeNavigationAdapter());
+        squad.Execute(SquadOrderKind.FollowPlayer);
+        squad.Advance();
+        var player = new Vector3(playerX, 0, playerZ);
+        world.TrySetEntityPosition(world.PlayerEntityId, player); // Existing path still targets old position.
+        var current = player + new Vector3(5, 0, 0);
+        var clipped = squad.ConstrainFollowStep(member.Id, current, player - new Vector3(5, 0, 0));
+        Assert.InRange(Vector3.Distance(clipped, player), 2, 2.001f);
+        Assert.True(clipped.X > player.X); // Endpoint alone would permit tunneling through the player.
+        var away = current + Vector3.UnitX;
+        Assert.Equal(away, squad.ConstrainFollowStep(member.Id, current, away));
+        var inside = player + Vector3.UnitX;
+        Assert.Equal(inside, squad.ConstrainFollowStep(member.Id, inside, player));
+        Assert.Equal(current, squad.ConstrainFollowStep(member.Id, current, new(float.NaN, 0, 0)));
+        squad.Execute(SquadOrderKind.MoveTo, player);
+        Assert.Equal(player, squad.ConstrainFollowStep(member.Id, current, player));
+    }
+
+    [Fact]
+    public void FailedFollowWaitsWithoutChurnThenRecoversAfterPlayerMoves()
+    {
+        var world = Session();
+        var member = Members(world)[0];
+        world.AddSquadMember(member.Id);
+        world.TrySetEntityPosition(world.PlayerEntityId, Vector3.Zero);
+        world.TrySetEntityPosition(member.Id, new(8, 0, 0));
+        var nav = new FakeNavigationAdapter();
+        var squad = new SquadOrderService(world, _ => nav);
+        squad.Execute(SquadOrderKind.FollowPlayer);
+        squad.Advance();
+        nav.MarkUnreachable(nav.Requests.Keys.Single());
+        squad.Advance();
+        for (var i = 0; i < 100; i++) squad.Advance();
+        Assert.Single(nav.Requests);
+        Assert.Contains("Unreachable", member.WaitingReason);
+        world.TrySetEntityPosition(world.PlayerEntityId, new(-2, 0, 0));
+        squad.Advance();
+        Assert.Equal(2, nav.Requests.Count);
+        world.TryRemoveEntity(world.PlayerEntityId);
+        var current = member.Position;
+        Assert.Equal(current, squad.ConstrainFollowStep(member.Id, current, Vector3.Zero));
+        squad.Advance();
+        Assert.Equal(SquadOrderKind.None, squad.Order);
+        Assert.Null(member.Actions.Current);
+        Assert.DoesNotContain(NavigationOutcome.InProgress, nav.Requests.Values);
+    }
+
+    [Fact]
     public void MembershipRejectsIneligibleAndRemovedEntitiesWithoutMutation()
     {
         var world = Session();
