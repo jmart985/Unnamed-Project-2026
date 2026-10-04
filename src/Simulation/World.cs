@@ -310,6 +310,23 @@ public sealed class World
         return farm;
     }
 
+    public SettlementConstructionSite AddConstructionSite(string id, Vector3 position, ConstructionBlueprint blueprint)
+    {
+        var site = new SettlementConstructionSite(id, position, blueprint);
+        AddTargetId(site.Id, nameof(id));
+        _constructionSites.Add(site);
+        return site;
+    }
+
+    public bool TryRemoveConstructionSite(string? id)
+    {
+        var site = _constructionSites.FirstOrDefault(item => string.Equals(item.Id, id, StringComparison.Ordinal));
+        if (site is null) return false;
+        _constructionSites.Remove(site);
+        Reservations.RemoveTarget(site.Id);
+        return true;
+    }
+
     public Structure? GetStructureAt(Vector3 position, double tolerance = 1.0)
     {
         return _structures.FirstOrDefault(s => Vector3.Distance(s.Position, position) <= (float)tolerance);
@@ -771,6 +788,7 @@ public sealed class World
         _structures.Clear();
         _workstations.Clear();
         _farms.Clear();
+        _constructionSites.Clear();
         _targetIds.Clear();
         Reservations.Reset();
         SessionSeed = null;
@@ -797,6 +815,7 @@ public sealed class World
             restored.CaptivityState = entity.CaptivityState;
             restored.Parent1Id = entity.Parent1Id;
             restored.Parent2Id = entity.Parent2Id;
+            restored.SetSleepState(entity.SleepState, entity.BedId);
             foreach (var item in entity.Inventory)
             {
                 restored.TryAddCarried(item.Key, item.Value);
@@ -880,17 +899,20 @@ public sealed class World
             }
         }
 
-        foreach (var saved in snapshot.ConstructionSites!)
-        {
-            var blueprint = new ConstructionBlueprint(saved.BlueprintId, saved.Width, saved.Depth, saved.RequiredMaterials);
-            blueprint.RestoreProgress(saved.Progress);
-            AddConstructionSite(saved.Id, saved.Position, blueprint);
-        }
-
         foreach (var saved in snapshot.Structures!)
         {
             var structure = AddStructure(saved.Id, saved.Type, saved.Position);
             structure.IsClosed = saved.IsClosed;
+            foreach (var bed in saved.Beds ?? Array.Empty<BedSnapshot>())
+                structure.AddBed(new Bed(bed.Id, bed.RecoveryRateMultiplier) { OccupantId = bed.OccupantId, IsOccupied = bed.OccupantId is not null });
+        }
+
+        foreach (var saved in snapshot.ConstructionSites!)
+        {
+            var blueprint = new ConstructionBlueprint(saved.BlueprintId, saved.Width, saved.Depth,
+                saved.RequiredMaterials, saved.WorkRequired);
+            blueprint.Restore(saved.MaterialProgress, saved.WorkProgress);
+            AddConstructionSite(saved.Id, saved.Position, blueprint);
         }
 
         foreach (var savedRelationship in snapshot.Relationships)

@@ -99,17 +99,14 @@ public partial class Main
             targets.Add(new(target, _farmView, parts.Aggregate((left, right) => left.Merge(right)), parts,
                 meshes.SelectMany(SampleMesh).ToArray()));
         }
-        foreach (var view in _constructionViews.GetChildren().OfType<MeshInstance3D>())
+        foreach (var (target, node) in _constructionViews)
         {
-            var kind = view.Name.ToString().StartsWith("Site_", StringComparison.Ordinal)
-                ? TargetKind.ConstructionSite : TargetKind.Structure;
-            var id = view.Name.ToString()[(kind == TargetKind.ConstructionSite ? 5 : 4)..];
-            var target = new WorldTarget(kind, id);
-            if (!TargetExists(target) || !view.IsVisibleInTree()) continue;
-            var meshes = view.FindChildren("*", "MeshInstance3D", true, false).OfType<MeshInstance3D>()
-                .Append(view).Where(mesh => mesh.Mesh is not null && mesh.IsVisibleInTree()).ToArray();
+            if (!TargetExists(target) || !node.IsVisibleInTree() || node.IsQueuedForDeletion()) continue;
+            var meshes = node.FindChildren("*", "MeshInstance3D", true, false).OfType<MeshInstance3D>()
+                .Where(mesh => mesh.Mesh is not null && mesh.IsVisibleInTree()).ToArray();
+            if (meshes.Length == 0) continue;
             var parts = meshes.Select(mesh => mesh.GlobalTransform * mesh.GetAabb()).ToArray();
-            targets.Add(new(target, view, parts.Aggregate((left, right) => left.Merge(right)), parts,
+            targets.Add(new(target, node, parts.Aggregate((left, right) => left.Merge(right)), parts,
                 meshes.SelectMany(SampleMesh).ToArray()));
         }
         return targets;
@@ -140,7 +137,10 @@ public partial class Main
         var farmParts = target.Kind == TargetKind.Farm
             ? Enumerable.Empty<MeshInstance3D>()
             : _farmView.FindChildren("*", "MeshInstance3D", true, false).OfType<MeshInstance3D>();
-        foreach (var mesh in scenery.Append(_map).Concat(benchParts).Concat(farmParts))
+        var constructionParts = target.Kind is TargetKind.ConstructionSite or TargetKind.Structure
+            ? Enumerable.Empty<MeshInstance3D>()
+            : _constructionViews.Values.SelectMany(node => node.FindChildren("*", "MeshInstance3D", true, false).OfType<MeshInstance3D>());
+        foreach (var mesh in scenery.Append(_map).Concat(benchParts).Concat(farmParts).Concat(constructionParts))
         {
             if (mesh.Mesh is null || !mesh.IsVisibleInTree()) continue;
             var inverse = mesh.GlobalTransform.AffineInverse();
@@ -232,13 +232,13 @@ public partial class Main
         }
         else if (target.Kind == TargetKind.ConstructionSite)
         {
-            var site = _world.ConstructionSites.Single(item => item.Id == target.Id);
-            detail = $"Starter hut · wood {site.Blueprint.GetProgress(ItemIds.Wood)}/{site.Blueprint.RequiredMaterials[ItemIds.Wood]} · press F within 2 m to build";
+            var blueprint = _world.ConstructionSites.Single(item => item.Id == target.Id).Blueprint;
+            detail = $"Starter hut · {blueprint.GetProgress(ItemIds.Wood)}/{SettlementConstruction.HutWood} wood · {blueprint.WorkProgress}/{blueprint.WorkRequired} work";
         }
         else if (target.Kind == TargetKind.Structure)
         {
             var structure = _world.Structures.Single(item => item.Id == target.Id);
-            detail = $"{structure.Type} · door {(structure.IsClosed ? "closed" : "open")} · press F within 2 m";
+            detail = $"{structure.Type} · bed {(structure.Beds.Count == 0 ? "unavailable" : structure.Beds[0].IsOccupied ? "occupied" : "available")} · door {(structure.IsClosed ? "closed" : "open")} · F door · R rest/wake";
         }
         else
         {

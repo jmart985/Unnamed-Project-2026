@@ -5,6 +5,19 @@ namespace UnnamedProject2026;
 
 public partial class Main
 {
+    private void PerformRestAction()
+    {
+        if (_world.PlayerEntityId is not { } playerId) return;
+        var rest = new SettlementRestService(_world);
+        var result = _world.Entities.FirstOrDefault(entity => entity.Id == playerId)?.SleepState == SleepState.Sleeping
+            ? rest.Wake(playerId)
+            : _selectedTarget is { Kind: TargetKind.Structure } target
+                ? rest.Sleep(playerId, target.Id)
+                : new RestAction(RestActionResult.NoShelter, "Select a completed hut to rest.");
+        ShowActionFeedback(result.Message);
+        UpdateWorldSelection();
+    }
+
     private const double PlayerMeleeReach = 2.2;
     private readonly CollectUseGesture _collectUse = new();
     private WorldTarget? _collectTarget;
@@ -80,7 +93,8 @@ public partial class Main
         }
     }
 
-    private bool GameplayActionsAllowed => _sessionActive && _menuState.ActiveMenu is null && !WorkstationPanelOpen && !FarmPanelOpen && !ConstructionPanelOpen && !_clock.IsPaused;
+    private bool GameplayActionsAllowed => _sessionActive && _menuState.ActiveMenu is null && !WorkstationPanelOpen && !FarmPanelOpen
+        && !ConstructionPanelOpen && !PlacementPanelOpen && !_clock.IsPaused;
 
     private void ConfigureGameplayActions()
     {
@@ -241,7 +255,8 @@ public partial class Main
         }
 
         // 1. Structures -> Toggle Door
-        var structure = _world.Structures.FirstOrDefault(s => s.Id == _selectedTarget.Id);
+        var structure = _selectedTarget.Kind == TargetKind.Structure
+            ? _world.Structures.FirstOrDefault(s => s.Id == _selectedTarget.Id) : null;
         if (structure != null)
         {
             var result = _interactionResolver.Resolve(new InteractionRequest(
@@ -250,6 +265,8 @@ public partial class Main
                 InteractionType.Physical,
                 "toggle_door"));
             ShowActionFeedback(result.Reason);
+            SyncConstructionPresentation();
+            UpdateWorldSelection();
             return;
         }
 

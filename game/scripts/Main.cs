@@ -140,7 +140,9 @@ public partial class Main : Node3D
 			_characterCreation.Visible = true;
 			_playerNameInput.GrabFocus();
 		}
-		if (OS.GetCmdlineUserArgs().Contains("--validate-farm"))
+		if (OS.GetCmdlineUserArgs().Contains("--validate-construction"))
+			Callable.From(RunConstructionValidation).CallDeferred();
+		else if (OS.GetCmdlineUserArgs().Contains("--validate-farm"))
 			Callable.From(RunFarmValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-workbench"))
 			Callable.From(RunWorkbenchValidation).CallDeferred();
@@ -180,19 +182,13 @@ public partial class Main : Node3D
 		UpdateWorkstationPanel();
 		UpdateFarmPanel();
 		UpdateFarmPresentation();
+		if (_placingHut) UpdateHutPreview();
 		UpdateConstructionPanel();
-		UpdateConstructionPresentation();
-		UpdateHutPreview();
 	}
 
 	public override void _UnhandledInput(InputEvent @event)
 	{
-		if (_hutPlacementActive)
-		{
-			HandleConstructionInput(@event);
-			return;
-		}
-		if (!_sessionActive || _menuState.ActiveMenu is not null || WorkstationPanelOpen || FarmPanelOpen || ConstructionPanelOpen || _clock.IsPaused)
+		if (!_sessionActive || _menuState.ActiveMenu is not null || WorkstationPanelOpen || FarmPanelOpen || ConstructionPanelOpen || PlacementPanelOpen || _clock.IsPaused)
 		{
 			return;
 		}
@@ -241,6 +237,13 @@ public partial class Main : Node3D
 			return;
 		}
 
+		if (@event is InputEventKey { PhysicalKeycode: Key.R })
+		{
+			PerformRestAction();
+			GetViewport().SetInputAsHandled();
+			return;
+		}
+
 		if (_selectedEntityId is not { } entityId
 			|| !_entityViews.TryGetValue(entityId, out var view))
 		{
@@ -276,7 +279,7 @@ public partial class Main : Node3D
 		_menuState.Toggle(menu);
 		ApplyMenuState();
 		UpdateFarmPresentation();
-		UpdateConstructionPresentation();
+		SyncConstructionPresentation();
 		UpdateStatus();
 	}
 
@@ -420,6 +423,7 @@ public partial class Main : Node3D
 		_characterCreation.Visible = false;
 		ApplyMenuState();
 		UpdateFarmPresentation();
+		SyncConstructionPresentation();
 		UpdateStatus();
 	}
 
