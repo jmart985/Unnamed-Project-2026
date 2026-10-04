@@ -8,6 +8,9 @@ A systemic open-world colony RPG in which people and creatures share consistent 
 
 - [Project board](https://github.com/users/jmart985/projects/1): Ideas → Backlog → Ready → In Progress → Testing → Done
 - [Milestone 0.1: The Ant Farm](https://github.com/jmart985/Unnamed-Project-2026/milestone/1)
+- [Milestone 0.2: Character_Core](https://github.com/jmart985/Unnamed-Project-2026/milestone/26)
+- [Milestone 0.3: Creature_Core](https://github.com/jmart985/Unnamed-Project-2026/milestone/27)
+- [Milestone 0.4: Basic_Settlement](https://github.com/jmart985/Unnamed-Project-2026/milestone/28)
 - [Milestone 0.5: Combat Prototype](https://github.com/jmart985/Unnamed-Project-2026/milestone/29)
 - [Milestone 0.6: Relationships & Loyalty](https://github.com/jmart985/Unnamed-Project-2026/milestone/30)
 - [Milestone 0.7: Factions](https://github.com/jmart985/Unnamed-Project-2026/milestone/31)
