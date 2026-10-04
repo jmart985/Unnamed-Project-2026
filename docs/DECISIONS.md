@@ -436,3 +436,9 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Existing F feed/pet and G greeting bindings show actual mapped hints and sustained attention during/after successful responses. New and restored Worlds configure their species catalog. Remove the obsolete backtick-suffixed resolver artifact; eliminate nullable build warnings with explicit lifecycle guards. No save schema or new interaction menu/keys.
 - Validation: docs/INTERACTION_REPAIR.md records success/failure invariants, actual Godot input and rendered evidence. Health persistence remains the next separately scoped user correction under #302.
 - User refinement: Sustained greeting attention has no timeout. A new task overrides it immediately, including stationary tasks; separation greater than 2 m also ends it. Exactly 2 m retains attention, and a new nearby interaction is required to reacquire attention after the cutoff.
+
+## Follow player clearance (2026-10-04, #395)
+
+- Decision: Follow stops at 2 m horizontal separation and resumes beyond 3 m. Clip every active follow movement segment against the live player boundary before assigning the NPC collider position; keep World synchronized first. Use a 1 cm arrival tolerance for numeric stability.
+- Consequence: A stationary player cannot be driven across the map by follow penetration/replanning. Already-near followers hold, including when the player approaches them; no snapping/teleporting or inter-NPC formation framework. Move-to, hunger, stop and load/reset retain existing behavior and schema.
+- Validation: docs/FOLLOW_SPACING.md records 570 domain tests and actual Godot navigation/player-physics checks for one and ten followers, stale paths, large steps, holding/resume and 4x ticks. Current body capsule sums are below 0.82 m; future body sizes must revisit the clearance policy.

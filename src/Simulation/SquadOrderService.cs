@@ -9,6 +9,11 @@ public sealed record SquadOrderResult(SquadResult Code, string Reason);
 /// <summary>One transient squad order; membership belongs exclusively to World.</summary>
 public sealed class SquadOrderService(World world, Func<EntityRecord, INavigationAdapter> navigationForEntity) : ITransientSimulationState
 {
+    // Current capsules total at most 0.82 m. Keep a comfortable gap, then use a separate
+    // resume band so idle followers do not repeatedly chase tiny player movements.
+    public const float FollowStopDistance = 2;
+    public const float FollowResumeDistance = 3;
+    private const float FollowArrivalTolerance = FollowStopDistance + 0.01f;
     private sealed record Trip(EntityRecord Entity, INavigationAdapter Navigator, string RequestId, Vector3 Target);
     private readonly Dictionary<string, Trip> _trips = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Vector3> _finishedTargets = new(StringComparer.Ordinal);
@@ -61,6 +66,17 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
                 continue;
             }
             var goal = Order == SquadOrderKind.FollowPlayer ? GetPlayerPosition() : Target!.Value;
+            var following = Order == SquadOrderKind.FollowPlayer;
+            var arrivalTolerance = following ? FollowArrivalTolerance : 0.5f;
+            var distanceSquared = following ? HorizontalDistanceSquared(entity.Position, goal) : Vector3.DistanceSquared(entity.Position, goal);
+            if (following && distanceSquared <= (_trips.ContainsKey(id) ? FollowArrivalTolerance * FollowArrivalTolerance : FollowResumeDistance * FollowResumeDistance))
+            {
+                CancelTrip(id);
+                _finishedTargets[id] = goal;
+                _failedMembers.Remove(id);
+                if (entity.Actions.Current is null) entity.Activity = "Squad following: holding distance";
+                continue;
+            }
             if (_trips.TryGetValue(id, out var trip))
             {
                 // Retarget follow only after the player moves a meaningful distance.
@@ -69,10 +85,10 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
                 else
                 {
                     // Position is authoritative; the engine may have already consumed its terminal poll.
-                    var outcome = Vector3.DistanceSquared(entity.Position, trip.Target) <= 0.25f
+                    var outcome = Vector3.DistanceSquared(entity.Position, trip.Target) <= arrivalTolerance * arrivalTolerance
                         ? NavigationOutcome.Arrived : trip.Navigator.Poll(trip.RequestId, 0);
                     if (outcome == NavigationOutcome.InProgress) continue;
-                    var arrived = outcome == NavigationOutcome.Arrived && Vector3.DistanceSquared(entity.Position, trip.Target) <= 0.25f;
+                    var arrived = outcome == NavigationOutcome.Arrived && Vector3.DistanceSquared(entity.Position, trip.Target) <= arrivalTolerance * arrivalTolerance;
                     CancelTrip(id);
                     _finishedTargets[id] = trip.Target;
                     if (arrived) _failedMembers.Remove(id); else _failedMembers.Add(id);
@@ -83,8 +99,8 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
             }
             if (entity.Actions.Current?.Kind == ActionKind.Eat || entity.Needs.IsHungry) continue;
             if (_finishedTargets.TryGetValue(id, out var finished) && Vector3.DistanceSquared(goal, finished) <= 1
-                && (_failedMembers.Contains(id) || Vector3.DistanceSquared(entity.Position, goal) <= 0.25f)) continue;
-            if (Vector3.DistanceSquared(entity.Position, goal) <= 0.25f)
+                && (_failedMembers.Contains(id) || distanceSquared <= arrivalTolerance * arrivalTolerance)) continue;
+            if (distanceSquared <= arrivalTolerance * arrivalTolerance)
             {
                 _finishedTargets[id] = goal;
                 entity.Activity = "Squad arrived";
@@ -98,13 +114,37 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
                 _trips.Remove(id);
             });
             if (started is ActionStartResult.Rejected or ActionStartResult.CargoPending) continue;
-            requestId = navigator.Request(new NavigationRequest(goal, arrivalTolerance: 0.5, timeoutSeconds: 120));
+            requestId = navigator.Request(new NavigationRequest(goal, arrivalTolerance: arrivalTolerance, timeoutSeconds: 120));
             _failedMembers.Remove(id);
             _trips[id] = new Trip(entity, navigator, requestId, goal);
             entity.Activity = $"Squad {Order}";
             entity.WaitingReason = null;
         }
     }
+
+    /// <summary>Clip the entire follow step against the live player, before the engine moves a collider.
+    /// A stale path must not cross the player even when its endpoint lies beyond them.</summary>
+    public Vector3 ConstrainFollowStep(string entityId, Vector3 current, Vector3 proposed)
+    {
+        if (Order != SquadOrderKind.FollowPlayer || !_trips.ContainsKey(entityId)) return proposed;
+        if (!TryPlayer(out var player) || !Finite(current) || !Finite(proposed)) return current;
+        var offset = new Vector2(current.X - player!.Position.X, current.Z - player.Position.Z);
+        var step = new Vector2(proposed.X - current.X, proposed.Z - current.Z);
+        var radiusSquared = FollowStopDistance * FollowStopDistance;
+        if (offset.LengthSquared() <= radiusSquared) return current;
+        var a = step.LengthSquared();
+        var b = Vector2.Dot(offset, step);
+        if (a <= 1e-12f || b >= 0) return proposed;
+        var discriminant = b * b - a * (offset.LengthSquared() - radiusSquared);
+        if (discriminant <= 0) return proposed;
+        var entry = (-b - MathF.Sqrt(discriminant)) / a;
+        if (entry < 0 || entry > 1) return proposed;
+        // Leave a tiny numeric margin outside the boundary, without snapping/teleporting.
+        return Vector3.Lerp(current, proposed, MathF.Max(0, entry - 0.0001f / MathF.Sqrt(a)));
+    }
+
+    private static float HorizontalDistanceSquared(Vector3 first, Vector3 second)
+        => Vector2.DistanceSquared(new(first.X, first.Z), new(second.X, second.Z));
 
     public void Reset()
     {

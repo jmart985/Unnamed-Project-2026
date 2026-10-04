@@ -50,7 +50,8 @@ public sealed class GodotNavigationAdapter : INavigationAdapter
         _lastRequest = state;
 
         _agent.TargetDesiredDistance = (float)request.ArrivalTolerance;
-        _agent.PathDesiredDistance = (float)request.ArrivalTolerance;
+        // Arrival can have a broad follow radius; intermediate corners still need precision.
+        _agent.PathDesiredDistance = MathF.Min(0.5f, (float)request.ArrivalTolerance);
         _agent.TargetPosition = ToGodot(request.Target);
         return state.Id;
     }
@@ -120,7 +121,8 @@ public sealed class GodotNavigationAdapter : INavigationAdapter
         state.HasPath = _agent.GetCurrentNavigationPath().Length > 0;
     }
 
-    public void AdvanceMovement(double simulationSeconds, float movementSpeed)
+    public void AdvanceMovement(double simulationSeconds, float movementSpeed,
+        Func<NumericsVector3, NumericsVector3, NumericsVector3>? constrainStep = null)
     {
         if (!double.IsFinite(simulationSeconds) || simulationSeconds < 0)
         {
@@ -139,9 +141,12 @@ public sealed class GodotNavigationAdapter : INavigationAdapter
             return;
         }
 
-        _owner.GlobalPosition = _owner.GlobalPosition.MoveToward(
+        var current = _owner.GlobalPosition;
+        var proposed = current.MoveToward(
             state.NextPathPosition,
             movementSpeed * (float)simulationSeconds);
+        _owner.GlobalPosition = constrainStep is null ? proposed : ToGodot(constrainStep(
+            new(current.X, current.Y, current.Z), new(proposed.X, proposed.Y, proposed.Z)));
     }
 
     private bool TryFinish(string requestId, NavigationOutcome outcome)

@@ -137,7 +137,9 @@ public partial class Main : Node3D
 			_characterCreation.Visible = true;
 			_playerNameInput.GrabFocus();
 		}
-		if (OS.GetCmdlineUserArgs().Contains("--validate-squad"))
+		if (OS.GetCmdlineUserArgs().Contains("--validate-follow-spacing"))
+			Callable.From(RunFollowSpacingValidation).CallDeferred();
+		else if (OS.GetCmdlineUserArgs().Contains("--validate-squad"))
 			Callable.From(RunSquadValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-first-game"))
 			Callable.From(RunFirstGameValidation).CallDeferred();
@@ -554,9 +556,11 @@ public partial class Main : Node3D
 
 	private void AdvanceNavigationTick(double tickSeconds)
 	{
+		// The step boundary uses the live player position, including validation/manual ticks.
+		SyncPlayerPosition();
 		foreach (var view in _entityViews.Values)
 		{
-			view.AdvanceNavigation(tickSeconds, _world);
+			view.AdvanceNavigation(tickSeconds, _world, _squad);
 		}
 	}
 

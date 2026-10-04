@@ -309,10 +309,11 @@ public partial class EntityView : CharacterBody3D
     public bool CancelNavigation() => _navigationAdapter?.ActiveRequestId is { } requestId && _navigationAdapter.Cancel(requestId);
     public bool RemoveNavigationTarget() => _navigationAdapter?.ActiveRequestId is { } requestId && _navigationAdapter.RemoveTarget(requestId);
 
-    public void AdvanceNavigation(double simulationSeconds, World world)
+    public void AdvanceNavigation(double simulationSeconds, World world, SquadOrderService? squad = null)
     {
         if (_navigationAdapter is not { HasActiveRequest: true } adapter) return;
-        adapter.AdvanceMovement(simulationSeconds, _movementSpeed);
+        adapter.AdvanceMovement(simulationSeconds, _movementSpeed,
+            squad is null ? null : (current, proposed) => squad.ConstrainFollowStep(EntityId, current, proposed));
         var position = GlobalPosition;
         if (!world.TrySetEntityPosition(EntityId, new NumericsVector3(position.X, position.Y, position.Z)) && adapter.ActiveRequestId is { } requestId)
             adapter.RemoveTarget(requestId);
