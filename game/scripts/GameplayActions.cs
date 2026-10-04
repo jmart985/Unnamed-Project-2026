@@ -15,6 +15,8 @@ public partial class Main
                 ? rest.Sleep(playerId, target.Id)
                 : new RestAction(RestActionResult.NoShelter, "Select a completed hut to rest.");
         ShowActionFeedback(result.Message);
+        if (_world.PlayerEntityId is { } currentPlayer && _world.TryGetEntity(currentPlayer, out var player) && player is not null)
+            _playerCharacter.SetGameplayInputEnabled(player.SleepState != SleepState.Sleeping);
         UpdateWorldSelection();
     }
 

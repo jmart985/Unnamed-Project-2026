@@ -441,6 +441,12 @@ public static class WorldSnapshotSerializer
             ValidateInventory(entity.Inventory, target.InventoryCapacity, entity.Id);
             highestEntityId = Math.Max(highestEntityId, ParseEntityId(entity.Id));
         }
+        foreach (var bed in occupiedBeds)
+        {
+            var occupant = snapshot.Entities.Single(entity => entity.Id == bed.OccupantId);
+            if (occupant.SleepState != SleepState.Sleeping || occupant.BedId != bed.Id)
+                throw new InvalidDataException($"Occupied bed '{bed.Id}' must belong to its sleeping occupant.");
+        }
 
         if (snapshot.LastAllocatedEntityId < highestEntityId)
         {
