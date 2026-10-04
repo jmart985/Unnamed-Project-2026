@@ -44,7 +44,7 @@ public partial class Main : Node3D
 	private InteractionResolver _interactionResolver = null!;
 	private PlayerCommandBoundary? _playerCommands;
 	private MeshInstance3D _map = null!;
-	private MeshInstance3D _obstacle = null!;
+	private MeshInstance3D _workbench = null!;
 	private NavigationRegion3D _navigationRegion = null!;
 	private Label _statusLabel = null!;
 	private Button _pauseButton = null!;
@@ -78,7 +78,7 @@ public partial class Main : Node3D
 	public override void _Ready()
 	{
 		_map = GetNode<MeshInstance3D>("Map");
-		_obstacle = GetNode<MeshInstance3D>("Obstacle");
+		_workbench = GetNode<MeshInstance3D>("Workbench");
 		_navigationRegion = GetNode<NavigationRegion3D>("NavigationRegion3D");
 		_controls = GetNode<CanvasLayer>("Controls");
 		_controlsPanel = GetNode<Control>("Controls/Panel");
@@ -137,7 +137,9 @@ public partial class Main : Node3D
 			_characterCreation.Visible = true;
 			_playerNameInput.GrabFocus();
 		}
-		if (OS.GetCmdlineUserArgs().Contains("--validate-social-feedback"))
+		if (OS.GetCmdlineUserArgs().Contains("--validate-workbench"))
+			Callable.From(RunWorkbenchValidation).CallDeferred();
+		else if (OS.GetCmdlineUserArgs().Contains("--validate-social-feedback"))
 			Callable.From(RunSocialFeedbackValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-follow-spacing"))
 			Callable.From(RunFollowSpacingValidation).CallDeferred();
@@ -350,8 +352,7 @@ public partial class Main : Node3D
 		_map.Mesh = new PlaneMesh { Size = new Vector2(WorldHalfExtent * 2, WorldHalfExtent * 2) };
 		_map.MaterialOverride = CreateMaterial(new Color(0.32f, 0.5f, 0.24f));
 		BuildScenery();
-		_obstacle.Mesh = new BoxMesh { Size = new Vector3(2, 1, 2) };
-		_obstacle.Position = new Vector3(0, 0.5f, 0);
+		BuildTownWorkbench();
 		_navigationRegion.NavigationMesh = CreateNavigationMesh();
 
 		_foodConsumption = new FoodConsumptionService(_world, _speciesCatalog, GetNavigationAdapter);
@@ -929,6 +930,37 @@ public partial class Main : Node3D
 		BuildingBands.Any(band => band.Min == min && band.Max == max);
 
 	private static StandardMaterial3D CreateMaterial(Color color) => new() { AlbedoColor = color };
+
+	private void BuildTownWorkbench()
+	{
+		foreach (var child in _workbench.GetChildren())
+		{
+			_workbench.RemoveChild(child);
+			child.QueueFree();
+		}
+		var placement = NewGameSession.TownWorkbenchPosition;
+		_workbench.Position = new Vector3(placement.X, placement.Y + 1.05f, placement.Z);
+		_workbench.Mesh = new BoxMesh { Size = new Vector3(2, 0.18f, 1.4f) };
+		_workbench.MaterialOverride = CreateMaterial(new Color(0.52f, 0.31f, 0.15f));
+		var wood = new Color(0.32f, 0.19f, 0.09f);
+		var steel = new Color(0.35f, 0.38f, 0.42f);
+		foreach (var x in new[] { -0.8f, 0.8f })
+			foreach (var z in new[] { -0.5f, 0.5f })
+				AddBenchPart($"Leg_{x}_{z}", new(0.18f, 0.83f, 0.18f), new(x, -0.53f, z), wood);
+		AddBenchPart("Shelf", new(1.7f, 0.08f, 1.05f), new(0, -0.63f, 0), wood);
+		AddBenchPart("Vise", new(0.32f, 0.24f, 0.3f), new(0.65f, 0.21f, 0.35f), steel);
+		AddBenchPart("ViseHandle", new(0.48f, 0.05f, 0.05f), new(0.65f, 0.15f, 0.55f), steel);
+		AddBenchPart("Workpiece", new(1.1f, 0.05f, 0.22f), new(-0.1f, 0.115f, -0.3f), new(0.73f, 0.53f, 0.3f));
+		AddBenchPart("HammerHandle", new(0.06f, 0.05f, 0.42f), new(-0.55f, 0.115f, 0.22f), wood);
+		AddBenchPart("HammerHead", new(0.26f, 0.1f, 0.1f), new(-0.55f, 0.14f, 0.04f), steel);
+		_workbench.AddChild(new Label3D { Name = "WorkbenchLabel", Text = "Workbench",
+			Position = new Vector3(0, 0.9f, 0), Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+			FontSize = 28, PixelSize = 0.006f });
+	}
+
+	private void AddBenchPart(string name, Vector3 size, Vector3 position, Color color)
+		=> _workbench.AddChild(new MeshInstance3D { Name = name, Mesh = new BoxMesh { Size = size },
+			Position = position, MaterialOverride = CreateMaterial(color) });
 
 	private void AddScenery(string name, Vector3 size, Vector3 position, Color color)
 	{

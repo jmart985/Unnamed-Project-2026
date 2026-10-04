@@ -5,6 +5,49 @@ namespace UnnamedProject2026;
 
 public partial class Main
 {
+    private async void RunWorkbenchValidation()
+    {
+        try
+        {
+            StartSession(PlayerCharacterProfile.Create("Workbench validation"), 42, "Town workbench validation.");
+            SetProcess(false); _playerCharacter.SetPhysicsProcess(false);
+            Require(_world.Workstations.Single().Id == "workbench-1"
+                && _world.Workstations.Single().Position == NewGameSession.TownWorkbenchPosition,
+                "reuse existing starter workstation placement");
+            Require(GetNodeOrNull<Node3D>("Obstacle") is null && _workbench.IsVisibleInTree()
+                && _workbench.GetNode<Label3D>("WorkbenchLabel").Text == "Workbench", "visible identifiable bench replaces old cube");
+            var parts = _workbench.FindChildren("*", "MeshInstance3D", true, false).Count;
+            Require(parts > 4 && _workbench.Mesh.GetAabb().Size.Y < 0.3f, "tabletop, supports and work tools rendered");
+            Require(IsBlockedCell(-1, 1, -1, 1), "existing navigation footprint retained");
+            var target = new WorldTarget(TargetKind.Entity, "validation-target");
+            Require(!TargetLineClear(new(-2, 1.05f, 0), new(2, 1.05f, 0), target, []), "tabletop obstructs real sight/strike ray");
+            Require(TargetLineClear(new(-2, 0.55f, 0), new(2, 0.55f, 0), target, []), "empty space below bench is not the old solid obstacle bounds");
+            _playerCharacter.GlobalPosition = new Vector3(-2.5f, 0, -3); SyncPlayerPosition();
+            foreach (var view in _entityViews.Values) view.Visible = false;
+            var camera = GetNode<Camera3D>("Camera3D"); camera.Current = true;
+            camera.GlobalPosition = new Vector3(4.2f, 3.2f, 4.6f); camera.LookAt(new Vector3(0, 0.7f, 0));
+            await PhysicsFrames(5);
+            if (DisplayServer.GetName() != "headless")
+            {
+                var directory = ProjectSettings.GlobalizePath("res://../docs/evidence/workbench");
+                Directory.CreateDirectory(directory);
+                await ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
+                Require(GetViewport().GetTexture().GetImage().SavePng(Path.Combine(directory, "town-center.png")) == Error.Ok, "actual rendered workbench evidence");
+            }
+            ResetScenario(); SetProcess(false); _playerCharacter.SetPhysicsProcess(false);
+            ResetScenario(); SetProcess(false); _playerCharacter.SetPhysicsProcess(false);
+            Require(_workbench.FindChildren("*", "MeshInstance3D", true, false).Count == parts
+                && _world.Workstations.Count == 1, "repeated reset does not duplicate props or workstations");
+            _saveSlotPath = ProjectSettings.GlobalizePath("user://workbench-validation-save.json");
+            SaveScenario(); LoadScenario();
+            Require(_workbench.IsVisibleInTree() && _workbench.FindChildren("*", "MeshInstance3D", true, false).Count == parts,
+                "static town landmark remains visible after load without duplicate geometry");
+            GD.Print("WORKBENCH VALIDATION PASSED: town-center placement, visible labeled bench, actual mesh occlusion, existing navigation footprint, repeated reset/load and rendered evidence.");
+            GetTree().Quit();
+        }
+        catch (Exception exception) { GD.PushError($"WORKBENCH VALIDATION FAILED: {exception}"); GetTree().Quit(1); }
+    }
+
     private async void RunSocialFeedbackValidation()
     {
         try

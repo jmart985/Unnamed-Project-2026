@@ -95,7 +95,8 @@ public partial class Main
     {
         // Existing scenery is visual-only, so inspect its actual mesh bounds instead of adding physics bodies.
         var scenery = _scenery?.GetChildren().OfType<MeshInstance3D>() ?? [];
-        foreach (var mesh in scenery.Append(_map).Append(_obstacle))
+        var benchParts = _workbench.FindChildren("*", "MeshInstance3D", true, false).OfType<MeshInstance3D>().Append(_workbench);
+        foreach (var mesh in scenery.Append(_map).Concat(benchParts))
         {
             if (mesh.Mesh is null || !mesh.IsVisibleInTree()) continue;
             var inverse = mesh.GlobalTransform.AffineInverse();
