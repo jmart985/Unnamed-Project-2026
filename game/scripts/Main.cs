@@ -29,7 +29,7 @@ public partial class Main : Node3D
     private Node3D? _scenery;
     private readonly Dictionary<string, EntityView> _entityViews = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Button> _entityButtons = new(StringComparer.Ordinal);
-    private readonly List<MeshInstance3D> _resourceMarkers = [];
+    private readonly Dictionary<WorldTarget, MeshInstance3D> _resourceMarkers = [];
     private FoodConsumptionService? _foodConsumption;
     private WanderingService? _wandering;
     private WoodHaulingService? _woodHauling;
@@ -51,7 +51,13 @@ public partial class Main : Node3D
     private Button _removeSelectedButton = null!;
     private string _saveLoadStatus = "No save loaded.";
     private string _saveSlotPath = null!;
-    private string? _selectedEntityId;
+    private WorldTarget? _selectedTarget;
+    // Existing entity actions and the Settlement list consume the same selection.
+    private string? _selectedEntityId
+    {
+        get => _selectedTarget is { Kind: TargetKind.Entity } target ? target.Id : null;
+        set => _selectedTarget = value is null ? null : new(TargetKind.Entity, value);
+    }
     private CanvasLayer _controls = null!;
     private Control _controlsPanel = null!;
     private PlayerCharacter _playerCharacter = null!;
@@ -106,6 +112,7 @@ public partial class Main : Node3D
         ConfigureSquadControls();
         ConfigureScheduleControls();
         ConfigurePlayerMenus();
+        ConfigureWorldSelection();
         ApplyMenuState();
         GetNode<Button>("CharacterCreation/Panel/Form/Start").Pressed += StartNewGame;
         _controls.Visible = false;
@@ -135,6 +142,8 @@ public partial class Main : Node3D
             Callable.From(RunScheduleValidation).CallDeferred();
         else if (OS.GetCmdlineUserArgs().Contains("--validate-menus"))
             Callable.From(RunMenuValidation).CallDeferred();
+        else if (OS.GetCmdlineUserArgs().Contains("--validate-selection"))
+            Callable.From(RunSelectionValidation).CallDeferred();
     }
 
     public override void _Process(double delta)
@@ -159,6 +168,13 @@ public partial class Main : Node3D
 
         if (@event is InputEventKey key && (!key.Pressed || key.Echo))
         {
+            return;
+        }
+
+        if (@event.IsActionPressed(ControllerActions.CycleTarget))
+        {
+            CycleWorldTarget();
+            GetViewport().SetInputAsHandled();
             return;
         }
 
@@ -389,6 +405,7 @@ public partial class Main : Node3D
             _selectedEntityId = entityId;
             ShowSelectedSchedule(entityId);
             UpdateInspector();
+            UpdateWorldSelection();
         }
     }
 
@@ -596,7 +613,7 @@ public partial class Main : Node3D
 
     private void ClearResourceMarkers()
     {
-        foreach (var marker in _resourceMarkers)
+        foreach (var marker in _resourceMarkers.Values)
         {
             marker.QueueFree();
         }
@@ -608,31 +625,31 @@ public partial class Main : Node3D
     {
         foreach (var source in _world.FoodSources)
         {
-            AddResourceMarker($"Food_{source.Id}", source.Position, new Color(0.75f, 0.6f, 0.15f));
+            AddResourceMarker(new(TargetKind.Food, source.Id), source.Position, new Color(0.75f, 0.6f, 0.15f));
         }
 
         foreach (var source in _world.ResourcePiles)
         {
-            AddResourceMarker($"Resource_{source.Id}", source.Position, new Color(0.45f, 0.25f, 0.1f));
+            AddResourceMarker(new(TargetKind.ResourcePile, source.Id), source.Position, new Color(0.45f, 0.25f, 0.1f));
         }
 
         foreach (var stockpile in _world.Stockpiles)
         {
-            AddResourceMarker($"Stockpile_{stockpile.Id}", stockpile.Position, new Color(0.2f, 0.45f, 0.25f));
+            AddResourceMarker(new(TargetKind.Stockpile, stockpile.Id), stockpile.Position, new Color(0.2f, 0.45f, 0.25f));
         }
     }
 
-    private void AddResourceMarker(string name, System.Numerics.Vector3 position, Color color)
+    private void AddResourceMarker(WorldTarget target, System.Numerics.Vector3 position, Color color)
     {
         var marker = new MeshInstance3D
         {
-            Name = name,
+            Name = $"{target.Kind}_{target.Id}",
             Mesh = new BoxMesh { Size = new Vector3(1, 0.6f, 1) },
             Position = new Vector3(position.X, 0.3f, position.Z),
             MaterialOverride = new StandardMaterial3D { AlbedoColor = color }
         };
         AddChild(marker);
-        _resourceMarkers.Add(marker);
+        _resourceMarkers.Add(target, marker);
     }
 
     private string TryPlayerEat()
@@ -692,6 +709,7 @@ public partial class Main : Node3D
             "Select an entity; F5 route, F6 unreachable, F7 cancel, F8 remove goal";
         _pauseButton.Text = _clock.IsPaused ? "Resume" : "Pause";
         UpdatePlayerMenuContents();
+        UpdateWorldSelection();
         UpdateInspector();
     }
 
