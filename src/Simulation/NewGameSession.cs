@@ -6,6 +6,7 @@ public sealed class NewGameSession
 {
     public const int DefaultSeed = AntFarmScenario.DefaultSeed;
     public const int HumanNpcCount = 10;
+    public static Vector3 TownWorkbenchPosition => Vector3.Zero;
     private static readonly (string SpeciesId, Vector3 Position)[] StarterCreatureSpawns =
     [
         ("ape", new Vector3(90, 0, 60)),
@@ -101,7 +102,7 @@ public sealed class NewGameSession
             new(-8, 0, 8),
             new ResourceContainer("stockpile-1", 100));
 
-        world.AddWorkstation("workbench-1", new(0, 0, 0));
+        world.AddWorkstation("workbench-1", TownWorkbenchPosition);
         world.AddFarm("farm-1", new(5, 0, 5));
 
         for (var index = 0; index < HumanNpcCount; index++)

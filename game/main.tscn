@@ -11,7 +11,7 @@ script = ExtResource("1_main")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 [node name="Map" type="MeshInstance3D" parent="."]
-[node name="Obstacle" type="MeshInstance3D" parent="."]
+[node name="Workbench" type="MeshInstance3D" parent="."]
 [node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
 
 [node name="Floor" type="StaticBody3D" parent="."]
