@@ -8,6 +8,9 @@ A systemic open-world colony RPG in which people and creatures share consistent 
 
 - [Project board](https://github.com/users/jmart985/projects/1): Ideas → Backlog → Ready → In Progress → Testing → Done
 - [Milestone 0.1: The Ant Farm](https://github.com/jmart985/Unnamed-Project-2026/milestone/1)
+- [Milestone 0.2: Character_Core](https://github.com/jmart985/Unnamed-Project-2026/milestone/26)
+- [Milestone 0.3: Creature_Core](https://github.com/jmart985/Unnamed-Project-2026/milestone/27)
+- [Milestone 0.4: Basic_Settlement](https://github.com/jmart985/Unnamed-Project-2026/milestone/28)
 - [Milestone 0.5: Combat Prototype](https://github.com/jmart985/Unnamed-Project-2026/milestone/29)
 - [Milestone 0.6: Relationships & Loyalty](https://github.com/jmart985/Unnamed-Project-2026/milestone/30)
 - [Milestone 0.7: Factions](https://github.com/jmart985/Unnamed-Project-2026/milestone/31)
@@ -16,7 +19,7 @@ A systemic open-world colony RPG in which people and creatures share consistent 
 - [Milestone 1.0: First Real Game](https://github.com/jmart985/Unnamed-Project-2026/milestone/4)
 - [Milestone 1.1: Job Intelligence](https://github.com/jmart985/Unnamed-Project-2026/milestone/5)
 - [All implementation issues](https://github.com/jmart985/Unnamed-Project-2026/issues)
-- **Start here:** choose the earliest independent **Ready** implementation issue in the active milestone. [#200](https://github.com/jmart985/Unnamed-Project-2026/issues/200) defines the selected 1.1 daily work/rest slice: feature #380 followed by integration gate #381.
+- **Start here:** choose the earliest independent **Ready** implementation issue in the active milestone.
 
 ## Start here
 
