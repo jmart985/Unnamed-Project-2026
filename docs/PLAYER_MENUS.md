@@ -18,7 +18,7 @@ An open menu blocks walking, jumping, aim, attacks and world action hotkeys. It 
 
 ## Live state and future space
 
-Inventory is a read-only projection of the current World player, resolved by ID on each refresh. It is not a second inventory. Atomic transfers, successful loads and resets update the view; a rejected load preserves the existing world and visible quantities. Ground resources and settlement storage are not carried items. There is no player pickup/drop or equip transaction in this UI slice.
+Inventory is a read-only projection of the current World player, resolved by ID on each refresh. It is not a second inventory. Atomic transfers, successful loads and resets update the view; a rejected load preserves the existing world and visible quantities. Ground resources and settlement storage are not carried items. The #384 UI slice does not add drop or equip transactions. Subsequent #390 adds menu-free pickup and carried-food use through existing atomic transfers; the Items tab shows those resulting carried counts. The existing Collect mapping now means tap to collect / hold 0.6 s to use, preserving settings version 2 and every saved binding.
 
 Equipment currently reflects the controller's existing left/right shield flags. These flags are prototype configuration, not durable equipped-item records. Head, body, legs, feet and accessories are disabled **Planned** slots. They reserve layout space without inventing wearable assets or save state. Their final item rules and slot definitions need their own scoped implementation before enabling them.
 

@@ -9,7 +9,8 @@ public enum CreatureGreetingResultCode
     UnsupportedSpecies,
     OutOfRange,
     RelationshipEventUnavailable,
-    RelationshipRejected
+    RelationshipRejected,
+    ParticipantUnavailable
 }
 
 public sealed record CreatureGreetingResult(
@@ -68,6 +69,9 @@ public sealed class CreatureGreetingService
         {
             return new(CreatureGreetingResultCode.SelfTarget, target.Id, "The player cannot greet themself.");
         }
+
+        if (player.Health.IsIncapacitated || target.Health.IsIncapacitated)
+            return new(CreatureGreetingResultCode.ParticipantUnavailable, target.Id, "An incapacitated character cannot exchange greetings.");
 
         if (!_speciesCatalog.TryGet(target.SpeciesId, out var species)
             || species is null
