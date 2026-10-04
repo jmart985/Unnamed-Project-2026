@@ -39,8 +39,9 @@ public sealed class ScheduleIntegrationTests
         AdvanceTo(99.9);
         Assert.Equal(WoodHaulingStatus.TravelingToSource, hauling.Advance(npc, species, tick, clock.SimulationTime).Status);
         AdvanceTo(100);
-        Assert.Equal("Resting", npc.Activity);
-        Assert.All(nav.Requests.Values, outcome => Assert.Equal(NavigationOutcome.Cancelled, outcome));
+        Assert.Equal("Going home", npc.Activity);
+        Assert.Contains(NavigationOutcome.Cancelled, nav.Requests.Values);
+        Assert.Contains(NavigationOutcome.InProgress, nav.Requests.Values);
         Assert.Empty(npc.Inventory);
 
         // Needs stay active at rest; food uses the real selection, reservation and consumption path.

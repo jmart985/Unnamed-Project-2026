@@ -21,6 +21,7 @@ public sealed record NpcWorkSchedule(int StartHour, int EndHour)
 }
 
 public sealed record NpcScheduleSetting(string EntityId, int StartHour, int EndHour);
+public sealed record NpcHomeSetting(string EntityId, System.Numerics.Vector3 Position);
 
 public sealed record DailyScheduleState(bool IsWorking, double Hour, double NextTransitionHour, double SecondsUntilTransition)
 {

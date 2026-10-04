@@ -38,6 +38,7 @@ public sealed class WoodHaulingService : ITransientSimulationState
     private readonly Dictionary<string, bool> _waitingForDelivery = new(StringComparer.Ordinal);
     private readonly Dictionary<string, WoodHaulingResult> _waitingContexts = new(StringComparer.Ordinal);
     private readonly Dictionary<string, ActiveTrip> _activeTrips = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, ActiveHomeTrip> _activeHomeTrips = new(StringComparer.Ordinal);
     private long _nextActionId;
 
     public WoodHaulingService(
@@ -136,15 +137,24 @@ public sealed class WoodHaulingService : ITransientSimulationState
         var resting = _world.HasDailySchedule(entity) && !_world.GetWorkSchedule(entity.Id).Evaluate(simulationTime).IsWorking;
         if (!resting)
         {
-            if (entity.Activity == "Resting") entity.Activity = "Idle";
+            CancelHomeTrip(entity.Id);
+            if (entity.Activity is "Resting" or "Going home") entity.Activity = "Idle";
             return false;
         }
         if (entity.Inventory.GetValueOrDefault(ItemIds.Wood) > 0) return false;
         if (entity.Actions.Current?.Kind == ActionKind.Haul) entity.Actions.Cancel();
         ClearWaitingState(entity.Id);
-        if (entity.Actions.Current is null && !entity.Needs.IsHungry)
+        if (entity.Needs.IsHungry) return true;
+        if (entity.Actions.Current is not null && !_activeHomeTrips.ContainsKey(entity.Id)) return true;
+        if (_world.TryGetHomePosition(entity.Id, out var home) && Vector3.Distance(entity.Position, home) > 0.6f)
         {
-            entity.Activity = "Resting";
+            AdvanceHomeTrip(entity, home);
+            return true;
+        }
+        CancelHomeTrip(entity.Id, completeAction: true);
+        if (entity.Actions.Current is null)
+        {
+            entity.Activity = "Resting at home";
             entity.WaitingReason = null;
         }
         return true;
@@ -166,7 +176,9 @@ public sealed class WoodHaulingService : ITransientSimulationState
             }
         }
 
+        foreach (var entityId in _activeHomeTrips.Keys.ToArray()) CancelHomeTrip(entityId);
         _activeTrips.Clear();
+        _activeHomeTrips.Clear();
         _nextActionId = 0;
         _retryScheduler.Reset();
         _waitingForDelivery.Clear();
@@ -506,6 +518,61 @@ public sealed class WoodHaulingService : ITransientSimulationState
         }
     }
 
+    private void AdvanceHomeTrip(EntityRecord entity, Vector3 home)
+    {
+        if (_activeHomeTrips.TryGetValue(entity.Id, out var active))
+        {
+            if (!string.Equals(entity.Actions.Current?.Id, active.ActionId, StringComparison.Ordinal))
+            {
+                CancelHomeTrip(entity.Id);
+                return;
+            }
+
+            var outcome = active.Navigator.Poll(active.NavigationRequestId, 0);
+            if (outcome == NavigationOutcome.Arrived || Vector3.Distance(entity.Position, home) <= 0.6f)
+            {
+                CancelHomeTrip(entity.Id, completeAction: true);
+                entity.Activity = "Resting at home";
+                entity.WaitingReason = null;
+            }
+            else if (outcome is NavigationOutcome.Unreachable or NavigationOutcome.TimedOut or NavigationOutcome.Cancelled or NavigationOutcome.Removed)
+            {
+                CancelHomeTrip(entity.Id, completeAction: true);
+                entity.Activity = "Resting";
+                entity.WaitingReason = "Home path unavailable";
+            }
+            else
+            {
+                entity.Activity = "Going home";
+                entity.WaitingReason = null;
+            }
+            return;
+        }
+
+        var actionId = $"home-{entity.Id}-{checked(++_nextActionId).ToString("D6", CultureInfo.InvariantCulture)}";
+        if (entity.Actions.TryStart(new ActionCandidate(actionId, ActionKind.Wander), () => CancelHomeTrip(entity.Id)) == ActionStartResult.Rejected)
+            return;
+        var navigator = _navigationForEntity(entity);
+        var requestId = navigator.Request(new NavigationRequest(home, timeoutSeconds: NavigationTimeoutSeconds, arrivalTolerance: 0.6));
+        _activeHomeTrips[entity.Id] = new ActiveHomeTrip(actionId, navigator, requestId);
+        entity.Activity = "Going home";
+        entity.WaitingReason = null;
+    }
+
+    private void CancelHomeTrip(string entityId, bool completeAction = false)
+    {
+        if (_activeHomeTrips.Remove(entityId, out var trip))
+        {
+            trip.Navigator.Cancel(trip.NavigationRequestId);
+            if (_world.TryGetEntity(entityId, out var entity) && entity is not null
+                && string.Equals(entity.Actions.Current?.Id, trip.ActionId, StringComparison.Ordinal))
+            {
+                if (completeAction) entity.Actions.Complete();
+                else entity.Actions.Cancel();
+            }
+        }
+    }
+
     private bool OwnsEntity(EntityRecord entity)
     {
         return _world.TryGetEntity(entity.Id, out var worldEntity)
@@ -553,4 +620,6 @@ public sealed class WoodHaulingService : ITransientSimulationState
         TripStage Stage,
         INavigationAdapter? Navigator,
         string? NavigationRequestId);
+
+    private sealed record ActiveHomeTrip(string ActionId, INavigationAdapter Navigator, string NavigationRequestId);
 }

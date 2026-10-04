@@ -597,8 +597,32 @@ public partial class Main : Node3D
 		SyncPlayerPosition();
 		foreach (var view in _entityViews.Values)
 		{
-			view.AdvanceNavigation(tickSeconds, _world, _squad);
+			view.AdvanceNavigation(tickSeconds, _world, _squad, ConstrainActorSpacing);
 		}
+	}
+
+	private System.Numerics.Vector3 ConstrainActorSpacing(string entityId, System.Numerics.Vector3 current, System.Numerics.Vector3 proposed)
+	{
+		const float minimumSeparation = 0.85f;
+		var adjusted = proposed;
+		foreach (var other in _world.Entities)
+		{
+			if (other.Id == entityId || other.Health.IsDead) continue;
+			var dx = adjusted.X - other.Position.X;
+			var dz = adjusted.Z - other.Position.Z;
+			var distanceSquared = dx * dx + dz * dz;
+			if (distanceSquared >= minimumSeparation * minimumSeparation) continue;
+			var currentDx = current.X - other.Position.X;
+			var currentDz = current.Z - other.Position.Z;
+			var currentDistanceSquared = currentDx * currentDx + currentDz * currentDz;
+			if (currentDistanceSquared >= minimumSeparation * minimumSeparation) return current;
+			var distance = MathF.Sqrt(MathF.Max(distanceSquared, 0.0001f));
+			adjusted = new System.Numerics.Vector3(
+				other.Position.X + dx / distance * minimumSeparation,
+				proposed.Y,
+				other.Position.Z + dz / distance * minimumSeparation);
+		}
+		return adjusted;
 	}
 
 	private void AdvanceNeeds(double simulationSeconds)
