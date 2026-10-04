@@ -76,6 +76,37 @@ public sealed class PlayerWorkstationServiceTests
         Assert.Empty(session.World.Workstations.Single().InputStorage.Counts);
     }
 
+    [Fact]
+    public void LoadingStopsAtTheRecipeRequirementSoOtherInputsCannotBeCrowdedOut()
+    {
+        var session = CreateSession();
+        session.World.TrySetEntityPosition(session.PlayerEntityId, Vector3.Zero);
+        session.Player.TryAddCarried(ItemIds.Plant, 2);
+        var service = new PlayerWorkstationService(session.World);
+
+        Assert.True(service.LoadOne("workbench-1", ItemIds.Plant).Succeeded);
+        Assert.Equal(WorkstationActionResult.InputRequirementSatisfied,
+            service.LoadOne("workbench-1", ItemIds.Plant).Result);
+        Assert.Equal(1, session.Player.Inventory[ItemIds.Plant]);
+        Assert.Equal(1, session.World.Workstations.Single().InputStorage.Counts[ItemIds.Plant]);
+    }
+
+    [Fact]
+    public void FullPlayerInventoryCannotCollectOrLoseFinishedOutput()
+    {
+        var session = CreateSession();
+        session.World.TrySetEntityPosition(session.PlayerEntityId, Vector3.Zero);
+        var station = session.World.Workstations.Single();
+        station.OutputStorage.TryAdd(ItemIds.Food, 2);
+        session.Player.TryAddCarried(ItemIds.Wood, session.Player.InventoryCapacity);
+
+        var result = new PlayerWorkstationService(session.World).CollectOutput(station.Id);
+
+        Assert.Equal(WorkstationActionResult.OutputCapacityExceeded, result.Result);
+        Assert.Equal(session.Player.InventoryCapacity, session.Player.Inventory[ItemIds.Wood]);
+        Assert.Equal(2, station.OutputStorage.Counts[ItemIds.Food]);
+    }
+
     private static NewGameSession CreateSession() => NewGameSession.Create(
         SpeciesCatalog.LoadFromFile(Path.Combine(AppContext.BaseDirectory, "data", "species.json")),
         PlayerCharacterProfile.Create("Maker"));

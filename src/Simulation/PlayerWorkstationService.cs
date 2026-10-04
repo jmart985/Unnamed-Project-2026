@@ -11,6 +11,7 @@ public enum WorkstationActionResult
     OutOfRange,
     InvalidItem,
     MissingCarriedItem,
+    InputRequirementSatisfied,
     InputCapacityExceeded,
     RecipeAlreadyActive,
     RecipeNotActive,
@@ -44,6 +45,9 @@ public sealed class PlayerWorkstationService(World world)
             return Fail(WorkstationActionResult.RecipeNotActive, "Start a recipe before loading materials.");
         if (!workstation.CurrentRecipe.Inputs.ContainsKey(itemId))
             return Fail(WorkstationActionResult.InvalidItem, "That item is not used by the active recipe.");
+        workstation.InputStorage.TryGetCount(itemId, out var loaded);
+        if (loaded >= workstation.CurrentRecipe.Inputs[itemId])
+            return Fail(WorkstationActionResult.InputRequirementSatisfied, $"The recipe already has enough {itemId}.");
         if (!player!.Inventory.TryGetValue(itemId, out var carried) || carried < 1)
             return Fail(WorkstationActionResult.MissingCarriedItem, $"You are not carrying {itemId}.");
         if (workstation.InputStorage.RemainingCapacity < 1)
@@ -77,6 +81,10 @@ public sealed class PlayerWorkstationService(World world)
         if (!TryResolve(workstationId, out var player, out var workstation, out var failure)) return failure;
         var output = workstation!.OutputStorage.Counts.Where(item => item.Value > 0).ToArray();
         if (output.Length == 0) return Fail(WorkstationActionResult.NothingToCollect, "There is no finished output to collect.");
+        var carried = player!.Inventory.Values.Sum(value => (long)value);
+        var produced = output.Sum(item => (long)item.Value);
+        if (carried + produced > player.InventoryCapacity)
+            return Fail(WorkstationActionResult.OutputCapacityExceeded, "You do not have enough carrying capacity for the finished output.");
         if (output.Any(item => player!.Inventory.GetValueOrDefault(item.Key) > int.MaxValue - item.Value))
             return Fail(WorkstationActionResult.OutputCapacityExceeded, "You cannot carry the finished output.");
         foreach (var item in output)
