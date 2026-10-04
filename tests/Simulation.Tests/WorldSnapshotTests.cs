@@ -87,6 +87,45 @@ public sealed class WorldSnapshotTests
     }
 
     [Fact]
+    public void SnapshotRoundTripPreservesConstructionProgressAndCompletedDoorState()
+    {
+        var catalog = GetSpeciesCatalog();
+        var source = NewGameSession.Create(catalog, PlayerCharacterProfile.Create("Builder"));
+        var blueprint = SettlementConstruction.CreateHutBlueprint();
+        blueprint.ApplyProgress(ItemIds.Wood, 3);
+        source.World.AddConstructionSite("hut-site", new Vector3(30, 0, 30), blueprint);
+        var hut = source.World.AddStructure("old-hut", StructureType.Hut, new Vector3(40, 0, 40));
+        hut.IsClosed = true;
+
+        var target = new World();
+        WorldSnapshotSerializer.Load(target, WorldSnapshotSerializer.Serialize(source.World, 4), catalog);
+
+        var restoredSite = Assert.Single(target.ConstructionSites);
+        Assert.Equal(3, restoredSite.Blueprint.GetProgress(ItemIds.Wood));
+        var restoredHut = Assert.Single(target.Structures);
+        Assert.Equal("old-hut", restoredHut.Id);
+        Assert.True(restoredHut.IsClosed);
+    }
+
+    [Fact]
+    public void InvalidConstructionProgressDoesNotReplaceWorld()
+    {
+        var catalog = GetSpeciesCatalog();
+        var source = NewGameSession.Create(catalog, PlayerCharacterProfile.Create("Builder"));
+        var blueprint = SettlementConstruction.CreateHutBlueprint();
+        blueprint.ApplyProgress(ItemIds.Wood, 3);
+        source.World.AddConstructionSite("hut-site", new Vector3(30, 0, 30), blueprint);
+        var json = WorldSnapshotSerializer.Serialize(source.World, 4)
+            .Replace("\"wood\": 3", "\"wood\": 9", StringComparison.Ordinal);
+
+        var target = NewGameSession.Create(catalog, PlayerCharacterProfile.Create("Existing"));
+        var existingPlayer = target.Player;
+        Assert.Throws<InvalidDataException>(() => WorldSnapshotSerializer.Load(target.World, json, catalog));
+        Assert.Same(existingPlayer, target.World.Entities.Single(entity => entity.Id == existingPlayer.Id));
+        Assert.Empty(target.World.ConstructionSites);
+    }
+
+    [Fact]
     public void InvalidSessionMetadataDoesNotReplaceExistingWorld()
     {
         var existing = NewGameSession.Create(
