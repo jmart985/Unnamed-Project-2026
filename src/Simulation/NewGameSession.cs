@@ -101,6 +101,9 @@ public sealed class NewGameSession
             new(-8, 0, 8),
             new ResourceContainer("stockpile-1", 100));
 
+        world.AddWorkstation("workbench-1", new(0, 0, 0));
+        world.AddFarm("farm-1", new(5, 0, 5));
+
         for (var index = 0; index < HumanNpcCount; index++)
         {
             world.SpawnEntity(
