@@ -235,7 +235,7 @@ public partial class Main
 		{
 			var name = node.Name.ToString();
 			node.Visible = name is "MenuTitle" or "MenuTabs"
-				|| (_settlementTabs.CurrentTab == 0 && name is "Status" or "Pause" or "OneX" or "FourX")
+				|| (_settlementTabs.CurrentTab == 0 && name is "Status" or "Pause" or "OneX" or "FourX" or "Construction")
 				|| (_settlementTabs.CurrentTab is 1 or 2 && name == "PeopleDetails");
 		}
 		foreach (var node in _settlementDetails.GetChildren().OfType<Control>())
@@ -256,6 +256,8 @@ public partial class Main
 	{
 		CloseWorkstation();
 		CloseFarm();
+		CloseConstruction();
+		CancelHutPlacement();
 		CancelGameplayActions();
 		_captureBinding = null;
 		_controls.Visible = _sessionActive && _menuState.ActiveMenu == PlayerMenu.Settlement;
@@ -274,12 +276,14 @@ public partial class Main
 		if (!_sessionActive) return;
 		if (input is InputEventKey { Pressed: false } or InputEventKey { Echo: true }
 			or InputEventMouseButton { Pressed: false } or InputEventJoypadButton { Pressed: false }) return;
-		if (WorkstationPanelOpen || FarmPanelOpen)
+		if (WorkstationPanelOpen || FarmPanelOpen || ConstructionPanelOpen || PlacementPanelOpen)
 		{
 			if (input.IsActionPressed(ControllerActions.CloseMenu))
 			{
 				if (WorkstationPanelOpen) CloseWorkstation();
 				if (FarmPanelOpen) CloseFarm();
+				if (ConstructionPanelOpen) CloseConstruction();
+				if (PlacementPanelOpen) CancelHutPlacement();
 				GetViewport().SetInputAsHandled();
 			}
 			return;

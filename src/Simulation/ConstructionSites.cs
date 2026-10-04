@@ -2,7 +2,7 @@ using System.Numerics;
 
 namespace Simulation;
 
-public enum ConstructionSiteState { Planned, Complete }
+public enum ConstructionSiteState { Planned, InProgress, Complete }
 
 public sealed class SettlementConstructionSite
 {
@@ -16,7 +16,9 @@ public sealed class SettlementConstructionSite
     public string Id { get; }
     public Vector3 Position { get; }
     public ConstructionBlueprint Blueprint { get; }
-    public ConstructionSiteState State => Blueprint.IsComplete ? ConstructionSiteState.Complete : ConstructionSiteState.Planned;
+    public ConstructionSiteState State => Blueprint.IsComplete ? ConstructionSiteState.Complete
+        : Blueprint.Progress.Values.Any(value => value > 0) || Blueprint.WorkProgress > 0
+            ? ConstructionSiteState.InProgress : ConstructionSiteState.Planned;
 }
 
 public sealed class ConstructionSiteRegistry

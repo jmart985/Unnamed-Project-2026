@@ -32,6 +32,8 @@ public sealed class World
     private readonly ReadOnlyCollection<Workstation> _workstationView;
     private readonly List<Farm> _farms = [];
     private readonly ReadOnlyCollection<Farm> _farmView;
+    private readonly List<SettlementConstructionSite> _constructionSites = [];
+    private readonly ReadOnlyCollection<SettlementConstructionSite> _constructionSiteView;
     private readonly HashSet<string> _targetIds = new(StringComparer.Ordinal);
     private long _lastEntityId;
     private readonly HashSet<string> _squadMembers = new(StringComparer.Ordinal);
@@ -98,6 +100,7 @@ public sealed class World
         _structureView = _structures.AsReadOnly();
         _workstationView = _workstations.AsReadOnly();
         _farmView = _farms.AsReadOnly();
+        _constructionSiteView = _constructionSites.AsReadOnly();
     }
 
     public IReadOnlyCollection<EntityRecord> Entities => _entities.Values;
@@ -127,6 +130,7 @@ public sealed class World
     public IReadOnlyList<Structure> Structures => _structureView;
     public IReadOnlyList<Workstation> Workstations => _workstationView;
     public IReadOnlyList<Farm> Farms => _farmView;
+    public IReadOnlyList<SettlementConstructionSite> ConstructionSites => _constructionSiteView;
     public NeedsTuning NeedsTuning { get; }
     public ReservationService Reservations { get; }
     public int InventoryCapacity { get; }
@@ -284,6 +288,23 @@ public sealed class World
         AddTargetId(farm.Id, nameof(id));
         _farms.Add(farm);
         return farm;
+    }
+
+    public SettlementConstructionSite AddConstructionSite(string id, Vector3 position, ConstructionBlueprint blueprint)
+    {
+        var site = new SettlementConstructionSite(id, position, blueprint);
+        AddTargetId(site.Id, nameof(id));
+        _constructionSites.Add(site);
+        return site;
+    }
+
+    public bool TryRemoveConstructionSite(string? id)
+    {
+        var site = _constructionSites.FirstOrDefault(item => string.Equals(item.Id, id, StringComparison.Ordinal));
+        if (site is null) return false;
+        _constructionSites.Remove(site);
+        Reservations.RemoveTarget(site.Id);
+        return true;
     }
 
     public Structure? GetStructureAt(Vector3 position, double tolerance = 1.0)
@@ -747,6 +768,7 @@ public sealed class World
         _structures.Clear();
         _workstations.Clear();
         _farms.Clear();
+        _constructionSites.Clear();
         _targetIds.Clear();
         Reservations.Reset();
         SessionSeed = null;
@@ -854,6 +876,19 @@ public sealed class World
                 plot.Restore(savedPlot.CropId is null ? null : SettlementCrops.GetRequired(savedPlot.CropId), savedPlot.Growth);
                 farm.AddPlot(plot);
             }
+        }
+
+        foreach (var saved in snapshot.Structures!)
+        {
+            AddStructure(saved.Id, saved.Type, saved.Position).IsClosed = saved.IsClosed;
+        }
+
+        foreach (var saved in snapshot.ConstructionSites!)
+        {
+            var blueprint = new ConstructionBlueprint(saved.BlueprintId, saved.Width, saved.Depth,
+                saved.RequiredMaterials, saved.WorkRequired);
+            blueprint.Restore(saved.MaterialProgress, saved.WorkProgress);
+            AddConstructionSite(saved.Id, saved.Position, blueprint);
         }
 
         foreach (var savedRelationship in snapshot.Relationships)

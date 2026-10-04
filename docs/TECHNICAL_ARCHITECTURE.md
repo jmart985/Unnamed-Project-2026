@@ -60,7 +60,7 @@ Save at a tick boundary while simulation is paused. Persist carried items. Jobs,
 
 Creature captivity is durable entity state in snapshot schema version 5; schema version 4 snapshots migrate with all entities restored as wild. Snapshot schema version 6 adds validated faction identities and entity allegiance; schema versions 4 and 5 migrate with entities unaligned and no factions. Schema version 7 adds validated entity-to-faction reputation and directed faction hostility; schema versions 4, 5, and 6 migrate with no reputation or hostility records. Schema version 8 adds optional faction ownership to settlement stockpiles; schema versions 4–7 migrate with stockpiles unowned. The 1.0 snapshot adds validated squad membership and increments the current schema version from 8 to 9. Squad orders and navigation requests remain transient.
 
-Schema 10 stores NPC schedule overrides. Schema 11 stores workstations, their input/output containers and active recipe progress. Schema 12 stores farms and plot crop/growth state; older session saves receive the fixed empty starter farm, while non-session Worlds do not fabricate one.
+Schema 10 stores NPC schedule overrides. Schema 11 stores workstations, their input/output containers and active recipe progress. Schema 12 stores farms and plot crop/growth state; older session saves receive the fixed empty starter farm, while non-session Worlds do not fabricate one. Schema 13 stores incomplete construction sites, material/work progress and completed structures with door state; older saves migrate with empty construction state.
 
 ## Tests and observability
 

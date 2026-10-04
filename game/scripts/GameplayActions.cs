@@ -80,7 +80,8 @@ public partial class Main
         }
     }
 
-    private bool GameplayActionsAllowed => _sessionActive && _menuState.ActiveMenu is null && !WorkstationPanelOpen && !FarmPanelOpen && !_clock.IsPaused;
+    private bool GameplayActionsAllowed => _sessionActive && _menuState.ActiveMenu is null && !WorkstationPanelOpen && !FarmPanelOpen
+        && !ConstructionPanelOpen && !PlacementPanelOpen && !_clock.IsPaused;
 
     private void ConfigureGameplayActions()
     {
@@ -234,8 +235,15 @@ public partial class Main
             return;
         }
 
+        if (_selectedTarget.Kind == TargetKind.ConstructionSite)
+        {
+            OpenConstructionSite(_selectedTarget.Id);
+            return;
+        }
+
         // 1. Structures -> Toggle Door
-        var structure = _world.Structures.FirstOrDefault(s => s.Id == _selectedTarget.Id);
+        var structure = _selectedTarget.Kind == TargetKind.Structure
+            ? _world.Structures.FirstOrDefault(s => s.Id == _selectedTarget.Id) : null;
         if (structure != null)
         {
             var result = _interactionResolver.Resolve(new InteractionRequest(
@@ -244,6 +252,8 @@ public partial class Main
                 InteractionType.Physical,
                 "toggle_door"));
             ShowActionFeedback(result.Reason);
+            SyncConstructionPresentation();
+            UpdateWorldSelection();
             return;
         }
 
