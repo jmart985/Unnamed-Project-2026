@@ -80,7 +80,7 @@ public partial class Main
         }
     }
 
-    private bool GameplayActionsAllowed => _sessionActive && _menuState.ActiveMenu is null && !WorkstationPanelOpen && !FarmPanelOpen && !_clock.IsPaused;
+    private bool GameplayActionsAllowed => _sessionActive && _menuState.ActiveMenu is null && !WorkstationPanelOpen && !FarmPanelOpen && !ConstructionPanelOpen && !_clock.IsPaused;
 
     private void ConfigureGameplayActions()
     {
@@ -231,6 +231,12 @@ public partial class Main
         if (_selectedTarget.Kind == TargetKind.Farm)
         {
             OpenFarm(_selectedTarget.Id);
+            return;
+        }
+
+        if (_selectedTarget.Kind == TargetKind.ConstructionSite)
+        {
+            OpenConstructionSite(_selectedTarget.Id);
             return;
         }
 

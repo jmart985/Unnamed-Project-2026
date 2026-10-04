@@ -28,4 +28,17 @@ public sealed class ConstructionBlueprint
         return ResourceMutationResult.Success;
     }
     public int Remaining(string itemId) => Math.Max(0, _required.GetValueOrDefault(itemId) - GetProgress(itemId));
+
+    public void RestoreProgress(IReadOnlyDictionary<string, int> progress)
+    {
+        ArgumentNullException.ThrowIfNull(progress);
+        foreach (var item in progress)
+        {
+            if (!_required.ContainsKey(item.Key) || item.Value < 0 || item.Value > _required[item.Key])
+                throw new ArgumentException("Blueprint progress must be within its required material bounds.", nameof(progress));
+        }
+        _progress.Clear();
+        foreach (var item in progress)
+            if (item.Value > 0) _progress.Add(item.Key, item.Value);
+    }
 }

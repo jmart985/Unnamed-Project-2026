@@ -118,6 +118,7 @@ public partial class Main : Node3D
 		ConfigurePlayerMenus();
 		ConfigureWorkstationGameplay();
 		ConfigureFarmGameplay();
+		ConfigureConstructionGameplay();
 		ConfigureWorldSelection();
 		ConfigureGameplayActions();
 		ApplyMenuState();
@@ -179,11 +180,19 @@ public partial class Main : Node3D
 		UpdateWorkstationPanel();
 		UpdateFarmPanel();
 		UpdateFarmPresentation();
+		UpdateConstructionPanel();
+		UpdateConstructionPresentation();
+		UpdateHutPreview();
 	}
 
 	public override void _UnhandledInput(InputEvent @event)
 	{
-		if (!_sessionActive || _menuState.ActiveMenu is not null || WorkstationPanelOpen || FarmPanelOpen || _clock.IsPaused)
+		if (_hutPlacementActive)
+		{
+			HandleConstructionInput(@event);
+			return;
+		}
+		if (!_sessionActive || _menuState.ActiveMenu is not null || WorkstationPanelOpen || FarmPanelOpen || ConstructionPanelOpen || _clock.IsPaused)
 		{
 			return;
 		}
@@ -267,6 +276,7 @@ public partial class Main : Node3D
 		_menuState.Toggle(menu);
 		ApplyMenuState();
 		UpdateFarmPresentation();
+		UpdateConstructionPresentation();
 		UpdateStatus();
 	}
 

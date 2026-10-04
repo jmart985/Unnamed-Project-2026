@@ -32,6 +32,8 @@ public sealed class World
     private readonly ReadOnlyCollection<Workstation> _workstationView;
     private readonly List<Farm> _farms = [];
     private readonly ReadOnlyCollection<Farm> _farmView;
+    private readonly List<SettlementConstructionSite> _constructionSites = [];
+    private readonly ReadOnlyCollection<SettlementConstructionSite> _constructionSiteView;
     private readonly HashSet<string> _targetIds = new(StringComparer.Ordinal);
     private long _lastEntityId;
     private readonly HashSet<string> _squadMembers = new(StringComparer.Ordinal);
@@ -98,6 +100,7 @@ public sealed class World
         _structureView = _structures.AsReadOnly();
         _workstationView = _workstations.AsReadOnly();
         _farmView = _farms.AsReadOnly();
+        _constructionSiteView = _constructionSites.AsReadOnly();
     }
 
     public IReadOnlyCollection<EntityRecord> Entities => _entities.Values;
@@ -127,6 +130,7 @@ public sealed class World
     public IReadOnlyList<Structure> Structures => _structureView;
     public IReadOnlyList<Workstation> Workstations => _workstationView;
     public IReadOnlyList<Farm> Farms => _farmView;
+    public IReadOnlyList<SettlementConstructionSite> ConstructionSites => _constructionSiteView;
     public NeedsTuning NeedsTuning { get; }
     public ReservationService Reservations { get; }
     public int InventoryCapacity { get; }
@@ -268,6 +272,26 @@ public sealed class World
         AddTargetId(structure.Id, nameof(id));
         _structures.Add(structure);
         return structure;
+    }
+
+    public SettlementConstructionSite AddConstructionSite(string id, Vector3 position, ConstructionBlueprint blueprint)
+    {
+        var site = new SettlementConstructionSite(id, position, blueprint);
+        AddTargetId(site.Id, nameof(id));
+        _constructionSites.Add(site);
+        return site;
+    }
+
+    public bool TryCompleteConstructionSite(string? id, StructureType type, out Structure? structure)
+    {
+        structure = null;
+        var site = _constructionSites.FirstOrDefault(candidate => candidate.Id == id);
+        if (site is null || !site.Blueprint.IsComplete) return false;
+        if (type is not StructureType.Hut) return false;
+        _constructionSites.Remove(site);
+        structure = new Structure(site.Id, type, site.Position);
+        _structures.Add(structure);
+        return true;
     }
 
     public Workstation AddWorkstation(string id, Vector3 position, int inputCapacity = 10, int outputCapacity = 10)
@@ -854,6 +878,19 @@ public sealed class World
                 plot.Restore(savedPlot.CropId is null ? null : SettlementCrops.GetRequired(savedPlot.CropId), savedPlot.Growth);
                 farm.AddPlot(plot);
             }
+        }
+
+        foreach (var saved in snapshot.ConstructionSites!)
+        {
+            var blueprint = new ConstructionBlueprint(saved.BlueprintId, saved.Width, saved.Depth, saved.RequiredMaterials);
+            blueprint.RestoreProgress(saved.Progress);
+            AddConstructionSite(saved.Id, saved.Position, blueprint);
+        }
+
+        foreach (var saved in snapshot.Structures!)
+        {
+            var structure = AddStructure(saved.Id, saved.Type, saved.Position);
+            structure.IsClosed = saved.IsClosed;
         }
 
         foreach (var savedRelationship in snapshot.Relationships)

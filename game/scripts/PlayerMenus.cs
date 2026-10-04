@@ -256,6 +256,8 @@ public partial class Main
 	{
 		CloseWorkstation();
 		CloseFarm();
+		CancelHutPlacement();
+		CloseConstructionPanel();
 		CancelGameplayActions();
 		_captureBinding = null;
 		_controls.Visible = _sessionActive && _menuState.ActiveMenu == PlayerMenu.Settlement;
@@ -274,12 +276,13 @@ public partial class Main
 		if (!_sessionActive) return;
 		if (input is InputEventKey { Pressed: false } or InputEventKey { Echo: true }
 			or InputEventMouseButton { Pressed: false } or InputEventJoypadButton { Pressed: false }) return;
-		if (WorkstationPanelOpen || FarmPanelOpen)
+		if (WorkstationPanelOpen || FarmPanelOpen || ConstructionPanelOpen)
 		{
 			if (input.IsActionPressed(ControllerActions.CloseMenu))
 			{
 				if (WorkstationPanelOpen) CloseWorkstation();
 				if (FarmPanelOpen) CloseFarm();
+				if (ConstructionPanelOpen) CloseConstructionPanel();
 				GetViewport().SetInputAsHandled();
 			}
 			return;

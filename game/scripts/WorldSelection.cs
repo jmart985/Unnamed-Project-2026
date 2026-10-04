@@ -5,7 +5,7 @@ namespace UnnamedProject2026;
 
 public partial class Main
 {
-    private enum TargetKind { Entity, Food, ResourcePile, Stockpile, Workstation, Farm }
+    private enum TargetKind { Entity, Food, ResourcePile, Stockpile, Workstation, Farm, ConstructionSite, Structure }
     private sealed record WorldTarget(TargetKind Kind, string Id);
     private sealed record TargetView(WorldTarget Target, Node3D Node, Aabb Bounds, Aabb[] Parts, Vector3[] Samples)
     {
@@ -52,6 +52,8 @@ public partial class Main
         TargetKind.Stockpile => _world.Stockpiles.Any(pile => pile.Id == target.Id),
         TargetKind.Workstation => _world.Workstations.Any(item => item.Id == target.Id),
         TargetKind.Farm => _world.Farms.Any(item => item.Id == target.Id),
+        TargetKind.ConstructionSite => _world.ConstructionSites.Any(item => item.Id == target.Id),
+        TargetKind.Structure => _world.Structures.Any(item => item.Id == target.Id),
         _ => false
     };
 
@@ -95,6 +97,19 @@ public partial class Main
             if (meshes.Length == 0) continue;
             var parts = meshes.Select(mesh => mesh.GlobalTransform * mesh.GetAabb()).ToArray();
             targets.Add(new(target, _farmView, parts.Aggregate((left, right) => left.Merge(right)), parts,
+                meshes.SelectMany(SampleMesh).ToArray()));
+        }
+        foreach (var view in _constructionViews.GetChildren().OfType<MeshInstance3D>())
+        {
+            var kind = view.Name.ToString().StartsWith("Site_", StringComparison.Ordinal)
+                ? TargetKind.ConstructionSite : TargetKind.Structure;
+            var id = view.Name.ToString()[(kind == TargetKind.ConstructionSite ? 5 : 4)..];
+            var target = new WorldTarget(kind, id);
+            if (!TargetExists(target) || !view.IsVisibleInTree()) continue;
+            var meshes = view.FindChildren("*", "MeshInstance3D", true, false).OfType<MeshInstance3D>()
+                .Append(view).Where(mesh => mesh.Mesh is not null && mesh.IsVisibleInTree()).ToArray();
+            var parts = meshes.Select(mesh => mesh.GlobalTransform * mesh.GetAabb()).ToArray();
+            targets.Add(new(target, view, parts.Aggregate((left, right) => left.Merge(right)), parts,
                 meshes.SelectMany(SampleMesh).ToArray()));
         }
         return targets;
@@ -214,6 +229,16 @@ public partial class Main
             detail = !plot.IsPlanted ? "Empty plot · plant 1 carried plant" : plot.IsMature
                 ? $"{plot.Crop!.Id} · mature · {plot.Crop.HarvestYield} food ready"
                 : $"{plot.Crop!.Id} · growing {plot.Growth}/{plot.Crop.GrowthRequired}";
+        }
+        else if (target.Kind == TargetKind.ConstructionSite)
+        {
+            var site = _world.ConstructionSites.Single(item => item.Id == target.Id);
+            detail = $"Starter hut · wood {site.Blueprint.GetProgress(ItemIds.Wood)}/{site.Blueprint.RequiredMaterials[ItemIds.Wood]} · press F within 2 m to build";
+        }
+        else if (target.Kind == TargetKind.Structure)
+        {
+            var structure = _world.Structures.Single(item => item.Id == target.Id);
+            detail = $"{structure.Type} · door {(structure.IsClosed ? "closed" : "open")} · press F within 2 m";
         }
         else
         {
