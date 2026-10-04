@@ -1,117 +1,86 @@
-[gd_scene format=3 uid="uid://djgcodp8i0qu3"]
+[gd_scene load_steps=4 format=3]
 
-[ext_resource type="Script" uid="uid://cwsh26oitrq0b" path="res://scripts/Main.cs" id="1_main"]
+[ext_resource type="Script" path="res://scripts/Main.cs" id="1_main"]
 [ext_resource type="PackedScene" path="res://player_character.tscn" id="2_player"]
 
 [sub_resource type="BoxShape3D" id="BoxShape_floor"]
 size = Vector3(400, 0.2, 400)
 
-[node name="Main" type="Node3D" unique_id=1223868506]
+[node name="Main" type="Node3D"]
 script = ExtResource("1_main")
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=696967984]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="Map" type="MeshInstance3D" parent="."]
+[node name="Workbench" type="MeshInstance3D" parent="."]
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
 
-[node name="Map" type="MeshInstance3D" parent="." unique_id=1932026346]
-
-[node name="Workbench" type="MeshInstance3D" parent="." unique_id=2114237175]
-
-[node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=943039715]
-
-[node name="Floor" type="StaticBody3D" parent="." unique_id=1150818025]
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor" unique_id=942478044]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+[node name="Floor" type="StaticBody3D" parent="."]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor"]
+position = Vector3(0, -0.1, 0)
 shape = SubResource("BoxShape_floor")
 
-[node name="PlayerCharacter" parent="." unique_id=436726533 instance=ExtResource("2_player")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+[node name="PlayerCharacter" parent="." instance=ExtResource("2_player")]
+position = Vector3(0, 1, 0)
 
-[node name="Camera3D" type="Camera3D" parent="." unique_id=508685482]
+[node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 12, 12)
+current = false
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1003465420]
-transform = Transform3D(0.90630776, 0.34618863, -0.24240388, 0, 0.57357645, 0.81915206, 0.42261827, -0.74240386, 0.5198368, 0, 0, 0)
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-55, -25, 0)
 
-[node name="Controls" type="CanvasLayer" parent="." unique_id=1552020897]
-
-[node name="Panel" type="PanelContainer" parent="Controls" unique_id=313443764]
-anchors_preset = 9
-anchor_bottom = 1.0
+[node name="Controls" type="CanvasLayer" parent="."]
+[node name="Panel" type="PanelContainer" parent="Controls"]
 offset_left = 24.0
 offset_top = 24.0
 offset_right = 360.0
 offset_bottom = -24.0
+anchor_bottom = 1.0
 grow_vertical = 2
-
-[node name="Scroll" type="ScrollContainer" parent="Controls/Panel" unique_id=1424604229]
+[node name="Scroll" type="ScrollContainer" parent="Controls/Panel"]
 layout_mode = 2
 horizontal_scroll_mode = 0
-
-[node name="Margin" type="MarginContainer" parent="Controls/Panel/Scroll" unique_id=1587234167]
+vertical_scroll_mode = 1
+[node name="Margin" type="MarginContainer" parent="Controls/Panel/Scroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/margin_left = 12
 theme_override_constants/margin_top = 12
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 12
-
-[node name="VBox" type="VBoxContainer" parent="Controls/Panel/Scroll/Margin" unique_id=304055049]
+[node name="VBox" type="VBoxContainer" parent="Controls/Panel/Scroll/Margin"]
 layout_mode = 2
 size_flags_horizontal = 3
-
-[node name="Status" type="Label" parent="Controls/Panel/Scroll/Margin/VBox" unique_id=1897088889]
-layout_mode = 2
+[node name="Status" type="Label" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Simulation time: 0.0s
 State: Running
 Speed: 1x"
-
-[node name="Pause" type="Button" parent="Controls/Panel/Scroll/Margin/VBox" unique_id=961395607]
-layout_mode = 2
+[node name="Pause" type="Button" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Pause"
-
-[node name="OneX" type="Button" parent="Controls/Panel/Scroll/Margin/VBox" unique_id=928549119]
-layout_mode = 2
+[node name="OneX" type="Button" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "1x"
-
-[node name="FourX" type="Button" parent="Controls/Panel/Scroll/Margin/VBox" unique_id=657346470]
-layout_mode = 2
+[node name="FourX" type="Button" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "4x"
-
-[node name="Reset" type="Button" parent="Controls/Panel/Scroll/Margin/VBox" unique_id=560855144]
-layout_mode = 2
+[node name="Reset" type="Button" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Reset"
-
-[node name="Save" type="Button" parent="Controls/Panel/Scroll/Margin/VBox" unique_id=791169066]
-layout_mode = 2
+[node name="Save" type="Button" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Save"
-
-[node name="Load" type="Button" parent="Controls/Panel/Scroll/Margin/VBox" unique_id=1382974995]
-layout_mode = 2
+[node name="Load" type="Button" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Load"
-
-[node name="EntityListHeading" type="Label" parent="Controls/Panel/Scroll/Margin/VBox" unique_id=1381276941]
-layout_mode = 2
+[node name="EntityListHeading" type="Label" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Entities"
-
-[node name="EntityList" type="VBoxContainer" parent="Controls/Panel/Scroll/Margin/VBox" unique_id=1060832079]
-layout_mode = 2
-
-[node name="InspectorHeading" type="Label" parent="Controls/Panel/Scroll/Margin/VBox" unique_id=1312835621]
-layout_mode = 2
+[node name="EntityList" type="VBoxContainer" parent="Controls/Panel/Scroll/Margin/VBox"]
+[node name="InspectorHeading" type="Label" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Inspector"
-
-[node name="Inspector" type="Label" parent="Controls/Panel/Scroll/Margin/VBox" unique_id=1945002458]
-layout_mode = 2
+[node name="Inspector" type="Label" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Select an entity to inspect."
-
-[node name="RemoveSelected" type="Button" parent="Controls/Panel/Scroll/Margin/VBox" unique_id=1807501868]
-layout_mode = 2
-disabled = true
+[node name="RemoveSelected" type="Button" parent="Controls/Panel/Scroll/Margin/VBox"]
 text = "Remove selected"
+disabled = true
 
-[node name="CharacterCreation" type="CanvasLayer" parent="." unique_id=1523683737]
+[node name="CharacterCreation" type="CanvasLayer" parent="."]
 
-[node name="Backdrop" type="ColorRect" parent="CharacterCreation" unique_id=262420590]
+[node name="Backdrop" type="ColorRect" parent="CharacterCreation"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -119,7 +88,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 0.7)
 
-[node name="Panel" type="PanelContainer" parent="CharacterCreation" unique_id=2027374716]
+[node name="Panel" type="PanelContainer" parent="CharacterCreation"]
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
@@ -132,46 +101,47 @@ offset_bottom = 220.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Form" type="VBoxContainer" parent="CharacterCreation/Panel" unique_id=90899711]
+[node name="Form" type="VBoxContainer" parent="CharacterCreation/Panel"]
 layout_mode = 2
 
-[node name="Title" type="Label" parent="CharacterCreation/Panel/Form" unique_id=608280997]
+[node name="Title" type="Label" parent="CharacterCreation/Panel/Form"]
 layout_mode = 2
 text = "Create your character"
 
-[node name="NameLabel" type="Label" parent="CharacterCreation/Panel/Form" unique_id=1444143075]
+[node name="NameLabel" type="Label" parent="CharacterCreation/Panel/Form"]
 layout_mode = 2
 text = "Name"
 
-[node name="Name" type="LineEdit" parent="CharacterCreation/Panel/Form" unique_id=448117498]
+[node name="Name" type="LineEdit" parent="CharacterCreation/Panel/Form"]
 layout_mode = 2
 placeholder_text = "Enter a name"
 
-[node name="HeightLabel" type="Label" parent="CharacterCreation/Panel/Form" unique_id=1956381471]
+[node name="HeightLabel" type="Label" parent="CharacterCreation/Panel/Form"]
 layout_mode = 2
 text = "Height"
 
-[node name="Height" type="OptionButton" parent="CharacterCreation/Panel/Form" unique_id=503894583]
+[node name="Height" type="OptionButton" parent="CharacterCreation/Panel/Form"]
 layout_mode = 2
 
-[node name="BodyTypeLabel" type="Label" parent="CharacterCreation/Panel/Form" unique_id=536742909]
+[node name="BodyTypeLabel" type="Label" parent="CharacterCreation/Panel/Form"]
 layout_mode = 2
 text = "Body type"
 
-[node name="BodyType" type="OptionButton" parent="CharacterCreation/Panel/Form" unique_id=863870933]
+[node name="BodyType" type="OptionButton" parent="CharacterCreation/Panel/Form"]
 layout_mode = 2
 
-[node name="SexLabel" type="Label" parent="CharacterCreation/Panel/Form" unique_id=662212125]
+[node name="SexLabel" type="Label" parent="CharacterCreation/Panel/Form"]
 layout_mode = 2
 text = "Sex"
 
-[node name="Sex" type="OptionButton" parent="CharacterCreation/Panel/Form" unique_id=1815981416]
+[node name="Sex" type="OptionButton" parent="CharacterCreation/Panel/Form"]
 layout_mode = 2
 
-[node name="Error" type="Label" parent="CharacterCreation/Panel/Form" unique_id=370985432]
+[node name="Error" type="Label" parent="CharacterCreation/Panel/Form"]
+layout_mode = 2
 modulate = Color(1, 0.35, 0.35, 1)
-layout_mode = 2
+text = ""
 
-[node name="Start" type="Button" parent="CharacterCreation/Panel/Form" unique_id=1105658382]
+[node name="Start" type="Button" parent="CharacterCreation/Panel/Form"]
 layout_mode = 2
 text = "Start new game"
