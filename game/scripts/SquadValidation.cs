@@ -93,6 +93,8 @@ public partial class Main
             var screenshotArgument = OS.GetCmdlineUserArgs().FirstOrDefault(argument => argument.StartsWith("--squad-screenshot=", StringComparison.Ordinal));
             if (screenshotArgument is not null)
             {
+                if (_menuState.ActiveMenu != PlayerMenu.Settlement) ToggleMenu(PlayerMenu.Settlement);
+                _settlementTabs.CurrentTab = 2;
                 GetNode<ScrollContainer>("Controls/Panel/Scroll").ScrollVertical = 350;
                 await ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
                 var error = GetViewport().GetTexture().GetImage().SavePng(screenshotArgument["--squad-screenshot=".Length..]);
@@ -115,7 +117,7 @@ public partial class Main
     private void PressSquadButton(string text)
     {
         var controls = GetNode<VBoxContainer>("Controls/Panel/Scroll/Margin/VBox");
-        var button = controls.GetChildren().OfType<HBoxContainer>().SelectMany(row => row.GetChildren().OfType<Button>()).Single(button => button.Text == text);
+        var button = controls.FindChildren("*", "Button", true, false).OfType<Button>().Single(button => button.Text == text);
         button.EmitSignal(BaseButton.SignalName.Pressed);
     }
 

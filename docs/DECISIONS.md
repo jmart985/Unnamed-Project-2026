@@ -407,3 +407,10 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Rest cancels new/unfinished pickups before navigation advances; carried wood can finish delivery. Hunger and squad orders retain priority. Schema 10 stores overrides and migrates schemas 4-9 to defaults. No fatigue, sleep infrastructure, job priorities or new jobs are introduced.
 - Validation: Focused behavioral invariants and actual Godot inspector/navigation evidence are in docs/NPC_SCHEDULES.md; #381 accepts the combined milestone.
 - Revisit: Tune day length and default hours from gameplay evidence; future job systems can consume this policy without another clock or duplicate world state.
+
+## Player menu repair and future placeholders (2026-10-03, #384)
+
+- Decision: Provide distinct Inventory (Status/Equipment/Items/Other), Settlement (Overview/People/Squad) and Save/Settings (Game/Controls) screens before 1.2 work, as requested by the user. Reuse existing World projections, settlement handlers, controller and atomic save store.
+- Consequence: Menu state owns visibility and gameplay input suppression; preferences are separate version-1 settings JSON, without a World schema change. Current inventory is read-only; equipment shows existing hand/shield configuration. Disabled Planned wearable slots and Audio/Display tabs reserve UI space without implementing future systems. Defaults and conflicts have one validated mapping boundary; writes precede InputMap mutation.
+- Validation: docs/PLAYER_MENUS.md records dispatched Godot input, UI controls, physics/input isolation, persistence failure recovery and actual rendered screenshots.
+- Revisit: Enable equipment/audio/display controls only when their concrete issues define rules, assets, persistence and acceptance criteria; placeholder layout is not a scope commitment.

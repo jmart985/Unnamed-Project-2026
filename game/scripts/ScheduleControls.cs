@@ -14,10 +14,10 @@ public partial class Main
     private void ConfigureScheduleControls()
     {
         var controls = GetNode<VBoxContainer>("Controls/Panel/Scroll/Margin/VBox");
-        var label = new Label { Text = "Selected NPC work hours (0–23; overnight allowed)", AutowrapMode = TextServer.AutowrapMode.WordSmart };
+        var label = new Label { Name = "ScheduleHeading", Text = "Selected NPC work hours (0–23; overnight allowed)", AutowrapMode = TextServer.AutowrapMode.WordSmart };
         controls.AddChild(label);
         controls.MoveChild(label, 11);
-        var row = new HBoxContainer();
+        var row = new HBoxContainer { Name = "ScheduleHours" };
         controls.AddChild(row);
         controls.MoveChild(row, 12);
         _workStart = new SpinBox { MinValue = 0, MaxValue = 23, Step = 1, Value = 8, TooltipText = "Work begins at this hour" };

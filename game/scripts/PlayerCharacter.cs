@@ -7,6 +7,17 @@ namespace UnnamedProject2026;
 /// Keyboard bindings are installed here as defaults and remain configurable in project settings.
 public partial class PlayerCharacter : CharacterBody3D
 {
+    public bool GameplayInputEnabled { get; private set; } = true;
+
+    public void SetGameplayInputEnabled(bool enabled)
+    {
+        GameplayInputEnabled = enabled;
+        if (!enabled)
+        {
+            Velocity = new Vector3(0, Velocity.Y, 0);
+            _swing = AttackSwing.ForTotalDuration(AttackDuration);
+        }
+    }
     [Export] public float MovementSpeed { get; set; } = 5.0f;
     [Export] public float JumpVelocity { get; set; } = 5.5f;
     [Export] public float Gravity { get; set; } = 9.8f;
@@ -118,6 +129,7 @@ public partial class PlayerCharacter : CharacterBody3D
     }
     public override void _UnhandledInput(InputEvent @event)
     {
+        if (!GameplayInputEnabled) return;
         if (@event is InputEventMouseMotion motion)
         {
             RotateY(-motion.Relative.X * MouseSensitivity);
@@ -135,25 +147,11 @@ public partial class PlayerCharacter : CharacterBody3D
             return;
         }
 
-        if (@event is InputEventMouseButton mouseButton)
-        {
-            if (mouseButton.ButtonIndex == MouseButton.Left)
-            {
-                StartAttackSwing(true, LeftShieldEquipped);
-            }
-            else if (mouseButton.ButtonIndex == MouseButton.Right)
-            {
-                StartAttackSwing(false, RightShieldEquipped);
-            }
-
-            return;
-        }
-
-        if (Input.IsActionPressed(ControllerActions.AttackLeft))
+        if (@event.IsActionPressed(ControllerActions.AttackLeft))
         {
             StartAttackSwing(true, LeftShieldEquipped);
         }
-        else if (Input.IsActionPressed(ControllerActions.AttackRight))
+        else if (@event.IsActionPressed(ControllerActions.AttackRight))
         {
             StartAttackSwing(false, RightShieldEquipped);
         }
@@ -168,13 +166,13 @@ public partial class PlayerCharacter : CharacterBody3D
             Velocity = new Vector3(Velocity.X, Velocity.Y - Gravity * physicsDelta, Velocity.Z);
         }
 
-        if (Input.IsActionJustPressed(ControllerActions.Jump) && IsOnFloor())
+        if (GameplayInputEnabled && Input.IsActionJustPressed(ControllerActions.Jump) && IsOnFloor())
         {
             Velocity = new Vector3(Velocity.X, JumpVelocity, Velocity.Z);
         }
 
-        var forward = Input.GetAxis(ControllerActions.MoveForward, ControllerActions.MoveBackward);
-        var strafe = Input.GetAxis(ControllerActions.MoveLeft, ControllerActions.MoveRight);
+        var forward = GameplayInputEnabled ? Input.GetAxis(ControllerActions.MoveForward, ControllerActions.MoveBackward) : 0;
+        var strafe = GameplayInputEnabled ? Input.GetAxis(ControllerActions.MoveLeft, ControllerActions.MoveRight) : 0;
         var localDirection = new Vector3(strafe, 0.0f, forward);
         if (localDirection.LengthSquared() > 1.0f)
         {

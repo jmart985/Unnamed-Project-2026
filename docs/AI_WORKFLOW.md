@@ -28,3 +28,5 @@ When no independent Ready issue remains after the readiness/dependency audit, re
 ## Current accepted slices
 
 The 1.0 integrated game loop is documented in `docs/VALIDATION_1_0.md`. The user selected daily work/rest schedules for 1.1 in #200: feature #380 then acceptance gate #381, with evidence in `docs/VALIDATION_1.1.md`. After that gate merges, inspect #201 (1.2 Advanced Creature Behavior) and current Project #1 before selecting more work; it is a planning issue that needs a concrete minimum playable target. Deferred #302/#306/#369 retain their scope boundaries.
+
+The user subsequently prioritized unfinished player menus before 1.2: #384 is a focused correction to completed 1.0 functionality. Its Inventory, Settlement and Save/Settings screens, button mapping, and deliberately disabled future placeholders are documented in `docs/PLAYER_MENUS.md`. Complete that correction before advancing #201; placeholders do not make future equipment/audio/display implementation Ready.

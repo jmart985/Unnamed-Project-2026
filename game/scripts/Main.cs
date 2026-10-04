@@ -105,6 +105,8 @@ public partial class Main : Node3D
         _removeSelectedButton.Pressed += RemoveSelectedEntity;
         ConfigureSquadControls();
         ConfigureScheduleControls();
+        ConfigurePlayerMenus();
+        ApplyMenuState();
         GetNode<Button>("CharacterCreation/Panel/Form/Start").Pressed += StartNewGame;
         _controls.Visible = false;
         _playerCharacter.Visible = false;
@@ -131,6 +133,8 @@ public partial class Main : Node3D
             Callable.From(RunScheduleValidation).CallDeferred();
         else if (OS.GetCmdlineUserArgs().Contains("--validate-schedule-integration"))
             Callable.From(RunScheduleValidation).CallDeferred();
+        else if (OS.GetCmdlineUserArgs().Contains("--validate-menus"))
+            Callable.From(RunMenuValidation).CallDeferred();
     }
 
     public override void _Process(double delta)
@@ -148,7 +152,7 @@ public partial class Main : Node3D
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (!_sessionActive)
+        if (!_sessionActive || _menuState.ActiveMenu is not null || _clock.IsPaused)
         {
             return;
         }
@@ -158,44 +162,14 @@ public partial class Main : Node3D
             return;
         }
 
-        // UI clicks belong to the menu. Only left clicks outside it become combat actions.
-        if (@event is InputEventMouseButton mouse
-            && mouse.ButtonIndex == MouseButton.Left
-            && mouse.Pressed
-            && _controls.Visible
-            && _controlsPanel.GetGlobalRect().HasPoint(mouse.Position))
-        {
-            return;
-        }
-
-        if (Input.IsActionPressed(ControllerActions.CloseMenu))
-        {
-            _menuState.Close();
-            _controls.Visible = false;
-            UpdateStatus();
-            return;
-        }
-
-        if (Input.IsActionPressed(ControllerActions.Inventory))
-        {
-            ToggleMenu(PlayerMenu.Inventory);
-            return;
-        }
-
-        if (Input.IsActionPressed(ControllerActions.Settlement))
-        {
-            ToggleMenu(PlayerMenu.Settlement);
-            return;
-        }
-
-        if (Input.IsActionJustPressed(ControllerActions.Collect))
+        if (@event.IsActionPressed(ControllerActions.Collect))
         {
             _lastActionMessage = TryPlayerEat();
             UpdateStatus();
             return;
         }
 
-        if (Input.IsActionPressed(ControllerActions.Attack))
+        if (@event.IsActionPressed(ControllerActions.AttackLeft) || @event.IsActionPressed(ControllerActions.AttackRight))
         {
             // Combat is an immediate world action; it must not open a menu.
             _lastActionMessage = _selectedEntityId is null
@@ -205,7 +179,7 @@ public partial class Main : Node3D
             return;
         }
 
-        if (Input.IsActionJustPressed(ControllerActions.Interact))
+        if (@event.IsActionPressed(ControllerActions.Interact))
         {
             _lastActionMessage = GreetSelectedEntity();
             UpdateStatus();
@@ -218,19 +192,19 @@ public partial class Main : Node3D
             return;
         }
 
-        if (Input.IsActionPressed(ControllerActions.DebugRoute))
+        if (@event.IsActionPressed(ControllerActions.DebugRoute))
         {
             view.RequestNavigation(new System.Numerics.Vector3(8, 0, 0));
         }
-        else if (Input.IsActionPressed(ControllerActions.DebugUnreachable))
+        else if (@event.IsActionPressed(ControllerActions.DebugUnreachable))
         {
             view.RequestNavigation(new System.Numerics.Vector3(25, 0, 0));
         }
-        else if (Input.IsActionPressed(ControllerActions.DebugCancel))
+        else if (@event.IsActionPressed(ControllerActions.DebugCancel))
         {
             view.CancelNavigation();
         }
-        else if (Input.IsActionPressed(ControllerActions.DebugRemoveGoal))
+        else if (@event.IsActionPressed(ControllerActions.DebugRemoveGoal))
         {
             view.RemoveNavigationTarget();
         }
@@ -245,7 +219,7 @@ public partial class Main : Node3D
     private void ToggleMenu(PlayerMenu menu)
     {
         _menuState.Toggle(menu);
-        _controls.Visible = true;
+        ApplyMenuState();
         UpdateStatus();
     }
 
@@ -253,6 +227,7 @@ public partial class Main : Node3D
     {
         _clock.SetPaused(!_clock.IsPaused);
         _playerCharacter.SetPhysicsProcess(!_clock.IsPaused);
+        _playerCharacter.SetGameplayInputEnabled(!_clock.IsPaused && _menuState.ActiveMenu is null);
         UpdateStatus();
     }
 
@@ -379,7 +354,7 @@ public partial class Main : Node3D
         _saveLoadStatus = saveLoadMessage;
         _sessionActive = true;
         _characterCreation.Visible = false;
-        _controls.Visible = true;
+        ApplyMenuState();
         UpdateStatus();
     }
 
@@ -420,10 +395,10 @@ public partial class Main : Node3D
     private void ConfigureSquadControls()
     {
         var controls = GetNode<VBoxContainer>("Controls/Panel/Scroll/Margin/VBox");
-        var heading = new Label { Text = "Squad: select human NPCs, then add/remove", AutowrapMode = TextServer.AutowrapMode.WordSmart };
+        var heading = new Label { Name = "SquadHeading", Text = "Squad: select human NPCs, then add/remove", AutowrapMode = TextServer.AutowrapMode.WordSmart };
         controls.AddChild(heading);
         controls.MoveChild(heading, 7);
-        var row = new HBoxContainer();
+        var row = new HBoxContainer { Name = "SquadMembership" };
         controls.AddChild(row);
         controls.MoveChild(row, 8);
         foreach (var add in new[] { true, false })
@@ -437,7 +412,7 @@ public partial class Main : Node3D
             };
             row.AddChild(button);
         }
-        var targetRow = new HBoxContainer();
+        var targetRow = new HBoxContainer { Name = "SquadTarget" };
         controls.AddChild(targetRow);
         controls.MoveChild(targetRow, 9);
         targetRow.AddChild(new Label { Text = "Move X/Z:" });
@@ -445,7 +420,7 @@ public partial class Main : Node3D
         _squadZ = new SpinBox { MinValue = -WorldHalfExtent, MaxValue = WorldHalfExtent, Value = 3 };
         targetRow.AddChild(_squadX);
         targetRow.AddChild(_squadZ);
-        var orders = new HBoxContainer();
+        var orders = new HBoxContainer { Name = "SquadOrders" };
         controls.AddChild(orders);
         controls.MoveChild(orders, 10);
         foreach (var order in new[] { SquadOrderKind.MoveTo, SquadOrderKind.FollowPlayer, SquadOrderKind.Stop })
@@ -711,11 +686,12 @@ public partial class Main : Node3D
             $"Wood: ground {groundWood}, carried {carriedWood}, stored {storedWood} (total {totalWood})\n" +
             $"Save/load: {_saveLoadStatus}\n" +
 
-            $"Menu: {_menuState.ActiveMenu?.ToString() ?? "closed"} | WASD move, Space jump, LMB combat, E collect, G greet, I inventory, Tab settlement, Esc close\n" +
+            $"Menu: {_menuState.ActiveMenu?.ToString() ?? "closed"} | Change button mapping in Save / Settings.\n" +
             $"Last action: {_lastActionMessage}\n" +
             $"Squad: {string.Join(", ", _world.SquadMemberIds)} | {_squad?.Order}\n" +
             "Select an entity; F5 route, F6 unreachable, F7 cancel, F8 remove goal";
         _pauseButton.Text = _clock.IsPaused ? "Resume" : "Pause";
+        UpdatePlayerMenuContents();
         UpdateInspector();
     }
 

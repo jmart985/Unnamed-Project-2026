@@ -101,6 +101,8 @@ public partial class Main
             var screenshotArgument = OS.GetCmdlineUserArgs().FirstOrDefault(argument => argument.StartsWith("--schedule-screenshot=", StringComparison.Ordinal));
             if (screenshotArgument is not null)
             {
+                if (_menuState.ActiveMenu != PlayerMenu.Settlement) ToggleMenu(PlayerMenu.Settlement);
+                _settlementTabs.CurrentTab = 1;
                 var output = screenshotArgument["--schedule-screenshot=".Length..];
                 GetNode<ScrollContainer>("Controls/Panel/Scroll").ScrollVertical = 370;
                 await ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);

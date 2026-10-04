@@ -3,7 +3,8 @@ namespace Simulation;
 public enum PlayerMenu
 {
     Inventory,
-    Settlement
+    Settlement,
+    Settings
 }
 
 public sealed class PlayerMenuState
