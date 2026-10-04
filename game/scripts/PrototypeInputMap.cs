@@ -27,6 +27,7 @@ public static class PrototypeInputMap
         AddMouseAction(ControllerActions.AttackRight, MouseButton.Right);
         AddKeyboardAction(ControllerActions.Collect, Key.E);
         AddKeyboardAction(ControllerActions.Interact, Key.F);
+        AddKeyboardAction(ControllerActions.Greet, Key.G);
         AddKeyboardAction(ControllerActions.CycleTarget, Key.T);
         AddKeyboardAction(ControllerActions.Inventory, Key.I);
         AddKeyboardAction(ControllerActions.Settlement, Key.Tab);
