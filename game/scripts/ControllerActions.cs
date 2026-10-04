@@ -15,6 +15,7 @@ public static class ControllerActions
     public const string Collect = "collect";
     public const string Interact = "interact";
     public const string Greet = "greet";
+    public const string Rest = "rest";
     public const string CycleTarget = "cycle_target";
     public const string Inventory = "open_inventory";
     public const string Settlement = "open_settlement";
@@ -26,5 +27,4 @@ public static class ControllerActions
     public const string DebugCancel = "debug_cancel";
     public const string DebugRemoveGoal = "debug_remove_goal";
 }
-
 
