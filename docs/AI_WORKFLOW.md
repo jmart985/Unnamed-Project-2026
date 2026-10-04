@@ -48,3 +48,5 @@ The milestone 0.4 audit found that its closed issues delivered domain foundation
 Issue #403 makes the fixed starter farm selectable and usable through explicit plant, growth and harvest controls, with schema 12 persistence documented in `docs/PLAYABLE_FARM.md`. `ActorFarmService` deliberately supports humans and species with tool-use capability so later NPC/creature jobs can call the same atomic actions. This issue does not autonomously choose or path workers; construction remains next at #404.
 
 Issue #404 supplies one bounded starter-hut placement, material and work loop through shared actor commands, with schema 13 site/structure/door persistence documented in `docs/PLAYABLE_CONSTRUCTION.md`. Beds and recovery remain ordered in #405.
+
+Issue #406 accepts the playable Basic Settlement loop after #401, #403, #404 and #405. `docs/VALIDATION_0_4.md` records the integrated workbench, farm, hut, door, sheltered-bed rest, save/load, invalid rollback, reset and rendered-evidence gate. After #406, the remaining follow-ups are deferred #302, #306 and #369 unless the user selects the next milestone planning issue.
