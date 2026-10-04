@@ -98,6 +98,9 @@ public sealed class SpeciesCatalog
             var dexterity = ValidateStat(id, entry.Dexterity ?? 1, "dexterity");
             var smellRange = ValidateStat(id, entry.SmellRange ?? 1, "smellRange");
             var temperament = ValidateTemperament(id, entry.Temperament);
+            var baseTrust = entry.BaseTrust ?? 0;
+            if (!double.IsFinite(baseTrust) || baseTrust is < 0 or > 100)
+                throw new InvalidDataException($"Species '{id}' baseTrust must be finite and within [0, 100].");
             definitions.Add(new SpeciesDefinition(
                 id,
                 displayName,
@@ -116,7 +119,10 @@ public sealed class SpeciesCatalog
                 entry.CanUseTools ?? false,
                 entry.CanOpenDoors ?? false,
                 entry.CanTrack ?? false,
-                entry.CanAcceptFriendlyInteraction ?? false));
+                entry.CanAcceptFriendlyInteraction ?? false,
+                entry.IsDomestic ?? false,
+                entry.IsPredator ?? dietaryProfile == DietaryProfile.Carnivore,
+                baseTrust));
         }
 
         return new SpeciesCatalog(definitions);
@@ -300,6 +306,9 @@ public sealed class SpeciesCatalog
         public bool? CanOpenDoors { get; init; }
         public bool? CanTrack { get; init; }
         public bool? CanAcceptFriendlyInteraction { get; init; }
+        public bool? IsDomestic { get; init; }
+        public bool? IsPredator { get; init; }
+        public double? BaseTrust { get; init; }
         public TemperamentData? Temperament { get; init; }
     }
 

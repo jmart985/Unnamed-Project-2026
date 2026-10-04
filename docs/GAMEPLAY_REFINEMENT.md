@@ -1,5 +1,7 @@
 # Gameplay refinement after target selection
 
+Current relationship feedback, recipient greeting direction and Trusted pet permission are defined in [SOCIAL_FEEDBACK.md](SOCIAL_FEEDBACK.md), which supersedes the earlier numeric relationship display and unrestricted pet fallback described here.
+
 Issue [#390](https://github.com/jmart985/Unnamed-Project-2026/issues/390) fixes gaps found by user playtesting the #388 selection build. It extends existing World, melee/social combat, resource transfer and greeting services.
 
 This document records the #390 acceptance. Subsequent interaction changes and #393 repair use F to feed/pet and G to greet humans or supported creatures; see [current interaction controls and validation](INTERACTION_REPAIR.md). The original targeted-damage and collect/hold rules below remain applicable.

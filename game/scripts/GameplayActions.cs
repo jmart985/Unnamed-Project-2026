@@ -13,6 +13,72 @@ public partial class Main
     private Label3D _targetResponse = null!;
     private string? _responseTargetId;
     private double _feedbackSeconds;
+    private sealed record SocialPopup(string EntityId, Label3D Label)
+    {
+        public double Age { get; set; }
+    }
+    private readonly List<SocialPopup> _socialPopups = [];
+
+    private void AttachSocialFeedback()
+    {
+        _world.RelationshipChanged += ShowRelationshipChange;
+        _world.FactionStandingChanged += ShowFactionChange;
+    }
+
+    private void DetachSocialFeedback()
+    {
+        _world.RelationshipChanged -= ShowRelationshipChange;
+        _world.FactionStandingChanged -= ShowFactionChange;
+    }
+
+    private void ShowRelationshipChange(string observerId, string targetId, RelationshipAdjustment change)
+    {
+        if (observerId == _world.PlayerEntityId) return;
+        var changes = new[] { ("Familiarity", change.FamiliarityDelta), ("Trust", change.TrustDelta),
+            ("Fear", change.FearDelta), ("Loyalty", change.LoyaltyDelta) };
+        ShowSocialPopup(observerId, string.Join("\n", changes.Where(pair => pair.Item2 != 0)
+            .Select(pair => $"{pair.Item1} {pair.Item2.ToString("+0.##;-0.##", System.Globalization.CultureInfo.InvariantCulture)}")));
+    }
+
+    private void ShowFactionChange(string entityId, string factionId, double change)
+        => ShowSocialPopup(entityId, $"{factionId} standing {change.ToString("+0.##;-0.##", System.Globalization.CultureInfo.InvariantCulture)}");
+
+    private void ShowSocialPopup(string entityId, string text)
+    {
+        if (text.Length == 0 || !GameplayActionsAllowed) return;
+        var label = new Label3D { Name = "SocialChange", Text = text, Visible = false,
+            Billboard = BaseMaterial3D.BillboardModeEnum.Enabled, FontSize = 32, PixelSize = 0.007f,
+            Modulate = Colors.White };
+        AddChild(label);
+        _socialPopups.Add(new(entityId, label));
+        UpdateSocialPopups(0);
+        UpdateWorldSelection();
+    }
+
+    private void UpdateSocialPopups(double delta)
+    {
+        if (_socialPopups.Count == 0) return;
+        var targets = WorldTargets();
+        var camera = GetViewport().GetCamera3D();
+        foreach (var popup in _socialPopups.ToArray())
+        {
+            popup.Age += delta;
+            if (popup.Age >= 3 || !_world.TryGetEntity(popup.EntityId, out _))
+            {
+                popup.Label.QueueFree(); _socialPopups.Remove(popup); continue;
+            }
+            var view = targets.FirstOrDefault(target => target.Target == new WorldTarget(TargetKind.Entity, popup.EntityId));
+            var player = popup.EntityId == _world.PlayerEntityId;
+            popup.Label.Visible = GameplayActionsAllowed && camera is not null
+                && (player || view is not null && TargetVisible(view, camera, targets));
+            var position = player ? _playerCharacter.GlobalPosition + Vector3.Up * 2.5f
+                : view is null ? Vector3.Zero : new Vector3(view.Center.X, view.Bounds.End.Y + 1, view.Center.Z);
+            // Successive events rise separately rather than overwriting each other or the action acknowledgment.
+            var stack = _socialPopups.TakeWhile(item => item != popup).Count(item => item.EntityId == popup.EntityId);
+            popup.Label.GlobalPosition = position + Vector3.Up * ((float)popup.Age * 0.5f + stack * 1.2f);
+            popup.Label.Modulate = new Color(1, 1, 1, (float)Math.Min(1, 3 - popup.Age));
+        }
+    }
 
     private bool GameplayActionsAllowed => _sessionActive && _menuState.ActiveMenu is null && !_clock.IsPaused;
 
@@ -39,6 +105,8 @@ public partial class Main
 
     private void CancelGameplayActions()
     {
+        foreach (var popup in _socialPopups) popup.Label.QueueFree();
+        _socialPopups.Clear();
         _collectUse.Cancel(); _collectTarget = null; _swingTargetId = null;
         _feedbackSeconds = 0; _responseTargetId = null;
         if (_targetResponse is not null) _targetResponse.Visible = false;
@@ -56,6 +124,7 @@ public partial class Main
     private void UpdateGameplayFeedback(double delta)
     {
         if (_actionHud is null) return;
+        UpdateSocialPopups(delta);
         _feedbackSeconds = Math.Max(0, _feedbackSeconds - delta);
         _actionHud.Visible = _sessionActive && _menuState.ActiveMenu is null;
         var collect = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.Collect).Desktop);
@@ -187,7 +256,7 @@ public partial class Main
                 .OrderBy(item => item.Key, StringComparer.Ordinal)
                 .FirstOrDefault();
 
-            if (foodItem.Key != null)
+            if (foodItem.Key != null && target.Satiety < 100)
             {
                 var itemContainer = new ResourceContainer("player-hand", 1);
                 itemContainer.TryAdd(foodItem.Key, 1);

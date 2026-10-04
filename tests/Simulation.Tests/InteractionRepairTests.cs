@@ -38,7 +38,7 @@ public sealed class InteractionRepairTests
         Assert.Equal(5, descriptor.Counts[ItemIds.Plant]);
         Assert.Equal(Math.Min(100, before + target.Needs.NutritionPerUnit), target.Satiety);
         Assert.True(world.TryGetRelationship(target.Id, actor.Id, out var bond));
-        Assert.Equal(8, bond!.Trust);
+        Assert.Equal(51, bond!.Trust);
         Assert.False(world.TryGetRelationship(actor.Id, target.Id, out _));
         Assert.False(resolver.Resolve(new(actor.Id, target.Id, InteractionType.Physical, "feed", descriptor)).Succeeded);
         Assert.Equal(4, actor.Inventory[ItemIds.Plant]);
@@ -95,7 +95,7 @@ public sealed class InteractionRepairTests
         Assert.Equal(CreatureCaptivityState.Captured, target.CaptivityState);
         Assert.False(resolver.Resolve(new(actor.Id, target.Id, InteractionType.Physical, "capture")).Succeeded);
         Assert.True(resolver.Resolve(new(actor.Id, target.Id, InteractionType.Physical, "pet")).Succeeded);
-        Assert.True(world.TryGetRelationship(target.Id, actor.Id, out var relation)); Assert.Equal(8, relation!.Trust);
+        Assert.True(world.TryGetRelationship(target.Id, actor.Id, out var relation)); Assert.Equal(51, relation!.Trust);
         var human = world.SpawnEntity(world.SpeciesCatalog!.GetRequired("human"), Vector3.Zero);
         Assert.False(resolver.Resolve(new(actor.Id, human.Id, InteractionType.Physical, "capture")).Succeeded);
         Assert.False(resolver.Resolve(new(actor.Id, human.Id, InteractionType.Physical, "pet")).Succeeded);
@@ -127,7 +127,7 @@ public sealed class InteractionRepairTests
         Assert.True(resolver.Resolve(new(actor.Id, target.Id, InteractionType.Physical, "give", Item(ItemIds.Wood, 1))).Succeeded);
         Assert.Equal(2, actor.Inventory[ItemIds.Wood]); Assert.Equal(1, target.Inventory[ItemIds.Wood]);
         Assert.Equal(2, target.Inventory[ItemIds.Food]);
-        Assert.True(world.TryGetRelationship(target.Id, actor.Id, out var bond)); Assert.Equal(8, bond!.Trust);
+        Assert.True(world.TryGetRelationship(target.Id, actor.Id, out var bond)); Assert.Equal(51, bond!.Trust);
         Assert.Equal(ResourceMutationResult.InvalidAmount, ResourceTransferService.TryTransfer(actor, target, ItemIds.Wood, 0));
         Assert.Equal(ResourceMutationResult.InvalidDestination, ResourceTransferService.TryTransfer(actor, actor, ItemIds.Wood, 1));
         Assert.Equal(ResourceMutationResult.InsufficientQuantity, ResourceTransferService.TryTransfer(actor, target, ItemIds.Wood, 4));

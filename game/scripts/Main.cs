@@ -137,7 +137,9 @@ public partial class Main : Node3D
 			_characterCreation.Visible = true;
 			_playerNameInput.GrabFocus();
 		}
-		if (OS.GetCmdlineUserArgs().Contains("--validate-follow-spacing"))
+		if (OS.GetCmdlineUserArgs().Contains("--validate-social-feedback"))
+			Callable.From(RunSocialFeedbackValidation).CallDeferred();
+		else if (OS.GetCmdlineUserArgs().Contains("--validate-follow-spacing"))
 			Callable.From(RunFollowSpacingValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-squad"))
 			Callable.From(RunSquadValidation).CallDeferred();
@@ -331,7 +333,9 @@ public partial class Main : Node3D
 		_simulationTick = 0;
 		ClearEntityViews();
 		ClearResourceMarkers();
+		DetachSocialFeedback();
 		_world = session.World;
+		AttachSocialFeedback();
 		_interactionResolver = new InteractionResolver(
 			_world,
 			_tradeGoodsCatalog,
@@ -782,7 +786,7 @@ public partial class Main : Node3D
 		if (capabilities.Length == 0) capabilities = "none";
 		var bodyHealth = string.Join(", ", entity.Health.Parts.Select(part => $"{part.Name} {part.CurrentHealth:0}/{part.MaximumHealth:0}"));
 		var inspection = EntityInspectionReadModel.Create(_world, entity);
-		var relationships = EntityInspectionReadModel.FormatOutgoingRelationships(inspection);
+		var relationships = entity.Id == _world.PlayerEntityId ? "not applicable" : EntityInspectionReadModel.FormatOutgoingRelationships(inspection, includeValues: false);
 		var scheduled = _world.HasDailySchedule(entity);
 		_applySchedule.Disabled = !scheduled || entity.Health.IsDead;
 		var scheduleText = "Schedule: not applicable\n";

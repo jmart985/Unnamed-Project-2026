@@ -25,10 +25,10 @@ public sealed class SocialMeleeCombatServiceTests
         Assert.Equal(RelationshipEventApplyResult.Applied, result.RelationshipEvent);
         Assert.Equal(40, defender.Health.Parts.Single(part => part.Name == "Torso").CurrentHealth);
         Assert.True(world.TryGetRelationship(defender.Id, attacker.Id, out var defenderView));
-        Assert.Equal(8, defenderView!.Familiarity);
-        Assert.Equal(15, defenderView.Trust);
-        Assert.Equal(18, defenderView.Fear);
-        Assert.Equal(13, defenderView.Loyalty);
+        Assert.Equal(6, defenderView!.Familiarity);
+        Assert.Equal(29, defenderView.Trust);
+        Assert.Equal(1, defenderView.Fear);
+        Assert.Equal(24, defenderView.Loyalty);
         Assert.False(world.TryGetRelationship(attacker.Id, defender.Id, out _));
     }
 

@@ -57,7 +57,7 @@ public static class EntityInspectionReadModel
             Array.AsReadOnly(relationships));
     }
 
-    public static string FormatOutgoingRelationships(EntityInspectionSnapshot snapshot)
+    public static string FormatOutgoingRelationships(EntityInspectionSnapshot snapshot, bool includeValues = true)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
         if (snapshot.OutgoingRelationships.Count == 0)
@@ -68,7 +68,8 @@ public static class EntityInspectionReadModel
         return string.Join(
             "\n",
             snapshot.OutgoingRelationships.Select(relationship =>
-                FormattableString.Invariant(
-                    $"{relationship.TargetEntityId}: Familiarity {relationship.Familiarity:0.0}, Trust {relationship.Trust:0.0}, Fear {relationship.Fear:0.0}, Loyalty {relationship.Loyalty:0.0} [{relationship.BondLevel}]")));
+                includeValues ? FormattableString.Invariant(
+                    $"{relationship.TargetEntityId}: Familiarity {relationship.Familiarity:0.0}, Trust {relationship.Trust:0.0}, Fear {relationship.Fear:0.0}, Loyalty {relationship.Loyalty:0.0} [{relationship.BondLevel}]")
+                    : $"{relationship.TargetEntityId}: {relationship.BondLevel}"));
     }
 }
