@@ -60,6 +60,22 @@ public sealed class PlayerWorkstationServiceTests
         Assert.Equal(2, station.InputStorage.UsedCapacity);
     }
 
+    [Fact]
+    public void IncapacitatedPlayerCannotMutateWorkbenchState()
+    {
+        var session = CreateSession();
+        session.World.TrySetEntityPosition(session.PlayerEntityId, Vector3.Zero);
+        session.Player.TryAddCarried(ItemIds.Plant, 1);
+        var head = session.Player.Health.Parts.Single(part => part.Name == "Head");
+        session.Player.Health.TryDamage("Head", head.MaximumHealth);
+
+        var result = new PlayerWorkstationService(session.World).LoadOne("workbench-1", ItemIds.Plant);
+
+        Assert.Equal(WorkstationActionResult.PlayerIncapacitated, result.Result);
+        Assert.Equal(1, session.Player.Inventory[ItemIds.Plant]);
+        Assert.Empty(session.World.Workstations.Single().InputStorage.Counts);
+    }
+
     private static NewGameSession CreateSession() => NewGameSession.Create(
         SpeciesCatalog.LoadFromFile(Path.Combine(AppContext.BaseDirectory, "data", "species.json")),
         PlayerCharacterProfile.Create("Maker"));

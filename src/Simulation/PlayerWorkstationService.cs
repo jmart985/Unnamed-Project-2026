@@ -6,6 +6,7 @@ public enum WorkstationActionResult
 {
     Success,
     PlayerUnavailable,
+    PlayerIncapacitated,
     WorkstationUnavailable,
     OutOfRange,
     InvalidItem,
@@ -93,6 +94,11 @@ public sealed class PlayerWorkstationService(World world)
         if (world.PlayerEntityId is null || !world.TryGetEntity(world.PlayerEntityId, out player) || player is null)
         {
             failure = Fail(WorkstationActionResult.PlayerUnavailable, "The player is unavailable.");
+            return false;
+        }
+        if (player.Health.IsIncapacitated)
+        {
+            failure = Fail(WorkstationActionResult.PlayerIncapacitated, "You cannot use the workbench while incapacitated.");
             return false;
         }
         workstation = world.Workstations.FirstOrDefault(item => item.Id == workstationId);
