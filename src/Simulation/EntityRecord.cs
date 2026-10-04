@@ -44,10 +44,18 @@ public sealed class EntityRecord
     public IReadOnlyDictionary<string, int> Inventory => _inventoryView;
     public int InventoryCapacity { get; }
     public string Activity { get; internal set; } = "Idle";
+    public SleepState SleepState { get; internal set; }
+    public string? BedId { get; internal set; }
     public string? WaitingReason { get; internal set; }
     public string? TargetId { get; internal set; }
     public string? Parent1Id { get; internal set; }
     public string? Parent2Id { get; internal set; }
+
+    internal void SetSleepState(SleepState state, string? bedId)
+    {
+        SleepState = state;
+        BedId = bedId;
+    }
 
     /// <summary>
     /// Atomically adds carried units of a known item to this entity's inventory. Carried

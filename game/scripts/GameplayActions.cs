@@ -5,6 +5,19 @@ namespace UnnamedProject2026;
 
 public partial class Main
 {
+    private void PerformRestAction()
+    {
+        if (_world.PlayerEntityId is not { } playerId) return;
+        var rest = new SettlementRestService(_world);
+        var result = _world.Entities.FirstOrDefault(entity => entity.Id == playerId)?.SleepState == SleepState.Sleeping
+            ? rest.Wake(playerId)
+            : _selectedTarget is { Kind: TargetKind.Structure } target
+                ? rest.Sleep(playerId, target.Id)
+                : new RestAction(RestActionResult.NoShelter, "Select a completed hut to rest.");
+        ShowActionFeedback(result.Message);
+        UpdateWorldSelection();
+    }
+
     private const double PlayerMeleeReach = 2.2;
     private readonly CollectUseGesture _collectUse = new();
     private WorldTarget? _collectTarget;

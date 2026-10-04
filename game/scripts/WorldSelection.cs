@@ -238,7 +238,7 @@ public partial class Main
         else if (target.Kind == TargetKind.Structure)
         {
             var structure = _world.Structures.Single(item => item.Id == target.Id);
-            detail = $"{structure.Type} · door {(structure.IsClosed ? "closed" : "open")} · F toggles door";
+            detail = $"{structure.Type} · bed {(structure.Beds.Count == 0 ? "unavailable" : structure.Beds[0].IsOccupied ? "occupied" : "available")} · door {(structure.IsClosed ? "closed" : "open")} · F door · R rest/wake";
         }
         else
         {

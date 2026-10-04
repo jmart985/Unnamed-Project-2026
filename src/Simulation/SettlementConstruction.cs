@@ -74,7 +74,8 @@ public sealed class ActorConstructionService(World world, SpeciesCatalog species
         site.Blueprint.ApplyWork(1);
         if (!site.Blueprint.IsComplete) return Ok($"Construction work: {site.Blueprint.WorkProgress}/{site.Blueprint.WorkRequired}.");
         var structureId = site.Id + "-structure";
-        world.AddStructure(structureId, StructureType.Hut, site.Position);
+        var structure = world.AddStructure(structureId, StructureType.Hut, site.Position);
+        structure.AddBed(new Bed($"{structureId}-bed-1"));
         world.TryRemoveConstructionSite(site.Id);
         return new(ConstructionActionResult.Success, "Starter hut complete. Its door is usable.", structureId);
     }

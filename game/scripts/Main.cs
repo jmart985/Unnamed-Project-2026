@@ -237,6 +237,13 @@ public partial class Main : Node3D
 			return;
 		}
 
+		if (@event is InputEventKey { PhysicalKeycode: Key.R })
+		{
+			PerformRestAction();
+			GetViewport().SetInputAsHandled();
+			return;
+		}
+
 		if (_selectedEntityId is not { } entityId
 			|| !_entityViews.TryGetValue(entityId, out var view))
 		{

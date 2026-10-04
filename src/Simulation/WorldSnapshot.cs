@@ -26,7 +26,8 @@ public sealed record WorldSnapshot(
     IReadOnlyList<StructureSnapshot>? Structures = null,
     IReadOnlyList<ConstructionSiteSnapshot>? ConstructionSites = null);
 
-public sealed record StructureSnapshot(string Id, StructureType Type, Vector3 Position, bool IsClosed);
+public sealed record StructureSnapshot(string Id, StructureType Type, Vector3 Position, bool IsClosed, IReadOnlyList<BedSnapshot>? Beds = null);
+public sealed record BedSnapshot(string Id, double RecoveryRateMultiplier, string? OccupantId);
 
 public sealed record ConstructionSiteSnapshot(
     string Id,
@@ -91,7 +92,9 @@ public sealed record EntitySnapshot(
     CreatureCaptivityState CaptivityState = CreatureCaptivityState.Wild,
     string? AllegianceFactionId = null,
     string? Parent1Id = null,
-    string? Parent2Id = null);
+    string? Parent2Id = null,
+    SleepState SleepState = SleepState.Awake,
+    string? BedId = null);
 
 public sealed record FoodSourceSnapshot(
     string Id,
@@ -125,7 +128,8 @@ public static class WorldSnapshotSerializer
     private const int ScheduleSchemaVersion = 10;
     private const int WorkstationSchemaVersion = 11;
     private const int FarmSchemaVersion = 12;
-    public const int CurrentSchemaVersion = 13;
+    private const int ConstructionSchemaVersion = 13;
+    public const int CurrentSchemaVersion = 14;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -153,7 +157,9 @@ public static class WorldSnapshotSerializer
                 entity.CaptivityState,
                 entity.AllegianceFactionId,
                 entity.Parent1Id,
-                entity.Parent2Id))
+                entity.Parent2Id,
+                entity.SleepState,
+                entity.BedId))
             .ToArray();
         var foodSources = world.FoodSources
             .Select(source => new FoodSourceSnapshot(
@@ -215,7 +221,8 @@ public static class WorldSnapshotSerializer
                 new FarmSnapshot(farm.Id, farm.Position, farm.Plots.Select(plot =>
                     new FarmPlotSnapshot(plot.Id, plot.Capacity, plot.Crop?.Id, plot.Growth)).ToArray())).ToArray(),
             world.Structures.OrderBy(item => item.Id, StringComparer.Ordinal)
-                .Select(item => new StructureSnapshot(item.Id, item.Type, item.Position, item.IsClosed)).ToArray(),
+                .Select(item => new StructureSnapshot(item.Id, item.Type, item.Position, item.IsClosed,
+                    item.Beds.Select(bed => new BedSnapshot(bed.Id, bed.RecoveryRateMultiplier, bed.OccupantId)).ToArray())).ToArray(),
             world.ConstructionSites.OrderBy(item => item.Id, StringComparer.Ordinal).Select(site =>
                 new ConstructionSiteSnapshot(site.Id, site.Position, site.Blueprint.Id, site.Blueprint.Width, site.Blueprint.Depth,
                     new Dictionary<string, int>(site.Blueprint.RequiredMaterials, StringComparer.Ordinal),
@@ -286,6 +293,9 @@ public static class WorldSnapshotSerializer
 
         if (snapshot.SchemaVersion == FarmSchemaVersion)
             return snapshot with { SchemaVersion = CurrentSchemaVersion, Structures = Array.Empty<StructureSnapshot>(), ConstructionSites = Array.Empty<ConstructionSiteSnapshot>() };
+
+        if (snapshot.SchemaVersion == ConstructionSchemaVersion)
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, Structures = snapshot.Structures?.Select(structure => structure with { Beds = Array.Empty<BedSnapshot>() }).ToArray() ?? Array.Empty<StructureSnapshot>() };
 
         if (snapshot.SchemaVersion != CurrentSchemaVersion)
         {
