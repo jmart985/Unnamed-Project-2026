@@ -15,6 +15,7 @@ public static class ControllerActions
     public const string Collect = "collect";
     public const string Interact = "interact";
     public const string Greet = "greet";
+    public const string Rest = "rest";
     public const string CycleTarget = "cycle_target";
     public const string Inventory = "open_inventory";
     public const string Settlement = "open_settlement";
@@ -28,10 +29,9 @@ public static class ControllerActions
     public static IReadOnlyList<string> All { get; } =
     [
         MoveLeft, MoveRight, MoveForward, MoveBackward, Jump,
-        Attack, AttackLeft, AttackRight, Collect, Interact, Greet, CycleTarget, Inventory, Settlement, Settings, CloseMenu,
+        Attack, AttackLeft, AttackRight, Collect, Interact, Greet, Rest, CycleTarget, Inventory, Settlement, Settings, CloseMenu,
         DebugRoute, DebugUnreachable, DebugCancel, DebugRemoveGoal
     ];
 }
-
 
 

@@ -73,6 +73,7 @@ public sealed class SettlementRestService
         if (Vector3.Distance(actor.Position, structure.Position) > 2f) return new(RestActionResult.OutOfRange, "Move within 2 m of the shelter.");
         var bed = structure.Beds.FirstOrDefault(item => !item.IsOccupied);
         if (bed is null) return new(RestActionResult.NoAvailableBed, "All shelter beds are occupied.");
+        actor.Actions.Cancel();
         bed.IsOccupied = true; bed.OccupantId = actor.Id;
         actor.SetSleepState(SleepState.Sleeping, bed.Id);
         actor.Activity = "Resting";

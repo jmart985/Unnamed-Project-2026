@@ -192,6 +192,13 @@ public partial class Main : Node3D
 		{
 			return;
 		}
+		if (_world.PlayerEntityId is { } sleepingPlayerId && _world.TryGetEntity(sleepingPlayerId, out var sleepingPlayer)
+			&& sleepingPlayer is not null && sleepingPlayer.SleepState == SleepState.Sleeping)
+		{
+			if (@event.IsActionPressed(ControllerActions.Rest)) PerformRestAction();
+			GetViewport().SetInputAsHandled();
+			return;
+		}
 
 		if (@event.IsActionReleased(ControllerActions.Collect))
 		{
@@ -237,7 +244,7 @@ public partial class Main : Node3D
 			return;
 		}
 
-		if (@event is InputEventKey { PhysicalKeycode: Key.R })
+		if (@event.IsActionPressed(ControllerActions.Rest))
 		{
 			PerformRestAction();
 			GetViewport().SetInputAsHandled();
@@ -597,7 +604,7 @@ public partial class Main : Node3D
 		foreach (var entity in _world.Entities)
 		{
 			entity.Health.AdvanceTime(simulationSeconds);
-			entity.Needs.Advance(simulationSeconds);
+			entity.Needs.Advance(simulationSeconds, isSleeping: entity.SleepState == SleepState.Sleeping);
 		}
 	}
 
