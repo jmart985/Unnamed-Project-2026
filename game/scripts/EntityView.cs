@@ -15,11 +15,11 @@ public partial class EntityView : CharacterBody3D
     private Vector3 _lastPosition;
     private float _smoothedSpeed;
     private double _greetingSeconds;
-    private Vector3 _greeterPosition;
+    private Func<Vector3?>? _greeterPosition;
 
     public Vector3 VisualForward => _rig is null ? -GlobalBasis.Z : -_rig.GlobalBasis.Z;
 
-    public void AcknowledgeGreeting(Vector3 greeterPosition)
+    public void AcknowledgeGreeting(Func<Vector3?> greeterPosition)
     {
         _greeterPosition = greeterPosition;
         _greetingSeconds = 2;
@@ -29,7 +29,8 @@ public partial class EntityView : CharacterBody3D
     private void FaceGreeter()
     {
         if (_rig is null) return;
-        var direction = _greeterPosition - GlobalPosition;
+        if (_greeterPosition?.Invoke() is not { } position) { _greeterPosition = null; return; }
+        var direction = position - GlobalPosition;
         direction.Y = 0;
         if (direction.LengthSquared() > 0.0001f)
             _rig.GlobalRotation = new Vector3(0, Mathf.Atan2(-direction.X, -direction.Z), 0);
@@ -267,10 +268,13 @@ public partial class EntityView : CharacterBody3D
         }
 
         _gait.Advance((float)delta, _smoothedSpeed);
-        if (_greetingSeconds > 0)
+        if (_greeterPosition is not null)
         {
             _greetingSeconds = Math.Max(0, _greetingSeconds - delta);
-            FaceGreeter();
+            // Keep attention during the greeting and afterward while idle; deliberate movement
+            // can reclaim facing after the initial acknowledgment. No arbitrary idle timeout.
+            if (_greetingSeconds == 0 && _smoothedSpeed > 0.15f) _greeterPosition = null;
+            else FaceGreeter();
         }
     }
 

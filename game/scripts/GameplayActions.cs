@@ -142,7 +142,8 @@ public partial class Main
         if (message.StartsWith("Greeted", StringComparison.Ordinal) && _selectedEntityId is { } id
             && _world.TryGetRelationship(_world.PlayerEntityId, id, out var relationship) && relationship is not null)
         {
-            if (_entityViews.TryGetValue(id, out var view)) view.AcknowledgeGreeting(_playerCharacter.GlobalPosition);
+            if (_entityViews.TryGetValue(id, out var view))
+                view.AcknowledgeGreeting(() => _world.TryGetEntity(_playerCharacter.EntityId, out _) ? _playerCharacter.GlobalPosition : null);
             ShowActionFeedback($"{message} Friendly greeting acknowledged. Familiarity {relationship.Familiarity:0}; trust {relationship.Trust:0} (player → target).",
                 id, "Friendly greeting acknowledged");
         }

@@ -101,6 +101,16 @@ public partial class Main
             Require(_entityViews[cow.Id].VisualForward.Dot(greeterDirection) > 0.99f, "greeted cow faces greeter");
             _entityViews[cow.Id]._Process(0.1);
             Require(_entityViews[cow.Id].VisualForward.Dot(greeterDirection) > 0.99f, "greeting turn survives gait update");
+            await PhysicsFrames(15);
+            _entityViews[cow.Id]._Process(3);
+            Require(_entityViews[cow.Id].VisualForward.Dot(greeterDirection) > 0.99f, "idle creature remains facing greeter after acknowledgment duration");
+            var priorPlayerPosition = _playerCharacter.GlobalPosition;
+            _playerCharacter.GlobalPosition += new Vector3(0, 0, 0.5f);
+            _entityViews[cow.Id]._Process(0.1);
+            Require(_entityViews[cow.Id].VisualForward.Dot((_playerCharacter.GlobalPosition - _entityViews[cow.Id].GlobalPosition).Normalized()) > 0.99f,
+                "idle attention follows the live greeter position after greeting");
+            _playerCharacter.GlobalPosition = priorPlayerPosition;
+            _entityViews[cow.Id]._Process(0.1);
             await CaptureGameplayRefinement("greeting.png");
             SelectEntity(wolf.Id); SendMenuKey(Key.F);
             Require(_actionHud.Text.Contains("does not accept") && !_targetResponse.Visible, "unsupported greeting visible without false acknowledgment");
