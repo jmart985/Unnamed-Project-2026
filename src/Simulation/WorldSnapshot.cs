@@ -441,13 +441,6 @@ public static class WorldSnapshotSerializer
             ValidateInventory(entity.Inventory, target.InventoryCapacity, entity.Id);
             highestEntityId = Math.Max(highestEntityId, ParseEntityId(entity.Id));
         }
-        foreach (var bed in occupiedBeds)
-        {
-            var occupant = snapshot.Entities.Single(entity => entity.Id == bed.OccupantId);
-            if (occupant.SleepState != SleepState.Sleeping || occupant.BedId != bed.Id)
-                throw new InvalidDataException($"Occupied bed '{bed.Id}' must belong to its sleeping occupant.");
-        }
-
         if (snapshot.LastAllocatedEntityId < highestEntityId)
         {
             throw new InvalidDataException(
@@ -563,6 +556,12 @@ public static class WorldSnapshotSerializer
                 throw new InvalidDataException($"Sleeping entity '{entity.Id}' must reference its occupied bed.");
             if (entity.SleepState != SleepState.Sleeping && entity.BedId is not null)
                 throw new InvalidDataException($"Awake entity '{entity.Id}' cannot retain a bed assignment.");
+        }
+        foreach (var bed in occupiedBeds)
+        {
+            var occupant = snapshot.Entities.Single(entity => entity.Id == bed.OccupantId);
+            if (occupant.SleepState != SleepState.Sleeping || occupant.BedId != bed.Id)
+                throw new InvalidDataException($"Occupied bed '{bed.Id}' must belong to its sleeping occupant.");
         }
         foreach (var site in snapshot.ConstructionSites)
         {
