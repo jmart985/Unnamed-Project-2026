@@ -19,7 +19,7 @@ A systemic open-world colony RPG in which people and creatures share consistent 
 - [Milestone 1.0: First Real Game](https://github.com/jmart985/Unnamed-Project-2026/milestone/4)
 - [Milestone 1.1: Job Intelligence](https://github.com/jmart985/Unnamed-Project-2026/milestone/5)
 - [All implementation issues](https://github.com/jmart985/Unnamed-Project-2026/issues)
-- **Start here:** choose the earliest independent **Ready** implementation issue in the active milestone. [#200](https://github.com/jmart985/Unnamed-Project-2026/issues/200) defines the selected 1.1 daily work/rest slice: feature #380 followed by integration gate #381.
+- **Start here:** choose the earliest independent **Ready** implementation issue in the active milestone.
 
 ## Start here
 
