@@ -429,3 +429,10 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Validation: Domain invariants and actual input/physics/renderer scenarios are documented in docs/GAMEPLAY_REFINEMENT.md. Prototype damage is 10 times strength with 2.2 m reach and a forward cone; final-art obstruction, combat AI and equipment remain separate.
 
 - User refinement: Facing is required during and after greeting. The view tracks the live greeter for at least two seconds and continues while idle until purposeful movement needs its attention. The user also prioritized health as core gameplay; complete a focused persistence follow-up under #302 rather than leaving injuries transient as the final state.
+
+## Interaction resolver repair (2026-10-04, #393)
+
+- Decision: Repair the current capture/feed/pet/give contract with present conscious participants, 2 m reach, truthful result messages, one-unit compatible feeding and atomic bounded giving. ProvidedItem describes a requested item; World inventories retain ownership. Positive pet/feed/give responses are directed from recipient to actor; greeting retains its existing direction.
+- Consequence: Existing F feed/pet and G greeting bindings show actual mapped hints and sustained attention during/after successful responses. New and restored Worlds configure their species catalog. Remove the obsolete backtick-suffixed resolver artifact; eliminate nullable build warnings with explicit lifecycle guards. No save schema or new interaction menu/keys.
+- Validation: docs/INTERACTION_REPAIR.md records success/failure invariants, actual Godot input and rendered evidence. Health persistence remains the next separately scoped user correction under #302.
+- User refinement: Sustained greeting attention has no timeout. A new task overrides it immediately, including stationary tasks; separation greater than 2 m also ends it. Exactly 2 m retains attention, and a new nearby interaction is required to reacquire attention after the cutoff.

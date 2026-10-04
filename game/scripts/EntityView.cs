@@ -14,15 +14,18 @@ public partial class EntityView : CharacterBody3D
     private ProceduralGait? _gait;
     private Vector3 _lastPosition;
     private float _smoothedSpeed;
-    private double _greetingSeconds;
     private Func<Vector3?>? _greeterPosition;
+    private ActionState? _currentTask;
+    private ActionState? _greetingTask;
+
+    public bool HasGreetingAttention => _greeterPosition is not null;
 
     public Vector3 VisualForward => _rig is null ? -GlobalBasis.Z : -_rig.GlobalBasis.Z;
 
     public void AcknowledgeGreeting(Func<Vector3?> greeterPosition)
     {
         _greeterPosition = greeterPosition;
-        _greetingSeconds = 2;
+        _greetingTask = _currentTask;
         FaceGreeter();
     }
 
@@ -30,6 +33,8 @@ public partial class EntityView : CharacterBody3D
     {
         if (_rig is null) return;
         if (_greeterPosition?.Invoke() is not { } position) { _greeterPosition = null; return; }
+        if (GlobalPosition.DistanceSquaredTo(position) > CreatureGreetingService.DefaultMaximumReach * CreatureGreetingService.DefaultMaximumReach)
+        { _greeterPosition = null; return; }
         var direction = position - GlobalPosition;
         direction.Y = 0;
         if (direction.LengthSquared() > 0.0001f)
@@ -122,6 +127,7 @@ public partial class EntityView : CharacterBody3D
 
     private void BuildQuadruped(Color bodyColor, Color accentColor)
     {
+        var rig = _rig ?? throw new InvalidOperationException("Build the body rig before its limbs.");
         var bodySize = _speciesId switch
         {
             "cow" => new Vector3(0.9f, 0.8f, 1.45f),
@@ -144,7 +150,7 @@ public partial class EntityView : CharacterBody3D
             AddPart(new BoxMesh { Size = new Vector3(0.3f, 0.2f, 0.25f) }, new Vector3(0, legLength - 0.02f, bodySize.Z * 0.3f), new Color(0.95f, 0.7f, 0.7f));
         }
 
-        var head = AddJoint(_rig, new Vector3(0, bodyY + bodySize.Y * 0.3f, -bodySize.Z * 0.5f));
+        var head = AddJoint(rig, new Vector3(0, bodyY + bodySize.Y * 0.3f, -bodySize.Z * 0.5f));
         AddPart(new BoxMesh { Size = new Vector3(0.3f, 0.34f, 0.4f) }, new Vector3(0, 0.02f, -0.12f), bodyColor, new Vector3(-25, 0, 0), head);
         AddPart(new BoxMesh { Size = new Vector3(0.38f, 0.38f, 0.42f) }, new Vector3(0, 0.1f, -0.38f), bodyColor, parent: head);
         AddPart(new BoxMesh { Size = new Vector3(0.22f, 0.18f, 0.24f) }, new Vector3(0, 0.02f, -0.66f), accentColor, parent: head);
@@ -182,6 +188,7 @@ public partial class EntityView : CharacterBody3D
 
     private void BuildUpright(Color shirt, Color skin, float variation)
     {
+        var rig = _rig ?? throw new InvalidOperationException("Build the body rig before its limbs.");
         var ape = _speciesId == "ape";
         var legLength = ape ? 0.55f : 0.9f;
         var shoulderWidth = ape ? 0.85f : 0.5f;
@@ -196,7 +203,7 @@ public partial class EntityView : CharacterBody3D
         _gait!.BobHeight = ape ? 0.05f : 0.035f;
 
         AddPart(new BoxMesh { Size = new Vector3(chest.X * 0.85f, 0.2f, chest.Z * 0.9f) }, new Vector3(0, legLength, 0), pants);
-        var torso = AddJoint(_rig, new Vector3(0, legLength, 0));
+        var torso = AddJoint(rig, new Vector3(0, legLength, 0));
         torso.Rotation = new Vector3(lean, 0, 0);
         AddPart(new BoxMesh { Size = chest }, new Vector3(0, chest.Y * 0.5f + 0.05f, 0), shirt, parent: torso);
         AddPart(new BoxMesh { Size = new Vector3(chest.X * 0.7f, 0.1f, chest.Z * 0.8f) }, new Vector3(0, 0.02f, 0), shirt.Darkened(0.25f), parent: torso);
@@ -270,10 +277,8 @@ public partial class EntityView : CharacterBody3D
         _gait.Advance((float)delta, _smoothedSpeed);
         if (_greeterPosition is not null)
         {
-            _greetingSeconds = Math.Max(0, _greetingSeconds - delta);
-            // Keep attention during the greeting and afterward while idle; deliberate movement
-            // can reclaim facing after the initial acknowledgment. No arbitrary idle timeout.
-            if (_greetingSeconds == 0 && _smoothedSpeed > 0.15f) _greeterPosition = null;
+            // Attention has no timeout. Purposeful movement or a new task can override it.
+            if (_smoothedSpeed > 0.15f && step.LengthSquared() > 1e-8f) _greeterPosition = null;
             else FaceGreeter();
         }
     }
@@ -292,6 +297,10 @@ public partial class EntityView : CharacterBody3D
     public bool Sync(World world)
     {
         if (!world.TryGetEntity(EntityId, out var entity) || entity is null) return false;
+        _currentTask = entity.Actions.Current;
+        if (_greeterPosition is not null && (entity.Health.IsIncapacitated
+            || (_currentTask is { Kind: not ActionKind.Idle } && !ReferenceEquals(_currentTask, _greetingTask))))
+            _greeterPosition = null;
         GlobalPosition = new Vector3(entity.Position.X, entity.Position.Y, entity.Position.Z);
         return true;
     }

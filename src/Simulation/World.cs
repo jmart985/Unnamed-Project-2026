@@ -720,6 +720,7 @@ public sealed class World
 
     internal void ApplySnapshot(WorldSnapshot snapshot, SpeciesCatalog speciesCatalog)
     {
+        SpeciesCatalog = speciesCatalog;
         ArgumentNullException.ThrowIfNull(snapshot);
         ArgumentNullException.ThrowIfNull(speciesCatalog);
 

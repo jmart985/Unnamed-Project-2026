@@ -10,7 +10,6 @@ namespace Simulation;
 public sealed class InteractionResolver
 {
     private readonly World _world;
-    private readonly TradeGoodsCatalog _tradeCatalog;
     private readonly RelationshipEventService _socialService;
 
     public InteractionResolver(World world, TradeGoodsCatalog tradeCatalog, RelationshipEventService socialService)
@@ -18,8 +17,8 @@ public sealed class InteractionResolver
         ArgumentNullException.ThrowIfNull(world);
         ArgumentNullException.ThrowIfNull(tradeCatalog);
         ArgumentNullException.ThrowIfNull(socialService);
+        if (!socialService.BelongsTo(world)) throw new ArgumentException("Relationship events must use the same World.", nameof(socialService));
         _world = world;
-        _tradeCatalog = tradeCatalog;
         _socialService = socialService;
     }
 
@@ -36,6 +35,9 @@ public sealed class InteractionResolver
             return new(false, "Actor not found in world.");
         }
 
+        if (actor.Health.IsIncapacitated) return new(false, "Actor is incapacitated.");
+        if (string.IsNullOrWhiteSpace(request.ActionId)) return new(false, "No action specified.");
+
         return request.Type switch
         {
             InteractionType.Physical => ResolvePhysical(actor, request),
@@ -49,8 +51,10 @@ public sealed class InteractionResolver
     {
         if (request.TargetId == null) return new(false, "Physical interactions require a target.");
         
-        if (_world.TryGetEntity(request.TargetId, out var target))
+        if (_world.TryGetEntity(request.TargetId, out var target) && target is not null)
         {
+            var rejection = ValidateTarget(actor, target);
+            if (rejection is not null) return rejection;
             return request.ActionId switch
             {
                 "capture" => ResolveCapture(actor, target),
@@ -64,6 +68,8 @@ public sealed class InteractionResolver
         var structure = _world.Structures.FirstOrDefault(s => s.Id == request.TargetId);
         if (structure != null)
         {
+            if (MeleeReachValidator.Validate(actor.Position, structure.Position, CreatureGreetingService.DefaultMaximumReach) != MeleeReachResult.InRange)
+                return new(false, "Move closer before interacting (2 m reach).");
             return request.ActionId switch
             {
                 "toggle_door" => ResolveToggleDoor(actor, structure),
@@ -81,6 +87,9 @@ public sealed class InteractionResolver
         {
             return new(false, "Target not found.");
         }
+
+        var rejection = ValidateTarget(actor, target);
+        if (rejection is not null) return rejection;
 
         var eventId = request.ActionId switch
         {
@@ -105,6 +114,9 @@ public sealed class InteractionResolver
         {
             return new(false, "Target not found.");
         }
+
+        if (actor.Id == target.Id || target.Health.IsIncapacitated)
+            return new(false, "Target cannot receive this command.");
 
         var authority = AuthorityMatrix.GetAuthority(actor, target, _world);
         
@@ -138,38 +150,25 @@ public sealed class InteractionResolver
             return new(false, "Cannot pet a human.");
         }
 
-        var result = _socialService.Apply(actor.Id, target.Id, "helped");
+        if (_world.SpeciesCatalog is not { } catalog || !catalog.TryGet(target.SpeciesId, out var species)
+            || species is null || !species.CanAcceptFriendlyInteraction)
+            return new(false, "This species does not accept friendly interaction.");
+
+        var result = _socialService.Apply(target.Id, actor.Id, "helped");
         return result == RelationshipEventApplyResult.Applied
             ? new(true, "You petted the creature. It seems to like you.")
-            : new(true, "You petted the creature, but it didn't seem to care.");
+            : new(false, $"Pet interaction failed: {result}.");
     }
 
     private InteractionResult ResolveGive(EntityRecord actor, EntityRecord target, ResourceContainer? itemContainer)
     {
-        if (itemContainer == null || itemContainer.Counts.Count == 0)
-        {
-            return new(false, "No item provided to give.");
-        }
-
-        var item = itemContainer.Counts.First().Key;
-        var amount = itemContainer.Counts.First().Value;
-
-        if (actor.TryRemoveCarried(item, amount) == ResourceMutationResult.Success)
-        {
-            if (target.TryAddCarried(item, amount) == ResourceMutationResult.Success)
-            {
-                _socialService.Apply(actor.Id, target.Id, "helped");
-                return new(true, $"Gave {amount}x {item} to target.");
-            }
-            else
-            {
-                // Return item to actor if target can't take it
-                actor.TryAddCarried(item, amount);
-                return new(false, "Target cannot carry this item.");
-            }
-        }
-
-        return new(false, "Actor does not have the item.");
+        if (!TryGetProvidedItem(itemContainer, out var item, out var amount))
+            return new(false, "Provide exactly one item type with a positive quantity to give.");
+        if (!_socialService.HasEvent("helped")) return new(false, "The helped relationship profile is unavailable.");
+        var transfer = ResourceTransferService.TryTransfer(actor, target, item, amount);
+        if (transfer != ResourceMutationResult.Success) return new(false, $"Give failed: {transfer}.");
+        _socialService.Apply(target.Id, actor.Id, "helped");
+        return new(true, $"Gave {amount}x {item} to target.");
     }
 
     private InteractionResult ResolveToggleDoor(EntityRecord actor, Structure structure)
@@ -180,22 +179,20 @@ public sealed class InteractionResolver
 
     private InteractionResult ResolveFeed(EntityRecord actor, EntityRecord target, ResourceContainer? itemContainer)
     {
-        if (itemContainer == null || itemContainer.Counts.Count == 0)
-        {
-            return new(false, "No item provided to feed.");
-        }
-
-        var item = itemContainer.Counts.First().Key;
-        var amount = itemContainer.Counts.First().Value;
-        var species = _world.GetSpecies(target.SpeciesId);
+        if (!TryGetProvidedItem(itemContainer, out var item, out _))
+            return new(false, "Provide exactly one item type with a positive quantity to feed.");
+        if (_world.SpeciesCatalog is not { } catalog || !catalog.TryGet(target.SpeciesId, out var species) || species is null)
+            return new(false, "Target species definition is unavailable.");
         if (!species.Diet.Contains(item))
         {
             return new(false, $"The target cannot eat {item}.");
         }
 
-        if (actor.TryRemoveCarried(item, amount) == ResourceMutationResult.Success)
+        if (target.Satiety >= 100) return new(false, "Target is already full.");
+        if (!_socialService.HasEvent("helped")) return new(false, "The helped relationship profile is unavailable.");
+        if (actor.TryRemoveCarried(item, 1) == ResourceMutationResult.Success)
         {
-            target.Needs.AddNutrition(10);
+            target.Needs.AddNutrition(target.Needs.NutritionPerUnit);
             var socialResult = _socialService.Apply(target.Id, actor.Id, "helped");
 
             return socialResult == RelationshipEventApplyResult.Applied
@@ -204,5 +201,22 @@ public sealed class InteractionResolver
         }
 
         return new(false, "Actor does not have the item.");
+    }
+
+    private static InteractionResult? ValidateTarget(EntityRecord actor, EntityRecord target)
+    {
+        if (actor.Id == target.Id) return new(false, "Cannot interact with yourself.");
+        if (target.Health.IsIncapacitated) return new(false, "Target is incapacitated.");
+        return MeleeReachValidator.Validate(actor.Position, target.Position, CreatureGreetingService.DefaultMaximumReach) == MeleeReachResult.InRange
+            ? null : new(false, "Move closer before interacting (2 m reach).");
+    }
+
+    private static bool TryGetProvidedItem(ResourceContainer? container, out string item, out int amount)
+    {
+        item = ""; amount = 0;
+        if (container is null || container.Counts.Count != 1) return false;
+        var entry = container.Counts.Single();
+        item = entry.Key; amount = entry.Value;
+        return ItemIds.IsKnown(item) && amount > 0;
     }
 }

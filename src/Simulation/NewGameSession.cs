@@ -65,7 +65,7 @@ public sealed class NewGameSession
             catalog.GetRequired(speciesId);
         }
 
-        var world = new World();
+        var world = new World { SpeciesCatalog = catalog };
         AddContainer(
             (id, position, contents) => world.AddFoodSource(id, position, contents),
             "food-pile-1",

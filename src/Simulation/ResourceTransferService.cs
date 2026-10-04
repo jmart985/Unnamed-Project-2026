@@ -2,6 +2,23 @@ namespace Simulation;
 
 public static class ResourceTransferService
 {
+    /// <summary>Transfers carried items atomically, respecting the recipient's configured capacity.</summary>
+    public static ResourceMutationResult TryTransfer(EntityRecord source, EntityRecord destination, string? itemId, int amount)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(destination);
+        if (ReferenceEquals(source, destination)) return ResourceMutationResult.InvalidDestination;
+        if (!ItemIds.IsKnown(itemId)) return ResourceMutationResult.UnknownItem;
+        if (amount <= 0) return ResourceMutationResult.InvalidAmount;
+        if (source.Inventory.GetValueOrDefault(itemId!) < amount) return ResourceMutationResult.InsufficientQuantity;
+        if (destination.Inventory.Values.Sum(count => (long)count) + amount > destination.InventoryCapacity)
+            return ResourceMutationResult.CapacityExceeded;
+        var added = destination.TryAddCarried(itemId, amount);
+        if (added != ResourceMutationResult.Success) return added;
+        source.TryRemoveCarried(itemId, amount);
+        return ResourceMutationResult.Success;
+    }
+
     public static ResourceMutationResult TryTransfer(
         ResourceContainer source,
         ResourceContainer destination,
