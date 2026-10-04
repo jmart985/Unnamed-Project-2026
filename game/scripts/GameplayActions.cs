@@ -138,15 +138,117 @@ public partial class Main
 
     private void PerformFriendlyInteraction()
     {
-        var message = GreetSelectedEntity();
-        if (message.StartsWith("Greeted", StringComparison.Ordinal) && _selectedEntityId is { } id
-            && _world.TryGetRelationship(_world.PlayerEntityId, id, out var relationship) && relationship is not null)
+        if (_selectedTarget is null)
         {
-            if (_entityViews.TryGetValue(id, out var view))
-                view.AcknowledgeGreeting(() => _world.TryGetEntity(_playerCharacter.EntityId, out _) ? _playerCharacter.GlobalPosition : null);
-            ShowActionFeedback($"{message} Friendly greeting acknowledged. Familiarity {relationship.Familiarity:0}; trust {relationship.Trust:0} (player → target).",
-                id, "Friendly greeting acknowledged");
+            ShowActionFeedback("No target selected.");
+            return;
         }
-        else ShowActionFeedback(message);
+
+        if (_world.PlayerEntityId is not { } playerId || !_world.TryGetEntity(playerId, out var player))
+        {
+            ShowActionFeedback("Player not found.");
+            return;
+        }
+
+        // 1. Structures -> Toggle Door
+        var structure = _world.Structures.FirstOrDefault(s => s.Id == _selectedTarget.Id);
+        if (structure != null)
+        {
+            var result = _interactionResolver.Resolve(new InteractionRequest(
+                playerId,
+                _selectedTarget.Id,
+                InteractionType.Physical,
+                "toggle_door"));
+            ShowActionFeedback(result.Reason);
+            return;
+        }
+
+        // 2. Entities
+        if (!_world.TryGetEntity(_selectedTarget.Id, out var target))
+        {
+            ShowActionFeedback("Target not found.");
+            return;
+        }
+
+        if (string.Equals(target.SpeciesId, "human", StringComparison.Ordinal))
+        {
+            ShowActionFeedback("Press 'G' to greet this person.");
+            return;
+        }
+        else
+        {
+            // Creature: Feed if possible, otherwise Pet
+            var species = _speciesCatalog.GetRequired(target.SpeciesId);
+            var foodItem = player.Inventory
+                .Where(item => species.Diet.Contains(item.Key))
+                .OrderBy(item => item.Value)
+                .FirstOrDefault();
+
+            if (foodItem.Key != null)
+            {
+                var itemContainer = new ResourceContainer("player-hand", 1);
+                itemContainer.TryAdd(foodItem.Key, foodItem.Value);
+
+                var result = _interactionResolver.Resolve(new InteractionRequest(
+                    playerId,
+                    target.Id,
+                    InteractionType.Physical,
+                    "feed",
+                    itemContainer));
+                ShowActionFeedback(result.Reason);
+            }
+            else
+            {
+                var result = _interactionResolver.Resolve(new InteractionRequest(
+                    playerId,
+                    target.Id,
+                    InteractionType.Physical,
+                    "pet"));
+                ShowActionFeedback(result.Reason);
+            }
+        }
+    }
+
+    private void PerformGreeting()
+    {
+        if (_selectedTarget is null)
+        {
+            ShowActionFeedback("No target selected.");
+            return;
+        }
+
+        if (_world.PlayerEntityId is not { } playerId || !_world.TryGetEntity(playerId, out var player))
+        {
+            ShowActionFeedback("Player not found.");
+            return;
+        }
+
+        if (!_world.TryGetEntity(_selectedTarget.Id, out var target) || target is null)
+        {
+            ShowActionFeedback("Target not found.");
+            return;
+        }
+
+        if (!string.Equals(target.SpeciesId, "human", StringComparison.Ordinal))
+        {
+            ShowActionFeedback("You can only greet humans.");
+            return;
+        }
+
+        var result = _interactionResolver.Resolve(new InteractionRequest(
+            playerId,
+            target.Id,
+            InteractionType.Social,
+            "greet"));
+
+        if (result.Success && _world.TryGetRelationship(playerId, target.Id, out var relationship))
+        {
+            if (_entityViews.TryGetValue(target.Id, out var view))
+                view.AcknowledgeGreeting(() => _world.TryGetEntity(_playerCharacter.EntityId, out _) ? _playerCharacter.GlobalPosition : null);
+            
+            ShowActionFeedback($"{result.Reason} Friendly greeting acknowledged. Familiarity {relationship?.Familiarity:0}; trust {relationship?.Trust:0} (player → target).",
+                target.Id, "Friendly greeting acknowledged");
+        }
+        else ShowActionFeedback(result.Reason);
     }
 }

@@ -40,6 +40,8 @@ public partial class Main : Node3D
 	private long _simulationTick;
 	private SpeciesCatalog _speciesCatalog = null!;
 	private RelationshipEventCatalog _relationshipEventCatalog = null!;
+	private TradeGoodsCatalog _tradeGoodsCatalog = null!;
+	private InteractionResolver _interactionResolver = null!;
 	private PlayerCommandBoundary? _playerCommands;
 	private MeshInstance3D _map = null!;
 	private MeshInstance3D _obstacle = null!;
@@ -101,6 +103,8 @@ public partial class Main : Node3D
 			Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
 		_relationshipEventCatalog = RelationshipEventCatalog.LoadFromFile(
 			Path.Combine(AppContext.BaseDirectory, "data", "relationship_events.json"));
+		_tradeGoodsCatalog = TradeGoodsCatalog.LoadFromFile(
+			Path.Combine(AppContext.BaseDirectory, "data", "trade_goods.json"));
 		ConfigureCreationChoices();
 		_pauseButton.Pressed += TogglePause;
 		GetNode<Button>("Controls/Panel/Scroll/Margin/VBox/OneX").Pressed += () => _clock.SetSpeed(SimulationSpeed.OneX);
@@ -206,6 +210,12 @@ public partial class Main : Node3D
 		if (@event.IsActionPressed(ControllerActions.Interact))
 		{
 			PerformFriendlyInteraction();
+			return;
+		}
+
+		if (@event.IsActionPressed(ControllerActions.Greet))
+		{
+			PerformGreeting();
 			return;
 		}
 
@@ -320,6 +330,10 @@ public partial class Main : Node3D
 		ClearEntityViews();
 		ClearResourceMarkers();
 		_world = session.World;
+		_interactionResolver = new InteractionResolver(
+			_world,
+			_tradeGoodsCatalog,
+			_relationshipEventCatalog);
 		_playerCommands = new PlayerCommandBoundary(
 			_world,
 			_clock,

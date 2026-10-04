@@ -48,17 +48,30 @@ public sealed class InteractionResolver
     private InteractionResult ResolvePhysical(EntityRecord actor, InteractionRequest request)
     {
         if (request.TargetId == null) return new(false, "Physical interactions require a target.");
-        if (!_world.TryGetEntity(request.TargetId, out var target) || target is null)
+        
+        if (_world.TryGetEntity(request.TargetId, out var target))
         {
-            return new(false, "Target not found.");
+            return request.ActionId switch
+            {
+                "capture" => ResolveCapture(actor, target),
+                "feed" => ResolveFeed(actor, target, request.ProvidedItem),
+                "pet" => ResolvePet(actor, target),
+                "give" => ResolveGive(actor, target, request.ProvidedItem),
+                _ => new(false, $"Unknown physical action: {request.ActionId}")
+            };
         }
 
-        return request.ActionId switch
+        var structure = _world.Structures.FirstOrDefault(s => s.Id == request.TargetId);
+        if (structure != null)
         {
-            "capture" => ResolveCapture(actor, target),
-            "feed" => ResolveFeed(actor, target, request.ProvidedItem),
-            _ => new(false, $"Unknown physical action: {request.ActionId}")
-        };
+            return request.ActionId switch
+            {
+                "toggle_door" => ResolveToggleDoor(actor, structure),
+                _ => new(false, $"Unknown physical action: {request.ActionId}")
+            };
+        }
+
+        return new(false, "Target not found.");
     }
 
     private InteractionResult ResolveSocial(EntityRecord actor, InteractionRequest request)
@@ -118,6 +131,53 @@ public sealed class InteractionResolver
         };
     }
 
+    private InteractionResult ResolvePet(EntityRecord actor, EntityRecord target)
+    {
+        if (string.Equals(target.SpeciesId, "human", StringComparison.Ordinal))
+        {
+            return new(false, "Cannot pet a human.");
+        }
+
+        var result = _socialService.Apply(actor.Id, target.Id, "helped");
+        return result == RelationshipEventApplyResult.Applied
+            ? new(true, "You petted the creature. It seems to like you.")
+            : new(true, "You petted the creature, but it didn't seem to care.");
+    }
+
+    private InteractionResult ResolveGive(EntityRecord actor, EntityRecord target, ResourceContainer? itemContainer)
+    {
+        if (itemContainer == null || itemContainer.Counts.Count == 0)
+        {
+            return new(false, "No item provided to give.");
+        }
+
+        var item = itemContainer.Counts.First().Key;
+        var amount = itemContainer.Counts.First().Value;
+
+        if (actor.TryRemoveCarried(item, amount) == ResourceMutationResult.Success)
+        {
+            if (target.TryAddCarried(item, amount) == ResourceMutationResult.Success)
+            {
+                _socialService.Apply(actor.Id, target.Id, "helped");
+                return new(true, $"Gave {amount}x {item} to target.");
+            }
+            else
+            {
+                // Return item to actor if target can't take it
+                actor.TryAddCarried(item, amount);
+                return new(false, "Target cannot carry this item.");
+            }
+        }
+
+        return new(false, "Actor does not have the item.");
+    }
+
+    private InteractionResult ResolveToggleDoor(EntityRecord actor, Structure structure)
+    {
+        structure.IsClosed = !structure.IsClosed;
+        return new(true, $"Door is now {(structure.IsClosed ? "closed" : "open")}.");
+    }
+
     private InteractionResult ResolveFeed(EntityRecord actor, EntityRecord target, ResourceContainer? itemContainer)
     {
         if (itemContainer == null || itemContainer.Counts.Count == 0)
@@ -126,17 +186,23 @@ public sealed class InteractionResolver
         }
 
         var item = itemContainer.Counts.First().Key;
+        var amount = itemContainer.Counts.First().Value;
         var species = _world.GetSpecies(target.SpeciesId);
         if (!species.Diet.Contains(item))
         {
             return new(false, $"The target cannot eat {item}.");
         }
 
-        target.Needs.AddNutrition(10);
-        var socialResult = _socialService.Apply(target.Id, actor.Id, "helped");
-        
-        return socialResult == RelationshipEventApplyResult.Applied 
-            ? new(true, $"Fed {item} to target. Satiety increased and trust gained.") 
-            : new(true, $"Fed {item} to target, but no social bond was formed.");
+        if (actor.TryRemoveCarried(item, amount) == ResourceMutationResult.Success)
+        {
+            target.Needs.AddNutrition(10);
+            var socialResult = _socialService.Apply(target.Id, actor.Id, "helped");
+
+            return socialResult == RelationshipEventApplyResult.Applied
+                ? new(true, $"Fed {item} to target. Satiety increased and trust gained.")
+                : new(true, $"Fed {item} to target, but no social bond was formed.");
+        }
+
+        return new(false, "Actor does not have the item.");
     }
 }
