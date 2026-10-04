@@ -795,6 +795,7 @@ public sealed class World
             restored.CaptivityState = entity.CaptivityState;
             restored.Parent1Id = entity.Parent1Id;
             restored.Parent2Id = entity.Parent2Id;
+            restored.SetSleepState(entity.SleepState, entity.BedId);
             foreach (var item in entity.Inventory)
             {
                 restored.TryAddCarried(item.Key, item.Value);
@@ -880,7 +881,10 @@ public sealed class World
 
         foreach (var saved in snapshot.Structures!)
         {
-            AddStructure(saved.Id, saved.Type, saved.Position).IsClosed = saved.IsClosed;
+            var structure = AddStructure(saved.Id, saved.Type, saved.Position);
+            structure.IsClosed = saved.IsClosed;
+            foreach (var bed in saved.Beds ?? Array.Empty<BedSnapshot>())
+                structure.AddBed(new Bed(bed.Id, bed.RecoveryRateMultiplier) { OccupantId = bed.OccupantId, IsOccupied = bed.OccupantId is not null });
         }
 
         foreach (var saved in snapshot.ConstructionSites!)

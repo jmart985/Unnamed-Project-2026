@@ -42,5 +42,42 @@ public sealed class SettlementBedTests
         registry.Reset();
         Assert.True(registry.TryAssignAvailable("entity-2", out _));
     }
+
+    [Fact]
+    public void CompletedShelterBedSupportsPlayerAndRejectsDoubleBooking()
+    {
+        var world = new World();
+        var first = world.SpawnEntity("human", Vector3.Zero, 100);
+        var second = world.SpawnEntity("human", Vector3.Zero, 100);
+        var hut = world.AddStructure("hut", StructureType.Hut, Vector3.Zero);
+        hut.AddBed(new Bed("hut-bed-1"));
+        var rest = new SettlementRestService(world);
+
+        Assert.True(rest.Sleep(first.Id, hut.Id).Succeeded);
+        Assert.Equal(SleepState.Sleeping, first.SleepState);
+        Assert.Equal(RestActionResult.NoAvailableBed, rest.Sleep(second.Id, hut.Id).Result);
+        Assert.Equal(RestActionResult.Success, rest.Wake(first.Id).Result);
+        Assert.Equal(SleepState.Awake, first.SleepState);
+        Assert.True(rest.Sleep(second.Id, hut.Id).Succeeded);
+    }
+
+    [Fact]
+    public void BedAndSleepStateRoundTripThroughSnapshot()
+    {
+        var world = new World();
+        var actor = world.SpawnEntity("human", Vector3.Zero, 100);
+        var hut = world.AddStructure("hut", StructureType.Hut, Vector3.Zero);
+        hut.AddBed(new Bed("hut-bed-1"));
+        Assert.True(new SettlementRestService(world).Sleep(actor.Id, hut.Id).Succeeded);
+
+        var restored = new World();
+        var catalog = SpeciesCatalog.LoadFromFile(Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
+        WorldSnapshotSerializer.Load(restored, WorldSnapshotSerializer.Serialize(world, 2), catalog);
+        var restoredActor = restored.Entities.Single(entity => entity.Id == actor.Id);
+        var restoredBed = Assert.Single(Assert.Single(restored.Structures).Beds);
+        Assert.Equal(SleepState.Sleeping, restoredActor.SleepState);
+        Assert.Equal(restoredBed.Id, restoredActor.BedId);
+        Assert.Equal(actor.Id, restoredBed.OccupantId);
+    }
 }
 
