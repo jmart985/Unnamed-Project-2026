@@ -16,19 +16,19 @@ public sealed class CreatureGreetingServiceTests
         Assert.False(world.TryGetRelationship(player.Id, creature.Id, out _));
     }
     [Fact]
-    public void GreetingAppliesTheProfileOnlyToThePlayerToCreatureRelationship()
+    public void GreetingAppliesTheProfileOnlyToTheCreatureTowardPlayerRelationship()
     {
         var (world, player, creature, greeting) = CreateGreetingTarget("ape", new Vector3(2, 0, 0));
 
         var result = greeting.Greet(creature.Id);
 
         Assert.Equal(CreatureGreetingResultCode.Greeted, result.Code);
-        Assert.True(world.TryGetRelationship(player.Id, creature.Id, out var relationship));
-        Assert.Equal(5, relationship!.Familiarity);
+        Assert.True(world.TryGetRelationship(creature.Id, player.Id, out var relationship));
+        Assert.Equal(1, relationship!.Familiarity);
         Assert.Equal(0, relationship.Trust);
         Assert.Equal(0, relationship.Fear);
         Assert.Equal(0, relationship.Loyalty);
-        Assert.False(world.TryGetRelationship(creature.Id, player.Id, out _));
+        Assert.False(world.TryGetRelationship(player.Id, creature.Id, out _));
     }
 
     [Fact]

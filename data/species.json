@@ -61,6 +61,8 @@
   },
   {
     "id": "cow",
+    "isDomestic": true,
+    "baseTrust": 50,
     "displayName": "Cow",
     "movementSpeed": 1.8,
     "hungerRate": 0.28,
@@ -81,6 +83,7 @@
   },
   {
     "id": "wolf",
+    "isPredator": true,
     "displayName": "Wolf",
     "movementSpeed": 3.4,
     "hungerRate": 0.24,

@@ -26,7 +26,10 @@ public sealed class SpeciesDefinition
         bool canUseTools = false,
         bool canOpenDoors = false,
         bool canTrack = false,
-        bool canAcceptFriendlyInteraction = false)
+        bool canAcceptFriendlyInteraction = false,
+        bool isDomestic = false,
+        bool isPredator = false,
+        double baseTrust = 0)
     {
         Id = id;
         DisplayName = displayName;
@@ -45,6 +48,9 @@ public sealed class SpeciesDefinition
         CanOpenDoors = canOpenDoors;
         CanTrack = canTrack;
         CanAcceptFriendlyInteraction = canAcceptFriendlyInteraction;
+        IsDomestic = isDomestic;
+        IsPredator = isPredator;
+        BaseTrust = baseTrust;
         Temperament = temperament;
         _dietItems = new HashSet<string>(Diet, StringComparer.Ordinal);
     }
@@ -66,6 +72,9 @@ public sealed class SpeciesDefinition
     public bool CanOpenDoors { get; }
     public bool CanTrack { get; }
     public bool CanAcceptFriendlyInteraction { get; }
+    public bool IsDomestic { get; }
+    public bool IsPredator { get; }
+    public double BaseTrust { get; }
     public TemperamentProfile Temperament { get; }
 
     public CharacterStats CreateCharacterStats(CharacterStats defaults)

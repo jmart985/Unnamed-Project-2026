@@ -34,6 +34,7 @@ A systemic open-world colony RPG in which people and creatures share consistent 
 - [Capture/feed/pet/give repair and current interaction controls](docs/INTERACTION_REPAIR.md)
 - [Follow distance, player clearance and physics validation](docs/FOLLOW_SPACING.md)
 - [NPC daily schedules and validation](docs/NPC_SCHEDULES.md)
+- [Social feedback and Trusted petting](docs/SOCIAL_FEEDBACK.md)
 - [Daily schedule integrated acceptance](docs/VALIDATION_1.1.md)
 - [First Real Game integrated validation](docs/VALIDATION_1_0.md)
 - [Work sequence and issue index](docs/BACKLOG.md)

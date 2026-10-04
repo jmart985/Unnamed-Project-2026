@@ -15,10 +15,16 @@ public sealed class RelationshipEventCatalogTests
             new[] { "greeted", "helped", "rescued", "harmed", "threatened" },
             catalog.Definitions.Select(definition => definition.Id));
         Assert.True(catalog.TryGet("greeted", out var greeted));
-        Assert.Equal(new RelationshipAdjustment(5, 0, 0, 0), greeted!.Adjustment);
+        Assert.Equal(new RelationshipAdjustment(1, 0, 0, 0), greeted!.Adjustment);
         Assert.True(catalog.TryGet("rescued", out var rescued));
-        Assert.Equal(20, rescued!.Adjustment.TrustDelta);
-        Assert.Equal(-15, rescued.Adjustment.FearDelta);
+        Assert.Equal(1, rescued!.Adjustment.TrustDelta);
+        Assert.Equal(-1, rescued.Adjustment.FearDelta);
+        Assert.All(catalog.Definitions, profile =>
+        {
+            var adjustment = profile.Adjustment;
+            Assert.All(new[] { adjustment.FamiliarityDelta, adjustment.TrustDelta, adjustment.FearDelta, adjustment.LoyaltyDelta },
+                delta => Assert.Contains(delta, new double[] { -1, 0, 1 }));
+        });
     }
 
     [Fact]
@@ -33,10 +39,10 @@ public sealed class RelationshipEventCatalogTests
             RelationshipEventApplyResult.Applied,
             service.Apply(observer.Id, target.Id, "helped"));
         Assert.True(world.TryGetRelationship(observer.Id, target.Id, out var relationship));
-        Assert.Equal(5, relationship!.Familiarity);
-        Assert.Equal(8, relationship.Trust);
+        Assert.Equal(1, relationship!.Familiarity);
+        Assert.Equal(1, relationship.Trust);
         Assert.Equal(0, relationship.Fear);
-        Assert.Equal(3, relationship.Loyalty);
+        Assert.Equal(1, relationship.Loyalty);
         Assert.False(world.TryGetRelationship(target.Id, observer.Id, out _));
     }
 
@@ -72,9 +78,9 @@ public sealed class RelationshipEventCatalogTests
             service.Apply(observer.Id, target.Id, "harmed"));
 
         Assert.True(world.TryGetRelationship(observer.Id, target.Id, out var relationship));
-        Assert.Equal(15, relationship!.Familiarity);
-        Assert.Equal(5, relationship.Trust);
-        Assert.Equal(18, relationship.Fear);
+        Assert.Equal(2, relationship!.Familiarity);
+        Assert.Equal(0, relationship.Trust);
+        Assert.Equal(1, relationship.Fear);
         Assert.Equal(0, relationship.Loyalty);
     }
 

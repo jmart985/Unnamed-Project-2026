@@ -149,7 +149,7 @@ public sealed class RegionIntegrationScenarioTests
                 new FactionHostilityState("visitors", "settlers", false) }, world.FactionHostilities);
             var relation = Assert.Single(world.Relationships);
             Assert.Equal((creature.Id, human.Id), (relation.ObserverEntityId, relation.TargetEntityId));
-            Assert.Equal((8d, 15d, 18d, 13d), (relation.Familiarity, relation.Trust, relation.Fear, relation.Loyalty));
+            Assert.Equal((6d, 29d, 1d, 24d), (relation.Familiarity, relation.Trust, relation.Fear, relation.Loyalty));
         }
     }
 

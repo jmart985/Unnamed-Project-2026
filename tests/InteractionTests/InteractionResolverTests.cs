@@ -49,6 +49,7 @@ public class InteractionResolverTests
         var player = world.SpawnEntity(catalog.GetRequired("human"), Vector3.Zero);
 
         var request = new InteractionRequest(player.Id, creature.Id, InteractionType.Physical, "pet");
+        world.ApplyRelationshipAdjustment(creature.Id, player.Id, new(20, 50, 0, 0));
         var result = resolver.Resolve(request);
 
         Assert.True(result.Succeeded);

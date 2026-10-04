@@ -2,6 +2,8 @@
 
 Issue #393 corrects the interaction resolver introduced on main 1982661. `InteractionResult.Succeeded` describes an action that actually happened, with a visible failure reason otherwise. `ProvidedItem` is a one-item quantity descriptor; its counts are not another owned inventory. The actor's World inventory supplies the item.
 
+Subsequent #397 supersedes the pet species gate, greeting direction and F priority described below: [social feedback](SOCIAL_FEEDBACK.md) requires a recipient Trusted/Loyal bond for petting, applies greetings toward the actor, and pets full qualifying creatures even when food is carried. The #393 validation results remain historical evidence for that repair.
+
 - Physical and social entity interactions require distinct, present, conscious participants within 2 m. Missing, incapacitated, distant and self targets fail before mutation. Capture delegates to existing World captivity transitions; humans and repeated/invalid captures remain rejected.
 - Feed uses one compatible carried unit per action, even when the descriptor or inventory contains a stack. Nutrition comes from the target's existing needs tuning. A full target keeps the actor's items. Missing food, species definitions or the required social profile fail without inventory or satiety changes.
 - Pet requires the existing friendly-interaction species capability. A successful `helped` event records the recipient's response toward the actor; a rejected event returns failure. Give uses the same direction. Greeting retains the existing actor-to-target direction.

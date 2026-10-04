@@ -101,7 +101,7 @@ public sealed class InteractionResolver
 
         if (eventId == null) return new(false, $"Unknown social action: {request.ActionId}");
 
-        var result = _socialService.Apply(actor.Id, target.Id, eventId);
+        var result = _socialService.Apply(target.Id, actor.Id, eventId);
         return result == RelationshipEventApplyResult.Applied 
             ? new(true, $"Successfully performed {request.ActionId}.") 
             : new(false, $"Social interaction failed: {result}");
@@ -150,9 +150,10 @@ public sealed class InteractionResolver
             return new(false, "Cannot pet a human.");
         }
 
-        if (_world.SpeciesCatalog is not { } catalog || !catalog.TryGet(target.SpeciesId, out var species)
-            || species is null || !species.CanAcceptFriendlyInteraction)
-            return new(false, "This species does not accept friendly interaction.");
+        if (_world.SpeciesCatalog is not { } catalog || !catalog.TryGet(target.SpeciesId, out _))
+            return new(false, "Target species definition is unavailable.");
+        if (_world.GetBondLevel(target.Id, actor.Id) is not (RelationshipBondLevel.Trusted or RelationshipBondLevel.Loyal))
+            return new(false, "Pet unavailable until this creature is Trusted.");
 
         var result = _socialService.Apply(target.Id, actor.Id, "helped");
         return result == RelationshipEventApplyResult.Applied
@@ -196,7 +197,7 @@ public sealed class InteractionResolver
             var socialResult = _socialService.Apply(target.Id, actor.Id, "helped");
 
             return socialResult == RelationshipEventApplyResult.Applied
-                ? new(true, $"Fed {item} to target. Satiety increased and trust gained.")
+                ? new(true, $"Fed {item} to target. Satiety increased.")
                 : new(true, $"Fed {item} to target, but no social bond was formed.");
         }
 

@@ -88,7 +88,7 @@ public sealed class CreatureGreetingService
             return new(CreatureGreetingResultCode.OutOfRange, target.Id, "Move closer before greeting this creature.");
         }
 
-        return _relationshipEvents.Apply(player.Id, target.Id, GreetedEventId) switch
+        return _relationshipEvents.Apply(target.Id, player.Id, GreetedEventId) switch
         {
             RelationshipEventApplyResult.Applied =>
                 new(CreatureGreetingResultCode.Greeted, target.Id, $"Greeted {species.DisplayName}."),

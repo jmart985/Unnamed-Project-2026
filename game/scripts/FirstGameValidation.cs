@@ -43,8 +43,8 @@ public partial class Main
         SelectEntity(cow.Id);
         Require(GreetSelectedEntity().StartsWith("Greeted", StringComparison.Ordinal), "greeting handler succeeds");
         var relation = _world.Relationships.Single();
-        Require(relation.ObserverEntityId == player.Id && relation.TargetEntityId == cow.Id && relation.Familiarity == 5
-            && relation.Trust == 0 && relation.Fear == 0 && relation.Loyalty == 0, "directed greeting only");
+        Require(relation.ObserverEntityId == cow.Id && relation.TargetEntityId == player.Id && relation.Familiarity == 21
+            && relation.Trust == 50 && relation.Fear == 0 && relation.Loyalty == 0, "recipient greeting and domestic baseline only");
         unchanged = WorldSnapshotSerializer.Serialize(_world, _clock.SimulationTime);
         SelectEntity(_world.Entities.Single(e => e.SpeciesId == "wolf").Id);
         Require(GreetSelectedEntity().Contains("does not accept", StringComparison.Ordinal), "unsupported capability rejection");

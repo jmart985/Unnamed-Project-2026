@@ -8,6 +8,13 @@ public sealed class World
 {
     public const int DefaultInventoryCapacity = 10;
 
+    public event Action<string, string, RelationshipAdjustment>? RelationshipChanged;
+    public event Action<string, string, double>? FactionStandingChanged;
+
+    // Gameplay events use unit steps; explicit adjustments remain available for setup/imports.
+    public FactionReputationResult ApplyFactionStandingEvent(string? entityId, string? factionId, bool positive)
+        => AdjustFactionReputation(entityId, factionId, positive ? 1 : -1);
+
     private readonly Dictionary<string, EntityRecord> _entities = new(StringComparer.Ordinal);
     private readonly Dictionary<(string ObserverId, string TargetId), RelationshipState> _relationships = [];
     private readonly HashSet<string> _factionIds = new(StringComparer.Ordinal);
@@ -524,6 +531,7 @@ public sealed class World
         }
 
         _factionReputations[key] = updatedValue;
+        if (updatedValue != currentValue) FactionStandingChanged?.Invoke(entityId, factionId, updatedValue - currentValue);
         return FactionReputationResult.Applied;
     }
 
@@ -608,7 +616,7 @@ public sealed class World
             return true;
         }
 
-        relationship = new RelationshipState(key.Item1, key.Item2);
+        relationship = CreateInitialRelationship(key.Item1, key.Item2);
         _relationships.Add(key, relationship);
         return true;
     }
@@ -633,11 +641,39 @@ public sealed class World
             return RelationshipAdjustmentResult.InvalidParticipant;
         }
 
+        var before = (relationship.Familiarity, relationship.Trust, relationship.Fear, relationship.Loyalty);
         relationship.ApplyDelta(RelationshipDimension.Familiarity, adjustment.FamiliarityDelta);
         relationship.ApplyDelta(RelationshipDimension.Trust, adjustment.TrustDelta);
         relationship.ApplyDelta(RelationshipDimension.Fear, adjustment.FearDelta);
         relationship.ApplyDelta(RelationshipDimension.Loyalty, adjustment.LoyaltyDelta);
+        var applied = new RelationshipAdjustment(relationship.Familiarity - before.Familiarity,
+            relationship.Trust - before.Trust, relationship.Fear - before.Fear, relationship.Loyalty - before.Loyalty);
+        if (applied.FamiliarityDelta != 0 || applied.TrustDelta != 0 || applied.FearDelta != 0 || applied.LoyaltyDelta != 0)
+            RelationshipChanged?.Invoke(relationship.ObserverEntityId, relationship.TargetEntityId, applied);
         return RelationshipAdjustmentResult.Applied;
+    }
+
+    public RelationshipBondLevel GetBondLevel(string observerId, string targetId)
+    {
+        if (!TryGetEntity(observerId, out _) || !TryGetEntity(targetId, out _) || observerId == targetId)
+            return RelationshipBondLevel.Stranger;
+        return RelationshipBondClassifier.Classify(TryGetRelationship(observerId, targetId, out var relationship)
+            ? relationship! : CreateInitialRelationship(observerId, targetId));
+    }
+
+    private RelationshipState CreateInitialRelationship(string observerId, string targetId)
+    {
+        var relationship = new RelationshipState(observerId, targetId);
+        if (SpeciesCatalog is { } catalog && TryGetEntity(observerId, out var observer)
+            && TryGetEntity(targetId, out var target) && observer is not null && target is not null
+            && catalog.TryGet(observer.SpeciesId, out var species) && species is { IsDomestic: true }
+            && catalog.TryGet(target.SpeciesId, out var targetSpecies) && targetSpecies is not null
+            && (target.SpeciesId == "human" || !targetSpecies.IsPredator))
+        {
+            relationship.ApplyDelta(RelationshipDimension.Familiarity, RelationshipBondThresholds.ProvisionalDefault.FamiliarityForFamiliar);
+            relationship.ApplyDelta(RelationshipDimension.Trust, species.BaseTrust);
+        }
+        return relationship;
     }
 
     public bool TryRemoveEntity(string? id)
@@ -797,15 +833,9 @@ public sealed class World
 
         foreach (var savedRelationship in snapshot.Relationships)
         {
-            if (!TryGetOrCreateRelationship(
-                savedRelationship.ObserverEntityId,
-                savedRelationship.TargetEntityId,
-                out var relationship)
-                || relationship is null)
-            {
-                throw new InvalidOperationException(
-                    "A validated relationship could not be restored into the world.");
-            }
+            // Saved totals are authoritative, including explicit zero/betrayed bonds.
+            var relationship = new RelationshipState(savedRelationship.ObserverEntityId, savedRelationship.TargetEntityId);
+            _relationships.Add((savedRelationship.ObserverEntityId, savedRelationship.TargetEntityId), relationship);
 
             relationship.ApplyDelta(RelationshipDimension.Familiarity, savedRelationship.Familiarity);
             relationship.ApplyDelta(RelationshipDimension.Trust, savedRelationship.Trust);

@@ -79,10 +79,10 @@ public sealed class FirstGameIntegrationTests
         world.TrySetEntityPosition(session.PlayerEntityId, cow.Position + Vector3.UnitX);
         Assert.Equal(PlayerCommandResultCode.Accepted, commands.Execute(new(PlayerCommandKind.Interact, cow.Id)).Code);
         var relationship = world.Relationships.Single();
-        Assert.Equal(session.PlayerEntityId, relationship.ObserverEntityId);
-        Assert.Equal(cow.Id, relationship.TargetEntityId);
-        Assert.Equal(5, relationship.Familiarity);
-        Assert.Equal(0, relationship.Trust);
+        Assert.Equal(cow.Id, relationship.ObserverEntityId);
+        Assert.Equal(session.PlayerEntityId, relationship.TargetEntityId);
+        Assert.Equal(21, relationship.Familiarity);
+        Assert.Equal(50, relationship.Trust);
         Assert.Equal(0, relationship.Fear);
         Assert.Equal(0, relationship.Loyalty);
         failureState = WorldSnapshotSerializer.Serialize(world, clock.SimulationTime);

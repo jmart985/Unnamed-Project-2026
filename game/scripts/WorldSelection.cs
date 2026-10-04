@@ -139,6 +139,7 @@ public partial class Main
         _targetHud.Visible = gameplay;
         UpdateGameplayFeedback(0);
         _targetRing.Visible = false;
+        ((StandardMaterial3D)_targetRing.MaterialOverride).AlbedoColor = new Color(1, 0.85f, 0.1f);
         var binding = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.CycleTarget).Desktop);
         var hint = $"{binding}: select / cycle visible targets (40 m)";
         if (_selectedTarget is not { } target)
@@ -157,8 +158,18 @@ public partial class Main
         if (target.Kind == TargetKind.Entity && _world.TryGetEntity(target.Id, out var entity) && entity is not null)
         {
             detail = $"{entity.SpeciesId} · HP {entity.Health.Parts.Sum(part => part.CurrentHealth):0}/{entity.Health.Parts.Sum(part => part.MaximumHealth):0} · Satiety {entity.Satiety:0}\n{(entity.Health.IsDead ? "Dead" : entity.Health.IsIncapacitated ? "Incapacitated" : "Conscious")} · {entity.Activity}";
-            if (_world.PlayerEntityId is { } playerId && _world.TryGetRelationship(playerId, entity.Id, out var relationship) && relationship is not null)
-                detail += $" · Familiarity {relationship.Familiarity:0} / Trust {relationship.Trust:0}";
+            if (_world.PlayerEntityId is { } playerId)
+            {
+                var bond = _world.GetBondLevel(entity.Id, playerId);
+                detail += $" · {bond}";
+                if (entity.SpeciesId != "human")
+                {
+                    var trusted = bond is RelationshipBondLevel.Trusted or RelationshipBondLevel.Loyal;
+                    var canPet = trusted && !entity.Health.IsIncapacitated;
+                    detail += canPet ? " · Pet available" : " · Pet unavailable";
+                    if (trusted) ((StandardMaterial3D)_targetRing.MaterialOverride).AlbedoColor = new Color(0.2f, 1, 0.45f);
+                }
+            }
         }
         else
         {

@@ -5,6 +5,120 @@ namespace UnnamedProject2026;
 
 public partial class Main
 {
+    private async void RunSocialFeedbackValidation()
+    {
+        try
+        {
+            StartSession(PlayerCharacterProfile.Create("Social feedback"), 42, "Social feedback validation.");
+            SetProcess(false);
+            _playerCharacter.SetPhysicsProcess(false);
+            _playerCharacter.GlobalPosition = new Vector3(0, 0, -6);
+            _playerCharacter.Rotation = Vector3.Zero; SyncPlayerPosition();
+            var player = _world.Entities.Single(entity => entity.Id == _world.PlayerEntityId);
+            var cow = _world.Entities.Single(entity => entity.SpeciesId == "cow");
+            var human = _world.Entities.First(entity => entity.SpeciesId == "human" && entity.Id != player.Id);
+            foreach (var (id, view) in _entityViews) view.Visible = id == cow.Id || id == human.Id;
+            foreach (var source in _world.FoodSources.ToArray()) _world.TryRemoveFoodSource(source.Id);
+            foreach (var source in _world.ResourcePiles.ToArray()) _world.TryRemoveResourcePile(source.Id);
+            foreach (var source in _world.Stockpiles.ToArray()) _world.TryRemoveStockpile(source.Id);
+            ClearResourceMarkers(); RebuildResourceMarkersFromWorld();
+            _world.TrySetEntityPosition(cow.Id, new(0, 0, -7.8f));
+            _world.TrySetEntityPosition(human.Id, new(4, 0, -7.5f)); SyncEntityViews();
+            var camera = GetNode<Camera3D>("Camera3D"); camera.Current = true;
+            camera.GlobalPosition = new Vector3(0, 5, 1); camera.LookAt(new Vector3(0, 1, -7));
+            await PhysicsFrames(5);
+            SelectEntity(cow.Id);
+            Require(_targetHud.Text.Contains("Trusted") && _targetHud.Text.Contains("Pet available"), "domestic baseline is Trusted before any interaction");
+            _world.ApplyRelationshipAdjustment(cow.Id, player.Id, new(0, -1, 0, 0));
+            CancelGameplayActions(); UpdateWorldSelection();
+            var lockedColor = ((StandardMaterial3D)_targetRing.MaterialOverride).AlbedoColor;
+            var saved = WorldSnapshotSerializer.Serialize(_world, 0);
+            SendMenuKey(Key.F);
+            Require(_actionHud.Text.Contains("Pet unavailable") && _socialPopups.Count == 0
+                && saved == WorldSnapshotSerializer.Serialize(_world, 0), "untrusted pet rejects without state change or fake gain");
+            await CaptureSocialFeedback("pet-locked.png");
+            var foodStack = new ResourceContainer("social food fixture", 2); foodStack.TryAdd(ItemIds.Plant, 2);
+            Require(ResourceTransferService.TryPickUp(foodStack, player, ItemIds.Plant, 2) == ResourceMutationResult.Success, "carried food fixture");
+            SendMenuKey(Key.F);
+            Require(_world.TryGetRelationship(cow.Id, player.Id, out var bond) && bond!.Trust == 50,
+                "real F feeding crosses 49 to 50");
+            Require(player.Inventory[ItemIds.Plant] == 1 && _socialPopups.Any(popup => popup.EntityId == cow.Id
+                && popup.Label.Visible && popup.Label.Text.Contains("Trust +1") && popup.Label.Text.Contains("Familiarity +1")
+                && popup.Label.Text.Contains("Loyalty +1") && !popup.Label.Text.Contains("Fear")), "feeding shows actual unit gains and omits clamped fear");
+            Require(_targetHud.Text.Contains("Trusted") && !_targetHud.Text.Contains("Familiarity")
+                && !_targetHud.Text.Contains("Trust 50") && ((StandardMaterial3D)_targetRing.MaterialOverride).AlbedoColor != lockedColor,
+                "Trusted ring changes and persistent numeric totals stay hidden");
+            await CaptureSocialFeedback("trusted-feed.png");
+            CancelGameplayActions();
+            SendMenuKey(Key.F);
+            Require(_actionHud.Text.Contains("petted") && bond!.Trust == 51 && player.Inventory[ItemIds.Plant] == 1,
+                "full Trusted creature can be petted even while carrying food");
+            Require(_entityViews[cow.Id].HasGreetingAttention, "pet response preserves sustained attention");
+            _playerCharacter.SetPhysicsProcess(true);
+            await PhysicsFrames(5);
+            var hp = cow.Health.Parts.Sum(part => part.CurrentHealth);
+            SendMenuMouse(MouseButton.Left); await PhysicsFrames(30);
+            SendMenuMouse(MouseButton.Right); await PhysicsFrames(30);
+            Require(cow.Health.Parts.Sum(part => part.CurrentHealth) == hp - 20 && bond!.Trust == 49,
+                $"actual attacks land and remove trust at threshold: {_lastActionMessage}; trust {bond!.Trust}");
+            UpdateWorldSelection();
+            Require(_targetHud.Text.Contains("Pet unavailable") && ((StandardMaterial3D)_targetRing.MaterialOverride).AlbedoColor == lockedColor,
+                "loss immediately removes Trusted color and pet permission");
+            Require(_socialPopups.Any(popup => popup.EntityId == cow.Id && popup.Label.Visible
+                && popup.Label.Text.Contains("Trust -1") && popup.Label.Text.Contains("Fear +1") && popup.Label.Text.Contains("Loyalty -1")),
+                "harm shows creature losses and fear gain above the recipient");
+            await CaptureSocialFeedback("trust-loss.png");
+            CancelGameplayActions();
+            Require(ResourceTransferService.TryDeliver(player, foodStack, ItemIds.Plant, 1) == ResourceMutationResult.Success, "clear carried food for pet-only test");
+            SendMenuKey(Key.F);
+            Require(_actionHud.Text.Contains("Pet unavailable") && bond.Trust == 49 && _socialPopups.Count == 0, "pet is removed after harm");
+            _playerCharacter.SetPhysicsProcess(false);
+            _world.TrySetEntityPosition(human.Id, new(1.5f, 0, -6)); SyncEntityViews(); SelectEntity(human.Id);
+            SendMenuKey(Key.G);
+            Require(_socialPopups.Any(popup => popup.EntityId == human.Id && popup.Label.Visible && popup.Label.Text == "Familiarity +1"),
+                "human greeting feedback belongs to NPC rather than player");
+            Require(!_world.TryGetRelationship(player.Id, human.Id, out _), "player outgoing relationship is not fabricated");
+            await CaptureSocialFeedback("npc-greeting.png");
+            CancelGameplayActions();
+            _world.ApplyRelationshipAdjustment(human.Id, player.Id, new(0, 1, 1, 1));
+            CancelGameplayActions();
+            _world.ApplyRelationshipAdjustment(human.Id, player.Id, new(-1, -1, -1, -1));
+            Require(_socialPopups.Any(popup => popup.Label.Text.Contains("Fear -1") && popup.Label.Text.Contains("Loyalty -1")),
+                "NPC relationship losses show applied unit changes");
+            await CaptureSocialFeedback("npc-relationship-loss.png");
+            CancelGameplayActions();
+            _world.DefineFaction("settlers");
+            Require(_world.ApplyFactionStandingEvent(human.Id, "settlers", true) == FactionReputationResult.Applied, "unit faction gain");
+            Require(_world.ApplyFactionStandingEvent(human.Id, "settlers", false) == FactionReputationResult.Applied, "unit faction loss");
+            Require(_socialPopups.Any(popup => popup.Label.Text == "settlers standing +1")
+                && _socialPopups.Any(popup => popup.Label.Text == "settlers standing -1"),
+                "NPC relationship and faction losses show honest signed changes");
+            await CaptureSocialFeedback("npc-standing.png");
+            UpdateGameplayFeedback(3.1);
+            Require(_socialPopups.Count == 0, "feedback expires without keeping numeric totals on screen");
+            SendMenuKey(Key.G); ToggleMenu(PlayerMenu.Inventory);
+            Require(_socialPopups.Count == 0, "menus clear social feedback");
+            ClosePlayerMenus(); UpdateInspector();
+            Require(!_inspectorLabel.Text.Contains("Familiarity ") && !_inspectorLabel.Text.Contains("Trust "), "settlement inspector hides relationship totals");
+            _saveSlotPath = ProjectSettings.GlobalizePath("user://social-feedback-validation-save.json");
+            SaveScenario(); LoadScenario();
+            Require(_world.TryGetRelationship(cow.Id, player.Id, out var loaded) && loaded!.Trust == 49
+                && _socialPopups.Count == 0, "save/load preserves betrayed trust without reseeding or replaying feedback");
+            GD.Print("SOCIAL FEEDBACK VALIDATION PASSED: real feed/pet/attacks, Trusted ring and reversible permission, directed NPC feedback, all relationship dimensions, faction unit events, expiry/menu isolation and save/load.");
+            GetTree().Quit();
+        }
+        catch (Exception exception) { GD.PushError($"SOCIAL FEEDBACK VALIDATION FAILED: {exception}"); GetTree().Quit(1); }
+    }
+
+    private async Task CaptureSocialFeedback(string filename)
+    {
+        if (DisplayServer.GetName() == "headless") return;
+        var directory = ProjectSettings.GlobalizePath("res://../docs/evidence/social-feedback");
+        Directory.CreateDirectory(directory);
+        await ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
+        Require(GetViewport().GetTexture().GetImage().SavePng(Path.Combine(directory, filename)) == Error.Ok, "rendered social feedback evidence");
+    }
+
     private async void RunGameplayActionsValidation()
     {
         try
@@ -108,11 +222,11 @@ public partial class Main
                 && cow.Satiety == Math.Min(100, cowSatiety + cow.Needs.NutritionPerUnit), $"F feeds exactly one from a carried stack and shows acknowledgment: {_lastActionMessage}; carried {player.Inventory[ItemIds.Plant]}; satiety {cow.Satiety}; response {_targetResponse.Visible}");
             await CaptureGameplayRefinement("feed.png");
             SendMenuKey(Key.F);
-            Require(_actionHud.Text.Contains("already full") && player.Inventory[ItemIds.Plant] == 2, "full target rejects feed without item waste");
+            Require(_actionHud.Text.Contains("petted") && player.Inventory[ItemIds.Plant] == 2, "full Trusted target can be petted without item waste");
             Require(ResourceTransferService.TryDeliver(player, plantStack, ItemIds.Plant, 2) == ResourceMutationResult.Success, "feed stack fixture removal");
             SendMenuKey(Key.F);
             Require(_actionHud.Text.Contains("petted") && _targetResponse.Visible
-                && _world.TryGetRelationship(cow.Id, player.Id, out var petBond) && petBond!.Trust == 16, "F pets with visible directed response when no compatible food is carried");
+                && _world.TryGetRelationship(cow.Id, player.Id, out var petBond) && petBond!.Trust == 53, "F pets with visible directed response when no compatible food is carried");
             var captured = _interactionResolver.Resolve(new(player.Id, cow.Id, InteractionType.Physical, "capture"));
             Require(captured.Succeeded && cow.CaptivityState == CreatureCaptivityState.Captured, "live capture resolver uses World lifecycle");
             var given = new ResourceContainer("give descriptor", 1); given.TryAdd(ItemIds.Food, 1);
@@ -149,7 +263,7 @@ public partial class Main
             Require(player.Inventory[ItemIds.Food] == foodBeforeGive - 1, "menus isolate interactions");
             SelectEntity(cow.Id); SendMenuKey(Key.G);
             Require(_actionHud.Text.StartsWith("Greeted", StringComparison.Ordinal) && _targetResponse.Visible
-                && _targetHud.Text.Contains("Familiarity"), "G exposes supported creature greeting and relationship response without menu");
+                && _targetHud.Text.Contains("Trusted") && !_targetHud.Text.Contains("Familiarity"), "G exposes recipient bond without numeric relationship totals");
             var greeterDirection = (_playerCharacter.GlobalPosition - _entityViews[cow.Id].GlobalPosition).Normalized();
             Require(_entityViews[cow.Id].VisualForward.Dot(greeterDirection) > 0.99f, "greeted cow faces greeter");
             _entityViews[cow.Id]._Process(0.1);
