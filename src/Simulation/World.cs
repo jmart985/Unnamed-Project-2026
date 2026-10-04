@@ -274,26 +274,6 @@ public sealed class World
         return structure;
     }
 
-    public SettlementConstructionSite AddConstructionSite(string id, Vector3 position, ConstructionBlueprint blueprint)
-    {
-        var site = new SettlementConstructionSite(id, position, blueprint);
-        AddTargetId(site.Id, nameof(id));
-        _constructionSites.Add(site);
-        return site;
-    }
-
-    public bool TryCompleteConstructionSite(string? id, StructureType type, out Structure? structure)
-    {
-        structure = null;
-        var site = _constructionSites.FirstOrDefault(candidate => candidate.Id == id);
-        if (site is null || !site.Blueprint.IsComplete) return false;
-        if (type is not StructureType.Hut) return false;
-        _constructionSites.Remove(site);
-        structure = new Structure(site.Id, type, site.Position);
-        _structures.Add(structure);
-        return true;
-    }
-
     public Workstation AddWorkstation(string id, Vector3 position, int inputCapacity = 10, int outputCapacity = 10)
     {
         var workstation = new Workstation(id, position, inputCapacity, outputCapacity);

@@ -23,8 +23,6 @@ public sealed record WorldSnapshot(
     IReadOnlyList<NpcScheduleSetting>? WorkSchedules = null,
     IReadOnlyList<WorkstationSnapshot>? Workstations = null,
     IReadOnlyList<FarmSnapshot>? Farms = null,
-    IReadOnlyList<ConstructionSiteSnapshot>? ConstructionSites = null,
-    IReadOnlyList<StructureSnapshot>? Structures = null);
     IReadOnlyList<StructureSnapshot>? Structures = null,
     IReadOnlyList<ConstructionSiteSnapshot>? ConstructionSites = null);
 

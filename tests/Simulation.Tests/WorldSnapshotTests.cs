@@ -91,7 +91,7 @@ public sealed class WorldSnapshotTests
     {
         var catalog = GetSpeciesCatalog();
         var source = NewGameSession.Create(catalog, PlayerCharacterProfile.Create("Builder"));
-        var blueprint = SettlementConstruction.CreateStarterHutBlueprint();
+        var blueprint = SettlementConstruction.CreateHutBlueprint();
         blueprint.ApplyProgress(ItemIds.Wood, 3);
         source.World.AddConstructionSite("hut-site", new Vector3(30, 0, 30), blueprint);
         var hut = source.World.AddStructure("old-hut", StructureType.Hut, new Vector3(40, 0, 40));
@@ -112,7 +112,7 @@ public sealed class WorldSnapshotTests
     {
         var catalog = GetSpeciesCatalog();
         var source = NewGameSession.Create(catalog, PlayerCharacterProfile.Create("Builder"));
-        var blueprint = SettlementConstruction.CreateStarterHutBlueprint();
+        var blueprint = SettlementConstruction.CreateHutBlueprint();
         blueprint.ApplyProgress(ItemIds.Wood, 3);
         source.World.AddConstructionSite("hut-site", new Vector3(30, 0, 30), blueprint);
         var json = WorldSnapshotSerializer.Serialize(source.World, 4)
