@@ -66,8 +66,8 @@ public sealed class RegionIntegrationScenarioTests
         WanderingResult? trip = null;
         Assert.Equal(1, clock.Advance(0.1, elapsed =>
         {
-            human.Needs.Advance(elapsed, species.GetRequired("human").HungerRate);
-            creature.Needs.Advance(elapsed, species.GetRequired("creature").HungerRate);
+            human.Needs.Advance(elapsed, satietyOverride: species.GetRequired("human").HungerRate);
+            creature.Needs.Advance(elapsed, satietyOverride: species.GetRequired("creature").HungerRate);
             trip = wandering.Advance(creature, species.GetRequired("creature"), simulationTick: 1);
         }));
         Assert.Equal(WanderingStatus.Traveling, trip!.Status);

@@ -24,6 +24,9 @@ public sealed class BehavioralTrigger
 
         // Derive individual temperament for the defender
         // Note: In a full implementation, this would use the established IndividualTemperament service.
+        // Catalog-free worlds remain supported by the core combat contract.
+        // Damage has already been applied; an optional response must not throw afterward.
+        if (_world.SpeciesCatalog is null) return;
         var species = _world.GetSpecies(defender.SpeciesId);
         var temperament = IndividualTemperament.ForEntity(defender.Id, species.Temperament);
 

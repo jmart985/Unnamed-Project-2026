@@ -20,7 +20,7 @@ public sealed class NeedsIntegrationTests
     [Fact]
     public void ActiveClockUpdatesNeedsAndExposesHungerState()
     {
-        var world = new World(new NeedsTuning(drainPerSecond: 10));
+        var world = new World(new NeedsTuning(satietyDrainPerSecond: 10));
         var entity = world.SpawnEntity("human", System.Numerics.Vector3.Zero);
         var clock = new SimulationClock();
 

@@ -7,7 +7,7 @@ public sealed class NeedsTests
     [Fact]
     public void SatietyDrainsBySimulationTimeAndClampsAtZero()
     {
-        var needs = new NeedsState(new NeedsTuning());
+        var needs = new NeedsState(new NeedsTuning(satietyDrainPerSecond: 0.2));
 
         needs.Advance(100);
 
@@ -20,8 +20,8 @@ public sealed class NeedsTests
     [Fact]
     public void EqualSimulationTimeProducesEqualSatietyAcrossTickSizes()
     {
-        var oneLargeStep = new NeedsState(new NeedsTuning());
-        var manySmallSteps = new NeedsState(new NeedsTuning());
+        var oneLargeStep = new NeedsState(new NeedsTuning(satietyDrainPerSecond: 0.2));
+        var manySmallSteps = new NeedsState(new NeedsTuning(satietyDrainPerSecond: 0.2));
 
         oneLargeStep.Advance(10);
         for (var index = 0; index < 100; index++)
@@ -35,7 +35,7 @@ public sealed class NeedsTests
     [Fact]
     public void HungerBeginsAtOrBelowConfiguredThreshold()
     {
-        var needs = new NeedsState(new NeedsTuning(initialSatiety: 31, drainPerSecond: 1, hungryThreshold: 30));
+        var needs = new NeedsState(new NeedsTuning(initialSatiety: 31, satietyDrainPerSecond: 1, hungryThreshold: 30));
 
         Assert.False(needs.IsHungry);
         needs.Advance(1);
@@ -63,11 +63,11 @@ public sealed class NeedsTests
     public void InvalidTuningAndUpdatesAreRejected()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new NeedsTuning(initialSatiety: 101));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new NeedsTuning(drainPerSecond: -1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new NeedsTuning(satietyDrainPerSecond: -1));
         Assert.Throws<ArgumentOutOfRangeException>(() => new NeedsTuning(hungryThreshold: -1));
         Assert.Throws<ArgumentOutOfRangeException>(() => new NeedsTuning(nutritionPerUnit: 0));
 
-        var needs = new NeedsState(new NeedsTuning());
+        var needs = new NeedsState(new NeedsTuning(satietyDrainPerSecond: 0.2));
         Assert.Throws<ArgumentOutOfRangeException>(() => needs.Advance(-1));
         Assert.Throws<ArgumentOutOfRangeException>(() => needs.AddNutrition(0));
     }
