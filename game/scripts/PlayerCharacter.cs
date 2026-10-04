@@ -7,180 +7,180 @@ namespace UnnamedProject2026;
 /// Keyboard bindings are installed here as defaults and remain configurable in project settings.
 public partial class PlayerCharacter : CharacterBody3D
 {
-    public bool GameplayInputEnabled { get; private set; } = true;
+	public bool GameplayInputEnabled { get; private set; } = true;
 
-    public void SetGameplayInputEnabled(bool enabled)
-    {
-        GameplayInputEnabled = enabled;
-        if (!enabled)
-        {
-            Velocity = new Vector3(0, Velocity.Y, 0);
-            _swing = AttackSwing.ForTotalDuration(AttackDuration);
-        }
-    }
-    [Export] public float MovementSpeed { get; set; } = 5.0f;
-    [Export] public float JumpVelocity { get; set; } = 5.5f;
-    [Export] public float Gravity { get; set; } = 9.8f;
-    [Export] public float Acceleration { get; set; } = 20.0f;
-    [Export] public float Deceleration { get; set; } = 24.0f;
-    [Export] public float FallRespawnHeight { get; set; } = -5.0f;
-    [Export] public float RespawnLift { get; set; } = 0.2f;
-    [Export] public float AttackDuration { get; set; } = 0.22f;
-    [Export] public float AttackCooldown { get; set; } = 0.35f;
-    [Export] public float MouseSensitivity { get; set; } = 0.01f;
-    [Export] public bool LeftShieldEquipped { get; set; }
-    [Export] public bool RightShieldEquipped { get; set; }
+	public void SetGameplayInputEnabled(bool enabled)
+	{
+		GameplayInputEnabled = enabled;
+		if (!enabled)
+		{
+			Velocity = new Vector3(0, Velocity.Y, 0);
+			_swing = AttackSwing.ForTotalDuration(AttackDuration);
+		}
+	}
+	[Export] public float MovementSpeed { get; set; } = 5.0f;
+	[Export] public float JumpVelocity { get; set; } = 5.5f;
+	[Export] public float Gravity { get; set; } = 9.8f;
+	[Export] public float Acceleration { get; set; } = 20.0f;
+	[Export] public float Deceleration { get; set; } = 24.0f;
+	[Export] public float FallRespawnHeight { get; set; } = -5.0f;
+	[Export] public float RespawnLift { get; set; } = 0.2f;
+	[Export] public float AttackDuration { get; set; } = 0.22f;
+	[Export] public float AttackCooldown { get; set; } = 0.35f;
+	[Export] public float MouseSensitivity { get; set; } = 0.01f;
+	[Export] public bool LeftShieldEquipped { get; set; }
+	[Export] public bool RightShieldEquipped { get; set; }
 
-    private Vector3 _lastGroundedPosition;
-    private double _attackCooldownRemaining;
-    private PlayerBodyRig _body = null!;
-    private PlayerCharacterProfile _profile = PlayerCharacterProfile.Create("Player");
-    private readonly ProceduralGait _gait = new() { ReferenceSpeed = 5.0f, BobHeight = 0.03f };
-    private AttackSwing _swing = new();
-    private bool _swingLeft;
-    private float _headPitch;
-    private float _headPitchTarget;
+	private Vector3 _lastGroundedPosition;
+	private double _attackCooldownRemaining;
+	private PlayerBodyRig _body = null!;
+	private PlayerCharacterProfile _profile = PlayerCharacterProfile.Create("Player");
+	private readonly ProceduralGait _gait = new() { ReferenceSpeed = 5.0f, BobHeight = 0.03f };
+	private AttackSwing _swing = new();
+	private bool _swingLeft;
+	private float _headPitch;
+	private float _headPitchTarget;
 
-    public bool IsAttacking => _swing.IsActive;
-    public string EntityId { get; private set; } = string.Empty;
-    public string AimedBodyPart => CombatAim.PartForPitch(_headPitch, _swingLeft);
+	public bool IsAttacking => _swing.IsActive;
+	public string EntityId { get; private set; } = string.Empty;
+	public string AimedBodyPart => CombatAim.PartForPitch(_headPitch, _swingLeft);
 
-    /// Raised once per swing at the moment of impact: the swinging side and the aimed body part.
-    /// Main resolves this event through the World-owned melee/social combat boundary.
-    public event Action<bool, string>? StrikeReleased;
-    public event Action? AttackStarted;
+	/// Raised once per swing at the moment of impact: the swinging side and the aimed body part.
+	/// Main resolves this event through the World-owned melee/social combat boundary.
+	public event Action<bool, string>? StrikeReleased;
+	public event Action? AttackStarted;
 
-    public override void _Ready()
-    {
-        PrototypeInputMap.EnsureDefaults();
-        _lastGroundedPosition = GlobalPosition;
-        RebuildBody(_profile);
-    }
+	public override void _Ready()
+	{
+		PrototypeInputMap.EnsureDefaults();
+		_lastGroundedPosition = GlobalPosition;
+		RebuildBody(_profile);
+	}
 
-    // The rig is rebuilt from the profile so character creation changes proportions, not a whole-node scale
-    // (which would also distort the collision capsule and camera).
-    private void RebuildBody(PlayerCharacterProfile profile)
-    {
-        _profile = profile;
-        if (_body is not null)
-        {
-            _body.Root.QueueFree();
-        }
+	// The rig is rebuilt from the profile so character creation changes proportions, not a whole-node scale
+	// (which would also distort the collision capsule and camera).
+	private void RebuildBody(PlayerCharacterProfile profile)
+	{
+		_profile = profile;
+		if (_body is not null)
+		{
+			_body.Root.QueueFree();
+		}
 
-        var proportions = PlayerBodyProportions.From(profile);
-        _body = new PlayerBodyRig(proportions);
-        AddChild(_body.Root);
+		var proportions = PlayerBodyProportions.From(profile);
+		_body = new PlayerBodyRig(proportions);
+		AddChild(_body.Root);
 
-        var collision = GetNode<CollisionShape3D>("CollisionShape3D");
-        var radius = Mathf.Min(0.4f * proportions.TorsoWidth, proportions.Height * 0.25f);
-        collision.Shape = new CapsuleShape3D { Radius = radius, Height = proportions.Height };
-        collision.Position = new Vector3(0, proportions.Height * 0.5f, 0);
-        var camera = GetNode<Camera3D>("Camera3D");
-        camera.Position = new Vector3(0, proportions.Height * 1.45f, 5.5f);
+		var collision = GetNode<CollisionShape3D>("CollisionShape3D");
+		var radius = Mathf.Min(0.4f * proportions.TorsoWidth, proportions.Height * 0.25f);
+		collision.Shape = new CapsuleShape3D { Radius = radius, Height = proportions.Height };
+		collision.Position = new Vector3(0, proportions.Height * 0.5f, 0);
+		var camera = GetNode<Camera3D>("Camera3D");
+		camera.Position = new Vector3(0, proportions.Height * 1.45f, 5.5f);
 
-        BuildGait();
-    }
+		BuildGait();
+	}
 
-    // Walk drives hips, knees, shoulders, elbows, head and torso; an attack layer overrides the swinging arm
-    // and adds a torso twist after the gait step, so locomotion and combat share joints without fighting.
-    private void BuildGait()
-    {
-        _gait.Limbs.Clear();
-        _gait.ReferenceSpeed = MovementSpeed;
-        _gait.Body = _body.Root;
-        var leg = new[] { (_body.LeftHip, _body.LeftKnee, 0f), (_body.RightHip, _body.RightKnee, Mathf.Pi) };
-        foreach (var (hip, knee, phase) in leg)
-        {
-            _gait.Limbs.Add(new ProceduralGait.Limb { Pivot = hip, Phase = phase, Amplitude = 0.6f });
-            _gait.Limbs.Add(new ProceduralGait.Limb { Pivot = knee, Phase = phase + Mathf.Pi * 0.5f, Amplitude = -0.9f, Rectify = true });
-        }
+	// Walk drives hips, knees, shoulders, elbows, head and torso; an attack layer overrides the swinging arm
+	// and adds a torso twist after the gait step, so locomotion and combat share joints without fighting.
+	private void BuildGait()
+	{
+		_gait.Limbs.Clear();
+		_gait.ReferenceSpeed = MovementSpeed;
+		_gait.Body = _body.Root;
+		var leg = new[] { (_body.LeftHip, _body.LeftKnee, 0f), (_body.RightHip, _body.RightKnee, Mathf.Pi) };
+		foreach (var (hip, knee, phase) in leg)
+		{
+			_gait.Limbs.Add(new ProceduralGait.Limb { Pivot = hip, Phase = phase, Amplitude = 0.6f });
+			_gait.Limbs.Add(new ProceduralGait.Limb { Pivot = knee, Phase = phase + Mathf.Pi * 0.5f, Amplitude = -0.9f, Rectify = true });
+		}
 
-        var arm = new[] { (_body.LeftShoulder, _body.LeftElbow, Mathf.Pi), (_body.RightShoulder, _body.RightElbow, 0f) };
-        foreach (var (shoulder, elbow, phase) in arm)
-        {
-            _gait.Limbs.Add(new ProceduralGait.Limb { Pivot = shoulder, Phase = phase, Amplitude = 0.5f, IdleAmplitude = 0.03f, IdleFrequency = 1.1f });
-            _gait.Limbs.Add(new ProceduralGait.Limb { Pivot = elbow, Phase = phase, Amplitude = 0.25f, Bias = 0.2f, Rectify = true });
-        }
+		var arm = new[] { (_body.LeftShoulder, _body.LeftElbow, Mathf.Pi), (_body.RightShoulder, _body.RightElbow, 0f) };
+		foreach (var (shoulder, elbow, phase) in arm)
+		{
+			_gait.Limbs.Add(new ProceduralGait.Limb { Pivot = shoulder, Phase = phase, Amplitude = 0.5f, IdleAmplitude = 0.03f, IdleFrequency = 1.1f });
+			_gait.Limbs.Add(new ProceduralGait.Limb { Pivot = elbow, Phase = phase, Amplitude = 0.25f, Bias = 0.2f, Rectify = true });
+		}
 
-        _gait.Limbs.Add(new ProceduralGait.Limb { Pivot = _body.Torso, Axis = Vector3.Up, Phase = 0, Amplitude = 0.08f, IdleAmplitude = 0.02f, IdleFrequency = 0.5f });
-    }
+		_gait.Limbs.Add(new ProceduralGait.Limb { Pivot = _body.Torso, Axis = Vector3.Up, Phase = 0, Amplitude = 0.08f, IdleAmplitude = 0.02f, IdleFrequency = 0.5f });
+	}
 
-    public void BindPlayer(string entityId, PlayerCharacterProfile profile, float movementSpeed)
-    {
-        if (string.IsNullOrWhiteSpace(entityId))
-        {
-            throw new ArgumentException("A player entity ID is required.", nameof(entityId));
-        }
+	public void BindPlayer(string entityId, PlayerCharacterProfile profile, float movementSpeed)
+	{
+		if (string.IsNullOrWhiteSpace(entityId))
+		{
+			throw new ArgumentException("A player entity ID is required.", nameof(entityId));
+		}
 
-        ArgumentNullException.ThrowIfNull(profile);
-        if (!profile.IsValid)
-        {
-            throw new ArgumentException("The player profile is invalid.", nameof(profile));
-        }
+		ArgumentNullException.ThrowIfNull(profile);
+		if (!profile.IsValid)
+		{
+			throw new ArgumentException("The player profile is invalid.", nameof(profile));
+		}
 
-        if (!float.IsFinite(movementSpeed) || movementSpeed <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(movementSpeed));
-        }
+		if (!float.IsFinite(movementSpeed) || movementSpeed <= 0)
+		{
+			throw new ArgumentOutOfRangeException(nameof(movementSpeed));
+		}
 
-        EntityId = entityId;
-        MovementSpeed = movementSpeed;
-        _lastGroundedPosition = GlobalPosition;
-        RebuildBody(profile);
-    }
-    public override void _UnhandledInput(InputEvent @event)
-    {
-        if (!GameplayInputEnabled) return;
-        if (@event is InputEventMouseMotion motion)
-        {
-            RotateY(-motion.Relative.X * MouseSensitivity);
-            _headPitchTarget = Mathf.Clamp(_headPitchTarget - motion.Relative.Y * MouseSensitivity, -0.6f, 0.6f);
-            return;
-        }
+		EntityId = entityId;
+		MovementSpeed = movementSpeed;
+		_lastGroundedPosition = GlobalPosition;
+		RebuildBody(profile);
+	}
+	public override void _UnhandledInput(InputEvent @event)
+	{
+		if (!GameplayInputEnabled) return;
+		if (@event is InputEventMouseMotion motion)
+		{
+			RotateY(-motion.Relative.X * MouseSensitivity);
+			_headPitchTarget = Mathf.Clamp(_headPitchTarget - motion.Relative.Y * MouseSensitivity, -0.6f, 0.6f);
+			return;
+		}
 
-        if (@event is InputEventKey key && (!key.Pressed || key.Echo))
-        {
-            return;
-        }
+		if (@event is InputEventKey key && (!key.Pressed || key.Echo))
+		{
+			return;
+		}
 
-        if (@event is InputEventMouseButton mouse && !mouse.Pressed)
-        {
-            return;
-        }
+		if (@event is InputEventMouseButton mouse && !mouse.Pressed)
+		{
+			return;
+		}
 
-        if (@event.IsActionPressed(ControllerActions.AttackLeft))
-        {
-            StartAttackSwing(true, LeftShieldEquipped);
-        }
-        else if (@event.IsActionPressed(ControllerActions.AttackRight))
-        {
-            StartAttackSwing(false, RightShieldEquipped);
-        }
-    }
+		if (@event.IsActionPressed(ControllerActions.AttackLeft))
+		{
+			StartAttackSwing(true, LeftShieldEquipped);
+		}
+		else if (@event.IsActionPressed(ControllerActions.AttackRight))
+		{
+			StartAttackSwing(false, RightShieldEquipped);
+		}
+	}
 
-    public override void _PhysicsProcess(double delta)
-    {
-        var physicsDelta = (float)delta;
-        _attackCooldownRemaining = Mathf.Max(0.0, _attackCooldownRemaining - delta);
-        if (!IsOnFloor())
-        {
-            Velocity = new Vector3(Velocity.X, Velocity.Y - Gravity * physicsDelta, Velocity.Z);
-        }
+	public override void _PhysicsProcess(double delta)
+	{
+		var physicsDelta = (float)delta;
+		_attackCooldownRemaining = Mathf.Max(0.0, _attackCooldownRemaining - delta);
+		if (!IsOnFloor())
+		{
+			Velocity = new Vector3(Velocity.X, Velocity.Y - Gravity * physicsDelta, Velocity.Z);
+		}
 
-        if (GameplayInputEnabled && Input.IsActionJustPressed(ControllerActions.Jump) && IsOnFloor())
-        {
-            Velocity = new Vector3(Velocity.X, JumpVelocity, Velocity.Z);
-        }
+		if (GameplayInputEnabled && Input.IsActionJustPressed(ControllerActions.Jump) && IsOnFloor())
+		{
+			Velocity = new Vector3(Velocity.X, JumpVelocity, Velocity.Z);
+		}
 
-        var forward = GameplayInputEnabled ? Input.GetAxis(ControllerActions.MoveForward, ControllerActions.MoveBackward) : 0;
-        var strafe = GameplayInputEnabled ? Input.GetAxis(ControllerActions.MoveLeft, ControllerActions.MoveRight) : 0;
-        var localDirection = new Vector3(strafe, 0.0f, forward);
-        if (localDirection.LengthSquared() > 1.0f)
-        {
-            localDirection = localDirection.Normalized();
-        }
+		var forward = GameplayInputEnabled ? Input.GetAxis(ControllerActions.MoveForward, ControllerActions.MoveBackward) : 0;
+		var strafe = GameplayInputEnabled ? Input.GetAxis(ControllerActions.MoveLeft, ControllerActions.MoveRight) : 0;
+		var localDirection = new Vector3(strafe, 0.0f, forward);
+		if (localDirection.LengthSquared() > 1.0f)
+		{
+			localDirection = localDirection.Normalized();
+		}
 
-        // Convert local input into world space so movement follows the player's facing.
+		// Convert local input into world space so movement follows the player's facing.
         var direction = GlobalTransform.Basis * localDirection;
         direction.Y = 0.0f;
         var target = direction * MovementSpeed;
