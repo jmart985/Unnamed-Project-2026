@@ -52,6 +52,18 @@ public sealed class NpcScheduleTests
     }
 
     [Fact]
+    public void StarterNpcsHaveDiverseSchedulesAndHomes()
+    {
+        var world = Session();
+        var npcs = world.Entities.Where(e => e.SpeciesId == "human" && e.Id != world.PlayerEntityId).ToArray();
+
+        Assert.Equal(NewGameSession.HumanNpcCount, npcs.Length);
+        Assert.True(npcs.Select(npc => world.GetWorkSchedule(npc.Id)).Distinct().Count() > 3);
+        Assert.Equal(npcs.Length, npcs.Count(npc => world.TryGetHomePosition(npc.Id, out _)));
+        Assert.Equal(npcs.Length, world.HomePositions.Select(home => home.Position).Distinct().Count());
+    }
+
+    [Fact]
     public void SettingsRejectAtomicallyAndRemovalResetClearOverrides()
     {
         var world = Session();
@@ -64,13 +76,13 @@ public sealed class NpcScheduleTests
         Assert.Equal(ScheduleUpdateResult.IneligibleEntity, world.SetWorkSchedule(world.Entities.First(e => e.SpeciesId == "wolf").Id, 22, 6));
         Assert.Equal(ScheduleUpdateResult.InvalidEntity, world.SetWorkSchedule("missing", 22, 6));
         Assert.Equal(new NpcWorkSchedule(22, 6), world.GetWorkSchedule(npc.Id));
-        Assert.Single(world.WorkSchedules);
+        Assert.Equal(10, world.WorkSchedules.Count);
         world.TryRemoveEntity(npc.Id);
-        Assert.Empty(world.WorkSchedules);
+        Assert.Equal(9, world.WorkSchedules.Count);
         npc = Npc(world);
         world.SetWorkSchedule(npc.Id, 6, 12);
         world.SetWorkSchedule(npc.Id, 8, 18);
-        Assert.Empty(world.WorkSchedules);
+        Assert.Equal(8, world.WorkSchedules.Count);
         world.SetWorkSchedule(npc.Id, 6, 12);
         world.Reset();
         Assert.Empty(world.WorkSchedules);
@@ -91,17 +103,18 @@ public sealed class NpcScheduleTests
         other.Actions.TryStart(new("competing", ActionKind.Haul));
         Assert.Equal(ReservationResult.InsufficientQuantity, world.Reservations.TryReserveResource(other.Id, "competing", source.Id, source.Contents, ItemIds.Wood, 100));
         Assert.True(hauling.ReconcileSchedule(npc, 100));
-        Assert.Equal(NavigationOutcome.Cancelled, nav.Requests.Values.Single());
-        Assert.Null(npc.Actions.Current);
+        Assert.Contains(NavigationOutcome.Cancelled, nav.Requests.Values);
+        Assert.Contains(NavigationOutcome.InProgress, nav.Requests.Values);
+        Assert.Equal(ActionKind.Wander, npc.Actions.Current!.Kind);
         Assert.Equal(ReservationResult.Reserved, world.Reservations.TryReserveResource(other.Id, "competing", source.Id, source.Contents, ItemIds.Wood, 100));
         var stockpile = world.Stockpiles[0];
         Assert.Equal(ReservationResult.Reserved, world.Reservations.TryReserveCapacity(other.Id, "competing", stockpile.Id, stockpile.Contents, stockpile.Contents.RemainingCapacity));
         other.Actions.Cancel();
         Assert.Equal(WoodHaulingStatus.Resting, hauling.Advance(npc, species, 2, 100).Status);
-        Assert.Equal("Resting", npc.Activity);
+        Assert.Equal("Going home", npc.Activity);
         Assert.Empty(npc.Inventory);
         Assert.Equal(WoodHaulingStatus.TravelingToSource, hauling.Advance(npc, species, 3, 240).Status);
-        Assert.Equal(2, nav.Requests.Count);
+        Assert.Equal(3, nav.Requests.Count);
     }
 
     [Fact]
@@ -128,7 +141,8 @@ public sealed class NpcScheduleTests
         Assert.Empty(npc.Inventory);
         Assert.Equal(100, world.ResourcePiles[0].Contents.Counts[ItemIds.Wood] + world.Stockpiles[0].Contents.Counts[ItemIds.Wood]);
         Assert.Equal(WoodHaulingStatus.Resting, hauling.Advance(npc, species, 5, 100).Status);
-        Assert.DoesNotContain(NavigationOutcome.InProgress, nav.Requests.Values);
+        Assert.Contains(NavigationOutcome.InProgress, nav.Requests.Values);
+        Assert.Equal("Going home", npc.Activity);
     }
 
     [Theory]

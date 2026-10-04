@@ -107,11 +107,12 @@ public sealed class NewGameSession
         var farm = world.AddFarm("farm-1", new(5, 0, 5));
         farm.AddPlot(new FarmPlot("farm-1-plot-1", capacity: 1));
 
+        var humanNpcs = new List<EntityRecord>();
         for (var index = 0; index < HumanNpcCount; index++)
         {
-            world.SpawnEntity(
+            humanNpcs.Add(world.SpawnEntity(
                 catalog.GetRequired("human"),
-                new Vector3(index - 4.5f, 0, 0));
+                new Vector3(index - 4.5f, 0, 0)));
         }
 
         foreach (var creature in StarterCreatureSpawns)
@@ -121,7 +122,34 @@ public sealed class NewGameSession
 
         var player = world.SpawnEntity(catalog.GetRequired("human"), GetPlayerSpawnPosition(seed));
         world.SetSessionPlayer(seed, player.Id, playerProfile);
+        AssignStarterNpcSchedulesAndHomes(world, humanNpcs);
         return new NewGameSession(world, seed, player.Id);
+    }
+
+    private static void AssignStarterNpcSchedulesAndHomes(World world, IReadOnlyList<EntityRecord> humanNpcs)
+    {
+        var schedules = new[]
+        {
+            NpcWorkSchedule.Default,
+            new NpcWorkSchedule(7, 15),
+            new NpcWorkSchedule(8, 16),
+            new NpcWorkSchedule(9, 17),
+            new NpcWorkSchedule(10, 18),
+            new NpcWorkSchedule(12, 20),
+            new NpcWorkSchedule(14, 22),
+            new NpcWorkSchedule(18, 2),
+            new NpcWorkSchedule(20, 4),
+            new NpcWorkSchedule(22, 6)
+        };
+        for (var index = 0; index < humanNpcs.Count; index++)
+        {
+            var npc = humanNpcs[index];
+            var schedule = schedules[index % schedules.Length];
+            world.SetWorkSchedule(npc.Id, schedule.StartHour, schedule.EndHour);
+            var row = index / 5;
+            var column = index % 5;
+            world.SetHomePosition(npc.Id, new Vector3(-18 + column * 3.0f, 0, -18 + row * 3.0f));
+        }
     }
 
     public static Vector3 GetPlayerSpawnPosition(int seed)

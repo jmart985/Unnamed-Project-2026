@@ -32,6 +32,8 @@ The focused scenario validates the integrated happy path plus failure recovery:
 - Door and shelter: the hut is targetable after site replacement; Interact toggles door closed/open; Rest reserves the bed and marks the player sleeping; save/load preserves the occupied bed and sleep state; Rest wakes and releases occupancy.
 - Mid-progress durability: a second validation setup saves and loads partial workstation input/work, planted farm growth, an in-progress construction site, a completed shelter, occupied bed and sleeping player.
 - Invalid-load rollback: corrupted construction material progress is rejected and leaves the live world unchanged.
+- Schedule diversity and homes: starter human NPCs use varied deterministic work windows and home positions, so rest validation no longer observes every NPC doing the same action at the same destination.
+- Actor spacing: moving humans and creatures preserve a minimum ground separation from other live actors while following navigation steps, preventing shared-destination stacking without adding a parallel position state.
 - Reset/repeated load safety: repeated reset returns to exactly one starter workbench and farm and no duplicate sites, structures, beds, resources or constructed presentation.
 
 ## Reproduce

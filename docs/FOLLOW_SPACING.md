@@ -17,4 +17,4 @@ Reproduce with the pinned Godot executable: `--path game --headless -- --validat
 
 ![Followers holding clear of the player](evidence/gameplay-refinement/follow-spacing.png)
 
-This is player clearance for the current squad, not a full formation or inter-NPC avoidance system. Followers can still bunch together; navigation/collision changes for future creature-follow commands or larger bodies should extend the same boundary rather than introducing a parallel movement system.
+This started as player clearance for the current squad. Runtime navigation now also applies a lightweight actor-spacing constraint so humans and creatures do not step into the same occupied ground space while moving toward shared destinations. This is still not a full formation or crowd simulation; future creature-follow commands or larger bodies should extend the same authoritative World-position boundary rather than introducing a parallel movement system.

@@ -21,6 +21,7 @@ public sealed record WorldSnapshot(
     IReadOnlyList<FactionHostilitySnapshot>? FactionHostilities = null,
     IReadOnlyList<string>? SquadMemberIds = null,
     IReadOnlyList<NpcScheduleSetting>? WorkSchedules = null,
+    IReadOnlyList<NpcHomeSetting>? HomePositions = null,
     IReadOnlyList<WorkstationSnapshot>? Workstations = null,
     IReadOnlyList<FarmSnapshot>? Farms = null,
     IReadOnlyList<StructureSnapshot>? Structures = null,
@@ -129,7 +130,8 @@ public static class WorldSnapshotSerializer
     private const int WorkstationSchemaVersion = 11;
     private const int FarmSchemaVersion = 12;
     private const int ConstructionSchemaVersion = 13;
-    public const int CurrentSchemaVersion = 14;
+    private const int BedSchemaVersion = 14;
+    public const int CurrentSchemaVersion = 15;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -210,6 +212,7 @@ public static class WorldSnapshotSerializer
             factionHostilities,
             world.SquadMemberIds.ToArray(),
             world.WorkSchedules.ToArray(),
+            world.HomePositions.ToArray(),
             world.Workstations.OrderBy(item => item.Id, StringComparer.Ordinal).Select(item =>
                 new WorkstationSnapshot(item.Id, item.Position, CaptureContainer(item.InputStorage),
                     CaptureContainer(item.OutputStorage), item.CurrentRecipe is null ? null :
@@ -263,6 +266,7 @@ public static class WorldSnapshotSerializer
                 SchemaVersion = CurrentSchemaVersion,
                 SquadMemberIds = Array.Empty<string>(),
                 WorkSchedules = Array.Empty<NpcScheduleSetting>(),
+                HomePositions = Array.Empty<NpcHomeSetting>(),
                 Workstations = LegacyWorkstations(snapshot),
                 Farms = LegacyFarms(snapshot),
                 Structures = Array.Empty<StructureSnapshot>(),
@@ -280,26 +284,29 @@ public static class WorldSnapshotSerializer
         }
 
         if (snapshot.SchemaVersion == OwnershipSchemaVersion)
-            return snapshot with { SchemaVersion = CurrentSchemaVersion, SquadMemberIds = Array.Empty<string>(), WorkSchedules = Array.Empty<NpcScheduleSetting>(), Workstations = LegacyWorkstations(snapshot), Farms = LegacyFarms(snapshot), Structures = Array.Empty<StructureSnapshot>(), ConstructionSites = Array.Empty<ConstructionSiteSnapshot>() };
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, SquadMemberIds = Array.Empty<string>(), WorkSchedules = Array.Empty<NpcScheduleSetting>(), HomePositions = Array.Empty<NpcHomeSetting>(), Workstations = LegacyWorkstations(snapshot), Farms = LegacyFarms(snapshot), Structures = Array.Empty<StructureSnapshot>(), ConstructionSites = Array.Empty<ConstructionSiteSnapshot>() };
 
         if (snapshot.SchemaVersion == SquadSchemaVersion)
-            return snapshot with { SchemaVersion = CurrentSchemaVersion, WorkSchedules = Array.Empty<NpcScheduleSetting>(), Workstations = LegacyWorkstations(snapshot), Farms = LegacyFarms(snapshot), Structures = Array.Empty<StructureSnapshot>(), ConstructionSites = Array.Empty<ConstructionSiteSnapshot>() };
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, WorkSchedules = Array.Empty<NpcScheduleSetting>(), HomePositions = Array.Empty<NpcHomeSetting>(), Workstations = LegacyWorkstations(snapshot), Farms = LegacyFarms(snapshot), Structures = Array.Empty<StructureSnapshot>(), ConstructionSites = Array.Empty<ConstructionSiteSnapshot>() };
 
         if (snapshot.SchemaVersion == ScheduleSchemaVersion)
-            return snapshot with { SchemaVersion = CurrentSchemaVersion, Workstations = LegacyWorkstations(snapshot), Farms = LegacyFarms(snapshot), Structures = Array.Empty<StructureSnapshot>(), ConstructionSites = Array.Empty<ConstructionSiteSnapshot>() };
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, HomePositions = Array.Empty<NpcHomeSetting>(), Workstations = LegacyWorkstations(snapshot), Farms = LegacyFarms(snapshot), Structures = Array.Empty<StructureSnapshot>(), ConstructionSites = Array.Empty<ConstructionSiteSnapshot>() };
 
         if (snapshot.SchemaVersion == WorkstationSchemaVersion)
-            return snapshot with { SchemaVersion = CurrentSchemaVersion, Farms = LegacyFarms(snapshot), Structures = Array.Empty<StructureSnapshot>(), ConstructionSites = Array.Empty<ConstructionSiteSnapshot>() };
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, HomePositions = Array.Empty<NpcHomeSetting>(), Farms = LegacyFarms(snapshot), Structures = Array.Empty<StructureSnapshot>(), ConstructionSites = Array.Empty<ConstructionSiteSnapshot>() };
 
         if (snapshot.SchemaVersion == FarmSchemaVersion)
-            return snapshot with { SchemaVersion = CurrentSchemaVersion, Structures = Array.Empty<StructureSnapshot>(), ConstructionSites = Array.Empty<ConstructionSiteSnapshot>() };
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, HomePositions = Array.Empty<NpcHomeSetting>(), Structures = Array.Empty<StructureSnapshot>(), ConstructionSites = Array.Empty<ConstructionSiteSnapshot>() };
 
         if (snapshot.SchemaVersion == ConstructionSchemaVersion)
-            return snapshot with { SchemaVersion = CurrentSchemaVersion, Structures = snapshot.Structures?.Select(structure => structure with
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, HomePositions = Array.Empty<NpcHomeSetting>(), Structures = snapshot.Structures?.Select(structure => structure with
             {
                 Beds = structure.Beds is { Count: > 0 } ? structure.Beds : structure.Type == StructureType.Hut
                     ? new[] { new BedSnapshot($"{structure.Id}-bed-1", 1.0, null) } : Array.Empty<BedSnapshot>()
             }).ToArray() ?? Array.Empty<StructureSnapshot>() };
+
+        if (snapshot.SchemaVersion == BedSchemaVersion)
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, HomePositions = Array.Empty<NpcHomeSetting>() };
 
         if (snapshot.SchemaVersion != CurrentSchemaVersion)
         {
@@ -466,6 +473,16 @@ public static class WorldSnapshotSerializer
                 || !snapshot.Entities.Any(entity => entity.Id == setting.EntityId && entity.SpeciesId == "human")
                 || !new NpcWorkSchedule(setting.StartHour, setting.EndHour).IsValid)
                 throw new InvalidDataException("Snapshot work schedules must reference distinct human NPCs with valid work hours.");
+        }
+        if (snapshot.HomePositions is null) throw new InvalidDataException("Snapshot home positions are required.");
+        var homeIds = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var home in snapshot.HomePositions)
+        {
+            if (home is null || string.IsNullOrWhiteSpace(home.EntityId)
+                || !homeIds.Add(home.EntityId) || home.EntityId == snapshot.PlayerEntityId
+                || !snapshot.Entities.Any(entity => entity.Id == home.EntityId && entity.SpeciesId == "human"))
+                throw new InvalidDataException("Snapshot home positions must reference distinct human NPCs.");
+            ValidatePosition(home.Position, $"home '{home.EntityId}' position");
         }
         if (snapshot.Workstations is null) throw new InvalidDataException("Snapshot workstations are required.");
         if (snapshot.Farms is null) throw new InvalidDataException("Snapshot farms are required.");
