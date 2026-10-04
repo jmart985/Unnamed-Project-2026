@@ -7,6 +7,23 @@
 5. Open a PR linking the issue with `Closes #N`. Explain observable behavior, validation evidence, and known limitations. Review before merging.
 6. Update docs when behavior changes. Close the issue only when its acceptance criteria are satisfied.
 
+## Line endings
+
+The root `.gitattributes` owns the repository's line-ending policy on every platform:
+
+- Text files use **LF**, including C# source, Godot scenes/configuration/UID files, JSON, Markdown, and workflow files. Save edited text with LF in your editor.
+- Windows `.bat` and `.cmd` scripts use **CRLF** when checked out; Git stores their normalized text with LF.
+- Binary assets retain their original bytes. Git automatically detects binary files; common game asset formats are also explicitly marked binary.
+
+These attributes take precedence over `core.autocrlf`, so contributors do not need to change their personal Git configuration. If an editor reports that an LF source file will become CRLF, reload its Git status after pulling this policy and check the effective attributes:
+
+```powershell
+git check-attr text eol -- game/scripts/Main.cs CONTRIBUTING.md
+git ls-files --eol -- game/scripts/Main.cs CONTRIBUTING.md
+```
+
+Expected attributes are `text: auto` and `eol: lf`. In `ls-files --eol`, `i/lf` describes the committed/index content and `w/lf` describes the working copy. Existing working copies may still show `w/crlf` or `w/mixed`: adding attributes does not rewrite files already on disk. Save files with LF as you edit them; fresh checkouts use the declared policy. Keep any repository-wide normalization in a separate reviewed change, and preserve file encodings and unrelated local edits.
+
 ## Work states
 
 Ideas → Backlog → Ready → In Progress → Testing → Done.

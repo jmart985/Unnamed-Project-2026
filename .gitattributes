@@ -1,0 +1,18 @@
+# Detected text is stored and checked out with LF on every platform.
+# This repository policy takes precedence over core.autocrlf.
+* text=auto eol=lf
+
+# Windows command scripts require CRLF in the working tree.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary game assets must never undergo line-ending conversion.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ogg binary
+*.wav binary
+*.glb binary
+*.ttf binary
+*.woff2 binary
