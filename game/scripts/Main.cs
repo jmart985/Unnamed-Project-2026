@@ -113,6 +113,7 @@ public partial class Main : Node3D
         ConfigureScheduleControls();
         ConfigurePlayerMenus();
         ConfigureWorldSelection();
+        ConfigureGameplayActions();
         ApplyMenuState();
         GetNode<Button>("CharacterCreation/Panel/Form/Start").Pressed += StartNewGame;
         _controls.Visible = false;
@@ -144,6 +145,8 @@ public partial class Main : Node3D
             Callable.From(RunMenuValidation).CallDeferred();
         else if (OS.GetCmdlineUserArgs().Contains("--validate-selection"))
             Callable.From(RunSelectionValidation).CallDeferred();
+        else if (OS.GetCmdlineUserArgs().Contains("--validate-gameplay-actions"))
+            Callable.From(RunGameplayActionsValidation).CallDeferred();
     }
 
     public override void _Process(double delta)
@@ -154,6 +157,8 @@ public partial class Main : Node3D
         }
 
         _clock.Advance(delta, AdvanceSimulationTick);
+        AdvanceCollectUse(delta);
+        UpdateGameplayFeedback(delta);
         SyncPlayerPosition();
         SyncEntityViews();
         UpdateStatus();
@@ -163,6 +168,13 @@ public partial class Main : Node3D
     {
         if (!_sessionActive || _menuState.ActiveMenu is not null || _clock.IsPaused)
         {
+            return;
+        }
+
+        if (@event.IsActionReleased(ControllerActions.Collect))
+        {
+            CompleteCollectUse();
+            GetViewport().SetInputAsHandled();
             return;
         }
 
@@ -180,25 +192,20 @@ public partial class Main : Node3D
 
         if (@event.IsActionPressed(ControllerActions.Collect))
         {
-            _lastActionMessage = TryPlayerEat();
-            UpdateStatus();
+            BeginCollectUse();
+            GetViewport().SetInputAsHandled();
             return;
         }
 
         if (@event.IsActionPressed(ControllerActions.AttackLeft) || @event.IsActionPressed(ControllerActions.AttackRight))
         {
-            // Combat is an immediate world action; it must not open a menu.
-            _lastActionMessage = _selectedEntityId is null
-                ? "Combat requested; select an entity first."
-                : $"Combat requested for {_selectedEntityId}.";
-            UpdateStatus();
+            // PlayerCharacter captures the target only when a swing actually begins.
             return;
         }
 
         if (@event.IsActionPressed(ControllerActions.Interact))
         {
-            _lastActionMessage = GreetSelectedEntity();
-            UpdateStatus();
+            PerformFriendlyInteraction();
             return;
         }
 
@@ -241,6 +248,7 @@ public partial class Main : Node3D
 
     private void TogglePause()
     {
+        CancelGameplayActions();
         _clock.SetPaused(!_clock.IsPaused);
         _playerCharacter.SetPhysicsProcess(!_clock.IsPaused);
         _playerCharacter.SetGameplayInputEnabled(!_clock.IsPaused && _menuState.ActiveMenu is null);
@@ -302,6 +310,7 @@ public partial class Main : Node3D
         int seed,
         string saveLoadMessage)
     {
+        CancelGameplayActions();
         var session = NewGameSession.Create(_speciesCatalog, profile, seed);
         _sessionActive = false;
         _playerCharacter.SetPhysicsProcess(false);
@@ -541,6 +550,7 @@ public partial class Main : Node3D
     {
         foreach (var entity in _world.Entities)
         {
+            entity.Health.AdvanceTime(simulationSeconds);
             entity.Needs.Advance(
                 simulationSeconds,
                 _speciesCatalog.GetRequired(entity.SpeciesId).HungerRate);
@@ -793,6 +803,7 @@ public partial class Main : Node3D
 
     private void SaveScenario()
     {
+        CancelGameplayActions();
         _clock.SetPaused(true);
         _playerCharacter.SetPhysicsProcess(false);
         try
@@ -812,6 +823,7 @@ public partial class Main : Node3D
 
     private void LoadScenario()
     {
+        CancelGameplayActions();
         _clock.SetPaused(true);
         _playerCharacter.SetPhysicsProcess(false);
         try

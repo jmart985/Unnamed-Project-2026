@@ -16,7 +16,7 @@ public sealed class PlayerButtonBindings
         (ControllerActions.MoveForward, "Move forward"), (ControllerActions.MoveBackward, "Move backward"),
         (ControllerActions.MoveLeft, "Move left"), (ControllerActions.MoveRight, "Move right"),
         (ControllerActions.Jump, "Jump"), (ControllerActions.AttackLeft, "Left attack"),
-        (ControllerActions.AttackRight, "Right attack"), (ControllerActions.Collect, "Eat nearby food"),
+        (ControllerActions.AttackRight, "Right attack"), (ControllerActions.Collect, "Collect / hold to use"),
         (ControllerActions.Interact, "Greet selected"), (ControllerActions.CycleTarget, "Cycle target"), (ControllerActions.Inventory, "Inventory"),
         (ControllerActions.Settlement, "Settlement"), (ControllerActions.Settings, "Save / Settings")
     ];

@@ -7,7 +7,7 @@ public partial class Main
 {
     private enum TargetKind { Entity, Food, ResourcePile, Stockpile }
     private sealed record WorldTarget(TargetKind Kind, string Id);
-    private sealed record TargetView(WorldTarget Target, Node3D Node, Aabb Bounds)
+    private sealed record TargetView(WorldTarget Target, Node3D Node, Aabb Bounds, Aabb[] Parts, Vector3[] Samples)
     {
         public Vector3 Center => Bounds.GetCenter();
     }
@@ -65,31 +65,44 @@ public partial class Main
             if (meshes.Length == 0) continue;
             var bounds = meshes[0].GlobalTransform * meshes[0].GetAabb();
             foreach (var mesh in meshes.Skip(1)) bounds = bounds.Merge(mesh.GlobalTransform * mesh.GetAabb());
-            targets.Add(new(target, node, bounds));
+            var parts = meshes.Select(mesh => mesh.GlobalTransform * mesh.GetAabb()).ToArray();
+            var samples = meshes.SelectMany(mesh => SampleMesh(mesh)).ToArray();
+            targets.Add(new(target, node, bounds, parts, samples));
         }
         foreach (var (target, marker) in _resourceMarkers)
             if (TargetExists(target) && marker.IsVisibleInTree() && !marker.IsQueuedForDeletion())
-                targets.Add(new(target, marker, marker.GlobalTransform * marker.GetAabb()));
+                targets.Add(new(target, marker, marker.GlobalTransform * marker.GetAabb(),
+                    [marker.GlobalTransform * marker.GetAabb()], SampleMesh(marker).ToArray()));
         return targets;
     }
 
     private bool TargetVisible(TargetView target, Camera3D camera, IReadOnlyList<TargetView> targets)
     {
-        var center = target.Center;
-        if (center.DistanceTo(_playerCharacter.GlobalPosition) > TargetRange
-            || !camera.IsPositionInFrustum(center)
-            || !GetViewport().GetVisibleRect().HasPoint(camera.UnprojectPosition(center))) return false;
-        var from = camera.GlobalPosition;
+        if (target.Node.GlobalPosition.DistanceTo(_playerCharacter.GlobalPosition) > TargetRange) return false;
+        return target.Samples.Any(point => camera.IsPositionInFrustum(point)
+            && GetViewport().GetVisibleRect().HasPoint(camera.UnprojectPosition(point))
+            && TargetLineClear(camera.GlobalPosition, point, target.Target, targets));
+    }
+
+    private static IEnumerable<Vector3> SampleMesh(MeshInstance3D mesh)
+    {
+        var bounds = mesh.GetAabb();
+        foreach (var height in new[] { 0.25f, 0.5f, 0.85f })
+            yield return mesh.GlobalTransform * new Vector3(bounds.GetCenter().X, bounds.Position.Y + bounds.Size.Y * height, bounds.GetCenter().Z);
+    }
+
+    private bool TargetLineClear(Vector3 from, Vector3 point, WorldTarget target, IReadOnlyList<TargetView> targets)
+    {
         // Existing scenery is visual-only, so inspect its actual mesh bounds instead of adding physics bodies.
         var scenery = _scenery?.GetChildren().OfType<MeshInstance3D>() ?? [];
         foreach (var mesh in scenery.Append(_map).Append(_obstacle))
         {
             if (mesh.Mesh is null || !mesh.IsVisibleInTree()) continue;
             var inverse = mesh.GlobalTransform.AffineInverse();
-            if (mesh.GetAabb().IntersectsSegment(inverse * from, inverse * center)) return false;
+            if (mesh.GetAabb().IntersectsSegment(inverse * from, inverse * point)) return false;
         }
-        // Other targets can block the center too; never cycle through a foreground entity or resource.
-        return !targets.Any(other => other.Target != target.Target && other.Bounds.IntersectsSegment(from, center));
+        // Check actual mesh parts, not the empty gaps in an animated character's aggregate bounds.
+        return !targets.Any(other => other.Target != target && other.Parts.Any(part => part.IntersectsSegment(from, point)));
     }
 
     private List<TargetView> VisibleWorldTargets()
@@ -124,6 +137,7 @@ public partial class Main
         if (_selectedTarget is { } selected && !TargetExists(selected)) _selectedTarget = null;
         var gameplay = _sessionActive && _menuState.ActiveMenu is null;
         _targetHud.Visible = gameplay;
+        UpdateGameplayFeedback(0);
         _targetRing.Visible = false;
         var binding = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.CycleTarget).Desktop);
         var hint = $"{binding}: select / cycle visible targets (40 m)";
@@ -141,7 +155,11 @@ public partial class Main
         _targetRing.GlobalPosition = new Vector3(view.Node.GlobalPosition.X, view.Node.GlobalPosition.Y + 0.1f, view.Node.GlobalPosition.Z);
         string detail;
         if (target.Kind == TargetKind.Entity && _world.TryGetEntity(target.Id, out var entity) && entity is not null)
-            detail = $"{entity.SpeciesId} · Satiety {entity.Satiety:0} · {(entity.Health.IsDead ? "Dead" : entity.Health.IsIncapacitated ? "Incapacitated" : "Conscious")}\n{entity.Activity}";
+        {
+            detail = $"{entity.SpeciesId} · HP {entity.Health.Parts.Sum(part => part.CurrentHealth):0}/{entity.Health.Parts.Sum(part => part.MaximumHealth):0} · Satiety {entity.Satiety:0}\n{(entity.Health.IsDead ? "Dead" : entity.Health.IsIncapacitated ? "Incapacitated" : "Conscious")} · {entity.Activity}";
+            if (_world.PlayerEntityId is { } playerId && _world.TryGetRelationship(playerId, entity.Id, out var relationship) && relationship is not null)
+                detail += $" · Familiarity {relationship.Familiarity:0} / Trust {relationship.Trust:0}";
+        }
         else
         {
             var contents = target.Kind switch

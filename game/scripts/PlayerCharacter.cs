@@ -46,8 +46,9 @@ public partial class PlayerCharacter : CharacterBody3D
     public string AimedBodyPart => CombatAim.PartForPitch(_headPitch, _swingLeft);
 
     /// Raised once per swing at the moment of impact: the swinging side and the aimed body part.
-    /// Combat resolution (reach validation, damage to a body part) attaches here; nothing resolves hits yet.
+    /// Main resolves this event through the World-owned melee/social combat boundary.
     public event Action<bool, string>? StrikeReleased;
+    public event Action? AttackStarted;
 
     public override void _Ready()
     {
@@ -219,6 +220,7 @@ public partial class PlayerCharacter : CharacterBody3D
         _swingLeft = left;
         _swing = AttackSwing.ForTotalDuration(AttackDuration);
         _swing.Begin();
+        AttackStarted?.Invoke();
         _attackCooldownRemaining = AttackCooldown;
     }
 

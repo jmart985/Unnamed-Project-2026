@@ -254,6 +254,7 @@ public partial class Main
 
     private void ApplyMenuState()
     {
+        CancelGameplayActions();
         _captureBinding = null;
         _controls.Visible = _sessionActive && _menuState.ActiveMenu == PlayerMenu.Settlement;
         _inventoryPanel.Visible = _sessionActive && _menuState.ActiveMenu == PlayerMenu.Inventory;

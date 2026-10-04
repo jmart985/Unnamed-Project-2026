@@ -32,3 +32,5 @@ The 1.0 integrated game loop is documented in `docs/VALIDATION_1_0.md`. The user
 The user subsequently prioritized unfinished player menus before 1.2: #384 is a focused correction to completed 1.0 functionality. Its Inventory, Settlement and Save/Settings screens, button mapping, and deliberately disabled future placeholders are documented in `docs/PLAYER_MENUS.md`. Complete that correction before advancing #201; placeholders do not make future equipment/audio/display implementation Ready.
 
 The next user-requested 1.0 correction is #388: gameplay target selection/cycling without opening menus, documented in `docs/WORLD_SELECTION.md`. It reuses accepted entity actions and resource projections, preserves existing input preferences, and leaves the #201 product-scope decision separate.
+
+User playtesting then selected #390: targeted strike resolution, exposed humans overlapping storage, visible greeting/facing feedback, and tap-collect versus hold-use. `docs/GAMEPLAY_REFINEMENT.md` defines this focused correction; reuse existing combat, World inventory and reservation services. Health persistence #302 and the #201 future creature scope remain separate.

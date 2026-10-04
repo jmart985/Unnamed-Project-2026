@@ -14,6 +14,26 @@ public partial class EntityView : CharacterBody3D
     private ProceduralGait? _gait;
     private Vector3 _lastPosition;
     private float _smoothedSpeed;
+    private double _greetingSeconds;
+    private Vector3 _greeterPosition;
+
+    public Vector3 VisualForward => _rig is null ? -GlobalBasis.Z : -_rig.GlobalBasis.Z;
+
+    public void AcknowledgeGreeting(Vector3 greeterPosition)
+    {
+        _greeterPosition = greeterPosition;
+        _greetingSeconds = 2;
+        FaceGreeter();
+    }
+
+    private void FaceGreeter()
+    {
+        if (_rig is null) return;
+        var direction = _greeterPosition - GlobalPosition;
+        direction.Y = 0;
+        if (direction.LengthSquared() > 0.0001f)
+            _rig.GlobalRotation = new Vector3(0, Mathf.Atan2(-direction.X, -direction.Z), 0);
+    }
 
     public string EntityId { get; private set; } = string.Empty;
     public NavigationOutcome? NavigationOutcome => _navigationAdapter?.LastOutcome;
@@ -247,6 +267,11 @@ public partial class EntityView : CharacterBody3D
         }
 
         _gait.Advance((float)delta, _smoothedSpeed);
+        if (_greetingSeconds > 0)
+        {
+            _greetingSeconds = Math.Max(0, _greetingSeconds - delta);
+            FaceGreeter();
+        }
     }
 
     public override void _PhysicsProcess(double delta) => _navigationAdapter?.RefreshPath();

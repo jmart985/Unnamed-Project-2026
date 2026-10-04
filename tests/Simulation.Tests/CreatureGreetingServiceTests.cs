@@ -5,6 +5,16 @@ namespace Simulation.Tests;
 
 public sealed class CreatureGreetingServiceTests
 {
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void IncapacitatedParticipantsCannotAcknowledgeOrChangeRelationships(bool incapacitatePlayer)
+    {
+        var (world, player, creature, greeting) = CreateGreetingTarget("cow", new Vector3(1, 0, 0));
+        (incapacitatePlayer ? player : creature).Health.TryDamage("Torso", 1000);
+        Assert.Equal(CreatureGreetingResultCode.ParticipantUnavailable, greeting.Greet(creature.Id).Code);
+        Assert.False(world.TryGetRelationship(player.Id, creature.Id, out _));
+    }
     [Fact]
     public void GreetingAppliesTheProfileOnlyToThePlayerToCreatureRelationship()
     {
