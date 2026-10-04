@@ -21,6 +21,10 @@ public sealed class World
     private readonly ReadOnlyCollection<ResourceLocation> _stockpileView;
     private readonly List<Structure> _structures = [];
     private readonly ReadOnlyCollection<Structure> _structureView;
+    private readonly List<Workstation> _workstations = [];
+    private readonly ReadOnlyCollection<Workstation> _workstationView;
+    private readonly List<Farm> _farms = [];
+    private readonly ReadOnlyCollection<Farm> _farmView;
     private readonly HashSet<string> _targetIds = new(StringComparer.Ordinal);
     private long _lastEntityId;
     private readonly HashSet<string> _squadMembers = new(StringComparer.Ordinal);
@@ -85,6 +89,8 @@ public sealed class World
         _resourcePileView = _resourcePiles.AsReadOnly();
         _stockpileView = _stockpiles.AsReadOnly();
         _structureView = _structures.AsReadOnly();
+        _workstationView = _workstations.AsReadOnly();
+        _farmView = _farms.AsReadOnly();
     }
 
     public IReadOnlyCollection<EntityRecord> Entities => _entities.Values;
@@ -112,6 +118,8 @@ public sealed class World
     public IReadOnlyList<ResourceLocation> ResourcePiles => _resourcePileView;
     public IReadOnlyList<ResourceLocation> Stockpiles => _stockpileView;
     public IReadOnlyList<Structure> Structures => _structureView;
+    public IReadOnlyList<Workstation> Workstations => _workstationView;
+    public IReadOnlyList<Farm> Farms => _farmView;
     public NeedsTuning NeedsTuning { get; }
     public ReservationService Reservations { get; }
     public int InventoryCapacity { get; }
@@ -246,6 +254,22 @@ public sealed class World
         AddTargetId(structure.Id, nameof(id));
         _structures.Add(structure);
         return structure;
+    }
+
+    public Workstation AddWorkstation(string id, Vector3 position, int inputCapacity = 10, int outputCapacity = 10)
+    {
+        var workstation = new Workstation(id, position, inputCapacity, outputCapacity);
+        AddTargetId(workstation.Id, nameof(id));
+        _workstations.Add(workstation);
+        return workstation;
+    }
+
+    public Farm AddFarm(string id, Vector3 position)
+    {
+        var farm = new Farm(id, position);
+        AddTargetId(farm.Id, nameof(id));
+        _farms.Add(farm);
+        return farm;
     }
 
     public Structure? GetStructureAt(Vector3 position, double tolerance = 1.0)
@@ -678,6 +702,8 @@ public sealed class World
         _resourcePiles.Clear();
         _stockpiles.Clear();
         _structures.Clear();
+        _workstations.Clear();
+        _farms.Clear();
         _targetIds.Clear();
         Reservations.Reset();
         SessionSeed = null;
