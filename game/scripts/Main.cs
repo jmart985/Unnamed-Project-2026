@@ -116,6 +116,7 @@ public partial class Main : Node3D
 		ConfigureSquadControls();
 		ConfigureScheduleControls();
 		ConfigurePlayerMenus();
+		ConfigureWorkstationGameplay();
 		ConfigureWorldSelection();
 		ConfigureGameplayActions();
 		ApplyMenuState();
@@ -172,11 +173,12 @@ public partial class Main : Node3D
 		SyncPlayerPosition();
 		SyncEntityViews();
 		UpdateStatus();
+		UpdateWorkstationPanel();
 	}
 
 	public override void _UnhandledInput(InputEvent @event)
 	{
-		if (!_sessionActive || _menuState.ActiveMenu is not null || _clock.IsPaused)
+		if (!_sessionActive || _menuState.ActiveMenu is not null || WorkstationPanelOpen || _clock.IsPaused)
 		{
 			return;
 		}

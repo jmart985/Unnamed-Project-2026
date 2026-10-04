@@ -831,6 +831,20 @@ public sealed class World
                 stockpile.FactionOwnerId);
         }
 
+        foreach (var saved in snapshot.Workstations!)
+        {
+            var workstation = AddWorkstation(saved.Id, saved.Position,
+                saved.InputStorage.Capacity, saved.OutputStorage.Capacity);
+            foreach (var item in saved.InputStorage.Counts) workstation.InputStorage.AddKnown(item.Key, item.Value);
+            foreach (var item in saved.OutputStorage.Counts) workstation.OutputStorage.AddKnown(item.Key, item.Value);
+            if (saved.CurrentRecipe is { } savedRecipe)
+            {
+                var recipe = new WorkstationRecipe(savedRecipe.Id, savedRecipe.Inputs, savedRecipe.Outputs, savedRecipe.WorkRequired);
+                recipe.RestoreProgress(savedRecipe.WorkProgress);
+                workstation.SetRecipe(recipe);
+            }
+        }
+
         foreach (var savedRelationship in snapshot.Relationships)
         {
             // Saved totals are authoritative, including explicit zero/betrayed bonds.

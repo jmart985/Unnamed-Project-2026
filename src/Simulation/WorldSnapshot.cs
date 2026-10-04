@@ -20,7 +20,22 @@ public sealed record WorldSnapshot(
     IReadOnlyList<FactionReputationSnapshot>? FactionReputations = null,
     IReadOnlyList<FactionHostilitySnapshot>? FactionHostilities = null,
     IReadOnlyList<string>? SquadMemberIds = null,
-    IReadOnlyList<NpcScheduleSetting>? WorkSchedules = null);
+    IReadOnlyList<NpcScheduleSetting>? WorkSchedules = null,
+    IReadOnlyList<WorkstationSnapshot>? Workstations = null);
+
+public sealed record WorkstationSnapshot(
+    string Id,
+    Vector3 Position,
+    ResourceContainerSnapshot InputStorage,
+    ResourceContainerSnapshot OutputStorage,
+    WorkstationRecipeSnapshot? CurrentRecipe);
+
+public sealed record WorkstationRecipeSnapshot(
+    string Id,
+    IReadOnlyDictionary<string, int> Inputs,
+    IReadOnlyDictionary<string, int> Outputs,
+    int WorkRequired,
+    int WorkProgress);
 
 public sealed record RelationshipSnapshot(
     string ObserverEntityId,
@@ -80,7 +95,8 @@ public static class WorldSnapshotSerializer
     private const int FactionRelationsSchemaVersion = 7;
     private const int OwnershipSchemaVersion = 8;
     private const int SquadSchemaVersion = 9;
-    public const int CurrentSchemaVersion = 10;
+    private const int ScheduleSchemaVersion = 10;
+    public const int CurrentSchemaVersion = 11;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -158,7 +174,14 @@ public static class WorldSnapshotSerializer
             factionReputations,
             factionHostilities,
             world.SquadMemberIds.ToArray(),
-            world.WorkSchedules.ToArray());
+            world.WorkSchedules.ToArray(),
+            world.Workstations.OrderBy(item => item.Id, StringComparer.Ordinal).Select(item =>
+                new WorkstationSnapshot(item.Id, item.Position, CaptureContainer(item.InputStorage),
+                    CaptureContainer(item.OutputStorage), item.CurrentRecipe is null ? null :
+                        new WorkstationRecipeSnapshot(item.CurrentRecipe.Id,
+                            new Dictionary<string, int>(item.CurrentRecipe.Inputs, StringComparer.Ordinal),
+                            new Dictionary<string, int>(item.CurrentRecipe.Outputs, StringComparer.Ordinal),
+                            item.CurrentRecipe.WorkRequired, item.CurrentRecipe.WorkProgress))).ToArray());
     }
 
     public static string Serialize(World world, double simulationTime)
@@ -194,6 +217,7 @@ public static class WorldSnapshotSerializer
                 SchemaVersion = CurrentSchemaVersion,
                 SquadMemberIds = Array.Empty<string>(),
                 WorkSchedules = Array.Empty<NpcScheduleSetting>(),
+                Workstations = LegacyWorkstations(snapshot),
                 FactionIds = snapshot.FactionIds ?? Array.Empty<string>(),
                 FactionReputations = snapshot.SchemaVersion == FactionRelationsSchemaVersion
                     ? snapshot.FactionReputations
@@ -207,10 +231,13 @@ public static class WorldSnapshotSerializer
         }
 
         if (snapshot.SchemaVersion == OwnershipSchemaVersion)
-            return snapshot with { SchemaVersion = CurrentSchemaVersion, SquadMemberIds = Array.Empty<string>(), WorkSchedules = Array.Empty<NpcScheduleSetting>() };
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, SquadMemberIds = Array.Empty<string>(), WorkSchedules = Array.Empty<NpcScheduleSetting>(), Workstations = LegacyWorkstations(snapshot) };
 
         if (snapshot.SchemaVersion == SquadSchemaVersion)
-            return snapshot with { SchemaVersion = CurrentSchemaVersion, WorkSchedules = Array.Empty<NpcScheduleSetting>() };
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, WorkSchedules = Array.Empty<NpcScheduleSetting>(), Workstations = LegacyWorkstations(snapshot) };
+
+        if (snapshot.SchemaVersion == ScheduleSchemaVersion)
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, Workstations = LegacyWorkstations(snapshot) };
 
         if (snapshot.SchemaVersion != CurrentSchemaVersion)
         {
@@ -219,6 +246,16 @@ public static class WorldSnapshotSerializer
         }
 
         return snapshot;
+    }
+
+    private static IReadOnlyList<WorkstationSnapshot> LegacyWorkstations(WorldSnapshot snapshot)
+    {
+        if (snapshot.SessionSeed is null) return Array.Empty<WorkstationSnapshot>();
+        var recipe = SettlementRecipes.CreateBasicMeal();
+        return [new WorkstationSnapshot("workbench-1", NewGameSession.TownWorkbenchPosition,
+            new ResourceContainerSnapshot("workbench-1-input", 10, new Dictionary<string, int>()),
+            new ResourceContainerSnapshot("workbench-1-output", 10, new Dictionary<string, int>()),
+            new WorkstationRecipeSnapshot(recipe.Id, recipe.Inputs, recipe.Outputs, recipe.WorkRequired, 0))];
     }
 
     public static double Load(
@@ -364,6 +401,7 @@ public static class WorldSnapshotSerializer
                 || !new NpcWorkSchedule(setting.StartHour, setting.EndHour).IsValid)
                 throw new InvalidDataException("Snapshot work schedules must reference distinct human NPCs with valid work hours.");
         }
+        if (snapshot.Workstations is null) throw new InvalidDataException("Snapshot workstations are required.");
         var foodSourceIds = new HashSet<string>(StringComparer.Ordinal);
         foreach (var source in snapshot.FoodSources)
         {
@@ -383,9 +421,32 @@ public static class WorldSnapshotSerializer
 
         ValidateLocations(snapshot.ResourcePiles, "resource pile", foodSourceIds, factionIds, allowFactionOwner: false);
         ValidateLocations(snapshot.Stockpiles, "stockpile", foodSourceIds, factionIds, allowFactionOwner: true);
+        foreach (var workstation in snapshot.Workstations)
+        {
+            if (workstation is null || string.IsNullOrWhiteSpace(workstation.Id) || !foodSourceIds.Add(workstation.Id))
+                throw new InvalidDataException("Snapshot contains an invalid or duplicate workstation ID.");
+            ValidatePosition(workstation.Position, $"workstation '{workstation.Id}' position");
+            ValidateContainer(workstation.InputStorage, workstation.Id);
+            ValidateContainer(workstation.OutputStorage, workstation.Id);
+            if (workstation.CurrentRecipe is { } recipe)
+            {
+                if (string.IsNullOrWhiteSpace(recipe.Id) || recipe.Inputs is null || recipe.Outputs is null
+                    || recipe.WorkRequired <= 0 || recipe.WorkProgress < 0 || recipe.WorkProgress > recipe.WorkRequired
+                    || recipe.Outputs.Count == 0)
+                    throw new InvalidDataException($"Snapshot workstation '{workstation.Id}' has an invalid recipe.");
+                foreach (var item in recipe.Inputs) ValidatePositiveItemCount(item, workstation.Id);
+                foreach (var item in recipe.Outputs) ValidatePositiveItemCount(item, workstation.Id);
+            }
+        }
         ValidateRelationships(snapshot.Relationships, entityIds);
         ValidateFactionReputations(snapshot.FactionReputations, entityIds, factionIds);
         ValidateFactionHostilities(snapshot.FactionHostilities, factionIds);
+    }
+
+    private static void ValidatePositiveItemCount(KeyValuePair<string, int> item, string workstationId)
+    {
+        if (!ItemIds.IsKnown(item.Key) || item.Value <= 0)
+            throw new InvalidDataException($"Snapshot workstation '{workstationId}' recipe has invalid materials.");
     }
 
     private static void ValidateFactionReputations(

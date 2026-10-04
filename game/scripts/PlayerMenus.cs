@@ -254,6 +254,7 @@ public partial class Main
 
 	private void ApplyMenuState()
 	{
+		CloseWorkstation();
 		CancelGameplayActions();
 		_captureBinding = null;
 		_controls.Visible = _sessionActive && _menuState.ActiveMenu == PlayerMenu.Settlement;
@@ -272,6 +273,15 @@ public partial class Main
 		if (!_sessionActive) return;
 		if (input is InputEventKey { Pressed: false } or InputEventKey { Echo: true }
 			or InputEventMouseButton { Pressed: false } or InputEventJoypadButton { Pressed: false }) return;
+		if (WorkstationPanelOpen)
+		{
+			if (input.IsActionPressed(ControllerActions.CloseMenu))
+			{
+				CloseWorkstation();
+				GetViewport().SetInputAsHandled();
+			}
+			return;
+		}
 		if (_captureBinding is { } capture)
 		{
 			if (input is InputEventKey key && (key.PhysicalKeycode == Key.Escape || key.Keycode == Key.Escape))

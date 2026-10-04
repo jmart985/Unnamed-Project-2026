@@ -80,7 +80,7 @@ public partial class Main
         }
     }
 
-    private bool GameplayActionsAllowed => _sessionActive && _menuState.ActiveMenu is null && !_clock.IsPaused;
+    private bool GameplayActionsAllowed => _sessionActive && _menuState.ActiveMenu is null && !WorkstationPanelOpen && !_clock.IsPaused;
 
     private void ConfigureGameplayActions()
     {
@@ -130,7 +130,7 @@ public partial class Main
         var collect = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.Collect).Desktop);
         var interact = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.Interact).Desktop);
         var greet = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.Greet).Desktop);
-        var hint = $"Tap {collect}: collect · Hold {collect} 0.6s: use carried food · {interact}: feed/pet · {greet}: greet (2 m)";
+        var hint = $"Tap {collect}: collect · Hold {collect} 0.6s: use carried food · {interact}: interact/feed/pet · {greet}: greet (2 m)";
         _actionHud.Text = _collectUse.IsPressed && !_collectUse.Used
             ? $"Hold to use… {Math.Min(100, _collectUse.Elapsed / CollectUseGesture.HoldSeconds * 100):0}%\nRelease now to collect.\n{hint}"
             : (_feedbackSeconds > 0 ? _lastActionMessage + "\n" : "") + hint;
@@ -219,6 +219,12 @@ public partial class Main
         if (_world.PlayerEntityId is not { } playerId || !_world.TryGetEntity(playerId, out var player) || player is null)
         {
             ShowActionFeedback("Player not found.");
+            return;
+        }
+
+        if (_selectedTarget.Kind == TargetKind.Workstation)
+        {
+            OpenWorkstation(_selectedTarget.Id);
             return;
         }
 

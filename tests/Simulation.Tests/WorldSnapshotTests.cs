@@ -48,6 +48,26 @@ public sealed class WorldSnapshotTests
         Assert.Equal(
             source.Player.Position,
             Assert.Single(target.Entities, entity => entity.Id == target.PlayerEntityId).Position);
+        var restoredWorkbench = Assert.Single(target.Workstations);
+        Assert.Equal(SettlementRecipes.BasicMealId, restoredWorkbench.CurrentRecipe!.Id);
+    }
+
+    [Fact]
+    public void SnapshotRoundTripPreservesWorkbenchStorageAndProgress()
+    {
+        var source = NewGameSession.Create(GetSpeciesCatalog(), PlayerCharacterProfile.Create("Ada"));
+        var station = source.World.Workstations.Single();
+        station.InputStorage.TryAdd(ItemIds.Plant, 1);
+        station.InputStorage.TryAdd(ItemIds.Wood, 1);
+        station.ApplyWork(3);
+
+        var target = new World();
+        WorldSnapshotSerializer.Load(target, WorldSnapshotSerializer.Serialize(source.World, 4), GetSpeciesCatalog());
+
+        var restored = Assert.Single(target.Workstations);
+        Assert.Equal(1, restored.InputStorage.Counts[ItemIds.Plant]);
+        Assert.Equal(1, restored.InputStorage.Counts[ItemIds.Wood]);
+        Assert.Equal(3, restored.CurrentRecipe!.WorkProgress);
     }
 
     [Fact]
