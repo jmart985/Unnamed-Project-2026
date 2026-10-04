@@ -59,8 +59,7 @@ public sealed class AntFarmScenario
         {
             foreach (var entity in World.Entities)
             {
-                var species = _catalog.GetRequired(entity.SpeciesId);
-                entity.Needs.Advance(0.1, species.HungerRate);
+                entity.Needs.Advance(0.1);
             }
 
             SimulationTicks++;

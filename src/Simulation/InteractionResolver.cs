@@ -132,7 +132,7 @@ public sealed class InteractionResolver
             return new(false, $"The target cannot eat {item}.");
         }
 
-        target.Satiety = Math.Min(100, target.Satiety + 10);
+        target.Needs.AddNutrition(10);
         var socialResult = _socialService.Apply(target.Id, actor.Id, "helped");
         
         return socialResult == RelationshipEventApplyResult.Applied 

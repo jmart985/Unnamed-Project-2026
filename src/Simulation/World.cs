@@ -124,9 +124,16 @@ public sealed class World
     public ReservationService Reservations { get; }
     public int InventoryCapacity { get; }
     public CharacterStats DefaultCharacterStats { get; }
+    public SpeciesCatalog? SpeciesCatalog { get; set; }
     public int? SessionSeed { get; private set; }
     public string? PlayerEntityId { get; private set; }
     public PlayerCharacterProfile? PlayerProfile { get; private set; }
+
+    public SpeciesDefinition GetSpecies(string speciesId)
+    {
+        if (SpeciesCatalog == null) throw new InvalidOperationException("SpeciesCatalog is not configured in the world.");
+        return SpeciesCatalog.GetRequired(speciesId);
+    }
 
     internal void SetSessionPlayer(
         int seed,

@@ -45,6 +45,7 @@ public sealed class EntityRecord
     public int InventoryCapacity { get; }
     public string Activity { get; internal set; } = "Idle";
     public string? WaitingReason { get; internal set; }
+    public string? TargetId { get; internal set; }
     public string? Parent1Id { get; internal set; }
     public string? Parent2Id { get; internal set; }
 
