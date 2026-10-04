@@ -333,7 +333,7 @@ public partial class Main : Node3D
 		_interactionResolver = new InteractionResolver(
 			_world,
 			_tradeGoodsCatalog,
-			_relationshipEventCatalog);
+			new RelationshipEventService(_world, _relationshipEventCatalog));
 		_playerCommands = new PlayerCommandBoundary(
 			_world,
 			_clock,

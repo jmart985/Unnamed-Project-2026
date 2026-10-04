@@ -241,11 +241,11 @@ public partial class Main
             InteractionType.Social,
             "greet"));
 
-        if (result.Success && _world.TryGetRelationship(playerId, target.Id, out var relationship))
+        if (result.Succeeded && _world.TryGetRelationship(playerId, target.Id, out var relationship))
         {
             if (_entityViews.TryGetValue(target.Id, out var view))
                 view.AcknowledgeGreeting(() => _world.TryGetEntity(_playerCharacter.EntityId, out _) ? _playerCharacter.GlobalPosition : null);
-            
+
             ShowActionFeedback($"{result.Reason} Friendly greeting acknowledged. Familiarity {relationship?.Familiarity:0}; trust {relationship?.Trust:0} (player → target).",
                 target.Id, "Friendly greeting acknowledged");
         }
