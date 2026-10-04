@@ -30,7 +30,9 @@ Select a Keyboard / Mouse or Controller mapping button, then press the new input
 
 Duplicate bindings are rejected with feedback. Escape, controller B and debug F5–F8 remain reserved. Escape cancels capture without closing Settings. Restore defaults resets and saves the mapping. The legacy combat alias follows left attack rather than keeping an obsolete binding.
 
-Preferences are stored separately at `user://player-settings.json` (version 1), through the existing atomic `SaveSlotStore`. The file is validated before changing InputMap; a failed write retains both the previous file and active mapping. Invalid settings report a load error and retain defaults. A settings change never changes World snapshots or their schema 10. Navigation hints and mapping buttons refresh from the actual bindings.
+Preferences are stored separately at `user://player-settings.json`, through the existing atomic `SaveSlotStore`. Issue #388 adds Cycle target (default T) and uses version 2 for new writes. Version 1 loads preserve every existing binding and add an unused target key (T, or F9 then other free keys if T is already assigned); migration does not overwrite the file until a settings change is saved. New/restored defaults use F for greeting; existing G/custom mappings remain intact. The complete file is validated before changing InputMap; a failed write retains both the previous file and active mapping. Invalid settings report a load error and retain the active mapping. A settings change never changes World snapshots or their schema 10. Navigation hints and mapping buttons refresh from the actual bindings.
+
+Gameplay targeting now works without a menu; see [World target controls and validation](WORLD_SELECTION.md).
 
 ## Validation and reproduction
 

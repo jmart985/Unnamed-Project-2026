@@ -414,3 +414,10 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Menu state owns visibility and gameplay input suppression; preferences are separate version-1 settings JSON, without a World schema change. Current inventory is read-only; equipment shows existing hand/shield configuration. Disabled Planned wearable slots and Audio/Display tabs reserve UI space without implementing future systems. Defaults and conflicts have one validated mapping boundary; writes precede InputMap mutation.
 - Validation: docs/PLAYER_MENUS.md records dispatched Godot input, UI controls, physics/input isolation, persistence failure recovery and actual rendered screenshots.
 - Revisit: Enable equipment/audio/display controls only when their concrete issues define rules, assets, persistence and acceptance criteria; placeholder layout is not a scope commitment.
+
+## Gameplay target selection (2026-10-03, #388)
+
+- Decision: Fix menu-only selection with a configurable target-cycle key (default T), a gameplay ring/HUD and one transient typed target reference shared with existing entity actions. The user accepted a target key to preserve mouse attack/look. New/restored greeting defaults use F; existing preferences are preserved.
+- Consequence: First selection favors the camera center; subsequent cycling follows visible target type/ID order within 40 m. Visibility checks camera frustum and conservative mesh-bounds occlusion for the current visual-only scenery. Selection does not mutate World or persist. Settings version 2 adds the target binding; version 1 migrates in memory with an unused key and no file rewrite until a settings change is saved. No new physics obstacles, inventory model or World schema.
+- Validation: docs/WORLD_SELECTION.md records dispatched input, rendered target feedback, stale-reference cleanup, preference migration and gameplay regressions.
+- Revisit: Define mouse picking and final-art/transparent occlusion separately if needed; map, sprint, dodge, abilities and combat hit resolution retain their existing scope boundaries.
