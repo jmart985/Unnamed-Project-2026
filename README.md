@@ -29,6 +29,7 @@ A systemic open-world colony RPG in which people and creatures share consistent 
 - [Combat prototype scope and acceptance](docs/MILESTONE_0_5.md)
 - [First Real Game scope and acceptance](docs/MILESTONE_1_0.md)
 - [Squad controls and validation](docs/VALIDATION_SQUAD.md)
+- [Player menus, character inventory and button mapping](docs/PLAYER_MENUS.md)
 - [NPC daily schedules and validation](docs/NPC_SCHEDULES.md)
 - [Daily schedule integrated acceptance](docs/VALIDATION_1.1.md)
 - [First Real Game integrated validation](docs/VALIDATION_1_0.md)

@@ -16,6 +16,8 @@ public static class ControllerActions
     public const string Interact = "interact";
     public const string Inventory = "open_inventory";
     public const string Settlement = "open_settlement";
+    public const string Settings = "open_settings";
+    public static IReadOnlyList<string> All => Simulation.ControllerActions.All;
     public const string CloseMenu = "close_menu";
     public const string DebugRoute = "debug_route";
     public const string DebugUnreachable = "debug_unreachable";

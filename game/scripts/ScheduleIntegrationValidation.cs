@@ -77,6 +77,8 @@ public partial class Main
         var screenshot = OS.GetCmdlineUserArgs().FirstOrDefault(argument => argument.StartsWith("--day-screenshot=", StringComparison.Ordinal));
         if (screenshot is not null)
         {
+            if (_menuState.ActiveMenu != PlayerMenu.Settlement) ToggleMenu(PlayerMenu.Settlement);
+            _settlementTabs.CurrentTab = 0;
             GetNode<ScrollContainer>("Controls/Panel/Scroll").ScrollVertical = 0;
             await ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
             Require(GetViewport().GetTexture().GetImage().SavePng(screenshot["--day-screenshot=".Length..]) == Error.Ok, "natural day screenshot");

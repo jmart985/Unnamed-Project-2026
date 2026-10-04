@@ -19,11 +19,11 @@ public sealed class ControllerActionsTests
     }
 
     [Fact]
-    public void InventoryAndSettlementAreDistinctMenusAndCollectionIsNotAMenu()
+    public void InventorySettlementAndSettingsAreDistinctMenusAndCollectionIsNotAMenu()
     {
         var menuState = new PlayerMenuState();
         Assert.Equal(
-            new[] { PlayerMenu.Inventory, PlayerMenu.Settlement },
+            new[] { PlayerMenu.Inventory, PlayerMenu.Settlement, PlayerMenu.Settings },
             Enum.GetValues<PlayerMenu>());
 
         menuState.Toggle(PlayerMenu.Inventory);
@@ -34,7 +34,20 @@ public sealed class ControllerActionsTests
 
         menuState.Toggle(PlayerMenu.Settlement);
         Assert.Null(menuState.ActiveMenu);
+        menuState.Toggle(PlayerMenu.Settings);
+        Assert.Equal(PlayerMenu.Settings, menuState.ActiveMenu);
+        menuState.Close();
+        Assert.Null(menuState.ActiveMenu);
         Assert.Contains(ControllerActions.Collect, ControllerActions.All);
+    }
+
+    [Fact]
+    public void InvalidMenuRequestPreservesTheCurrentScreen()
+    {
+        var menuState = new PlayerMenuState();
+        menuState.Toggle(PlayerMenu.Settings);
+        Assert.Throws<ArgumentOutOfRangeException>(() => menuState.Toggle((PlayerMenu)99));
+        Assert.Equal(PlayerMenu.Settings, menuState.ActiveMenu);
     }
 
     [Fact]
