@@ -21,6 +21,7 @@ public sealed record InteractionRequest(
     string? TargetId,
     InteractionType Type,
     string ActionId,
+    // A single-item quantity descriptor; ownership stays in the actor's World inventory.
     ResourceContainer? ProvidedItem = null,
     object? Context = null);
 

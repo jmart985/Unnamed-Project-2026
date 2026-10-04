@@ -169,6 +169,9 @@ public sealed class RelationshipEventService
     private readonly World _world;
     private readonly RelationshipEventCatalog _catalog;
 
+    internal bool HasEvent(string eventId) => _catalog.TryGet(eventId, out _);
+    internal bool BelongsTo(World world) => ReferenceEquals(_world, world);
+
     public RelationshipEventService(World world, RelationshipEventCatalog catalog)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));

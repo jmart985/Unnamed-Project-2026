@@ -91,12 +91,65 @@ public partial class Main
                 && player.Satiety > 95, "real elapsed controller hold dispatches through Main process once");
             _world.TrySetEntityPosition(cow.Id, new(-1.5f, 0, -6));
             _world.TrySetEntityPosition(human.Id, new(0, 0, -7.5f));
+            // Freeze the player during interaction assertions/screenshots so overlapping
+            // fixture colliders cannot push the actor out of the deliberate 2 m reach.
+            _playerCharacter.SetPhysicsProcess(false);
+            _playerCharacter.GlobalPosition = new Vector3(0, 0, -6); SyncPlayerPosition();
             SyncEntityViews();
             _buttonBindings.RestoreDefaults(out _);
 
-            SelectEntity(cow.Id); SendMenuKey(Key.F);
+            SelectEntity(cow.Id);
+            var plantStack = new ResourceContainer("feed fixture", 3); plantStack.TryAdd(ItemIds.Plant, 3);
+            Require(ResourceTransferService.TryPickUp(plantStack, player, ItemIds.Plant, 3) == ResourceMutationResult.Success, "feed stack fixture pickup");
+            var cowSatiety = cow.Satiety;
+            SendMenuKey(Key.F);
+            Require(_actionHud.Text.StartsWith("Fed plant", StringComparison.Ordinal) && _targetResponse.Visible
+                && player.Inventory[ItemIds.Plant] == 2
+                && cow.Satiety == Math.Min(100, cowSatiety + cow.Needs.NutritionPerUnit), $"F feeds exactly one from a carried stack and shows acknowledgment: {_lastActionMessage}; carried {player.Inventory[ItemIds.Plant]}; satiety {cow.Satiety}; response {_targetResponse.Visible}");
+            await CaptureGameplayRefinement("feed.png");
+            SendMenuKey(Key.F);
+            Require(_actionHud.Text.Contains("already full") && player.Inventory[ItemIds.Plant] == 2, "full target rejects feed without item waste");
+            Require(ResourceTransferService.TryDeliver(player, plantStack, ItemIds.Plant, 2) == ResourceMutationResult.Success, "feed stack fixture removal");
+            SendMenuKey(Key.F);
+            Require(_actionHud.Text.Contains("petted") && _targetResponse.Visible
+                && _world.TryGetRelationship(cow.Id, player.Id, out var petBond) && petBond!.Trust == 16, "F pets with visible directed response when no compatible food is carried");
+            var captured = _interactionResolver.Resolve(new(player.Id, cow.Id, InteractionType.Physical, "capture"));
+            Require(captured.Succeeded && cow.CaptivityState == CreatureCaptivityState.Captured, "live capture resolver uses World lifecycle");
+            var given = new ResourceContainer("give descriptor", 1); given.TryAdd(ItemIds.Food, 1);
+            var foodBeforeGive = player.Inventory[ItemIds.Food];
+            var give = _interactionResolver.Resolve(new(player.Id, human.Id, InteractionType.Physical, "give", given));
+            Require(give.Succeeded && player.Inventory[ItemIds.Food] == foodBeforeGive - 1 && human.Inventory[ItemIds.Food] == 1,
+                $"live give resolver conserves actor and recipient inventory: {give.Reason}");
+            SelectEntity(human.Id); SendMenuKey(Key.G);
+            Require(_actionHud.Text.Contains("Successfully performed greet") && _targetResponse.Visible, "G greets humans visibly");
+            var humanView = _entityViews[human.Id];
+            humanView._Process(3);
+            Require(humanView.VisualForward.Dot((_playerCharacter.GlobalPosition - humanView.GlobalPosition).Normalized()) > 0.99f,
+                "human continues facing greeter after acknowledgment");
+            await CaptureGameplayRefinement("human-greeting.png");
+            humanView._Process(60);
+            Require(humanView.HasGreetingAttention, "greeting attention has no elapsed-time timeout");
+            var playerBeforeAttentionRange = _playerCharacter.GlobalPosition;
+            _playerCharacter.GlobalPosition = humanView.GlobalPosition + new Vector3(2, 0, 0);
+            humanView._Process(0.1);
+            Require(humanView.HasGreetingAttention, "attention remains at exactly 2 m separation");
+            _playerCharacter.GlobalPosition = humanView.GlobalPosition + new Vector3(2.01f, 0, 0);
+            humanView._Process(0.1);
+            Require(!humanView.HasGreetingAttention, "attention stops beyond 2 m separation");
+            _playerCharacter.GlobalPosition = playerBeforeAttentionRange; SyncPlayerPosition();
+            SendMenuKey(Key.G);
+            Require(humanView.HasGreetingAttention, "new nearby greeting restores attention");
+            human.Actions.Cancel();
+            Require(human.Actions.TryStart(new ActionCandidate("attention-override", ActionKind.Eat)) == ActionStartResult.Started,
+                "new task fixture starts");
+            humanView.Sync(_world);
+            Require(!humanView.HasGreetingAttention, "new task overrides greeting attention even before movement");
+            human.Actions.Cancel();
+            ToggleMenu(PlayerMenu.Inventory); SendMenuKey(Key.G); SendMenuKey(Key.F); ClosePlayerMenus();
+            Require(player.Inventory[ItemIds.Food] == foodBeforeGive - 1, "menus isolate interactions");
+            SelectEntity(cow.Id); SendMenuKey(Key.G);
             Require(_actionHud.Text.StartsWith("Greeted", StringComparison.Ordinal) && _targetResponse.Visible
-                && _targetHud.Text.Contains("Familiarity"), "F exposes greeting and relationship response without menu");
+                && _targetHud.Text.Contains("Familiarity"), "G exposes supported creature greeting and relationship response without menu");
             var greeterDirection = (_playerCharacter.GlobalPosition - _entityViews[cow.Id].GlobalPosition).Normalized();
             Require(_entityViews[cow.Id].VisualForward.Dot(greeterDirection) > 0.99f, "greeted cow faces greeter");
             _entityViews[cow.Id]._Process(0.1);
@@ -112,14 +165,15 @@ public partial class Main
             _playerCharacter.GlobalPosition = priorPlayerPosition;
             _entityViews[cow.Id]._Process(0.1);
             await CaptureGameplayRefinement("greeting.png");
-            SelectEntity(wolf.Id); SendMenuKey(Key.F);
+            SelectEntity(wolf.Id); SendMenuKey(Key.G);
             Require(_actionHud.Text.Contains("does not accept") && !_targetResponse.Visible, "unsupported greeting visible without false acknowledgment");
-            _world.TrySetEntityPosition(cow.Id, new(-10, 0, -6)); SyncEntityViews(); SelectEntity(cow.Id); SendMenuKey(Key.F);
+            _world.TrySetEntityPosition(cow.Id, new(-10, 0, -6)); SyncEntityViews(); SelectEntity(cow.Id); SendMenuKey(Key.G);
             Require(_actionHud.Text.Contains("Move closer"), "distant greeting visible rejection");
             _world.TrySetEntityPosition(cow.Id, new(-1.5f, 0, -6)); SyncEntityViews();
 
             // Remove low storage only for strike tests: a selection can be visible while a strike is physically blocked.
             _world.TryRemoveStockpile("refinement-stock"); ClearResourceMarkers(); RebuildResourceMarkersFromWorld();
+            _playerCharacter.SetPhysicsProcess(true);
             await PhysicsFrames(25);
             SelectEntity(human.Id);
             var hp = human.Health.Parts.Sum(part => part.CurrentHealth);

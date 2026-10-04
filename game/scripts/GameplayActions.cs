@@ -60,7 +60,8 @@ public partial class Main
         _actionHud.Visible = _sessionActive && _menuState.ActiveMenu is null;
         var collect = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.Collect).Desktop);
         var interact = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.Interact).Desktop);
-        var hint = $"Tap {collect}: collect · Hold {collect} 0.6s: use carried food · {interact}: greet (2 m)";
+        var greet = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.Greet).Desktop);
+        var hint = $"Tap {collect}: collect · Hold {collect} 0.6s: use carried food · {interact}: feed/pet · {greet}: greet (2 m)";
         _actionHud.Text = _collectUse.IsPressed && !_collectUse.Used
             ? $"Hold to use… {Math.Min(100, _collectUse.Elapsed / CollectUseGesture.HoldSeconds * 100):0}%\nRelease now to collect.\n{hint}"
             : (_feedbackSeconds > 0 ? _lastActionMessage + "\n" : "") + hint;
@@ -138,13 +139,15 @@ public partial class Main
 
     private void PerformFriendlyInteraction()
     {
+        if (!GameplayActionsAllowed) return;
+        SyncPlayerPosition();
         if (_selectedTarget is null)
         {
             ShowActionFeedback("No target selected.");
             return;
         }
 
-        if (_world.PlayerEntityId is not { } playerId || !_world.TryGetEntity(playerId, out var player))
+        if (_world.PlayerEntityId is not { } playerId || !_world.TryGetEntity(playerId, out var player) || player is null)
         {
             ShowActionFeedback("Player not found.");
             return;
@@ -164,7 +167,7 @@ public partial class Main
         }
 
         // 2. Entities
-        if (!_world.TryGetEntity(_selectedTarget.Id, out var target))
+        if (_selectedTarget.Kind != TargetKind.Entity || !_world.TryGetEntity(_selectedTarget.Id, out var target) || target is null)
         {
             ShowActionFeedback("Target not found.");
             return;
@@ -172,7 +175,7 @@ public partial class Main
 
         if (string.Equals(target.SpeciesId, "human", StringComparison.Ordinal))
         {
-            ShowActionFeedback("Press 'G' to greet this person.");
+            ShowActionFeedback($"Press {PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.Greet).Desktop)} to greet this person.");
             return;
         }
         else
@@ -180,14 +183,14 @@ public partial class Main
             // Creature: Feed if possible, otherwise Pet
             var species = _speciesCatalog.GetRequired(target.SpeciesId);
             var foodItem = player.Inventory
-                .Where(item => species.Diet.Contains(item.Key))
-                .OrderBy(item => item.Value)
+                .Where(item => item.Value > 0 && species.Diet.Contains(item.Key))
+                .OrderBy(item => item.Key, StringComparer.Ordinal)
                 .FirstOrDefault();
 
             if (foodItem.Key != null)
             {
                 var itemContainer = new ResourceContainer("player-hand", 1);
-                itemContainer.TryAdd(foodItem.Key, foodItem.Value);
+                itemContainer.TryAdd(foodItem.Key, 1);
 
                 var result = _interactionResolver.Resolve(new InteractionRequest(
                     playerId,
@@ -195,7 +198,7 @@ public partial class Main
                     InteractionType.Physical,
                     "feed",
                     itemContainer));
-                ShowActionFeedback(result.Reason);
+                ShowEntityInteractionResult(result, target.Id, "Food accepted");
             }
             else
             {
@@ -204,13 +207,15 @@ public partial class Main
                     target.Id,
                     InteractionType.Physical,
                     "pet"));
-                ShowActionFeedback(result.Reason);
+                ShowEntityInteractionResult(result, target.Id, "Pet acknowledged");
             }
         }
     }
 
     private void PerformGreeting()
     {
+        if (!GameplayActionsAllowed) return;
+        SyncPlayerPosition();
         if (_selectedTarget is null)
         {
             ShowActionFeedback("No target selected.");
@@ -231,7 +236,8 @@ public partial class Main
 
         if (!string.Equals(target.SpeciesId, "human", StringComparison.Ordinal))
         {
-            ShowActionFeedback("You can only greet humans.");
+            var reason = GreetSelectedEntity();
+            ShowEntityInteractionResult(new InteractionResult(reason.StartsWith("Greeted", StringComparison.Ordinal), reason), target.Id, "Friendly greeting acknowledged");
             return;
         }
 
@@ -241,13 +247,16 @@ public partial class Main
             InteractionType.Social,
             "greet"));
 
-        if (result.Succeeded && _world.TryGetRelationship(playerId, target.Id, out var relationship))
-        {
-            if (_entityViews.TryGetValue(target.Id, out var view))
-                view.AcknowledgeGreeting(() => _world.TryGetEntity(_playerCharacter.EntityId, out _) ? _playerCharacter.GlobalPosition : null);
+        ShowEntityInteractionResult(result, target.Id, "Friendly greeting acknowledged");
+    }
 
-            ShowActionFeedback($"{result.Reason} Friendly greeting acknowledged. Familiarity {relationship?.Familiarity:0}; trust {relationship?.Trust:0} (player → target).",
-                target.Id, "Friendly greeting acknowledged");
+    private void ShowEntityInteractionResult(InteractionResult result, string targetId, string acknowledgment)
+    {
+        if (result.Succeeded)
+        {
+            if (_entityViews.TryGetValue(targetId, out var view))
+                view.AcknowledgeGreeting(() => _world.TryGetEntity(_playerCharacter.EntityId, out _) ? _playerCharacter.GlobalPosition : null);
+            ShowActionFeedback(result.Reason, targetId, acknowledgment);
         }
         else ShowActionFeedback(result.Reason);
     }
