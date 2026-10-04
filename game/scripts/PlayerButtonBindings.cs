@@ -52,13 +52,14 @@ public sealed class PlayerButtonBindings
         try
         {
             var file = JsonSerializer.Deserialize<SettingsFile>(_store.Load(Path));
-            if (file?.Version is not (1 or 2) || file.Actions is null)
+            if (file?.Version is not (1 or 2 or 3) || file.Actions is null)
                 throw new InvalidDataException("Unsupported or incomplete button mapping.");
-            var migrated = file.Version == 1;
-            if (migrated)
+            var migrated = file.Version < 3;
+            if (file.Version == 1)
             {
-                if (file.Actions.Count != Actions.Length - 1 || file.Actions.ContainsKey(ControllerActions.CycleTarget)
-                    || Actions.Any(entry => entry.Action != ControllerActions.CycleTarget && !file.Actions.ContainsKey(entry.Action)))
+                if (file.Actions.Count != Actions.Length - 2 || file.Actions.ContainsKey(ControllerActions.CycleTarget)
+                    || file.Actions.ContainsKey(ControllerActions.Greet)
+                    || Actions.Any(entry => entry.Action != ControllerActions.CycleTarget && entry.Action != ControllerActions.Greet && !file.Actions.ContainsKey(entry.Action)))
                     throw new InvalidDataException("Incomplete legacy button mapping.");
                 // Preserve every old binding. Choose an unused default for the new action.
                 var used = file.Actions.Values.Where(value => value is not null).Select(value => value.Desktop).ToHashSet();
@@ -66,14 +67,24 @@ public sealed class PlayerButtonBindings
                     .Select(key => new ButtonBinding("key", (long)key)).First(binding => !used.Contains(binding));
                 file.Actions.Add(ControllerActions.CycleTarget, new(key, null));
             }
+            if (file.Version < 3 && !file.Actions.ContainsKey(ControllerActions.Greet))
+            {
+                if (file.Actions.Count != Actions.Length - 1
+                    || Actions.Any(entry => entry.Action != ControllerActions.Greet && !file.Actions.ContainsKey(entry.Action)))
+                    throw new InvalidDataException("Incomplete legacy button mapping.");
+                var used = file.Actions.Values.Where(value => value is not null).Select(value => value.Desktop).ToHashSet();
+                var key = new[] { Key.G, Key.F9, Key.F11, Key.F12, Key.P, Key.O, Key.L, Key.K, Key.J, Key.H, Key.B, Key.N, Key.M }
+                    .Select(key => new ButtonBinding("key", (long)key)).First(binding => !used.Contains(binding));
+                file.Actions.Add(ControllerActions.Greet, new(key, null));
+            }
             if (file.Actions.Count != Actions.Length || Actions.Any(entry => !file.Actions.ContainsKey(entry.Action)))
                 throw new InvalidDataException("Unsupported or incomplete button mapping.");
             if (!Validate(file.Actions, out var reason)) throw new InvalidDataException(reason);
             Apply(file.Actions);
-            Status = migrated ? "Saved mapping upgraded; existing bindings preserved. Cycle target: " + Label(Get(ControllerActions.CycleTarget).Desktop)
+            Status = migrated ? "Saved mapping upgraded; existing bindings preserved. Greet: " + Label(Get(ControllerActions.Greet).Desktop)
                 : "Saved button mapping loaded.";
         }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException or JsonException)
+        catch (Exception error) when (error is IOException or InvalidDataException or UnauthorizedAccessException or JsonException)
         {
             Status = $"Button mapping not loaded: {error.Message} Defaults remain available.";
         }
@@ -100,7 +111,7 @@ public sealed class PlayerButtonBindings
     private bool SaveAndApply(Dictionary<string, ActionBinding> proposed, out string reason)
     {
         if (!Validate(proposed, out reason)) return false;
-        try { _store.Save(Path, () => JsonSerializer.Serialize(new SettingsFile(2, proposed))); }
+        try { _store.Save(Path, () => JsonSerializer.Serialize(new SettingsFile(3, proposed))); }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {
             reason = $"Mapping not saved; current bindings retained. {error.Message}";

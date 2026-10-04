@@ -28,7 +28,7 @@ public sealed class FirstGameIntegrationTests
         Assert.Equal(400, FoodTotal(world));
         Assert.Equal(100, WoodTotal(world));
         var initialSatiety = session.Player.Satiety;
-        clock.Advance(1, seconds => { foreach (var entity in world.Entities) entity.Needs.Advance(seconds, species.GetRequired(entity.SpeciesId).HungerRate); });
+        clock.Advance(1, seconds => { foreach (var entity in world.Entities) entity.Needs.Advance(seconds, satietyOverride: species.GetRequired(entity.SpeciesId).HungerRate); });
         Assert.True(session.Player.Satiety < initialSatiety);
         var source = world.FoodSources.Single(s => s.Id == "food-pile-1");
         var move = commands.Execute(new(PlayerCommandKind.Move, session.PlayerEntityId, Target: source.Position));

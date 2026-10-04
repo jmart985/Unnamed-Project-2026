@@ -342,7 +342,7 @@ public sealed class FoodSelectionServiceTests
     private static EntityRecord SpawnHungryEntity(World world, string speciesId = "human")
     {
         var entity = world.SpawnEntity(speciesId, Vector3.Zero);
-        entity.Needs.Advance(150);
+        entity.Needs.Advance(150, satietyOverride: 0.2);
         Assert.True(entity.Needs.IsHungry);
         return entity;
     }

@@ -29,7 +29,7 @@ public sealed class MilestoneAcceptanceScenarioTests
             foreach (var entity in world.Entities)
             {
                 var definition = catalog.GetRequired(entity.SpeciesId);
-                entity.Needs.Advance(0.1, definition.HungerRate);
+                entity.Needs.Advance(0.1, satietyOverride: definition.HungerRate);
                 nav[entity.Id].Arrive(world, entity.Id);
             }
             foreach (var entity in world.Entities)

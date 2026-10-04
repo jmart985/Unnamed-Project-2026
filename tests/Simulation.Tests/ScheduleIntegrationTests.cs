@@ -27,7 +27,7 @@ public sealed class ScheduleIntegrationTests
         void AdvanceTo(double time)
         {
             while (clock.SimulationTime < time - 1e-8)
-                clock.Advance(0.1, seconds => { tick++; npc.Needs.Advance(seconds, species.HungerRate); hauling.ReconcileSchedule(npc, clock.SimulationTime); });
+                clock.Advance(0.1, seconds => { tick++; npc.Needs.Advance(seconds, satietyOverride: species.HungerRate); hauling.ReconcileSchedule(npc, clock.SimulationTime); });
         }
         void Arrive(Vector3 target)
         {
@@ -44,7 +44,7 @@ public sealed class ScheduleIntegrationTests
         Assert.Empty(npc.Inventory);
 
         // Needs stay active at rest; food uses the real selection, reservation and consumption path.
-        npc.Needs.Advance((npc.Satiety - 20) / species.HungerRate, species.HungerRate);
+        npc.Needs.Advance((npc.Satiety - 20) / species.HungerRate, satietyOverride: species.HungerRate);
         Assert.Equal(WoodHaulingStatus.NeedsFood, hauling.Advance(npc, species, tick, clock.SimulationTime).Status);
         var eating = food.Advance(npc, species, tick);
         Assert.Equal(FoodConsumptionStatus.Traveling, eating.Status);
@@ -71,7 +71,7 @@ public sealed class ScheduleIntegrationTests
         Assert.Equal(frozen, WorldSnapshotSerializer.Serialize(world, clock.SimulationTime));
         clock.SetPaused(false);
         clock.SetSpeed(SimulationSpeed.FourX);
-        clock.Advance(0.1, seconds => { tick++; npc.Needs.Advance(seconds, species.HungerRate); });
+        clock.Advance(0.1, seconds => { tick++; npc.Needs.Advance(seconds, satietyOverride: species.HungerRate); });
         Assert.Equal(100.4, clock.SimulationTime, 6);
         clock.SetSpeed(SimulationSpeed.OneX);
         AdvanceTo(240);
