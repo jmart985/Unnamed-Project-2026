@@ -140,7 +140,9 @@ public partial class Main : Node3D
 			_characterCreation.Visible = true;
 			_playerNameInput.GrabFocus();
 		}
-		if (OS.GetCmdlineUserArgs().Contains("--validate-construction"))
+		if (OS.GetCmdlineUserArgs().Contains("--validate-basic-settlement"))
+			Callable.From(RunBasicSettlementValidation).CallDeferred();
+		else if (OS.GetCmdlineUserArgs().Contains("--validate-construction"))
 			Callable.From(RunConstructionValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-farm"))
 			Callable.From(RunFarmValidation).CallDeferred();
