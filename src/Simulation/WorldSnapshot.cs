@@ -22,7 +22,22 @@ public sealed record WorldSnapshot(
     IReadOnlyList<string>? SquadMemberIds = null,
     IReadOnlyList<NpcScheduleSetting>? WorkSchedules = null,
     IReadOnlyList<WorkstationSnapshot>? Workstations = null,
-    IReadOnlyList<FarmSnapshot>? Farms = null);
+    IReadOnlyList<FarmSnapshot>? Farms = null,
+    IReadOnlyList<StructureSnapshot>? Structures = null,
+    IReadOnlyList<ConstructionSiteSnapshot>? ConstructionSites = null);
+
+public sealed record StructureSnapshot(string Id, StructureType Type, Vector3 Position, bool IsClosed);
+
+public sealed record ConstructionSiteSnapshot(
+    string Id,
+    Vector3 Position,
+    string BlueprintId,
+    int Width,
+    int Depth,
+    IReadOnlyDictionary<string, int> RequiredMaterials,
+    IReadOnlyDictionary<string, int> MaterialProgress,
+    int WorkRequired,
+    int WorkProgress);
 
 public sealed record FarmSnapshot(
     string Id,
@@ -109,7 +124,8 @@ public static class WorldSnapshotSerializer
     private const int SquadSchemaVersion = 9;
     private const int ScheduleSchemaVersion = 10;
     private const int WorkstationSchemaVersion = 11;
-    public const int CurrentSchemaVersion = 12;
+    private const int FarmSchemaVersion = 12;
+    public const int CurrentSchemaVersion = 13;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -197,7 +213,14 @@ public static class WorldSnapshotSerializer
                             item.CurrentRecipe.WorkRequired, item.CurrentRecipe.WorkProgress))).ToArray(),
             world.Farms.OrderBy(item => item.Id, StringComparer.Ordinal).Select(farm =>
                 new FarmSnapshot(farm.Id, farm.Position, farm.Plots.Select(plot =>
-                    new FarmPlotSnapshot(plot.Id, plot.Capacity, plot.Crop?.Id, plot.Growth)).ToArray())).ToArray());
+                    new FarmPlotSnapshot(plot.Id, plot.Capacity, plot.Crop?.Id, plot.Growth)).ToArray())).ToArray(),
+            world.Structures.OrderBy(item => item.Id, StringComparer.Ordinal)
+                .Select(item => new StructureSnapshot(item.Id, item.Type, item.Position, item.IsClosed)).ToArray(),
+            world.ConstructionSites.OrderBy(item => item.Id, StringComparer.Ordinal).Select(site =>
+                new ConstructionSiteSnapshot(site.Id, site.Position, site.Blueprint.Id, site.Blueprint.Width, site.Blueprint.Depth,
+                    new Dictionary<string, int>(site.Blueprint.RequiredMaterials, StringComparer.Ordinal),
+                    new Dictionary<string, int>(site.Blueprint.Progress, StringComparer.Ordinal),
+                    site.Blueprint.WorkRequired, site.Blueprint.WorkProgress)).ToArray());
     }
 
     public static string Serialize(World world, double simulationTime)
@@ -235,6 +258,8 @@ public static class WorldSnapshotSerializer
                 WorkSchedules = Array.Empty<NpcScheduleSetting>(),
                 Workstations = LegacyWorkstations(snapshot),
                 Farms = LegacyFarms(snapshot),
+                Structures = Array.Empty<StructureSnapshot>(),
+                ConstructionSites = Array.Empty<ConstructionSiteSnapshot>(),
                 FactionIds = snapshot.FactionIds ?? Array.Empty<string>(),
                 FactionReputations = snapshot.SchemaVersion == FactionRelationsSchemaVersion
                     ? snapshot.FactionReputations
@@ -248,16 +273,19 @@ public static class WorldSnapshotSerializer
         }
 
         if (snapshot.SchemaVersion == OwnershipSchemaVersion)
-            return snapshot with { SchemaVersion = CurrentSchemaVersion, SquadMemberIds = Array.Empty<string>(), WorkSchedules = Array.Empty<NpcScheduleSetting>(), Workstations = LegacyWorkstations(snapshot), Farms = LegacyFarms(snapshot) };
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, SquadMemberIds = Array.Empty<string>(), WorkSchedules = Array.Empty<NpcScheduleSetting>(), Workstations = LegacyWorkstations(snapshot), Farms = LegacyFarms(snapshot), Structures = Array.Empty<StructureSnapshot>(), ConstructionSites = Array.Empty<ConstructionSiteSnapshot>() };
 
         if (snapshot.SchemaVersion == SquadSchemaVersion)
-            return snapshot with { SchemaVersion = CurrentSchemaVersion, WorkSchedules = Array.Empty<NpcScheduleSetting>(), Workstations = LegacyWorkstations(snapshot), Farms = LegacyFarms(snapshot) };
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, WorkSchedules = Array.Empty<NpcScheduleSetting>(), Workstations = LegacyWorkstations(snapshot), Farms = LegacyFarms(snapshot), Structures = Array.Empty<StructureSnapshot>(), ConstructionSites = Array.Empty<ConstructionSiteSnapshot>() };
 
         if (snapshot.SchemaVersion == ScheduleSchemaVersion)
-            return snapshot with { SchemaVersion = CurrentSchemaVersion, Workstations = LegacyWorkstations(snapshot), Farms = LegacyFarms(snapshot) };
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, Workstations = LegacyWorkstations(snapshot), Farms = LegacyFarms(snapshot), Structures = Array.Empty<StructureSnapshot>(), ConstructionSites = Array.Empty<ConstructionSiteSnapshot>() };
 
         if (snapshot.SchemaVersion == WorkstationSchemaVersion)
-            return snapshot with { SchemaVersion = CurrentSchemaVersion, Farms = LegacyFarms(snapshot) };
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, Farms = LegacyFarms(snapshot), Structures = Array.Empty<StructureSnapshot>(), ConstructionSites = Array.Empty<ConstructionSiteSnapshot>() };
+
+        if (snapshot.SchemaVersion == FarmSchemaVersion)
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, Structures = Array.Empty<StructureSnapshot>(), ConstructionSites = Array.Empty<ConstructionSiteSnapshot>() };
 
         if (snapshot.SchemaVersion != CurrentSchemaVersion)
         {
@@ -428,6 +456,8 @@ public static class WorldSnapshotSerializer
         }
         if (snapshot.Workstations is null) throw new InvalidDataException("Snapshot workstations are required.");
         if (snapshot.Farms is null) throw new InvalidDataException("Snapshot farms are required.");
+        if (snapshot.Structures is null || snapshot.ConstructionSites is null)
+            throw new InvalidDataException("Snapshot construction state is required.");
         var foodSourceIds = new HashSet<string>(StringComparer.Ordinal);
         foreach (var source in snapshot.FoodSources)
         {
@@ -488,6 +518,30 @@ public static class WorldSnapshotSerializer
                         throw new InvalidDataException($"Snapshot plot '{plot.Id}' has invalid growth.");
                 }
             }
+        }
+        foreach (var structure in snapshot.Structures)
+        {
+            if (structure is null || string.IsNullOrWhiteSpace(structure.Id) || !foodSourceIds.Add(structure.Id))
+                throw new InvalidDataException("Snapshot contains an invalid or duplicate structure.");
+            ValidatePosition(structure.Position, $"structure '{structure.Id}' position");
+        }
+        foreach (var site in snapshot.ConstructionSites)
+        {
+            if (site is null || string.IsNullOrWhiteSpace(site.Id) || !foodSourceIds.Add(site.Id)
+                || string.IsNullOrWhiteSpace(site.BlueprintId) || site.Width <= 0 || site.Depth <= 0
+                || site.RequiredMaterials is null || site.MaterialProgress is null || site.RequiredMaterials.Count == 0
+                || site.WorkRequired < 0 || site.WorkProgress < 0 || site.WorkProgress > site.WorkRequired)
+                throw new InvalidDataException("Snapshot contains an invalid or duplicate construction site.");
+            ValidatePosition(site.Position, $"construction site '{site.Id}' position");
+            foreach (var requirement in site.RequiredMaterials)
+                if (!ItemIds.IsKnown(requirement.Key) || requirement.Value <= 0
+                    || site.MaterialProgress.GetValueOrDefault(requirement.Key) < 0
+                    || site.MaterialProgress.GetValueOrDefault(requirement.Key) > requirement.Value)
+                    throw new InvalidDataException($"Construction site '{site.Id}' has invalid material progress.");
+            if (site.MaterialProgress.Keys.Any(key => !site.RequiredMaterials.ContainsKey(key)))
+                throw new InvalidDataException($"Construction site '{site.Id}' has unknown material progress.");
+            if (site.WorkProgress > 0 && site.RequiredMaterials.Any(item => site.MaterialProgress.GetValueOrDefault(item.Key) < item.Value))
+                throw new InvalidDataException($"Construction site '{site.Id}' has work before materials are complete.");
         }
         ValidateRelationships(snapshot.Relationships, entityIds);
         ValidateFactionReputations(snapshot.FactionReputations, entityIds, factionIds);

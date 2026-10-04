@@ -41,6 +41,7 @@ A systemic open-world colony RPG in which people and creatures share consistent 
 - [Town-center workbench presentation](docs/TOWN_WORKBENCH.md)
 - [Playable workbench production and persistence](docs/PLAYABLE_WORKSTATION.md)
 - [Playable town farm and shared actor actions](docs/PLAYABLE_FARM.md)
+- [Playable construction and starter hut](docs/PLAYABLE_CONSTRUCTION.md)
 - [Daily schedule integrated acceptance](docs/VALIDATION_1.1.md)
 - [First Real Game integrated validation](docs/VALIDATION_1_0.md)
 - [Work sequence and issue index](docs/BACKLOG.md)
