@@ -108,7 +108,7 @@ public partial class Main
             Require(_selectedTarget is null && _lastActionMessage.Contains("No visible targets"), "no-target case clears safely");
 
             _buttonBindings.Path = ProjectSettings.GlobalizePath("user://selection-validation-settings.json");
-            var legacy = PlayerButtonBindings.Actions.Where(entry => entry.Action != ControllerActions.CycleTarget)
+            var legacy = PlayerButtonBindings.Actions.Where(entry => entry.Action != ControllerActions.CycleTarget && entry.Action != ControllerActions.Greet)
                 .ToDictionary(entry => entry.Action, entry => _buttonBindings.Get(entry.Action));
             legacy[ControllerActions.Interact] = new(new("key", (long)Key.G), null);
             legacy[ControllerActions.Inventory] = new(new("key", (long)Key.T), new("joypad", (long)JoyButton.Y));
@@ -118,6 +118,23 @@ public partial class Main
                 && _buttonBindings.Get(ControllerActions.Inventory).Desktop.Code == (long)Key.T
                 && _buttonBindings.Get(ControllerActions.CycleTarget).Desktop.Code == (long)Key.F9
                 && File.ReadAllText(_buttonBindings.Path) == legacyJson, "legacy preferences preserved, target key avoids conflict, migration does not overwrite file");
+            Require(_buttonBindings.Get(ControllerActions.Greet).Desktop.Code == (long)Key.F11,
+                "legacy greeting migration avoids existing G and F9 bindings");
+            var versionTwo = PlayerButtonBindings.Actions.Where(entry => entry.Action != ControllerActions.Greet)
+                .ToDictionary(entry => entry.Action, entry => _buttonBindings.Get(entry.Action));
+            var versionTwoJson = JsonSerializer.Serialize(new PlayerButtonBindings.SettingsFile(2, versionTwo));
+            File.WriteAllText(_buttonBindings.Path, versionTwoJson);
+            _buttonBindings.Load();
+            Require(_buttonBindings.Get(ControllerActions.Interact).Desktop.Code == (long)Key.G
+                && _buttonBindings.Get(ControllerActions.Greet).Desktop.Code == (long)Key.F11
+                && File.ReadAllText(_buttonBindings.Path) == versionTwoJson,
+                "version two migration preserves bindings and source file");
+            File.WriteAllText(_buttonBindings.Path, JsonSerializer.Serialize(new PlayerButtonBindings.SettingsFile(3, versionTwo)));
+            var invalidPreferences = new PlayerButtonBindings(_buttonBindings.Path);
+            invalidPreferences.Load();
+            Require(invalidPreferences.Status.StartsWith("Button mapping not loaded", StringComparison.Ordinal)
+                && invalidPreferences.Get(ControllerActions.Greet).Desktop.Code == (long)Key.G,
+                "incomplete current settings retain defaults without throwing");
             Require(_buttonBindings.TryBind(ControllerActions.CycleTarget, false, new InputEventKey { PhysicalKeycode = Key.K, Pressed = true }, out _), "target key rebind persists");
             var preferences = new PlayerButtonBindings(_buttonBindings.Path); preferences.Load();
             Require(preferences.Get(ControllerActions.CycleTarget).Desktop.Code == (long)Key.K, "version 2 target binding reload");
@@ -143,12 +160,12 @@ public partial class Main
             Require(_playerCharacter.IsAttacking, "normal mouse attack retained");
             _buttonBindings.RestoreDefaults(out _);
             var player = _world.Entities.Single(entity => entity.Id == _world.PlayerEntityId);
-            var greetingTarget = _world.Entities.Single(entity => entity.SpeciesId == "cow");
+            var greetingTarget = _world.Entities.First(entity => entity.SpeciesId == "human" && entity.Id != player.Id);
             _world.TrySetEntityPosition(greetingTarget.Id, player.Position + new System.Numerics.Vector3(1.5f, 0, 0));
             SyncEntityViews(); SelectEntity(greetingTarget.Id);
-            SendMenuKey(Key.F);
-            Require(_lastActionMessage.StartsWith("Greeted", StringComparison.Ordinal) && _menuState.ActiveMenu is null,
-                "default F greets the gameplay target without opening a menu");
+            SendMenuKey(Key.G);
+            Require(_lastActionMessage.StartsWith("Successfully performed greet.", StringComparison.Ordinal) && _menuState.ActiveMenu is null,
+                "default G greets the human gameplay target without opening a menu");
             GD.Print("SELECTION VALIDATION PASSED: menu-free cycling, visibility/occlusion, shared selection, live feedback, stale cleanup, preferences migration and combat/look regression.");
             GetTree().Quit();
         }

@@ -94,8 +94,8 @@ public sealed class WanderServiceTests
         var human = world.SpawnEntity("human", Vector3.Zero);
         var creature = world.SpawnEntity("creature", Vector3.Zero);
 
-        human.Needs.Advance(10, catalog.GetRequired(human.SpeciesId).HungerRate);
-        creature.Needs.Advance(10, catalog.GetRequired(creature.SpeciesId).HungerRate);
+        human.Needs.Advance(10, satietyOverride: catalog.GetRequired(human.SpeciesId).HungerRate);
+        creature.Needs.Advance(10, satietyOverride: catalog.GetRequired(creature.SpeciesId).HungerRate);
 
         Assert.Equal(58, human.Satiety, precision: 6);
         Assert.Equal(55, creature.Satiety, precision: 6);

@@ -102,7 +102,7 @@ public sealed class WanderingServiceTests
     [Fact]
     public void HungryCreatureDoesNotWanderAndCancelsItsActiveTrip()
     {
-        var world = new World(new NeedsTuning(initialSatiety: 31, drainPerSecond: 1));
+        var world = new World(new NeedsTuning(initialSatiety: 31, satietyDrainPerSecond: 1));
         var species = GetCreatureSpecies();
         var navigator = new FakeNavigationAdapter();
         var service = new WanderingService(world, _ => navigator, [new Vector3(2, 0, 0)]);

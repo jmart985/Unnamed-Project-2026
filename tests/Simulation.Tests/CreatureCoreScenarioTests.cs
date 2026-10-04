@@ -39,8 +39,8 @@ public sealed class CreatureCoreScenarioTests
         var processedTicks = clock.Advance(0.7, elapsed =>
         {
             simulationTick++;
-            cautiousCreature.Needs.Advance(elapsed, cautiousSpecies.HungerRate);
-            exploratoryCreature.Needs.Advance(elapsed, exploratorySpecies.HungerRate);
+            cautiousCreature.Needs.Advance(elapsed, satietyOverride: cautiousSpecies.HungerRate);
+            exploratoryCreature.Needs.Advance(elapsed, satietyOverride: exploratorySpecies.HungerRate);
             var cautiousResult = wandering.Advance(cautiousCreature, cautiousSpecies, simulationTick);
             var exploratoryResult = wandering.Advance(exploratoryCreature, exploratorySpecies, simulationTick);
 
