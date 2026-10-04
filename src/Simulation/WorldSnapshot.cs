@@ -47,7 +47,9 @@ public sealed record EntitySnapshot(
     double Satiety,
     IReadOnlyDictionary<string, int> Inventory,
     CreatureCaptivityState CaptivityState = CreatureCaptivityState.Wild,
-    string? AllegianceFactionId = null);
+    string? AllegianceFactionId = null,
+    string? Parent1Id = null,
+    string? Parent2Id = null);
 
 public sealed record FoodSourceSnapshot(
     string Id,
@@ -104,7 +106,9 @@ public static class WorldSnapshotSerializer
                 entity.Satiety,
                 new Dictionary<string, int>(entity.Inventory, StringComparer.Ordinal),
                 entity.CaptivityState,
-                entity.AllegianceFactionId))
+                entity.AllegianceFactionId,
+                entity.Parent1Id,
+                entity.Parent2Id))
             .ToArray();
         var foodSources = world.FoodSources
             .Select(source => new FoodSourceSnapshot(

@@ -41,6 +41,16 @@ public static class MeleeCombatService
         if (!defender.Health.TryDamage(request.BodyPart, request.Damage, out var applied))
             return new(MeleeAttackResult.DefenderUnavailable);
         if (applied <= 0) return new(MeleeAttackResult.NoDamage);
+        
+        // Trigger behavioral response to damage
+        if (world != null)
+        {
+            // In a real system, the trigger would be an event subscriber.
+            // For the prototype, we inject the call here.
+            var trigger = new BehavioralTrigger(world);
+            trigger.OnDamageTaken(request.AttackerId, request.DefenderId, applied);
+        }
+
         return new(MeleeAttackResult.Success, applied, defender.Health.IsIncapacitated, defender.Health.IsDead);
     }
 }

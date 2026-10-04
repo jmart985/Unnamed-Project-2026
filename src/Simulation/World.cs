@@ -19,6 +19,8 @@ public sealed class World
     private readonly ReadOnlyCollection<ResourceLocation> _resourcePileView;
     private readonly List<ResourceLocation> _stockpiles = [];
     private readonly ReadOnlyCollection<ResourceLocation> _stockpileView;
+    private readonly List<Structure> _structures = [];
+    private readonly ReadOnlyCollection<Structure> _structureView;
     private readonly HashSet<string> _targetIds = new(StringComparer.Ordinal);
     private long _lastEntityId;
     private readonly HashSet<string> _squadMembers = new(StringComparer.Ordinal);
@@ -82,6 +84,7 @@ public sealed class World
         _foodSourceView = _foodSources.AsReadOnly();
         _resourcePileView = _resourcePiles.AsReadOnly();
         _stockpileView = _stockpiles.AsReadOnly();
+        _structureView = _structures.AsReadOnly();
     }
 
     public IReadOnlyCollection<EntityRecord> Entities => _entities.Values;
@@ -108,6 +111,7 @@ public sealed class World
     internal long LastAllocatedEntityId => _lastEntityId;
     public IReadOnlyList<ResourceLocation> ResourcePiles => _resourcePileView;
     public IReadOnlyList<ResourceLocation> Stockpiles => _stockpileView;
+    public IReadOnlyList<Structure> Structures => _structureView;
     public NeedsTuning NeedsTuning { get; }
     public ReservationService Reservations { get; }
     public int InventoryCapacity { get; }
@@ -234,6 +238,19 @@ public sealed class World
         _stockpiles.Remove(stockpile);
         Reservations.RemoveTarget(stockpile.Id);
         return true;
+    }
+
+    public Structure AddStructure(string id, StructureType type, Vector3 position)
+    {
+        var structure = new Structure(id, type, position);
+        AddTargetId(structure.Id, nameof(id));
+        _structures.Add(structure);
+        return structure;
+    }
+
+    public Structure? GetStructureAt(Vector3 position, double tolerance = 1.0)
+    {
+        return _structures.FirstOrDefault(s => Vector3.Distance(s.Position, position) <= (float)tolerance);
     }
 
     public FactionOwnershipResult SetStockpileFactionOwner(string? stockpileId, string? factionId)
@@ -660,6 +677,7 @@ public sealed class World
         _foodSources.Clear();
         _resourcePiles.Clear();
         _stockpiles.Clear();
+        _structures.Clear();
         _targetIds.Clear();
         Reservations.Reset();
         SessionSeed = null;
@@ -683,6 +701,8 @@ public sealed class World
                 entity.Satiety,
                 species.CreateCharacterStats(DefaultCharacterStats));
             restored.CaptivityState = entity.CaptivityState;
+            restored.Parent1Id = entity.Parent1Id;
+            restored.Parent2Id = entity.Parent2Id;
             foreach (var item in entity.Inventory)
             {
                 restored.TryAddCarried(item.Key, item.Value);
