@@ -16,7 +16,7 @@ These are planned paths. F01 creates the runnable scaffold. Use a fixed, flat 3D
 
 ## Ownership and update model
 
-- A World owns entity records identified by stable IDs, resource containers, and simulation time. It owns food sources, haul piles, stockpiles, and new-session metadata (seed, player entity ID, and player profile); entity inventories are bounded resource containers. The Godot PlayerCharacter is the view/controller for the World-owned player record. Use simple composition, not a custom ECS framework.
+- A World owns entity records identified by stable IDs, resource containers, farms, and simulation time. It owns food sources, haul piles, stockpiles, and new-session metadata (seed, player entity ID, and player profile); entity inventories are bounded resource containers. Farm actions accept any live conscious actor whose species can use tools, preserving one rule path for the player, NPCs and capable creatures. The Godot PlayerCharacter is the view/controller for the World-owned player record. Use simple composition, not a custom ECS framework.
 - For 1.0, the World owns one player-led squad's durable membership as entity IDs. An entity may belong to at most one squad; membership references must resolve to live human NPCs. Removing an entity removes its membership. Squad orders and navigation are transient and are re-evaluated after load; membership remains durable.
 - Entity IDs are allocated monotonically within a World and are not reused after entity removal or world reset. Reset clears records but preserves the allocator, so stale IDs cannot resolve to new entities; a newly created World starts a new ID sequence.
 - Entity state contains ID, species ID, position, satiety, inventory, and current activity. Views reference IDs; scene-node paths are not save identities.
@@ -59,6 +59,8 @@ Use a versioned JSON snapshot of durable state: schema version, simulation time,
 Save at a tick boundary while simulation is paused. Persist carried items. Jobs, reservations, paths, and current movement are transient: registered simulation services reset only after snapshot validation and re-evaluate actions on the next tick, depositing carried wood first. The first version promises durable-state continuity, not bit-for-bit replay of paths or random wandering. Write through a temporary file and preserve the previous valid save on failure.
 
 Creature captivity is durable entity state in snapshot schema version 5; schema version 4 snapshots migrate with all entities restored as wild. Snapshot schema version 6 adds validated faction identities and entity allegiance; schema versions 4 and 5 migrate with entities unaligned and no factions. Schema version 7 adds validated entity-to-faction reputation and directed faction hostility; schema versions 4, 5, and 6 migrate with no reputation or hostility records. Schema version 8 adds optional faction ownership to settlement stockpiles; schema versions 4–7 migrate with stockpiles unowned. The 1.0 snapshot adds validated squad membership and increments the current schema version from 8 to 9. Squad orders and navigation requests remain transient.
+
+Schema 10 stores NPC schedule overrides. Schema 11 stores workstations, their input/output containers and active recipe progress. Schema 12 stores farms and plot crop/growth state; older session saves receive the fixed empty starter farm, while non-session Worlds do not fabricate one.
 
 ## Tests and observability
 

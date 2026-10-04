@@ -71,6 +71,22 @@ public sealed class WorldSnapshotTests
     }
 
     [Fact]
+    public void SnapshotRoundTripPreservesFarmCropAndGrowth()
+    {
+        var source = NewGameSession.Create(GetSpeciesCatalog(), PlayerCharacterProfile.Create("Ada"));
+        var plot = source.World.Farms.Single().Plots.Single();
+        plot.TryPlant(SettlementCrops.CreateFieldCrop(), 1);
+        plot.AdvanceGrowth(3);
+
+        var target = new World();
+        WorldSnapshotSerializer.Load(target, WorldSnapshotSerializer.Serialize(source.World, 4), GetSpeciesCatalog());
+
+        var restored = Assert.Single(target.Farms).Plots.Single();
+        Assert.Equal(SettlementCrops.FieldCropId, restored.Crop!.Id);
+        Assert.Equal(3, restored.Growth);
+    }
+
+    [Fact]
     public void InvalidSessionMetadataDoesNotReplaceExistingWorld()
     {
         var existing = NewGameSession.Create(

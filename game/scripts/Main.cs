@@ -117,6 +117,7 @@ public partial class Main : Node3D
 		ConfigureScheduleControls();
 		ConfigurePlayerMenus();
 		ConfigureWorkstationGameplay();
+		ConfigureFarmGameplay();
 		ConfigureWorldSelection();
 		ConfigureGameplayActions();
 		ApplyMenuState();
@@ -138,7 +139,9 @@ public partial class Main : Node3D
 			_characterCreation.Visible = true;
 			_playerNameInput.GrabFocus();
 		}
-		if (OS.GetCmdlineUserArgs().Contains("--validate-workbench"))
+		if (OS.GetCmdlineUserArgs().Contains("--validate-farm"))
+			Callable.From(RunFarmValidation).CallDeferred();
+		else if (OS.GetCmdlineUserArgs().Contains("--validate-workbench"))
 			Callable.From(RunWorkbenchValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-social-feedback"))
 			Callable.From(RunSocialFeedbackValidation).CallDeferred();
@@ -174,11 +177,13 @@ public partial class Main : Node3D
 		SyncEntityViews();
 		UpdateStatus();
 		UpdateWorkstationPanel();
+		UpdateFarmPanel();
+		UpdateFarmPresentation();
 	}
 
 	public override void _UnhandledInput(InputEvent @event)
 	{
-		if (!_sessionActive || _menuState.ActiveMenu is not null || WorkstationPanelOpen || _clock.IsPaused)
+		if (!_sessionActive || _menuState.ActiveMenu is not null || WorkstationPanelOpen || FarmPanelOpen || _clock.IsPaused)
 		{
 			return;
 		}
@@ -261,6 +266,7 @@ public partial class Main : Node3D
 	{
 		_menuState.Toggle(menu);
 		ApplyMenuState();
+		UpdateFarmPresentation();
 		UpdateStatus();
 	}
 
@@ -403,6 +409,7 @@ public partial class Main : Node3D
 		_sessionActive = true;
 		_characterCreation.Visible = false;
 		ApplyMenuState();
+		UpdateFarmPresentation();
 		UpdateStatus();
 	}
 

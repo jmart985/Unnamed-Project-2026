@@ -42,4 +42,14 @@ public sealed class FarmPlot
         if (!IsMature) return 0;
         var yield = Crop!.HarvestYield; Crop = null; Growth = 0; return yield;
     }
+    internal void Restore(CropDefinition? crop, int growth)
+    {
+        if (crop is null)
+        {
+            if (growth != 0) throw new ArgumentOutOfRangeException(nameof(growth));
+            Crop = null; Growth = 0; return;
+        }
+        if (growth < 0 || growth > crop.GrowthRequired) throw new ArgumentOutOfRangeException(nameof(growth));
+        Crop = crop; Growth = growth;
+    }
 }

@@ -21,7 +21,19 @@ public sealed record WorldSnapshot(
     IReadOnlyList<FactionHostilitySnapshot>? FactionHostilities = null,
     IReadOnlyList<string>? SquadMemberIds = null,
     IReadOnlyList<NpcScheduleSetting>? WorkSchedules = null,
-    IReadOnlyList<WorkstationSnapshot>? Workstations = null);
+    IReadOnlyList<WorkstationSnapshot>? Workstations = null,
+    IReadOnlyList<FarmSnapshot>? Farms = null);
+
+public sealed record FarmSnapshot(
+    string Id,
+    Vector3 Position,
+    IReadOnlyList<FarmPlotSnapshot> Plots);
+
+public sealed record FarmPlotSnapshot(
+    string Id,
+    int Capacity,
+    string? CropId,
+    int Growth);
 
 public sealed record WorkstationSnapshot(
     string Id,
@@ -96,7 +108,8 @@ public static class WorldSnapshotSerializer
     private const int OwnershipSchemaVersion = 8;
     private const int SquadSchemaVersion = 9;
     private const int ScheduleSchemaVersion = 10;
-    public const int CurrentSchemaVersion = 11;
+    private const int WorkstationSchemaVersion = 11;
+    public const int CurrentSchemaVersion = 12;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -181,7 +194,10 @@ public static class WorldSnapshotSerializer
                         new WorkstationRecipeSnapshot(item.CurrentRecipe.Id,
                             new Dictionary<string, int>(item.CurrentRecipe.Inputs, StringComparer.Ordinal),
                             new Dictionary<string, int>(item.CurrentRecipe.Outputs, StringComparer.Ordinal),
-                            item.CurrentRecipe.WorkRequired, item.CurrentRecipe.WorkProgress))).ToArray());
+                            item.CurrentRecipe.WorkRequired, item.CurrentRecipe.WorkProgress))).ToArray(),
+            world.Farms.OrderBy(item => item.Id, StringComparer.Ordinal).Select(farm =>
+                new FarmSnapshot(farm.Id, farm.Position, farm.Plots.Select(plot =>
+                    new FarmPlotSnapshot(plot.Id, plot.Capacity, plot.Crop?.Id, plot.Growth)).ToArray())).ToArray());
     }
 
     public static string Serialize(World world, double simulationTime)
@@ -218,6 +234,7 @@ public static class WorldSnapshotSerializer
                 SquadMemberIds = Array.Empty<string>(),
                 WorkSchedules = Array.Empty<NpcScheduleSetting>(),
                 Workstations = LegacyWorkstations(snapshot),
+                Farms = LegacyFarms(snapshot),
                 FactionIds = snapshot.FactionIds ?? Array.Empty<string>(),
                 FactionReputations = snapshot.SchemaVersion == FactionRelationsSchemaVersion
                     ? snapshot.FactionReputations
@@ -231,13 +248,16 @@ public static class WorldSnapshotSerializer
         }
 
         if (snapshot.SchemaVersion == OwnershipSchemaVersion)
-            return snapshot with { SchemaVersion = CurrentSchemaVersion, SquadMemberIds = Array.Empty<string>(), WorkSchedules = Array.Empty<NpcScheduleSetting>(), Workstations = LegacyWorkstations(snapshot) };
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, SquadMemberIds = Array.Empty<string>(), WorkSchedules = Array.Empty<NpcScheduleSetting>(), Workstations = LegacyWorkstations(snapshot), Farms = LegacyFarms(snapshot) };
 
         if (snapshot.SchemaVersion == SquadSchemaVersion)
-            return snapshot with { SchemaVersion = CurrentSchemaVersion, WorkSchedules = Array.Empty<NpcScheduleSetting>(), Workstations = LegacyWorkstations(snapshot) };
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, WorkSchedules = Array.Empty<NpcScheduleSetting>(), Workstations = LegacyWorkstations(snapshot), Farms = LegacyFarms(snapshot) };
 
         if (snapshot.SchemaVersion == ScheduleSchemaVersion)
-            return snapshot with { SchemaVersion = CurrentSchemaVersion, Workstations = LegacyWorkstations(snapshot) };
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, Workstations = LegacyWorkstations(snapshot), Farms = LegacyFarms(snapshot) };
+
+        if (snapshot.SchemaVersion == WorkstationSchemaVersion)
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, Farms = LegacyFarms(snapshot) };
 
         if (snapshot.SchemaVersion != CurrentSchemaVersion)
         {
@@ -257,6 +277,11 @@ public static class WorldSnapshotSerializer
             new ResourceContainerSnapshot("workbench-1-output", 10, new Dictionary<string, int>()),
             new WorkstationRecipeSnapshot(recipe.Id, recipe.Inputs, recipe.Outputs, recipe.WorkRequired, 0))];
     }
+
+    private static IReadOnlyList<FarmSnapshot> LegacyFarms(WorldSnapshot snapshot) => snapshot.SessionSeed is null
+        ? Array.Empty<FarmSnapshot>()
+        : [new FarmSnapshot("farm-1", new Vector3(5, 0, 5),
+            [new FarmPlotSnapshot("farm-1-plot-1", 1, null, 0)])];
 
     public static double Load(
         World target,
@@ -402,6 +427,7 @@ public static class WorldSnapshotSerializer
                 throw new InvalidDataException("Snapshot work schedules must reference distinct human NPCs with valid work hours.");
         }
         if (snapshot.Workstations is null) throw new InvalidDataException("Snapshot workstations are required.");
+        if (snapshot.Farms is null) throw new InvalidDataException("Snapshot farms are required.");
         var foodSourceIds = new HashSet<string>(StringComparer.Ordinal);
         foreach (var source in snapshot.FoodSources)
         {
@@ -436,6 +462,31 @@ public static class WorldSnapshotSerializer
                     throw new InvalidDataException($"Snapshot workstation '{workstation.Id}' has an invalid recipe.");
                 foreach (var item in recipe.Inputs) ValidatePositiveItemCount(item, workstation.Id);
                 foreach (var item in recipe.Outputs) ValidatePositiveItemCount(item, workstation.Id);
+            }
+        }
+        foreach (var farm in snapshot.Farms)
+        {
+            if (farm is null || string.IsNullOrWhiteSpace(farm.Id) || !foodSourceIds.Add(farm.Id)
+                || farm.Plots is null || farm.Plots.Count == 0)
+                throw new InvalidDataException("Snapshot contains an invalid or duplicate farm.");
+            ValidatePosition(farm.Position, $"farm '{farm.Id}' position");
+            var plotIds = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var plot in farm.Plots)
+            {
+                if (plot is null || string.IsNullOrWhiteSpace(plot.Id) || !plotIds.Add(plot.Id) || plot.Capacity <= 0)
+                    throw new InvalidDataException($"Snapshot farm '{farm.Id}' contains an invalid or duplicate plot.");
+                if (plot.CropId is null)
+                {
+                    if (plot.Growth != 0) throw new InvalidDataException($"Snapshot empty plot '{plot.Id}' cannot have growth.");
+                }
+                else
+                {
+                    CropDefinition crop;
+                    try { crop = SettlementCrops.GetRequired(plot.CropId); }
+                    catch (ArgumentException exception) { throw new InvalidDataException($"Snapshot plot '{plot.Id}' has an unknown crop.", exception); }
+                    if (plot.Growth < 0 || plot.Growth > crop.GrowthRequired)
+                        throw new InvalidDataException($"Snapshot plot '{plot.Id}' has invalid growth.");
+                }
             }
         }
         ValidateRelationships(snapshot.Relationships, entityIds);

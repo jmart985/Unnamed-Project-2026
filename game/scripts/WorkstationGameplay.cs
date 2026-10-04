@@ -40,6 +40,7 @@ public partial class Main
         var player = _world.Entities.FirstOrDefault(entity => entity.Id == _world.PlayerEntityId);
         if (player is null || System.Numerics.Vector3.Distance(player.Position, station.Position) > PlayerWorkstationService.InteractionRange)
         { ShowActionFeedback("Move within 2 m of the workbench."); return; }
+        CloseFarm();
         _openWorkstationId = id;
         _workstationMessage.Text = "Use carried materials to produce food.";
         _workstationPanel.Visible = true;
@@ -52,7 +53,7 @@ public partial class Main
         if (_workstationPanel is null) return;
         _workstationPanel.Visible = false;
         _openWorkstationId = null;
-        _playerCharacter.SetGameplayInputEnabled(_sessionActive && _menuState.ActiveMenu is null && !_clock.IsPaused);
+        _playerCharacter.SetGameplayInputEnabled(_sessionActive && _menuState.ActiveMenu is null && !FarmPanelOpen && !_clock.IsPaused);
         UpdateWorldSelection();
     }
 

@@ -104,7 +104,8 @@ public sealed class NewGameSession
 
         var workbench = world.AddWorkstation("workbench-1", TownWorkbenchPosition);
         workbench.SetRecipe(SettlementRecipes.CreateBasicMeal());
-        world.AddFarm("farm-1", new(5, 0, 5));
+        var farm = world.AddFarm("farm-1", new(5, 0, 5));
+        farm.AddPlot(new FarmPlot("farm-1-plot-1", capacity: 1));
 
         for (var index = 0; index < HumanNpcCount; index++)
         {
