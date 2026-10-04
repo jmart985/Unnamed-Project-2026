@@ -191,7 +191,7 @@ public sealed class NpcScheduleTests
         Assert.Empty(world.WorkSchedules);
         Assert.Equal(NpcWorkSchedule.Default, world.GetWorkSchedule(npc.Id));
         Assert.Equal(version == 9 ? 1 : 0, world.SquadMemberIds.Count);
-        Assert.Equal(10, WorldSnapshotSerializer.Capture(world, 0).SchemaVersion);
+        Assert.Equal(WorldSnapshotSerializer.CurrentSchemaVersion, WorldSnapshotSerializer.Capture(world, 0).SchemaVersion);
     }
 
     [Theory]

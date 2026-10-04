@@ -5,7 +5,7 @@ namespace UnnamedProject2026;
 
 public partial class Main
 {
-    private enum TargetKind { Entity, Food, ResourcePile, Stockpile }
+    private enum TargetKind { Entity, Food, ResourcePile, Stockpile, Workstation }
     private sealed record WorldTarget(TargetKind Kind, string Id);
     private sealed record TargetView(WorldTarget Target, Node3D Node, Aabb Bounds, Aabb[] Parts, Vector3[] Samples)
     {
@@ -50,6 +50,7 @@ public partial class Main
         TargetKind.Food => _world.TryGetFoodSource(target.Id, out _),
         TargetKind.ResourcePile => _world.ResourcePiles.Any(pile => pile.Id == target.Id),
         TargetKind.Stockpile => _world.Stockpiles.Any(pile => pile.Id == target.Id),
+        TargetKind.Workstation => _world.Workstations.Any(item => item.Id == target.Id),
         _ => false
     };
 
@@ -73,6 +74,16 @@ public partial class Main
             if (TargetExists(target) && marker.IsVisibleInTree() && !marker.IsQueuedForDeletion())
                 targets.Add(new(target, marker, marker.GlobalTransform * marker.GetAabb(),
                     [marker.GlobalTransform * marker.GetAabb()], SampleMesh(marker).ToArray()));
+        foreach (var workstation in _world.Workstations)
+        {
+            var target = new WorldTarget(TargetKind.Workstation, workstation.Id);
+            var meshes = _workbench.FindChildren("*", "MeshInstance3D", true, false).OfType<MeshInstance3D>()
+                .Append(_workbench).Where(mesh => mesh.Mesh is not null && mesh.IsVisibleInTree()).ToArray();
+            if (meshes.Length == 0) continue;
+            var parts = meshes.Select(mesh => mesh.GlobalTransform * mesh.GetAabb()).ToArray();
+            var bounds = parts.Aggregate((left, right) => left.Merge(right));
+            targets.Add(new(target, _workbench, bounds, parts, meshes.SelectMany(SampleMesh).ToArray()));
+        }
         return targets;
     }
 
@@ -95,7 +106,9 @@ public partial class Main
     {
         // Existing scenery is visual-only, so inspect its actual mesh bounds instead of adding physics bodies.
         var scenery = _scenery?.GetChildren().OfType<MeshInstance3D>() ?? [];
-        var benchParts = _workbench.FindChildren("*", "MeshInstance3D", true, false).OfType<MeshInstance3D>().Append(_workbench);
+        var benchParts = target.Kind == TargetKind.Workstation
+            ? Enumerable.Empty<MeshInstance3D>()
+            : _workbench.FindChildren("*", "MeshInstance3D", true, false).OfType<MeshInstance3D>().Append(_workbench);
         foreach (var mesh in scenery.Append(_map).Concat(benchParts))
         {
             if (mesh.Mesh is null || !mesh.IsVisibleInTree()) continue;
@@ -172,6 +185,13 @@ public partial class Main
                 }
             }
         }
+        else if (target.Kind == TargetKind.Workstation)
+        {
+            var workstation = _world.Workstations.Single(item => item.Id == target.Id);
+            var recipe = workstation.CurrentRecipe;
+            detail = recipe is null ? "Idle · no active recipe" :
+                $"{recipe.Id} · work {recipe.WorkProgress}/{recipe.WorkRequired}\nInputs: {ContainerSummary(workstation.InputStorage)} · Outputs: {ContainerSummary(workstation.OutputStorage)}";
+        }
         else
         {
             var contents = target.Kind switch
@@ -184,4 +204,8 @@ public partial class Main
         }
         _targetHud.Text = $"TARGET: {target.Kind} · {target.Id}{(visible ? "" : " (out of view)")}\n{detail}\n{hint}";
     }
+
+    private static string ContainerSummary(ResourceContainer container) => container.Counts.Count == 0
+        ? "empty"
+        : string.Join(", ", container.Counts.OrderBy(item => item.Key).Select(item => $"{item.Key}: {item.Value}"));
 }

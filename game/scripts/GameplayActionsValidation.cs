@@ -22,7 +22,22 @@ public partial class Main
             var target = new WorldTarget(TargetKind.Entity, "validation-target");
             Require(!TargetLineClear(new(-2, 1.05f, 0), new(2, 1.05f, 0), target, []), "tabletop obstructs real sight/strike ray");
             Require(TargetLineClear(new(-2, 0.55f, 0), new(2, 0.55f, 0), target, []), "empty space below bench is not the old solid obstacle bounds");
-            _playerCharacter.GlobalPosition = new Vector3(-2.5f, 0, -3); SyncPlayerPosition();
+            _playerCharacter.GlobalPosition = new Vector3(0, 0, -1.5f); SyncPlayerPosition();
+            var player = _world.Entities.Single(entity => entity.Id == _world.PlayerEntityId);
+            var plantSource = _world.FoodSources.First(source => source.Contents.Counts.ContainsKey(ItemIds.Plant));
+            var woodSource = _world.ResourcePiles.Single(source => source.Contents.Counts.ContainsKey(ItemIds.Wood));
+            Require(ResourceTransferService.TryPickUp(plantSource.Contents, player, ItemIds.Plant, 2) == ResourceMutationResult.Success
+                && ResourceTransferService.TryPickUp(woodSource.Contents, player, ItemIds.Wood, 2) == ResourceMutationResult.Success,
+                "validation materials transferred through atomic inventory service");
+            _selectedTarget = new(TargetKind.Workstation, "workbench-1");
+            Require(WorldTargets().Any(view => view.Target == _selectedTarget), "rendered workbench is a world target");
+            PerformFriendlyInteraction();
+            Require(WorkstationPanelOpen, "F interaction opens workbench controls at close range");
+            PressMenuButton(_workstationPanel, "Load 1 plant");
+            PressMenuButton(_workstationPanel, "Load 1 wood");
+            for (var step = 0; step < 5; step++) PressMenuButton(_workstationPanel, "Apply 1 work");
+            PressMenuButton(_workstationPanel, "Collect output");
+            Require(player.Inventory.GetValueOrDefault(ItemIds.Food) == 2, "load, work and collect path produces exactly two food");
             foreach (var view in _entityViews.Values) view.Visible = false;
             var camera = GetNode<Camera3D>("Camera3D"); camera.Current = true;
             camera.GlobalPosition = new Vector3(4.2f, 3.2f, 4.6f); camera.LookAt(new Vector3(0, 0.7f, 0));
@@ -32,17 +47,39 @@ public partial class Main
                 var directory = ProjectSettings.GlobalizePath("res://../docs/evidence/workbench");
                 Directory.CreateDirectory(directory);
                 await ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
-                Require(GetViewport().GetTexture().GetImage().SavePng(Path.Combine(directory, "town-center.png")) == Error.Ok, "actual rendered workbench evidence");
+                Require(GetViewport().GetTexture().GetImage().SavePng(Path.Combine(directory, "production-controls.png")) == Error.Ok, "actual rendered production controls evidence");
             }
+            CloseWorkstation();
             ResetScenario(); SetProcess(false); _playerCharacter.SetPhysicsProcess(false);
             ResetScenario(); SetProcess(false); _playerCharacter.SetPhysicsProcess(false);
             Require(_workbench.FindChildren("*", "MeshInstance3D", true, false).Count == parts
                 && _world.Workstations.Count == 1, "repeated reset does not duplicate props or workstations");
-            _saveSlotPath = ProjectSettings.GlobalizePath("user://workbench-validation-save.json");
+            _saveSlotPath = ProjectSettings.GlobalizePath("res://../.workbench-validation-save.json");
+            var durablePlayer = _world.Entities.Single(entity => entity.Id == _world.PlayerEntityId);
+            _world.TrySetEntityPosition(durablePlayer.Id, NewGameSession.TownWorkbenchPosition);
+            Require(ResourceTransferService.TryPickUp(_world.FoodSources.First(source => source.Contents.Counts.ContainsKey(ItemIds.Plant)).Contents,
+                    durablePlayer, ItemIds.Plant, 1) == ResourceMutationResult.Success
+                && ResourceTransferService.TryPickUp(_world.ResourcePiles.Single().Contents,
+                    durablePlayer, ItemIds.Wood, 1) == ResourceMutationResult.Success,
+                "durability materials transferred through atomic inventory service");
+            var durableService = new PlayerWorkstationService(_world);
+            Require(durableService.LoadOne("workbench-1", ItemIds.Plant).Succeeded
+                && durableService.LoadOne("workbench-1", ItemIds.Wood).Succeeded,
+                "partial recipe materials load before save");
+            Require(durableService.ApplyWork("workbench-1").Succeeded
+                && durableService.ApplyWork("workbench-1").Succeeded
+                && durableService.ApplyWork("workbench-1").Succeeded,
+                "partial work advances before save");
+            Require(_world.Workstations.Single().CurrentRecipe?.WorkProgress == 3, "partial work exists before save");
             SaveScenario(); LoadScenario();
             Require(_workbench.IsVisibleInTree() && _workbench.FindChildren("*", "MeshInstance3D", true, false).Count == parts,
                 "static town landmark remains visible after load without duplicate geometry");
-            GD.Print("WORKBENCH VALIDATION PASSED: town-center placement, visible labeled bench, actual mesh occlusion, existing navigation footprint, repeated reset/load and rendered evidence.");
+            var restoredBench = _world.Workstations.Single();
+            Require(restoredBench.CurrentRecipe?.WorkProgress == 3
+                && restoredBench.InputStorage.Counts.GetValueOrDefault(ItemIds.Plant) == 1
+                && restoredBench.InputStorage.Counts.GetValueOrDefault(ItemIds.Wood) == 1,
+                "save/load preserves loaded materials and partial work");
+            GD.Print("WORKBENCH VALIDATION PASSED: selectable close-range controls, atomic load/work/collect, save durability, reset, occlusion and rendered evidence.");
             GetTree().Quit();
         }
         catch (Exception exception) { GD.PushError($"WORKBENCH VALIDATION FAILED: {exception}"); GetTree().Quit(1); }

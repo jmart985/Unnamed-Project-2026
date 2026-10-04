@@ -23,6 +23,11 @@ public sealed class WorkstationRecipe
         if (amount <= 0 || IsComplete) return false;
         WorkProgress=Math.Min(WorkRequired,WorkProgress+amount); return true;
     }
+    internal void RestoreProgress(int amount)
+    {
+        if (amount < 0 || amount > WorkRequired) throw new ArgumentOutOfRangeException(nameof(amount));
+        WorkProgress = amount;
+    }
     private static void ValidateMaterials(IReadOnlyDictionary<string,int> materials,string parameter)
     {
         ArgumentNullException.ThrowIfNull(materials);
