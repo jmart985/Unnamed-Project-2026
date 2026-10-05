@@ -27,7 +27,13 @@ When no independent Ready issue remains after the readiness/dependency audit, re
 
 ## Current accepted slices
 
-The 1.0 integrated game loop is documented in `docs/VALIDATION_1_0.md`. The user selected daily work/rest schedules for 1.1 in #200: feature #380 then acceptance gate #381, with evidence in `docs/VALIDATION_1.1.md`. After that gate merges, inspect #201 (1.2 Advanced Creature Behavior) and current Project #1 before selecting more work; it is a planning issue that needs a concrete minimum playable target. Deferred #302/#306/#369 retain their scope boundaries.
+### Current project status (2026-10-05)
+
+The Ant Farm board is the live routing source for implementation work. Character Core issues #135, #136, #137, and #139, far-population validation #369, and actor-spacing work #415 are complete and belong in **Done**. Basic Settlement acceptance #406 remains **In Progress** until its integrated validation evidence is complete. Deferred health/facing persistence #302, future capability-gated actions #306, Advanced Creature Behavior #201, Captivity Systems #225, and Breeding & Genetics #226 are planning horizons and belong in **Backlog**; they must not be treated as Ready implementation work. There are currently no independent Ready implementation issues, so new work must first be decomposed into a concrete issue with testable acceptance criteria.
+
+Do not infer readiness from an issue being open or assigned a future milestone. A closed issue with a merged pull request is Done even if an old project status was left behind; a planning issue remains Backlog until its minimum playable slice, dependencies, and validation steps are explicit.
+
+The 1.0 integrated game loop is documented in `docs/VALIDATION_1_0.md`. The user selected daily work/rest schedules for 1.1 in #200: feature #380 then acceptance gate #381, with evidence in `docs/VALIDATION_1.1.md`. After that gate merges, inspect #201 (1.2 Advanced Creature Behavior) and current Project #1 before selecting more work; it is a planning issue that needs a concrete minimum playable target. Deferred #302/#306 retain their scope boundaries; #369 and #415 are completed implementation work.
 
 The user subsequently prioritized unfinished player menus before 1.2: #384 is a focused correction to completed 1.0 functionality. Its Inventory, Settlement and Save/Settings screens, button mapping, and deliberately disabled future placeholders are documented in `docs/PLAYER_MENUS.md`. Complete that correction before advancing #201; placeholders do not make future equipment/audio/display implementation Ready.
 
@@ -49,4 +55,4 @@ Issue #403 makes the fixed starter farm selectable and usable through explicit p
 
 Issue #404 supplies one bounded starter-hut placement, material and work loop through shared actor commands, with schema 13 site/structure/door persistence documented in `docs/PLAYABLE_CONSTRUCTION.md`. Beds and recovery remain ordered in #405.
 
-Issue #406 accepts the playable Basic Settlement loop after #401, #403, #404 and #405. `docs/VALIDATION_0_4.md` records the integrated workbench, farm, hut, door, sheltered-bed rest, save/load, invalid rollback, reset and rendered-evidence gate. After #406, the remaining follow-ups are deferred #302, #306 and #369 unless the user selects the next milestone planning issue.
+Issue #406 accepts the playable Basic Settlement loop after #401, #403, #404 and #405. `docs/VALIDATION_0_4.md` records the integrated workbench, farm, hut, door, sheltered-bed rest, save/load, invalid rollback, reset and rendered-evidence gate. At the current checkpoint, #406 remains In Progress while that integrated evidence is completed; #369 and #415 are already complete, and #302/#306 remain deferred backlog scope.
