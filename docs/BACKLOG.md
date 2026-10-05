@@ -2,6 +2,10 @@
 
 The [GitHub issues](https://github.com/jmart985/Unnamed-Project-2026/issues) are the editable task specifications and source of truth for scope, acceptance criteria, and validation. This document is a starting index.
 
+## Current status (2026-10-05)
+
+Character Core issues #135, #136, #137, and #139, far-population arithmetic validation #369, and actor-spacing movement protection #415 are complete. Basic Settlement acceptance #406 remains **In Progress** pending integrated validation evidence. Issues #302, #306, #201, #225, and #226 are planning or deferred scope and belong in **Backlog**, not Ready. The board currently has no independent Ready implementation issue; the next implementation item must be decomposed into a small, testable slice with explicit dependencies and validation steps.
+
 - [Ant Farm Board](https://github.com/users/jmart985/projects/1)
 - [Milestone 0.1: The Ant Farm](https://github.com/jmart985/Unnamed-Project-2026/milestone/1)
 - [Milestone 1.0: First Real Game](https://github.com/jmart985/Unnamed-Project-2026/milestone/4)
