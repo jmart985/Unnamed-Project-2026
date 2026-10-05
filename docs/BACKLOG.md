@@ -118,3 +118,5 @@ The open, unassigned proposals below were checked while reconciling the later ro
 
 - [Future milestone scaffold](ROADMAP_SCAFFOLD.md)
 - [Milestone planning checklist](MILESTONE_PLANNING_CHECKLIST.md)
+
+- [Design alignment and scope boundary](DESIGN_ALIGNMENT.md)
