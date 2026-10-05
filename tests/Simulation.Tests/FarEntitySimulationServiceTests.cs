@@ -35,4 +35,17 @@ public sealed class FarEntitySimulationServiceTests
         Assert.True(first.Births > 0);
         Assert.Equal(20, first.FoodConsumed);
     }
+
+    [Fact]
+    public void BirthFoodThresholdUsesWiderArithmetic()
+    {
+        var input = new FarEntitySimulationRequest(
+            new FarEntityRecord("grove", "creature", int.MaxValue, 60, []),
+            0, 1, int.MaxValue);
+
+        var result = CreateService().Advance(input);
+
+        Assert.Equal(0, result.Births);
+        Assert.Equal(int.MaxValue, result.Record.Count);
+    }
 }

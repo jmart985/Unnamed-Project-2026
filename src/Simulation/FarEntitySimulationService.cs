@@ -55,8 +55,11 @@ public sealed class FarEntitySimulationService
 
         var deaths = count == 0 ? 0 : (int)Math.Min(count, Math.Max(0, (drainFixed - (long)(request.Record.AverageSatiety * FixedPointScale)) / Math.Max(1L, (long)Math.Ceiling(species.HungerRate * FixedPointScale))));
         var survivors = count - deaths;
-        var births = survivors > 0 && satietyFixed >= 60 * FixedPointScale && request.AvailableFood >= survivors * 2 ? survivors / 10 : 0;
-        var nextCount = survivors + births;
+        var foodForBirths = (long)survivors * 2;
+        var births = survivors > 0 && satietyFixed >= 60L * FixedPointScale && request.AvailableFood >= foodForBirths ? survivors / 10 : 0;
+        var nextCountLong = (long)survivors + births;
+        if (nextCountLong > int.MaxValue) throw new InvalidOperationException("Far population exceeds the supported range.");
+        var nextCount = (int)nextCountLong;
         var regionId = request.Record.RegionId;
         var migrated = request.MigrationPressure >= 100 && !string.IsNullOrWhiteSpace(request.MigrationTargetRegionId) && request.MigrationTargetRegionId != regionId;
         if (migrated) regionId = request.MigrationTargetRegionId!;
