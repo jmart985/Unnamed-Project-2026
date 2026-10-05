@@ -759,6 +759,15 @@ public sealed class World
         return true;
     }
 
+    /// <summary>Moves an actor only when its destination preserves spacing from live actors.</summary>
+    public bool TryMoveEntityPosition(string? id, Vector3 position)
+    {
+        if (!TryGetEntity(id, out var entity) || entity is null) return false;
+        if (!ActorSpacing.IsPositionAvailable(this, entity, position)) return false;
+        entity.Position = position;
+        return true;
+    }
+
     public void Reset()
     {
         foreach (var stockpile in _stockpiles)
