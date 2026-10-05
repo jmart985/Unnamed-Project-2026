@@ -7,15 +7,18 @@ public sealed class FarEntityRecord : IEquatable<FarEntityRecord>
 {
     public FarEntityRecord(string regionId, string speciesId, int count, double averageSatiety, IEnumerable<KeyValuePair<string, int>> resources)
     {
-        if (string.IsNullOrWhiteSpace(regionId) || string.IsNullOrWhiteSpace(speciesId) || count < 0 || !double.IsFinite(averageSatiety))
-            throw new ArgumentException("Far records require IDs, a nonnegative count, and finite needs state.");
+        if (string.IsNullOrWhiteSpace(regionId) || string.IsNullOrWhiteSpace(speciesId) || count < 0 || !double.IsFinite(averageSatiety) || averageSatiety is < 0 or > 100)
+            throw new ArgumentException("Far records require IDs, a nonnegative count, and average satiety in the range 0 to 100.");
 
         RegionId = regionId;
         SpeciesId = speciesId;
         Count = count;
         AverageSatiety = averageSatiety;
-        var sorted = resources?.OrderBy(pair => pair.Key, StringComparer.Ordinal).ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal)
-            ?? throw new ArgumentNullException(nameof(resources));
+        if (resources is null) throw new ArgumentNullException(nameof(resources));
+        var entries = resources.ToArray();
+        if (entries.Any(pair => !ItemIds.IsKnown(pair.Key) || pair.Value < 0))
+            throw new ArgumentException("Far records require known resource IDs and nonnegative quantities.", nameof(resources));
+        var sorted = entries.OrderBy(pair => pair.Key, StringComparer.Ordinal).ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
         Resources = new ReadOnlyDictionary<string, int>(sorted);
     }
 
