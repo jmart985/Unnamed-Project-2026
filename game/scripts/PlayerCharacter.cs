@@ -53,6 +53,10 @@ public partial class PlayerCharacter : CharacterBody3D
 	public override void _Ready()
 	{
 		PrototypeInputMap.EnsureDefaults();
+		// Layer 1 is the player; mask layer 2 for soft physical resistance against
+		// entities. Entity views intentionally do not collide with each other.
+		CollisionLayer = 1;
+		CollisionMask = 3;
 		_lastGroundedPosition = GlobalPosition;
 		RebuildBody(_profile);
 	}

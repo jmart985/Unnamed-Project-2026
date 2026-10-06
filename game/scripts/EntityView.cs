@@ -49,11 +49,12 @@ public partial class EntityView : CharacterBody3D
 
     public override void _Ready()
     {
-        // Actors use authoritative spacing and navigation for separation. They do not
-        // become physical walls for the player or for one another, which prevents a
-        // crowd from trapping a controllable character in a narrow space.
-        CollisionLayer = 0;
-        CollisionMask = 0;
+        // Actors collide with the player (layer 2 / mask 1) so moving through a
+        // person or creature has resistance. Actors do not collide with one another;
+        // authoritative spacing and navigation handle that relationship, preventing
+        // a crowd from becoming a solid wall around the player.
+        CollisionLayer = 2;
+        CollisionMask = 1;
         var navigationAgent = new NavigationAgent3D { PathDesiredDistance = 0.1f, TargetDesiredDistance = 0.1f };
         AddChild(navigationAgent);
         _navigationAdapter = new GodotNavigationAdapter(this, navigationAgent);
