@@ -21,7 +21,8 @@ The domain model owns the values and clamps them to documented ranges. It does n
 Build mode is accessed through the Settlement menu. This milestone owns the settlement placement workflow:
 
 - open/close Build mode;
-- hotbar/ribbon selection of approved build definitions;
+- direct-placement hotbar/ribbon selection of approved build definitions while the player moves in the world;
+- a later Sims-style planning-camera workflow for settlement layouts, tracked as separate build-mode work;
 - ghost blueprint placement;
 - structural layer progress;
 - linked storage/material delivery;
@@ -54,10 +55,12 @@ The form previews the same player rig used in the simulation. Confirming creates
 
 1. **Character body-parameter model (0.2):** validated height, weight, muscle, named body parts, X/Y/Z bounds, symmetry, serialization, and derived stat tests.
 2. **Body-profile to rig projection (0.2):** map approved profiles to the existing jointed human/creature rigs, collision, camera height, and animation proportions.
-3. **Settlement-menu Build mode shell (0.4):** open/close mode from Settlement, ribbon selection, cancel isolation, and mode/input tests.
+3. **Direct-placement Build mode shell (0.4):** open/close mode from Settlement, player-relative ribbon selection, cancel isolation, and mode/input tests.
 4. **Build ghost and staged structure projection (0.4):** preview frames, placement validation, structural layers, progress, and linked storage hooks.
-5. **Player creation sliders (1.0):** weight, height, muscle/build, existing profile fields, preview, validation, and atomic confirmation.
-6. **Advanced body-part controls (1.0 follow-up):** bounded X/Y/Z controls, symmetry toggle where allowed, reset-to-profile, preview, and persistence.
-7. **Character creation acceptance gate (1.0):** repeatable creation/save/load/reset scenario across supported profiles and body categories.
+5. **Settlement planning camera (0.4 follow-up):** explicit enter/exit, detached camera bounds, multi-blueprint placement, input capture, and return-to-player tests.
+6. **Player creation sliders (1.0):** weight, height, muscle/build, existing profile fields, preview, validation, and atomic confirmation.
+7. **Advanced body-part controls (1.0 follow-up):** bounded X/Y/Z controls, symmetry toggle where allowed, reset-to-profile, preview, and persistence.
+8. **Character creation acceptance gate (1.0):** repeatable creation/save/load/reset scenario across supported profiles and body categories.
 
 Keep each issue independent and testable. The 0.4 Build mode issues should not be blocked on the full 1.0 character-customization UI; they only consume validated capabilities when needed for placement/work rules.
+

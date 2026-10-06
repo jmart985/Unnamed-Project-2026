@@ -468,3 +468,10 @@ User reported only an obstacle at the expected workbench. Replace that legacy ce
 - Reason: Body data is a reusable simulation contract; settlement construction is a separate interaction mode; and player creation needs the accepted 1.0 profile/save flow. Keeping these boundaries avoids mixing UI, building placement, and arbitrary mesh editing.
 - Consequence: Body changes are validated proportions consumed by collision, joints, camera, and animation. They cannot grant arbitrary skills or bypass species capabilities. Build mode is opened through Settlement and does not edit character proportions. Each slice can be tested and persisted independently.
 - Revisit: When the 0.2 body model, 0.4 Build mode, and 1.0 player-creation acceptance scenarios provide evidence about range, rig fidelity, and usability.
+
+## D039 — Separate direct placement and Sims-style planning camera (2026-10-05)
+
+- Status: Design direction; implementation not started.
+- Decision: Direct placement uses the moving player, third-person camera, hotbar/ribbon selection, and player-relative placement for the 0.4 prototype. Sims-style planning uses an explicit free camera from the Settlement menu so layouts can be placed or queued without moving the player model.
+- Consequence: Both workflows submit to the same authoritative construction systems, but each has separate mode state, camera rules, input tests, and acceptance criteria. Planning-camera work follows the direct-placement slice.
+- Revisit: When bounded free-camera navigation, multi-blueprint placement, save/load, and clean return to the player-follow camera are demonstrated.

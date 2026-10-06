@@ -2,7 +2,21 @@
 
 This document records the requested expansion of the Milestone 0.4 construction direction. It extends the bounded starter-hut acceptance without changing that acceptance retroactively.
 
-## Access and player flow
+## Two construction workflows
+
+The project has two distinct placement workflows. They share authoritative build definitions, placement validation, construction sites, material delivery, and progress, but they use different camera and input rules.
+
+### Direct placement (0.4 prototype / hotbar ribbon)
+
+This in-world workflow is used while controlling the player: open **Settlement → Build mode**, choose a definition from the hotbar-style ribbon, move the player through the world, and place the framed ghost at the player-relative placement ray/range. The player remains in the normal third-person simulation.
+
+### Free-camera planning (Sims-style settlement tooling)
+
+This later workflow is entered explicitly from the Settlement menu. The camera detaches from the player and can pan, orbit, and zoom over the bounded settlement area. The player can place or queue multiple ghost blueprints without moving the player character. Confirmed plans submit to the same construction-site and material/work queues. Exiting planning mode restores the player-follow camera and input context; it must never teleport or silently move the player.
+
+Planning-camera controls are a separate follow-up issue. Do not make the direct-placement prototype depend on detached-camera tooling.
+
+## Direct placement access and player flow
 
 Build mode is opened and closed from the **Settlement** menu. It is a settlement placement mode, separate from Inventory, object interaction, and character creation.
 
@@ -14,7 +28,7 @@ Build mode is opened and closed from the **Settlement** menu. It is a settlement
 6. The site displays structural layers and progress. Entities can deliver required materials and perform work through the shared actor construction service.
 7. When all material and work layers are complete, the site becomes the selected building, table, farm, or other object. Its own interaction menu then exposes the actions appropriate to that definition.
 
-Character creation and body-part sliders are separate from Build mode and are assigned to 0.2 Character Core and 1.0 First Real Game. Build mode may inspect builder capabilities, but it does not edit body proportions.
+Character creation and body-part sliders are separate from both construction workflows and are assigned to 0.2 Character Core and 1.0 First Real Game. Build mode may inspect builder capabilities, but it does not edit body proportions.
 
 ## Domain boundaries
 
