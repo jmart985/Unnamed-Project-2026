@@ -153,6 +153,7 @@ public sealed class World
     public int? SessionSeed { get; private set; }
     public string? PlayerEntityId { get; private set; }
     public PlayerCharacterProfile? PlayerProfile { get; private set; }
+    public Vector3 PlayerFacing { get; private set; } = Vector3.UnitZ;
 
     public SpeciesDefinition GetSpecies(string speciesId)
     {
@@ -186,6 +187,14 @@ public sealed class World
         SessionSeed = seed;
         PlayerEntityId = playerEntityId;
         PlayerProfile = profile;
+    }
+
+    public void SetPlayerFacing(Vector3 facing)
+    {
+        if (!float.IsFinite(facing.X) || !float.IsFinite(facing.Y) || !float.IsFinite(facing.Z)
+            || Math.Abs(facing.Y) > 0.0001f || facing.LengthSquared() < 0.999f || facing.LengthSquared() > 1.001f)
+            throw new ArgumentOutOfRangeException(nameof(facing));
+        PlayerFacing = Vector3.Normalize(new Vector3(facing.X, 0, facing.Z));
     }
 
     public FoodSource AddFoodSource(string id, Vector3 position, ResourceContainer contents)
@@ -802,6 +811,7 @@ public sealed class World
         SessionSeed = null;
         PlayerEntityId = null;
         PlayerProfile = null;
+        PlayerFacing = Vector3.UnitZ;
     }
 
     internal void ApplySnapshot(WorldSnapshot snapshot, SpeciesCatalog speciesCatalog)
@@ -828,6 +838,8 @@ public sealed class World
             {
                 restored.TryAddCarried(item.Key, item.Value);
             }
+            if (entity.Id == snapshot.PlayerEntityId && snapshot.PlayerHealth is not null)
+                restored.Health.Restore(snapshot.PlayerHealth, snapshot.PlayerPendingDeathSeconds, snapshot.PlayerIsDead);
         }
 
         foreach (var factionId in snapshot.FactionIds!)
@@ -941,6 +953,7 @@ public sealed class World
             && snapshot.PlayerProfile is { } playerProfile)
         {
             SetSessionPlayer(seed, playerEntityId, playerProfile);
+            SetPlayerFacing(snapshot.PlayerFacing);
         }
         foreach (var id in snapshot.SquadMemberIds!) _squadMembers.Add(id);
         foreach (var setting in snapshot.WorkSchedules!)
