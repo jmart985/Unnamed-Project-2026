@@ -483,3 +483,11 @@ User reported only an obstacle at the expected workbench. Replace that legacy ce
 - Reason: Crowding and follow behavior must not permanently trap the player or deadlock entities.
 - Consequence: Recovery remains compatible with existing navigation, orders, construction movement, and save/load. Formation AI, tactical crowd behavior, and arbitrary teleportation remain out of scope.
 - Validation: Use the scenarios in docs/ENTITY_SAFETY.md, including narrow-space follow, converging crowds, no-progress detection, responsive player input, save/load, and regression checks.
+
+## D041 — Dense entity crowds remain physically meaningful (2026-10-05)
+
+- Status: Design direction; implementation is being staged.
+- Decision: Active entities may collide with the player and with one another. A group should form a dense, difficult-to-push-through mob, while the movement-safety layer detects prolonged enclosure and creates a bounded escape or replan opportunity.
+- Reason: Entity crowds should have physical presence comparable to a mob in a survival or action game rather than behaving as ghosts.
+- Consequence: Crowd resistance and safety recovery are separate acceptance concerns. The player may be slowed or redirected by a mob, but never permanently trapped, teleported, or allowed to clip through solid geometry.
+- Revisit: When a playable crowd test demonstrates density, resistance, enclosure recovery, and normal movement regression behavior.

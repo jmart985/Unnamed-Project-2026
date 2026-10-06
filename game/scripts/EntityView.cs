@@ -49,12 +49,11 @@ public partial class EntityView : CharacterBody3D
 
     public override void _Ready()
     {
-        // Actors collide with the player (layer 2 / mask 1) so moving through a
-        // person or creature has resistance. Actors do not collide with one another;
-        // authoritative spacing and navigation handle that relationship, preventing
-        // a crowd from becoming a solid wall around the player.
+        // Actors occupy physical space (layer 2 / mask 3), so groups form a dense
+        // mob that resists the player like a crowd. The movement-safety layer must
+        // still detect prolonged enclosure and provide a bounded escape/replan path.
         CollisionLayer = 2;
-        CollisionMask = 1;
+        CollisionMask = 3;
         var navigationAgent = new NavigationAgent3D { PathDesiredDistance = 0.1f, TargetDesiredDistance = 0.1f };
         AddChild(navigationAgent);
         _navigationAdapter = new GodotNavigationAdapter(this, navigationAgent);
