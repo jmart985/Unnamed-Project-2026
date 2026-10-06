@@ -998,6 +998,15 @@ public partial class Main : Node3D
 		_workbench.Position = new Vector3(placement.X, placement.Y + 1.05f, placement.Z);
 		_workbench.Mesh = new BoxMesh { Size = new Vector3(2, 0.18f, 1.4f) };
 		_workbench.MaterialOverride = CreateMaterial(new Color(0.52f, 0.31f, 0.15f));
+		// The visual workbench is also a real obstacle. Keep the collision footprint
+		// broad enough to cover the legs and shelf while leaving walkable space around it.
+		var workbenchBody = new StaticBody3D { Name = "WorkbenchCollision" };
+		workbenchBody.AddChild(new CollisionShape3D
+		{
+			Shape = new BoxShape3D { Size = new Vector3(2f, 1.05f, 1.4f) },
+			Position = new Vector3(0, -0.48f, 0)
+		});
+		_workbench.AddChild(workbenchBody);
 		var wood = new Color(0.32f, 0.19f, 0.09f);
 		var steel = new Color(0.35f, 0.38f, 0.42f);
 		foreach (var x in new[] { -0.8f, 0.8f })
