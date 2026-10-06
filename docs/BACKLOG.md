@@ -120,3 +120,5 @@ The open, unassigned proposals below were checked while reconciling the later ro
 - [Milestone planning checklist](MILESTONE_PLANNING_CHECKLIST.md)
 
 - [Design alignment and scope boundary](DESIGN_ALIGNMENT.md)
+
+- [Construction build mode direction](CONSTRUCTION_BUILD_MODE.md)
