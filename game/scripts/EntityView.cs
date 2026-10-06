@@ -6,6 +6,7 @@ namespace UnnamedProject2026;
 
 public partial class EntityView : CharacterBody3D
 {
+    private const double CrowdRecoveryTimeoutSeconds = 8;
     private GodotNavigationAdapter? _navigationAdapter;
     private float _movementSpeed;
     private bool _isCreature;
@@ -312,7 +313,11 @@ public partial class EntityView : CharacterBody3D
         return true;
     }
 
-    public string RequestNavigation(NumericsVector3 target) => NavigationAdapter.Request(new NavigationRequest(target, timeoutSeconds: 30));
+    // A crowd blockage should yield/replan quickly. The owning service receives
+    // TimedOut and either retries the same task after the actor is free or advances
+    // to its next queued task according to that service's normal priority rules.
+    public string RequestNavigation(NumericsVector3 target) => NavigationAdapter.Request(
+        new NavigationRequest(target, timeoutSeconds: CrowdRecoveryTimeoutSeconds));
     public bool CancelNavigation() => _navigationAdapter?.ActiveRequestId is { } requestId && _navigationAdapter.Cancel(requestId);
     public bool RemoveNavigationTarget() => _navigationAdapter?.ActiveRequestId is { } requestId && _navigationAdapter.RemoveTarget(requestId);
 
