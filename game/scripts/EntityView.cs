@@ -52,8 +52,10 @@ public partial class EntityView : CharacterBody3D
         // Actors use authoritative spacing and navigation for separation. They do not
         // become physical walls for the player or for one another, which prevents a
         // crowd from trapping a controllable character in a narrow space.
-        CollisionLayer = 0;
-        CollisionMask = 0;
+        // Actors occupy physical space so groups form a dense mob that resists
+        // the player. The safety layer handles prolonged enclosure separately.
+        CollisionLayer = 2;
+        CollisionMask = 3;
         var navigationAgent = new NavigationAgent3D { PathDesiredDistance = 0.1f, TargetDesiredDistance = 0.1f };
         AddChild(navigationAgent);
         _navigationAdapter = new GodotNavigationAdapter(this, navigationAgent);
