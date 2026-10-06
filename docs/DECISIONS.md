@@ -452,3 +452,11 @@ Reuse the existing Trusted/Loyal/Fearful classifier for pet permission and green
 ## 2026-10-04: town-center workbench presentation (#399)
 
 User reported only an obstacle at the expected workbench. Replace that legacy central cube with a labeled procedural workbench using the shared NewGameSession starter placement. Keep the existing navigation exclusion and use actual mesh parts for sight/strike occlusion. The bench is a static town landmark; this visual repair does not fabricate World workstation records after loading or claim recipe/progress persistence. Existing crafting domain execution is unchanged, and playable crafting controls/workstation persistence remain separate scope. See TOWN_WORKBENCH.md for rendered evidence and reset/load/regression checks.
+
+## D037 — Linked settlement storage networks (2026-10-05)
+
+- Status: Design direction; implementation not started.
+- Decision: Keep physical storage units as authoritative access points, but link units with the same settlement, storage family, and tier into one logical inventory network. Settlement management aggregates each resource ID across the network while retaining detail about physical contributors, reservations, capacity, and local buffers.
+- Reason: Production buildings and settlement management need a useful total such as `wood 200`, `food 200`, and `water 1000` instead of fragmented per-container counts. A network projection keeps the player-facing model simple without introducing a global inventory.
+- Consequence: Production buildings may consume inputs and place outputs through their linked network using the existing atomic transfer and reservation services. Physical placement, access, capacity, ownership, destruction, and hauling distance remain meaningful. Existing containers migrate into a default network without changing totals.
+- Revisit: When the first implementation issue defines network membership, reservation participants, removal/spill behavior, and snapshot migration tests.

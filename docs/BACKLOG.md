@@ -122,3 +122,5 @@ The open, unassigned proposals below were checked while reconciling the later ro
 - [Design alignment and scope boundary](DESIGN_ALIGNMENT.md)
 
 - [Construction build mode direction](CONSTRUCTION_BUILD_MODE.md)
+
+- [Linked settlement storage](SETTLEMENT_STORAGE.md)
