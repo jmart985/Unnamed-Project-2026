@@ -124,3 +124,5 @@ The open, unassigned proposals below were checked while reconciling the later ro
 - [Construction build mode direction](CONSTRUCTION_BUILD_MODE.md)
 
 - [Linked settlement storage](SETTLEMENT_STORAGE.md)
+
+- [Character creation and body customization](CHARACTER_CREATION_AND_BODY.md)

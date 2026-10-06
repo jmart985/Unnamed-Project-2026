@@ -460,3 +460,11 @@ User reported only an obstacle at the expected workbench. Replace that legacy ce
 - Reason: Production buildings and settlement management need a useful total such as `wood 200`, `food 200`, and `water 1000` instead of fragmented per-container counts. A network projection keeps the player-facing model simple without introducing a global inventory.
 - Consequence: Production buildings may consume inputs and place outputs through their linked network using the existing atomic transfer and reservation services. Physical placement, access, capacity, ownership, destruction, and hauling distance remain meaningful. Existing containers migrate into a default network without changing totals.
 - Revisit: When the first implementation issue defines network membership, reservation participants, removal/spill behavior, and snapshot migration tests.
+
+## D038 — Character creation and settlement Build mode boundaries (2026-10-05)
+
+- Status: Design direction; implementation not started.
+- Decision: Put authoritative body parameters (height, weight, muscle/build, named body-part X/Y/Z bounds, symmetry, and derived proportions) in 0.2 Character Core. Put Settlement-menu Build mode, ribbon selection, ghost blueprints, staged structures, linked storage, and completed object menus in 0.4 Basic Settlement. Put player-facing Sims-style sliders and advanced body-part controls in 1.0 First Real Game after the shared profile-to-rig projection is stable.
+- Reason: Body data is a reusable simulation contract; settlement construction is a separate interaction mode; and player creation needs the accepted 1.0 profile/save flow. Keeping these boundaries avoids mixing UI, building placement, and arbitrary mesh editing.
+- Consequence: Body changes are validated proportions consumed by collision, joints, camera, and animation. They cannot grant arbitrary skills or bypass species capabilities. Build mode is opened through Settlement and does not edit character proportions. Each slice can be tested and persisted independently.
+- Revisit: When the 0.2 body model, 0.4 Build mode, and 1.0 player-creation acceptance scenarios provide evidence about range, rig fidelity, and usability.
