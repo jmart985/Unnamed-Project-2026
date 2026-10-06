@@ -4,7 +4,7 @@ The [GitHub issues](https://github.com/jmart985/Unnamed-Project-2026/issues) are
 
 ## Current status (2026-10-05)
 
-Character Core issues #135, #136, #137, and #139, far-population arithmetic validation #369, and actor-spacing movement protection #415 are complete. Basic Settlement acceptance #406 remains **In Progress** pending integrated validation evidence. Issues #302, #306, #201, #225, and #226 are planning or deferred scope and belong in **Backlog**, not Ready. The board currently has no independent Ready implementation issue; the next implementation item must be decomposed into a small, testable slice with explicit dependencies and validation steps.
+Character Core issues #135, #136, #137, and #139, far-population arithmetic validation #369, actor-spacing movement protection #415, and Basic Settlement acceptance #406 are complete. Issues #302, #306, #201, #225, and #226 are planning or deferred scope and belong in **Backlog**, not Ready. The current 0.4 construction loop is complete; the broader build-mode expansion is documented separately in `docs/CONSTRUCTION_BUILD_MODE.md`. The next implementation item must be decomposed into a small, testable slice with explicit dependencies and validation steps.
 
 - [Ant Farm Board](https://github.com/users/jmart985/projects/1)
 - [Milestone 0.1: The Ant Farm](https://github.com/jmart985/Unnamed-Project-2026/milestone/1)
