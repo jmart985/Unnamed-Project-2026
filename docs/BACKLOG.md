@@ -126,3 +126,7 @@ The open, unassigned proposals below were checked while reconciling the later ro
 - [Linked settlement storage](SETTLEMENT_STORAGE.md)
 
 - [Character creation and body customization](CHARACTER_CREATION_AND_BODY.md)
+
+## Movement safety follow-up
+
+Entity movement must not trap the player or deadlock crowds. The scoped requirements and acceptance tests are in [ENTITY_SAFETY.md](ENTITY_SAFETY.md). This belongs with the navigation/movement foundation before larger squad and settlement automation work.

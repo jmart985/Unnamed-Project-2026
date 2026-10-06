@@ -475,3 +475,11 @@ User reported only an obstacle at the expected workbench. Replace that legacy ce
 - Decision: Direct placement uses the moving player, third-person camera, hotbar/ribbon selection, and player-relative placement for the 0.4 prototype. Sims-style planning uses an explicit free camera from the Settlement menu so layouts can be placed or queued without moving the player model.
 - Consequence: Both workflows submit to the same authoritative construction systems, but each has separate mode state, camera rules, input tests, and acceptance criteria. Planning-camera work follows the direct-placement slice.
 - Revisit: When bounded free-camera navigation, multi-blueprint placement, save/load, and clean return to the player-follow camera are demonstrated.
+
+## D040 — Entity movement safety and unstuck recovery (2026-10-05)
+
+- Status: Design direction; implementation not started.
+- Decision: Add a shared safety layer for humans and creatures that detects blocked progress, crowd overlap, and repeated failed movement; cancels or replans blocked orders, preserves player control, and chooses nearby valid free positions without moving through solid geometry or teleporting.
+- Reason: Crowding and follow behavior must not permanently trap the player or deadlock entities.
+- Consequence: Recovery remains compatible with existing navigation, orders, construction movement, and save/load. Formation AI, tactical crowd behavior, and arbitrary teleportation remain out of scope.
+- Validation: Use the scenarios in docs/ENTITY_SAFETY.md, including narrow-space follow, converging crowds, no-progress detection, responsive player input, save/load, and regression checks.
