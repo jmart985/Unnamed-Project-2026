@@ -296,7 +296,12 @@ public partial class Main
         else if (target.Kind == TargetKind.Fireplace)
         {
             var fire = _world.Fireplaces.Single(item => item.Id == target.Id);
-            detail = $"Fire {(fire.IsLit ? "lit" : "unlit")} · fuel {fire.Fuel} · F add wood / cook";
+            var playerId = _world.PlayerEntityId;
+            var warm = playerId is not null && new FireplaceService(_world).IsWarm(playerId);
+            var closeEnough = playerId is not null && _world.TryGetEntity(playerId, out var actor) && actor is not null
+                && System.Numerics.Vector3.Distance(actor.Position, fire.Position) <= 2;
+            detail = $"Fire {(fire.IsLit ? "lit" : "unlit")} · fuel {fire.Fuel} · {(warm ? "warmth active" : "outside warmth radius")}\n" +
+                (closeEnough ? "F add wood / cook" : "Move within 2 m to fuel or cook");
         }
         else if (target.Kind == TargetKind.ConstructionSite)
         {
