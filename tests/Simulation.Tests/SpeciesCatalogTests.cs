@@ -32,7 +32,7 @@ public sealed class SpeciesCatalogTests
         Assert.Equal(0.22, ape.HungerRate);
         Assert.Equal(new[] { ItemIds.Plant, ItemIds.Fruit, ItemIds.Meat }, ape.Diet);
         Assert.True(ape.CanHaul);
-        Assert.Equal("upright_creature", ape.BodyCategory);
+        Assert.Equal("primate", ape.BodyCategory);
         Assert.Equal(DietaryProfile.Omnivore, ape.DietaryProfile);
         Assert.Equal(95, ape.MaxHealth);
         Assert.Equal(1.1, ape.Strength);
@@ -48,7 +48,7 @@ public sealed class SpeciesCatalogTests
         Assert.Equal(0.28, cow.HungerRate);
         Assert.Equal(new[] { ItemIds.Plant, ItemIds.Fruit }, cow.Diet);
         Assert.True(cow.CanHaul);
-        Assert.Equal("quadruped", cow.BodyCategory);
+        Assert.Equal("ungulate", cow.BodyCategory);
         Assert.Equal(DietaryProfile.Herbivore, cow.DietaryProfile);
         Assert.Equal(120, cow.MaxHealth);
         Assert.Equal(1.4, cow.Strength);
@@ -64,7 +64,7 @@ public sealed class SpeciesCatalogTests
         Assert.Equal(0.24, wolf.HungerRate);
         Assert.Equal(new[] { ItemIds.Meat }, wolf.Diet);
         Assert.False(wolf.CanHaul);
-        Assert.Equal("quadruped", wolf.BodyCategory);
+        Assert.Equal("canid", wolf.BodyCategory);
         Assert.Equal(DietaryProfile.Carnivore, wolf.DietaryProfile);
         Assert.Equal(85, wolf.MaxHealth);
         Assert.Equal(1.0, wolf.Strength);

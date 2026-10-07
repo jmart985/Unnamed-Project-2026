@@ -56,7 +56,7 @@
     "canTrack": true,
     "canAcceptFriendlyInteraction": true,
     "canHaul": true,
-    "bodyCategory": "upright_creature",
+    "bodyCategory": "primate",
     "temperament": { "boldness": 0.75, "aggression": 0.55, "fear": 0.3, "curiosity": 0.9, "sociability": 0.8, "territoriality": 0.65 }
   },
   {
@@ -78,7 +78,7 @@
     "canTrack": false,
     "canAcceptFriendlyInteraction": true,
     "canHaul": true,
-    "bodyCategory": "quadruped",
+    "bodyCategory": "ungulate",
     "temperament": { "boldness": 0.35, "aggression": 0.1, "fear": 0.7, "curiosity": 0.25, "sociability": 0.9, "territoriality": 0.2 }
   },
   {
@@ -99,7 +99,7 @@
     "canTrack": true,
     "canAcceptFriendlyInteraction": false,
     "canHaul": false,
-    "bodyCategory": "quadruped",
+    "bodyCategory": "canid",
     "temperament": { "boldness": 0.85, "aggression": 0.75, "fear": 0.25, "curiosity": 0.65, "sociability": 0.45, "territoriality": 0.8 }
   }
 ]
