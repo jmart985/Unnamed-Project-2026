@@ -40,4 +40,21 @@ public sealed class PlayerToolServiceTests
         Assert.Equal(1, session.Player.Inventory[ItemIds.Wood]);
         Assert.Equal(11, tree.Contents.Counts[ItemIds.Wood]);
     }
+
+    [Fact]
+    public void DepletedTreeRegrowsOnlyAfterTheConfiguredTimer()
+    {
+        var catalog = SpeciesCatalog.LoadFromFile(Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
+        var session = NewGameSession.Create(catalog, PlayerCharacterProfile.Create("Forester"), survivalGathering: true);
+        var tree = session.World.ResourcePiles.Single(pile => pile.Id == "tree-adult-1");
+        tree.Contents.TryRemove(ItemIds.Wood, tree.Contents.Counts[ItemIds.Wood]);
+        var regrowth = new TreeRegrowthService(session.World);
+
+        regrowth.Advance(TreeRegrowthService.RegrowthSeconds - 1);
+        Assert.Equal(0, tree.Contents.Counts.GetValueOrDefault(ItemIds.Wood));
+        Assert.InRange(regrowth.Progress(tree.Id), 0.9, 1);
+        regrowth.Advance(1);
+        Assert.Equal(TreeRegrowthService.AdultWoodCapacity, tree.Contents.Counts[ItemIds.Wood]);
+        Assert.Equal(1, regrowth.Progress(tree.Id));
+    }
 }
