@@ -71,4 +71,18 @@ public sealed class PlayerToolServiceTests
 
         Assert.Equal(ItemIds.Axe, loaded.Entities.Single(entity => entity.Id == session.PlayerEntityId).EquippedTool);
     }
+
+    [Fact]
+    public void TreeRegrowthTimersRoundTripThroughServiceState()
+    {
+        var catalog = SpeciesCatalog.LoadFromFile(Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
+        var session = NewGameSession.Create(catalog, PlayerCharacterProfile.Create("Timer"), survivalGathering: true);
+        var tree = session.World.ResourcePiles.Single(pile => pile.Id == "tree-adult-1");
+        tree.Contents.TryRemove(ItemIds.Wood, tree.Contents.Counts[ItemIds.Wood]);
+        var source = new TreeRegrowthService(session.World);
+        source.Advance(30);
+        var restored = new TreeRegrowthService(session.World);
+        restored.Restore(source.Capture());
+        Assert.Equal(source.Progress(tree.Id), restored.Progress(tree.Id));
+    }
 }

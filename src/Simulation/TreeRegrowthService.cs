@@ -1,5 +1,7 @@
 namespace Simulation;
 
+public sealed record TreeRegrowthSnapshot(string TreeId, double ElapsedSeconds);
+
 public sealed class TreeRegrowthService(World world)
 {
     public const double RegrowthSeconds = 120;
@@ -8,6 +10,26 @@ public sealed class TreeRegrowthService(World world)
 
     public double Progress(string treeId)
         => _timers.TryGetValue(treeId, out var elapsed) ? Math.Clamp(elapsed / RegrowthSeconds, 0, 1) : 1;
+
+    public IReadOnlyList<TreeRegrowthSnapshot> Capture()
+        => _timers.OrderBy(pair => pair.Key, StringComparer.Ordinal)
+            .Select(pair => new TreeRegrowthSnapshot(pair.Key, pair.Value)).ToArray();
+
+    public void Restore(IEnumerable<TreeRegrowthSnapshot> snapshots)
+    {
+        ArgumentNullException.ThrowIfNull(snapshots);
+        _timers.Clear();
+        foreach (var snapshot in snapshots)
+        {
+            if (string.IsNullOrWhiteSpace(snapshot.TreeId)
+                || !double.IsFinite(snapshot.ElapsedSeconds)
+                || snapshot.ElapsedSeconds < 0
+                || snapshot.ElapsedSeconds >= RegrowthSeconds
+                || !world.ResourcePiles.Any(tree => tree.Id == snapshot.TreeId))
+                throw new ArgumentException("Tree regrowth snapshots must reference valid in-progress trees.", nameof(snapshots));
+            _timers[snapshot.TreeId] = snapshot.ElapsedSeconds;
+        }
+    }
 
     public void Advance(double seconds)
     {
