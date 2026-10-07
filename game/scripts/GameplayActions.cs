@@ -268,7 +268,10 @@ public partial class Main
         if (_selectedTarget.Kind == TargetKind.Fireplace)
         {
             var service = new FireplaceService(_world);
-            var result = service.AddFuel(player.Id, _selectedTarget.Id);
+            var fire = _world.Fireplaces.First(item => item.Id == _selectedTarget.Id);
+            var result = fire.IsLit && player.Inventory.GetValueOrDefault(ItemIds.Plant) > 0
+                ? service.CookMeal(player.Id, _selectedTarget.Id)
+                : service.AddFuel(player.Id, _selectedTarget.Id);
             ShowActionFeedback(result.Message);
             return;
         }
