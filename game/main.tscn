@@ -168,6 +168,28 @@ text = "Sex"
 [node name="Sex" type="OptionButton" parent="CharacterCreation/Panel/Form" unique_id=1406898256]
 layout_mode = 2
 
+[node name="WeightLabel" type="Label" parent="CharacterCreation/Panel/Form" unique_id=1406898257]
+layout_mode = 2
+text = "Weight: 50%"
+
+[node name="Weight" type="HSlider" parent="CharacterCreation/Panel/Form" unique_id=1406898258]
+layout_mode = 2
+min_value = 0.0
+max_value = 1.0
+step = 0.01
+value = 0.5
+
+[node name="MuscleLabel" type="Label" parent="CharacterCreation/Panel/Form" unique_id=1406898259]
+layout_mode = 2
+text = "Muscle: 50%"
+
+[node name="Muscle" type="HSlider" parent="CharacterCreation/Panel/Form" unique_id=1406898260]
+layout_mode = 2
+min_value = 0.0
+max_value = 1.0
+step = 0.01
+value = 0.5
+
 [node name="Error" type="Label" parent="CharacterCreation/Panel/Form" unique_id=1083019040]
 modulate = Color(1, 0.35, 0.35, 1)
 layout_mode = 2
