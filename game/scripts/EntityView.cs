@@ -12,6 +12,7 @@ public partial class EntityView : CharacterBody3D
     private bool _isCreature;
     private string _speciesId = string.Empty;
     private string _bodyCategory = string.Empty;
+    private CreatureBodyPlan _bodyPlan;
     private Node3D? _rig;
     private ProceduralGait? _gait;
     private Vector3 _lastPosition;
@@ -82,7 +83,7 @@ public partial class EntityView : CharacterBody3D
             _ => (Color.FromHsv(variation, 0.45f, 0.75f), new Color(0.85f, 0.68f + variation * 0.12f, 0.55f))
         };
 
-        if (_isCreature && !string.Equals(_bodyCategory, "humanoid", StringComparison.OrdinalIgnoreCase))
+        if (_bodyPlan != CreatureBodyPlan.Humanoid)
         {
             BuildQuadruped(bodyColor, accentColor);
         }
@@ -142,9 +143,13 @@ public partial class EntityView : CharacterBody3D
             "cow" => new Vector3(0.9f, 0.8f, 1.45f),
             "wolf" => new Vector3(0.6f, 0.5f, 1.2f),
             "ape" => new Vector3(0.82f, 0.62f, 1.15f),
+            _ when _bodyPlan == CreatureBodyPlan.Ungulate => new Vector3(0.88f, 0.78f, 1.4f),
+            _ when _bodyPlan == CreatureBodyPlan.Canid => new Vector3(0.6f, 0.5f, 1.2f),
+            _ when _bodyPlan == CreatureBodyPlan.Primate => new Vector3(0.82f, 0.62f, 1.15f),
             _ => new Vector3(0.75f, 0.65f, 1.25f)
         };
-        var legLength = bodySize.Y * (_speciesId == "wolf" ? 0.85f : _speciesId == "ape" ? 0.95f : 0.75f);
+        var legLength = bodySize.Y * (_bodyPlan == CreatureBodyPlan.Canid ? 0.85f
+            : _bodyPlan == CreatureBodyPlan.Primate ? 0.95f : 0.75f);
         var bodyY = legLength + bodySize.Y * 0.5f - 0.05f;
         AddCollision(legLength + bodySize.Y, Mathf.Max(bodySize.X, bodySize.Z) * 0.4f);
         _gait!.BobHeight = 0.03f;
@@ -307,6 +312,7 @@ public partial class EntityView : CharacterBody3D
         _isCreature = isCreature;
         _speciesId = speciesId ?? (isCreature ? "creature" : "human");
         _bodyCategory = bodyCategory ?? (isCreature ? "quadruped" : "humanoid");
+        _bodyPlan = CreatureBodyPlanResolver.Resolve(_bodyCategory, _isCreature);
     }
 
     public bool Sync(World world)
