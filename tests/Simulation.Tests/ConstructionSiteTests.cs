@@ -7,6 +7,25 @@ namespace Simulation.Tests;
 public sealed class ConstructionSiteTests
 {
     [Fact]
+    public void CompletedStarterHutProvidesOpenShelterAndBed()
+    {
+        var catalog = SpeciesCatalog.LoadFromFile(Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
+        var session = NewGameSession.Create(catalog, PlayerCharacterProfile.Create("Shelter Builder"));
+        var actor = session.Player;
+        actor.TryAddCarried(ItemIds.Wood, SettlementConstruction.HutWood);
+        var service = new ActorConstructionService(session.World, catalog);
+        var shelterPosition = actor.Position + new System.Numerics.Vector3(4, 0, 0);
+        var site = service.PlaceHut(actor.Id, "shelter-site", shelterPosition);
+        Assert.True(site.Succeeded);
+        session.World.TrySetEntityPosition(actor.Id, shelterPosition);
+        for (var i = 0; i < SettlementConstruction.HutWood; i++) Assert.True(service.SupplyWood(actor.Id, "shelter-site").Succeeded);
+        for (var i = 0; i < SettlementConstruction.HutWork; i++) Assert.True(service.ApplyWork(actor.Id, "shelter-site").Succeeded);
+
+        var hut = session.World.Structures.Single(structure => structure.Type == StructureType.Hut);
+        Assert.False(hut.IsClosed);
+        Assert.Single(hut.Beds);
+    }
+    [Fact]
     public void ConstructionRequiresValidPlacementAndBuildsOnlyAfterMaterialsAndWorkAreSupplied()
     {
         var catalog = SpeciesCatalog.LoadFromFile(Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
