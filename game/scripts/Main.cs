@@ -960,7 +960,7 @@ public partial class Main : Node3D
 		}
 		catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
 		{
-			_saveLoadStatus = $"Save failed: {exception.Message}";
+			_saveLoadStatus = $"Save failed: {exception.Message}{(exception.InnerException is null ? string.Empty : $" ({exception.InnerException.Message})")}";
 		}
 
 		UpdateStatus();

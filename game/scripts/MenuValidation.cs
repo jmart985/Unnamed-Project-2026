@@ -17,8 +17,11 @@ public partial class Main
             StartSession(PlayerCharacterProfile.Create("Menu validation"), 42, "Menu validation session.");
             _clock.SetPaused(true);
             _playerCharacter.SetPhysicsProcess(false);
-            _saveSlotPath = ProjectSettings.GlobalizePath("user://menu-validation-save.json");
-            _buttonBindings.Path = ProjectSettings.GlobalizePath("user://menu-validation-settings.json");
+            // Isolate each run so a prior intentionally-corrupt fixture cannot affect the
+            // current save/load assertions, even when another Godot process still holds it.
+            var validationRun = Guid.NewGuid().ToString("N");
+            _saveSlotPath = ProjectSettings.GlobalizePath($"res://../.menu-validation-save-{validationRun}.json");
+            _buttonBindings.Path = ProjectSettings.GlobalizePath($"res://../.menu-validation-settings-{validationRun}.json");
             Require(_menuState.ActiveMenu is null && !_controls.Visible && !_inventoryPanel.Visible && !_settingsPanel.Visible, "session starts closed");
             SendMenuKey(Key.I);
             Require(_menuState.ActiveMenu == PlayerMenu.Inventory && _inventoryPanel.Visible && !_controls.Visible, "I opens inventory");
@@ -76,6 +79,7 @@ public partial class Main
             UpdatePlayerMenuContents();
             ToggleMenu(PlayerMenu.Settings);
             PressMenuButton(_settingsPanel, "Save game (pauses)");
+            Require(File.Exists(_saveSlotPath), $"save creates a slot (status: {_saveLoadStatus})");
             ToggleMenu(PlayerMenu.Inventory);
             Require(ResourceTransferService.TryDeliver(player, source.Contents, ItemIds.Wood, 1) == ResourceMutationResult.Success, "atomic delivery fixture");
             UpdatePlayerMenuContents();
@@ -83,7 +87,8 @@ public partial class Main
             ToggleMenu(PlayerMenu.Settings);
             PressMenuButton(_settingsPanel, "Load game (pauses)");
             ToggleMenu(PlayerMenu.Inventory);
-            Require(_carriedItems.Text.Contains("Wood   × 3") && _inventoryPanel.Visible, "load reprojects current player inventory");
+            Require(_carriedItems.Text.Contains("Wood   × 3") && _inventoryPanel.Visible,
+                $"load reprojects current player inventory (status: {_saveLoadStatus}; items: {_carriedItems.Text})");
             File.WriteAllText(_saveSlotPath, "invalid");
             var preserved = WorldSnapshotSerializer.Serialize(_world, _clock.SimulationTime);
             ToggleMenu(PlayerMenu.Settings);
