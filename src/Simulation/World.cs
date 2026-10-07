@@ -33,6 +33,8 @@ public sealed class World
     private readonly List<Farm> _farms = [];
     private readonly ReadOnlyCollection<Farm> _farmView;
     private readonly List<SettlementConstructionSite> _constructionSites = [];
+    private readonly List<Fireplace> _fireplaces = [];
+    public IReadOnlyList<Fireplace> Fireplaces => _fireplaces;
     private readonly ReadOnlyCollection<SettlementConstructionSite> _constructionSiteView;
     private readonly HashSet<string> _targetIds = new(StringComparer.Ordinal);
     private long _lastEntityId;
@@ -316,6 +318,7 @@ public sealed class World
         _constructionSites.Add(site);
         return site;
     }
+    public Fireplace AddFireplace(string id, Vector3 position) { var fire = new Fireplace(id, position); _fireplaces.Add(fire); return fire; }
 
     public bool TryRemoveConstructionSite(string? id)
     {
@@ -802,6 +805,7 @@ public sealed class World
         _workstations.Clear();
         _farms.Clear();
         _constructionSites.Clear();
+        _fireplaces.Clear();
         _treeRegrowthTimers.Clear();
         _targetIds.Clear();
         Reservations.Reset();
