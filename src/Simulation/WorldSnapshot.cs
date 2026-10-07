@@ -25,7 +25,8 @@ public sealed record WorldSnapshot(
     IReadOnlyList<WorkstationSnapshot>? Workstations = null,
     IReadOnlyList<FarmSnapshot>? Farms = null,
     IReadOnlyList<StructureSnapshot>? Structures = null,
-    IReadOnlyList<ConstructionSiteSnapshot>? ConstructionSites = null);
+    IReadOnlyList<ConstructionSiteSnapshot>? ConstructionSites = null,
+    IReadOnlyList<TreeRegrowthSnapshot>? TreeRegrowthTimers = null);
 
 public sealed record StructureSnapshot(string Id, StructureType Type, Vector3 Position, bool IsClosed, IReadOnlyList<BedSnapshot>? Beds = null);
 public sealed record BedSnapshot(string Id, double RecoveryRateMultiplier, string? OccupantId);
@@ -232,7 +233,9 @@ public static class WorldSnapshotSerializer
                 new ConstructionSiteSnapshot(site.Id, site.Position, site.Blueprint.Id, site.Blueprint.Width, site.Blueprint.Depth,
                     new Dictionary<string, int>(site.Blueprint.RequiredMaterials, StringComparer.Ordinal),
                     new Dictionary<string, int>(site.Blueprint.Progress, StringComparer.Ordinal),
-                    site.Blueprint.WorkRequired, site.Blueprint.WorkProgress)).ToArray());
+                    site.Blueprint.WorkRequired, site.Blueprint.WorkProgress)).ToArray(),
+            world.TreeRegrowthTimers.OrderBy(item => item.Key, StringComparer.Ordinal)
+                .Select(item => new TreeRegrowthSnapshot(item.Key, item.Value)).ToArray());
     }
 
     public static string Serialize(World world, double simulationTime)

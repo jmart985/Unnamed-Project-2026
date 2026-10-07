@@ -6,19 +6,17 @@ public sealed class TreeRegrowthService(World world)
 {
     public const double RegrowthSeconds = 120;
     public const int AdultWoodCapacity = 12;
-    private readonly Dictionary<string, double> _timers = new(StringComparer.Ordinal);
-
     public double Progress(string treeId)
-        => _timers.TryGetValue(treeId, out var elapsed) ? Math.Clamp(elapsed / RegrowthSeconds, 0, 1) : 1;
+        => world.TreeRegrowthTimers.TryGetValue(treeId, out var elapsed) ? Math.Clamp(elapsed / RegrowthSeconds, 0, 1) : 1;
 
     public IReadOnlyList<TreeRegrowthSnapshot> Capture()
-        => _timers.OrderBy(pair => pair.Key, StringComparer.Ordinal)
+        => world.TreeRegrowthTimers.OrderBy(pair => pair.Key, StringComparer.Ordinal)
             .Select(pair => new TreeRegrowthSnapshot(pair.Key, pair.Value)).ToArray();
 
     public void Restore(IEnumerable<TreeRegrowthSnapshot> snapshots)
     {
         ArgumentNullException.ThrowIfNull(snapshots);
-        _timers.Clear();
+        world.ClearTreeRegrowthTimers();
         foreach (var snapshot in snapshots)
         {
             if (string.IsNullOrWhiteSpace(snapshot.TreeId)
@@ -27,7 +25,7 @@ public sealed class TreeRegrowthService(World world)
                 || snapshot.ElapsedSeconds >= RegrowthSeconds
                 || !world.ResourcePiles.Any(tree => tree.Id == snapshot.TreeId))
                 throw new ArgumentException("Tree regrowth snapshots must reference valid in-progress trees.", nameof(snapshots));
-            _timers[snapshot.TreeId] = snapshot.ElapsedSeconds;
+            world.SetTreeRegrowthTimer(snapshot.TreeId, snapshot.ElapsedSeconds);
         }
     }
 
@@ -38,16 +36,16 @@ public sealed class TreeRegrowthService(World world)
         {
             if (tree.Contents.Counts.GetValueOrDefault(ItemIds.Wood) > 0)
             {
-                _timers.Remove(tree.Id);
+                world.RemoveTreeRegrowthTimer(tree.Id);
                 continue;
             }
-            var elapsed = _timers.GetValueOrDefault(tree.Id) + seconds;
+            var elapsed = world.TreeRegrowthTimers.GetValueOrDefault(tree.Id) + seconds;
             if (elapsed >= RegrowthSeconds)
             {
                 tree.Contents.TryAdd(ItemIds.Wood, AdultWoodCapacity);
-                _timers.Remove(tree.Id);
+                world.RemoveTreeRegrowthTimer(tree.Id);
             }
-            else _timers[tree.Id] = elapsed;
+            else world.SetTreeRegrowthTimer(tree.Id, elapsed);
         }
     }
 }

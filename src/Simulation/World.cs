@@ -39,6 +39,11 @@ public sealed class World
     private readonly HashSet<string> _squadMembers = new(StringComparer.Ordinal);
     private readonly Dictionary<string, NpcWorkSchedule> _workSchedules = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Vector3> _homePositions = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, double> _treeRegrowthTimers = new(StringComparer.Ordinal);
+    public IReadOnlyDictionary<string, double> TreeRegrowthTimers => _treeRegrowthTimers;
+    internal void SetTreeRegrowthTimer(string treeId, double elapsed) => _treeRegrowthTimers[treeId] = elapsed;
+    internal void RemoveTreeRegrowthTimer(string treeId) => _treeRegrowthTimers.Remove(treeId);
+    internal void ClearTreeRegrowthTimers() => _treeRegrowthTimers.Clear();
     public IReadOnlyCollection<NpcScheduleSetting> WorkSchedules => Array.AsReadOnly(_workSchedules
         .OrderBy(pair => pair.Key, StringComparer.Ordinal)
         .Select(pair => new NpcScheduleSetting(pair.Key, pair.Value.StartHour, pair.Value.EndHour)).ToArray());
@@ -797,6 +802,7 @@ public sealed class World
         _workstations.Clear();
         _farms.Clear();
         _constructionSites.Clear();
+        _treeRegrowthTimers.Clear();
         _targetIds.Clear();
         Reservations.Reset();
         SessionSeed = null;
@@ -830,6 +836,8 @@ public sealed class World
                 restored.TryAddCarried(item.Key, item.Value);
             }
         }
+        foreach (var timer in snapshot.TreeRegrowthTimers ?? Array.Empty<TreeRegrowthSnapshot>())
+            _treeRegrowthTimers[timer.TreeId] = timer.ElapsedSeconds;
 
         foreach (var factionId in snapshot.FactionIds!)
         {
