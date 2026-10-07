@@ -195,6 +195,25 @@ layout_mode = 2
 text = "Preview: choose a name and body settings"
 autowrap_mode = 2
 
+[node name="PreviewViewport" type="SubViewportContainer" parent="CharacterCreation/Panel/Form" unique_id=1406898262]
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+stretch = true
+
+[node name="SubViewport" type="SubViewport" parent="CharacterCreation/Panel/Form/PreviewViewport" unique_id=1406898263]
+transparent_bg = true
+render_target_update_mode = 4
+
+[node name="PreviewRoot" type="Node3D" parent="CharacterCreation/Panel/Form/PreviewViewport/SubViewport" unique_id=1406898264]
+
+[node name="PreviewCamera" type="Camera3D" parent="CharacterCreation/Panel/Form/PreviewViewport/SubViewport" unique_id=1406898265]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 3.3)
+current = true
+
+[node name="PreviewLight" type="DirectionalLight3D" parent="CharacterCreation/Panel/Form/PreviewViewport/SubViewport" unique_id=1406898266]
+rotation_degrees = Vector3(-25, -25, 0)
+light_energy = 1.2
+
 [node name="Error" type="Label" parent="CharacterCreation/Panel/Form" unique_id=1083019040]
 modulate = Color(1, 0.35, 0.35, 1)
 layout_mode = 2

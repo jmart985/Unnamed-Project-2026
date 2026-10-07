@@ -77,6 +77,7 @@ public partial class Main : Node3D
 	private Label _weightLabel = null!;
 	private Label _muscleLabel = null!;
 	private Label _creationPreview = null!;
+	private Node3D _previewRoot = null!;
 	private Label _creationError = null!;
 	private PlayerCharacterProfile? _playerProfile;
 	private int _sessionSeed = NewGameSession.DefaultSeed;
@@ -102,6 +103,7 @@ public partial class Main : Node3D
 		_weightLabel = GetNode<Label>("CharacterCreation/Panel/Form/WeightLabel");
 		_muscleLabel = GetNode<Label>("CharacterCreation/Panel/Form/MuscleLabel");
 		_creationPreview = GetNode<Label>("CharacterCreation/Panel/Form/Preview");
+		_previewRoot = GetNode<Node3D>("CharacterCreation/Panel/Form/PreviewViewport/SubViewport/PreviewRoot");
 		_weightChoice.ValueChanged += value => { _weightLabel.Text = $"Weight: {value * 100:0}%"; UpdateCreationPreview(); };
 		_muscleChoice.ValueChanged += value => { _muscleLabel.Text = $"Muscle: {value * 100:0}%"; UpdateCreationPreview(); };
 		_heightChoice.ItemSelected += _ => UpdateCreationPreview();
@@ -371,6 +373,10 @@ public partial class Main : Node3D
 				_muscleChoice.Value);
 			var body = PlayerBodyProportions.From(profile);
 			_creationPreview.Text = $"Preview: {body.Height:0.00}m tall · torso {body.TorsoWidth:0.00}m wide · limbs {body.LimbThickness:0.00}m";
+			foreach (var child in _previewRoot.GetChildren()) child.QueueFree();
+			var rig = new PlayerBodyRig(body);
+			_previewRoot.AddChild(rig.Root);
+			rig.Root.Position = new Vector3(0, -body.Height * 0.5f, 0);
 		}
 		catch (ArgumentException)
 		{
