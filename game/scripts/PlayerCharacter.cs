@@ -209,6 +209,15 @@ public partial class PlayerCharacter : CharacterBody3D
 	public override void _PhysicsProcess(double delta)
 	{
 		var physicsDelta = (float)delta;
+		if (GameplayInputEnabled)
+		{
+			var stickLook = new Vector2(Input.GetJoyAxis(0, JoyAxis.RightX), Input.GetJoyAxis(0, JoyAxis.RightY));
+			if (stickLook.LengthSquared() > 0.01f)
+			{
+				RotateY(-stickLook.X * MouseSensitivity * 60f * physicsDelta);
+				_headPitchTarget = Mathf.Clamp(_headPitchTarget - stickLook.Y * MouseSensitivity * 60f * physicsDelta, -0.6f, 1.0f);
+			}
+		}
 		_attackCooldownRemaining = Mathf.Max(0.0, _attackCooldownRemaining - delta);
 		if (!IsOnFloor())
 		{
