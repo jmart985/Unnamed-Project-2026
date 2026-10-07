@@ -8,6 +8,20 @@ public sealed class NewGameSessionTests
     private static readonly string[] ExpectedStarterCreatureSpeciesIds = ["ape", "cow", "wolf"];
 
     [Fact]
+    public void SurvivalGatheringFixtureStartsWithTreesAndLooseRocksInsteadOfWoodBox()
+    {
+        var session = NewGameSession.Create(GetSpeciesCatalog(), PlayerCharacterProfile.Create("Survivor"), survivalGathering: true);
+
+        Assert.DoesNotContain(session.World.ResourcePiles, pile => pile.Id == "wood-pile-1");
+        Assert.Equal(4, session.World.ResourcePiles.Count(pile => pile.Id.StartsWith("tree-adult-", StringComparison.Ordinal)));
+        Assert.Equal(4, session.World.ResourcePiles.Count(pile => pile.Id.StartsWith("rock-loose-", StringComparison.Ordinal)));
+        Assert.All(session.World.ResourcePiles.Where(pile => pile.Id.StartsWith("tree-adult-", StringComparison.Ordinal)),
+            tree => Assert.Equal(12, tree.Contents.Counts[ItemIds.Wood]));
+        Assert.All(session.World.ResourcePiles.Where(pile => pile.Id.StartsWith("rock-loose-", StringComparison.Ordinal)),
+            rock => Assert.Equal(1, rock.Contents.Counts[ItemIds.Rock]));
+    }
+
+    [Fact]
     public void CreateBuildsTheDocumentedWorldAndPlayerState()
     {
         var profile = PlayerCharacterProfile.Create("  Ada  ");

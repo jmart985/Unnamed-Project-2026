@@ -357,7 +357,7 @@ public partial class Main : Node3D
 		string saveLoadMessage)
 	{
 		CancelGameplayActions();
-		var session = NewGameSession.Create(_speciesCatalog, profile, seed);
+		var session = NewGameSession.Create(_speciesCatalog, profile, seed, survivalGathering: true);
 		_sessionActive = false;
 		_playerCharacter.SetPhysicsProcess(false);
 		ResetTransientServices();

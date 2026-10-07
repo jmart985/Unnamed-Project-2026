@@ -7,11 +7,12 @@ public static class ItemIds
     public const string Meat = "meat";
     public const string Fruit = "fruit";
     public const string Wood = "wood";
+    public const string Rock = "rock";
     public const string Coin = "coin";
 
     public static bool IsKnown(string? itemId)
     {
-        return itemId is ItemIds.Food or ItemIds.Plant or ItemIds.Meat or ItemIds.Fruit or ItemIds.Wood or ItemIds.Coin;
+        return itemId is ItemIds.Food or ItemIds.Plant or ItemIds.Meat or ItemIds.Fruit or ItemIds.Wood or ItemIds.Rock or ItemIds.Coin;
     }
 
     public static bool IsPlantFood(string? itemId) => itemId is Food or Plant or Fruit;
