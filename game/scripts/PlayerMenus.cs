@@ -348,7 +348,7 @@ public partial class Main
 	{
 		if (_menuHint is null) return;
 		string Binding(string action) => PlayerButtonBindings.Label(_buttonBindings.Get(action).Desktop);
-		_menuHint.Text = $"{Binding(ControllerActions.Inventory)} Inventory  |  {Binding(ControllerActions.Settlement)} Settlement  |  {Binding(ControllerActions.Settings)} Save / Settings  |  {Binding(ControllerActions.CycleTarget)} Target  |  Esc close / menu";
+		_menuHint.Text = $"{Binding(ControllerActions.Inventory)} Inventory  |  {Binding(ControllerActions.Settlement)} Settlement  |  {Binding(ControllerActions.Settings)} Save / Settings  |  {Binding(ControllerActions.CycleTarget)} Target lock  |  Esc close / menu";
 		_settingsStatus.Text = $"{(_clock.IsPaused ? "Paused" : "Running")} · {_clock.SimulationTime:0.0}s · {(int)_clock.Speed}x\n{_saveLoadStatus}";
 		if (_world.PlayerEntityId is not { } id || !_world.TryGetEntity(id, out var player) || player is null)
 		{
