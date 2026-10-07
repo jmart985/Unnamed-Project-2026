@@ -95,7 +95,8 @@ public sealed record EntitySnapshot(
     string? Parent1Id = null,
     string? Parent2Id = null,
     SleepState SleepState = SleepState.Awake,
-    string? BedId = null);
+    string? BedId = null,
+    string? EquippedTool = null);
 
 public sealed record FoodSourceSnapshot(
     string Id,
@@ -131,7 +132,7 @@ public static class WorldSnapshotSerializer
     private const int FarmSchemaVersion = 12;
     private const int ConstructionSchemaVersion = 13;
     private const int BedSchemaVersion = 14;
-    public const int CurrentSchemaVersion = 15;
+    public const int CurrentSchemaVersion = 16;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -161,7 +162,8 @@ public static class WorldSnapshotSerializer
                 entity.Parent1Id,
                 entity.Parent2Id,
                 entity.SleepState,
-                entity.BedId))
+                entity.BedId,
+                entity.EquippedTool))
             .ToArray();
         var foodSources = world.FoodSources
             .Select(source => new FoodSourceSnapshot(

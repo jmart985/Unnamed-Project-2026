@@ -57,4 +57,18 @@ public sealed class PlayerToolServiceTests
         Assert.Equal(TreeRegrowthService.AdultWoodCapacity, tree.Contents.Counts[ItemIds.Wood]);
         Assert.Equal(1, regrowth.Progress(tree.Id));
     }
+
+    [Fact]
+    public void SaveLoadPreservesEquippedAxe()
+    {
+        var catalog = SpeciesCatalog.LoadFromFile(Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
+        var session = NewGameSession.Create(catalog, PlayerCharacterProfile.Create("Saver"));
+        session.Player.TryAddCarried(ItemIds.Axe, 1);
+        new PlayerToolService(session.World).EquipAxe();
+        var json = WorldSnapshotSerializer.Serialize(session.World, 12);
+        var loaded = NewGameSession.Create(catalog, PlayerCharacterProfile.Create("Temp")).World;
+        WorldSnapshotSerializer.Load(loaded, json, catalog);
+
+        Assert.Equal(ItemIds.Axe, loaded.Entities.Single(entity => entity.Id == session.PlayerEntityId).EquippedTool);
+    }
 }

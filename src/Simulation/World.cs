@@ -824,6 +824,7 @@ public sealed class World
             restored.Parent1Id = entity.Parent1Id;
             restored.Parent2Id = entity.Parent2Id;
             restored.SetSleepState(entity.SleepState, entity.BedId);
+            restored.EquippedTool = entity.EquippedTool;
             foreach (var item in entity.Inventory)
             {
                 restored.TryAddCarried(item.Key, item.Value);
