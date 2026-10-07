@@ -588,7 +588,20 @@ public partial class Main : Node3D
 	{
 		_simulationTick = checked(_simulationTick + 1);
 		AdvanceNeeds(tickSeconds);
+		var depletedTreesBefore = _world.ResourcePiles
+			.Where(source => source.Id.StartsWith("tree-adult-", StringComparison.Ordinal)
+				&& source.Contents.Counts.GetValueOrDefault(ItemIds.Wood) == 0)
+			.Select(source => source.Id).ToHashSet(StringComparer.Ordinal);
 		_treeRegrowth?.Advance(tickSeconds);
+		var depletedTreesAfter = _world.ResourcePiles
+			.Where(source => source.Id.StartsWith("tree-adult-", StringComparison.Ordinal)
+				&& source.Contents.Counts.GetValueOrDefault(ItemIds.Wood) == 0)
+			.Select(source => source.Id).ToHashSet(StringComparer.Ordinal);
+		if (!depletedTreesBefore.SetEquals(depletedTreesAfter))
+		{
+			ClearResourceMarkers();
+			RebuildResourceMarkersFromWorld();
+		}
 		foreach (var entity in _world.Entities)
 			_woodHauling!.ReconcileSchedule(entity, _clock.SimulationTime);
 		AdvanceNavigationTick(tickSeconds);
@@ -748,7 +761,10 @@ public partial class Main : Node3D
 		{
 			var target = new WorldTarget(TargetKind.ResourcePile, source.Id);
 			if (source.Id.StartsWith("tree-adult-", StringComparison.Ordinal))
-				AddResourceMarker(target, source.Position, new Color(0.16f, 0.48f, 0.18f), tree: true);
+			{
+				var available = source.Contents.Counts.GetValueOrDefault(ItemIds.Wood) > 0;
+				AddResourceMarker(target, source.Position, available ? new Color(0.16f, 0.48f, 0.18f) : new Color(0.3f, 0.2f, 0.12f), tree: available);
+			}
 			else if (source.Id.StartsWith("rock-loose-", StringComparison.Ordinal))
 				AddResourceMarker(target, source.Position, new Color(0.42f, 0.44f, 0.46f), rock: true);
 			else

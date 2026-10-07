@@ -211,6 +211,8 @@ public partial class Main
                 ? new PlayerResourceService(_world, _speciesCatalog).ChopTree(id)
                 : new PlayerResourceService(_world, _speciesCatalog).PunchTree(id);
             ShowActionFeedback(result.Message);
+            ClearResourceMarkers();
+            RebuildResourceMarkersFromWorld();
             return;
         }
         if (id is null || !_world.TryGetEntity(id, out var defender) || defender is null)
