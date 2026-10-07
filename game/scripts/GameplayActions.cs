@@ -265,6 +265,14 @@ public partial class Main
             return;
         }
 
+        if (_selectedTarget.Kind == TargetKind.Fireplace)
+        {
+            var service = new FireplaceService(_world);
+            var result = service.AddFuel(player.Id, _selectedTarget.Id);
+            ShowActionFeedback(result.Message);
+            return;
+        }
+
         if (_selectedTarget.Kind == TargetKind.ConstructionSite)
         {
             OpenConstructionSite(_selectedTarget.Id);

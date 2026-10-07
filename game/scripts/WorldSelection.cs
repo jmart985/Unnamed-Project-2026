@@ -5,7 +5,7 @@ namespace UnnamedProject2026;
 
 public partial class Main
 {
-    private enum TargetKind { Entity, Food, ResourcePile, Stockpile, Workstation, Farm, ConstructionSite, Structure }
+    private enum TargetKind { Entity, Food, ResourcePile, Stockpile, Fireplace, Workstation, Farm, ConstructionSite, Structure }
     private sealed record WorldTarget(TargetKind Kind, string Id);
     private sealed record TargetView(WorldTarget Target, Node3D Node, Aabb Bounds, Aabb[] Parts, Vector3[] Samples)
     {
@@ -50,6 +50,7 @@ public partial class Main
         TargetKind.Food => _world.TryGetFoodSource(target.Id, out _),
         TargetKind.ResourcePile => _world.ResourcePiles.Any(pile => pile.Id == target.Id),
         TargetKind.Stockpile => _world.Stockpiles.Any(pile => pile.Id == target.Id),
+        TargetKind.Fireplace => _world.Fireplaces.Any(fire => fire.Id == target.Id),
         TargetKind.Workstation => _world.Workstations.Any(item => item.Id == target.Id),
         TargetKind.Farm => _world.Farms.Any(item => item.Id == target.Id),
         TargetKind.ConstructionSite => _world.ConstructionSites.Any(item => item.Id == target.Id),
@@ -77,6 +78,12 @@ public partial class Main
             if (TargetExists(target) && marker.IsVisibleInTree() && !marker.IsQueuedForDeletion())
                 targets.Add(new(target, marker, marker.GlobalTransform * marker.GetAabb(),
                     [marker.GlobalTransform * marker.GetAabb()], SampleMesh(marker).ToArray()));
+        foreach (var fire in _world.Fireplaces)
+        {
+            var target = new WorldTarget(TargetKind.Fireplace, fire.Id);
+            if (_fireplaceViews.TryGetValue(fire.Id, out var view) && view.IsVisibleInTree())
+                targets.Add(new(target, view, view.GlobalTransform * view.GetAabb(), [view.GlobalTransform * view.GetAabb()], SampleMesh(view).ToArray()));
+        }
         foreach (var workstation in _world.Workstations)
         {
             var target = new WorldTarget(TargetKind.Workstation, workstation.Id);
@@ -230,6 +237,11 @@ public partial class Main
                 ? $"{plot.Crop!.Id} · mature · {plot.Crop.HarvestYield} food ready"
                 : $"{plot.Crop!.Id} · growing {plot.Growth}/{plot.Crop.GrowthRequired}";
         }
+        else if (target.Kind == TargetKind.Fireplace)
+        {
+            var fire = _world.Fireplaces.Single(item => item.Id == target.Id);
+            detail = $"Fire {(fire.IsLit ? "lit" : "unlit")} · fuel {fire.Fuel} · F add wood / cook";
+        }
         else if (target.Kind == TargetKind.ConstructionSite)
         {
             var blueprint = _world.ConstructionSites.Single(item => item.Id == target.Id).Blueprint;
@@ -246,6 +258,7 @@ public partial class Main
             {
                 TargetKind.Food => _world.FoodSources.First(source => source.Id == target.Id).Contents,
                 TargetKind.ResourcePile => _world.ResourcePiles.First(source => source.Id == target.Id).Contents,
+                TargetKind.Fireplace => new ResourceContainer("fire", 0),
                 _ => _world.Stockpiles.First(source => source.Id == target.Id).Contents
             };
             detail = contents.Counts.Count == 0 ? "Empty" : string.Join(", ", contents.Counts.OrderBy(item => item.Key).Select(item => $"{item.Key}: {item.Value}"));
