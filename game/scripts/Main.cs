@@ -56,6 +56,7 @@ public partial class Main : Node3D
 	private string _saveLoadStatus = "No save loaded.";
 	private string _saveSlotPath = null!;
 	private WorldTarget? _selectedTarget;
+	private bool _targetLocked;
 	// Existing entity actions and the Settlement list consume the same selection.
 	private string? _selectedEntityId
 	{
