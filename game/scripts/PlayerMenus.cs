@@ -73,6 +73,10 @@ public partial class Main
 		_equipmentSummary.GetParent().AddChild(slots);
 		foreach (var slot in new[] { "Head", "Body", "Legs", "Feet", "Accessories" })
 			slots.AddChild(new Button { Text = $"{slot}\nPlanned", Disabled = true, CustomMinimumSize = new Vector2(170, 64), TooltipText = "Wearable equipment is planned; this slot is not usable yet." });
+		var toolActions = new HBoxContainer { Name = "ToolActions" };
+		_equipmentSummary.GetParent().AddChild(toolActions);
+		AddMenuButton(toolActions, "Craft axe", CraftPlayerAxe);
+		AddMenuButton(toolActions, "Equip axe", EquipPlayerAxe);
 
 		var settings = CreateMenuPanel("Save / Settings", out _settingsPanel);
 		_settingsTabs = new TabContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill };
@@ -163,6 +167,20 @@ public partial class Main
 		var index = _settingsTabs.GetTabCount() - 1;
 		_settingsTabs.SetTabDisabled(index, true);
 		_settingsTabs.GetTabBar().SetTabTooltip(index, $"Planned: {explanation}");
+	}
+
+	private void CraftPlayerAxe()
+	{
+		var result = new PlayerToolService(_world).CraftAxe();
+		ShowActionFeedback(result.Message);
+		UpdatePlayerMenuContents();
+	}
+
+	private void EquipPlayerAxe()
+	{
+		var result = new PlayerToolService(_world).EquipAxe();
+		ShowActionFeedback(result.Message);
+		UpdatePlayerMenuContents();
 	}
 
 	private VBoxContainer CreateMenuPanel(string title, out Control panel)
@@ -344,7 +362,7 @@ public partial class Main
 		_characterStatus.Text = $"STATUS\nSatiety: {player.Satiety:0.0} / 100\nCondition: {(player.Health.IsDead ? "Dead" : player.Health.IsIncapacitated ? "Incapacitated" : "Conscious")}\n\nBODY HEALTH\n" +
 			string.Join("\n", player.Health.Parts.Select(part => $"{part.Name}: {part.CurrentHealth:0.#} / {part.MaximumHealth:0.#}"));
 		_characterAttributes.Text = $"BASE ATTRIBUTES\n\nStrength: {stats.Strength:0.#}\nEndurance: {stats.Endurance:0.#}\nDefense: {stats.Defense:0.#}\nPerception: {stats.Perception:0.#}\nMovement speed: {stats.MovementSpeed:0.#}\nMaximum stamina: {stats.MaxStamina:0.#}";
-		_equipmentSummary.Text = $"EQUIPMENT\n\nLeft hand: {(_playerCharacter.LeftShieldEquipped ? "Shield" : "Empty")}\nRight hand: {(_playerCharacter.RightShieldEquipped ? "Shield" : "Empty")}\n\nUnarmed attacks are available in empty hands. Wearable items and equip/unequip are planned.\n\nPLANNED SLOTS";
+		_equipmentSummary.Text = $"EQUIPMENT\n\nTool: {(player.EquippedTool ?? "None")}\nLeft hand: {(_playerCharacter.LeftShieldEquipped ? "Shield" : "Empty")}\nRight hand: {(_playerCharacter.RightShieldEquipped ? "Shield" : "Empty")}\n\nUnarmed attacks are available in empty hands.\n\nPLANNED SLOTS";
 		var items = player.Inventory.Where(item => _itemCategory.Selected switch
 		{
 			1 => ItemIds.IsEdibleFood(item.Key), 2 => item.Key == ItemIds.Wood, 3 => item.Key == ItemIds.Coin, _ => true
