@@ -158,7 +158,9 @@ public partial class Main
         _feedbackSeconds = Math.Max(0, _feedbackSeconds - delta);
         _actionHud.Visible = _sessionActive && _menuState.ActiveMenu is null;
         _targetReticle.Visible = GameplayActionsAllowed;
-        Input.MouseMode = GameplayActionsAllowed ? Input.MouseModeEnum.Hidden : Input.MouseModeEnum.Visible;
+        // Captured mode keeps the OS cursor invisible and continuously reports relative
+        // movement for both horizontal and vertical camera look while the reticle stays centered.
+        Input.MouseMode = GameplayActionsAllowed ? Input.MouseModeEnum.Captured : Input.MouseModeEnum.Visible;
         var collect = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.Collect).Desktop);
         var interact = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.Interact).Desktop);
         var greet = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.Greet).Desktop);
