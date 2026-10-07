@@ -158,6 +158,7 @@ public partial class Main
         _feedbackSeconds = Math.Max(0, _feedbackSeconds - delta);
         _actionHud.Visible = _sessionActive && _menuState.ActiveMenu is null;
         _targetReticle.Visible = GameplayActionsAllowed;
+        Input.MouseMode = GameplayActionsAllowed ? Input.MouseModeEnum.Hidden : Input.MouseModeEnum.Visible;
         var collect = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.Collect).Desktop);
         var interact = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.Interact).Desktop);
         var greet = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.Greet).Desktop);
@@ -174,6 +175,7 @@ public partial class Main
         _targetResponse.GlobalPosition = new Vector3(view.Center.X, view.Bounds.End.Y + 0.35f, view.Center.Z);
         _targetResponse.Visible = true;
     }
+
 
     private void BeginCollectUse()
     {
