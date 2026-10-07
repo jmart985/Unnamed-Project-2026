@@ -206,7 +206,11 @@ public partial class Main
         SyncPlayerPosition();
         if (id is not null && _selectedTarget is { Kind: TargetKind.ResourcePile } resourceTarget && resourceTarget.Id == id)
         {
-            ShowActionFeedback(new PlayerResourceService(_world, _speciesCatalog).PunchTree(id).Message);
+            var player = _world.Entities.FirstOrDefault(entity => entity.Id == _world.PlayerEntityId);
+            var result = player?.EquippedTool == ItemIds.Axe
+                ? new PlayerResourceService(_world, _speciesCatalog).ChopTree(id)
+                : new PlayerResourceService(_world, _speciesCatalog).PunchTree(id);
+            ShowActionFeedback(result.Message);
             return;
         }
         if (id is null || !_world.TryGetEntity(id, out var defender) || defender is null)

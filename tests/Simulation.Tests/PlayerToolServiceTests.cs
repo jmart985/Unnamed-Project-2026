@@ -23,4 +23,21 @@ public sealed class PlayerToolServiceTests
         Assert.Equal(ToolCraftResultCode.Crafted, equipped.Code);
         Assert.Equal(ItemIds.Axe, session.Player.EquippedTool);
     }
+
+    [Fact]
+    public void ChoppingRequiresEquippedAxeAndYieldsOneWood()
+    {
+        var catalog = SpeciesCatalog.LoadFromFile(Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
+        var session = NewGameSession.Create(catalog, PlayerCharacterProfile.Create("Chopper"), survivalGathering: true);
+        var tree = session.World.ResourcePiles.Single(pile => pile.Id == "tree-adult-1");
+        session.World.TrySetEntityPosition(session.PlayerEntityId, tree.Position);
+        var service = new PlayerResourceService(session.World, catalog);
+
+        Assert.Equal(PlayerResourceResultCode.NotUsable, service.ChopTree(tree.Id).Code);
+        session.Player.TryAddCarried(ItemIds.Axe, 1);
+        new PlayerToolService(session.World).EquipAxe();
+        Assert.Equal(PlayerResourceResultCode.Collected, service.ChopTree(tree.Id).Code);
+        Assert.Equal(1, session.Player.Inventory[ItemIds.Wood]);
+        Assert.Equal(11, tree.Contents.Counts[ItemIds.Wood]);
+    }
 }
