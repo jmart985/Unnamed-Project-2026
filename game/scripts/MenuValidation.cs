@@ -118,8 +118,8 @@ public partial class Main
             Require(_inventoryPanel.Visible && !_settingsPanel.Visible, "rebound menu key works");
             _buttonBindings.TryBind(ControllerActions.Interact, false, new InputEventMouseButton { ButtonIndex = MouseButton.Middle, Pressed = true }, out var mouseReason);
             Require(InputMap.ActionHasEvent(ControllerActions.Interact, new InputEventMouseButton { ButtonIndex = MouseButton.Middle }), mouseReason);
-            _buttonBindings.TryBind(ControllerActions.Settings, true, new InputEventJoypadButton { ButtonIndex = JoyButton.LeftShoulder, Pressed = true }, out var padReason);
-            Require(InputMap.ActionHasEvent(ControllerActions.Settings, new InputEventJoypadButton { ButtonIndex = JoyButton.LeftShoulder }), padReason);
+            _buttonBindings.TryBind(ControllerActions.Settings, true, new InputEventJoypadButton { ButtonIndex = JoyButton.RightStick, Pressed = true }, out var padReason);
+            Require(InputMap.ActionHasEvent(ControllerActions.Settings, new InputEventJoypadButton { ButtonIndex = JoyButton.RightStick }), padReason);
             var validPath = _buttonBindings.Path;
             _buttonBindings.Path = validPath + "/invalid-child.json";
             Require(!_buttonBindings.TryBind(ControllerActions.Inventory, false, new InputEventKey { PhysicalKeycode = Key.P, Pressed = true }, out _)
