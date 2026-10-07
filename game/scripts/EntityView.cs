@@ -159,7 +159,7 @@ public partial class EntityView : CharacterBody3D
         AddPart(new BoxMesh { Size = bodySize }, new Vector3(0, bodyY, 0), bodyColor);
         AddPart(new BoxMesh { Size = new Vector3(bodySize.X * 0.9f, bodySize.Y * 0.85f, bodySize.Z * 0.4f) },
             new Vector3(0, bodyY - 0.02f, bodySize.Z * 0.38f), bodyColor.Darkened(0.08f));
-        if (_speciesId == "cow")
+        if (_bodyPlan == CreatureBodyPlan.Ungulate)
         {
             AddPart(new BoxMesh { Size = new Vector3(0.5f, 0.3f, 0.5f) }, new Vector3(0.2f, bodyY + bodySize.Y * 0.25f, 0.1f), accentColor);
             AddPart(new BoxMesh { Size = new Vector3(0.3f, 0.2f, 0.25f) }, new Vector3(0, legLength - 0.02f, bodySize.Z * 0.3f), new Color(0.95f, 0.7f, 0.7f));
@@ -176,7 +176,7 @@ public partial class EntityView : CharacterBody3D
             AddPart(new SphereMesh { Radius = 0.04f, Height = 0.08f }, new Vector3(x, 0.17f, -0.58f), Colors.Black, parent: head);
         }
 
-        if (_speciesId == "cow")
+        if (_bodyPlan == CreatureBodyPlan.Ungulate)
         {
             foreach (var x in new[] { -0.2f, 0.2f })
             {
@@ -187,18 +187,18 @@ public partial class EntityView : CharacterBody3D
         _gait.Limbs.Add(new ProceduralGait.Limb { Pivot = head, Phase = 0.5f, Amplitude = 0.07f, IdleAmplitude = 0.12f, IdleFrequency = 0.7f });
 
         var tail = AddJoint(_rig, new Vector3(0, bodyY + bodySize.Y * 0.2f, bodySize.Z * 0.5f));
-        var tailLength = _speciesId == "wolf" ? 0.6f : 0.5f;
+        var tailLength = _bodyPlan == CreatureBodyPlan.Canid ? 0.6f : 0.5f;
         AddPart(new BoxMesh { Size = new Vector3(0.1f, 0.1f, tailLength) }, new Vector3(0, -0.07f, tailLength * 0.5f), accentColor, new Vector3(25, 0, 0), tail);
         _gait.Limbs.Add(new ProceduralGait.Limb { Pivot = tail, Axis = Vector3.Up, Phase = 0, Amplitude = 0.35f, IdleAmplitude = 0.3f, IdleFrequency = 1.3f });
 
         var frontZ = -bodySize.Z * 0.32f;
         var rearZ = bodySize.Z * 0.32f;
         var legX = bodySize.X * 0.32f;
-        var thickness = _speciesId == "wolf" ? 0.12f : _speciesId == "ape" ? 0.18f : 0.16f;
-        var handColor = _speciesId == "ape" ? new Color(0.22f, 0.14f, 0.09f) : accentColor;
+        var thickness = _bodyPlan == CreatureBodyPlan.Canid ? 0.12f : _bodyPlan == CreatureBodyPlan.Primate ? 0.18f : 0.16f;
+        var handColor = _bodyPlan == CreatureBodyPlan.Primate ? new Color(0.22f, 0.14f, 0.09f) : accentColor;
         // Apes knuckle-walk: the long front limbs carry weight on the ground.
         // FastGroup pairs both front limbs, then both hind legs for a gallop.
-        var ape = _speciesId == "ape";
+        var ape = _bodyPlan == CreatureBodyPlan.Primate;
         AddLeg(_rig, new Vector3(-legX, legLength, frontZ), legLength, thickness, bodyColor, handColor, 0, 0.55f, 0.6f, ape ? 1 : 0);
         AddLeg(_rig, new Vector3(legX, legLength, rearZ), legLength, thickness, bodyColor, accentColor, 0, 0.55f, 0.6f, ape ? 2 : 0);
         AddLeg(_rig, new Vector3(legX, legLength, frontZ), legLength, thickness, bodyColor, handColor, Mathf.Pi, 0.55f, 0.6f, ape ? 1 : 0);
