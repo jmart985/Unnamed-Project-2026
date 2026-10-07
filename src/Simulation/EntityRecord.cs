@@ -48,6 +48,7 @@ public sealed class EntityRecord
     public string? BedId { get; internal set; }
     public string? WaitingReason { get; internal set; }
     public string? TargetId { get; internal set; }
+    public string? EquippedTool { get; internal set; }
     public string? Parent1Id { get; internal set; }
     public string? Parent2Id { get; internal set; }
 

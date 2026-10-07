@@ -5,6 +5,16 @@ public sealed record ToolCraftResult(ToolCraftResultCode Code, string Message);
 
 public sealed class PlayerToolService(World world)
 {
+    public ToolCraftResult EquipAxe()
+    {
+        if (world.PlayerEntityId is not { } id || !world.TryGetEntity(id, out var player) || player is null || player.Health.IsIncapacitated)
+            return new(ToolCraftResultCode.Unavailable, "The player cannot equip tools while incapacitated.");
+        if (player.Inventory.GetValueOrDefault(ItemIds.Axe) < 1)
+            return new(ToolCraftResultCode.MissingMaterials, "Craft an axe before equipping it.");
+        player.EquippedTool = ItemIds.Axe;
+        return new(ToolCraftResultCode.Crafted, "Equipped the axe.");
+    }
+
     public ToolCraftResult CraftAxe()
     {
         if (world.PlayerEntityId is not { } id || !world.TryGetEntity(id, out var player) || player is null || player.Health.IsIncapacitated)

@@ -18,5 +18,9 @@ public sealed class PlayerToolServiceTests
         Assert.Equal(1, session.Player.Inventory[ItemIds.Axe]);
         Assert.Equal(0, session.Player.Inventory.GetValueOrDefault(ItemIds.Wood));
         Assert.Equal(0, session.Player.Inventory.GetValueOrDefault(ItemIds.Rock));
+
+        var equipped = new PlayerToolService(session.World).EquipAxe();
+        Assert.Equal(ToolCraftResultCode.Crafted, equipped.Code);
+        Assert.Equal(ItemIds.Axe, session.Player.EquippedTool);
     }
 }
