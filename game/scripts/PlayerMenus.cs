@@ -324,6 +324,12 @@ public partial class Main
 		}
 		if (input.IsActionPressed(ControllerActions.CloseMenu))
 		{
+			if (_menuState.ActiveMenu is null && (_selectedTarget is not null || _targetLocked))
+			{
+				ClearTargetLock();
+				GetViewport().SetInputAsHandled();
+				return;
+			}
 			if (_menuState.ActiveMenu is null) ToggleMenu(PlayerMenu.Settings);
 			else ClosePlayerMenus();
 		}

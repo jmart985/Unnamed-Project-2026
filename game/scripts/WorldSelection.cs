@@ -216,6 +216,17 @@ public partial class Main
         UpdateWorldSelection();
     }
 
+    private void ClearTargetLock()
+    {
+        if (_selectedTarget is null && !_targetLocked) return;
+        _selectedTarget = null;
+        _targetLocked = false;
+        _targetLockLostSeconds = 0;
+        _lastActionMessage = "Target lock cleared.";
+        UpdateInspector();
+        UpdateWorldSelection();
+    }
+
     private void UpdateWorldSelection()
     {
         if (_targetHud is null) return;
