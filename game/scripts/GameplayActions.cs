@@ -113,8 +113,8 @@ public partial class Main
         GetWindow().FocusExited += CancelGameplayActions;
         _playerCharacter.AttackStarted += () =>
         {
-            _swingTargetId = GameplayActionsAllowed ? _selectedEntityId : null;
-            ShowActionFeedback(_swingTargetId is null ? "Select an entity with the target key before attacking." : "Swinging…");
+            _swingTargetId = GameplayActionsAllowed && _selectedTarget is { Kind: TargetKind.Entity or TargetKind.ResourcePile } target ? target.Id : null;
+            ShowActionFeedback(_swingTargetId is null ? "Select an entity or adult tree before attacking." : "Swinging…");
         };
         _playerCharacter.StrikeReleased += ResolvePlayerStrike;
     }
@@ -204,6 +204,11 @@ public partial class Main
         var id = _swingTargetId; _swingTargetId = null;
         if (!GameplayActionsAllowed) return;
         SyncPlayerPosition();
+        if (id is not null && _selectedTarget is { Kind: TargetKind.ResourcePile } resourceTarget && resourceTarget.Id == id)
+        {
+            ShowActionFeedback(new PlayerResourceService(_world, _speciesCatalog).PunchTree(id).Message);
+            return;
+        }
         if (id is null || !_world.TryGetEntity(id, out var defender) || defender is null)
         { ShowActionFeedback("Miss: the selected entity is unavailable."); return; }
         var targets = WorldTargets();

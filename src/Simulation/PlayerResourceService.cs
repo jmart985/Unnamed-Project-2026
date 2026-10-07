@@ -38,6 +38,23 @@ public sealed class PlayerResourceService(World world, SpeciesCatalog species)
             : new(PlayerResourceResultCode.Full, $"Collection rejected: {result}.");
     }
 
+    public PlayerResourceResult PunchTree(string id)
+    {
+        if (!TryPlayer(out var player)) return new(PlayerResourceResultCode.Unavailable, "The player cannot gather while incapacitated.");
+        if (!id.StartsWith("tree-adult-", StringComparison.Ordinal))
+            return new(PlayerResourceResultCode.NotUsable, "Only an adult tree can be punched for starter wood.");
+        var target = world.ResourcePiles.FirstOrDefault(source => source.Id == id);
+        if (target is null) return new(PlayerResourceResultCode.Missing, "The tree no longer exists.");
+        if (MeleeReachValidator.Validate(player!.Position, target.Position, Reach) != MeleeReachResult.InRange)
+            return new(PlayerResourceResultCode.OutOfRange, "Move within 2 m to punch the tree.");
+        if (target.Contents.Counts.GetValueOrDefault(ItemIds.Wood) <= 0)
+            return new(PlayerResourceResultCode.Empty, "This tree has no starter wood left.");
+        var result = ResourceTransferService.TryPickUp(target.Contents, player, ItemIds.Wood, 1);
+        return result == ResourceMutationResult.Success
+            ? new(PlayerResourceResultCode.Collected, $"Punch gathered 1 wood. Carried {player.Inventory.GetValueOrDefault(ItemIds.Wood)}.")
+            : new(PlayerResourceResultCode.Full, $"Gathering rejected: {result}.");
+    }
+
     public PlayerResourceResult UseCarriedFood()
     {
         if (!TryPlayer(out var player) || !species.TryGet(player!.SpeciesId, out var definition) || definition is null)
