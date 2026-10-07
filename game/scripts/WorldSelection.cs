@@ -13,6 +13,7 @@ public partial class Main
     }
 
     private const float TargetRange = 40;
+    private const double TargetLockGraceSeconds = 1.25;
     private Label _targetHud = null!;
     private Label _targetLockMarker = null!;
     // Retained as a non-rendered compatibility state for existing validation hooks.
@@ -178,6 +179,25 @@ public partial class Main
             .OrderBy(target => target.Target.Kind).ThenBy(target => target.Target.Id, StringComparer.Ordinal).ToList();
     }
 
+    private void AdvanceTargetLockGrace(double delta)
+    {
+        if (!_targetLocked || _selectedTarget is not { } target) return;
+        if (!TargetExists(target))
+        {
+            _selectedTarget = null;
+            _targetLocked = false;
+            _targetLockLostSeconds = 0;
+            return;
+        }
+
+        var visible = VisibleWorldTargets().Any(view => view.Target == target);
+        _targetLockLostSeconds = visible ? 0 : _targetLockLostSeconds + delta;
+        if (_targetLockLostSeconds < TargetLockGraceSeconds) return;
+        _selectedTarget = null;
+        _targetLocked = false;
+        _targetLockLostSeconds = 0;
+    }
+
     private void CycleWorldTarget()
     {
         var targets = VisibleWorldTargets();
@@ -189,6 +209,7 @@ public partial class Main
                 .ThenBy(target => target.Center.DistanceSquaredTo(camera.GlobalPosition)).First().Target
             : targets[(previous + 1) % targets.Count].Target;
         _targetLocked = _selectedTarget is not null;
+        _targetLockLostSeconds = 0;
         if (_selectedEntityId is { } id) ShowSelectedSchedule(id);
         _lastActionMessage = _selectedTarget is { } target ? $"Selected {target.Kind}: {target.Id}." : "No visible targets within 40 m.";
         UpdateInspector();
@@ -198,10 +219,11 @@ public partial class Main
     private void UpdateWorldSelection()
     {
         if (_targetHud is null) return;
-        if (_selectedTarget is { } selected && (!TargetExists(selected) || _targetLocked && !VisibleWorldTargets().Any(view => view.Target == selected)))
+        if (_selectedTarget is { } selected && !TargetExists(selected))
         {
             _selectedTarget = null;
             _targetLocked = false;
+            _targetLockLostSeconds = 0;
         }
         var gameplay = _sessionActive && _menuState.ActiveMenu is null;
         _targetHud.Visible = gameplay;

@@ -57,6 +57,7 @@ public partial class Main : Node3D
 	private string _saveSlotPath = null!;
 	private WorldTarget? _selectedTarget;
 	private bool _targetLocked;
+	private double _targetLockLostSeconds;
 	// Existing entity actions and the Settlement list consume the same selection.
 	private string? _selectedEntityId
 	{
@@ -181,6 +182,7 @@ public partial class Main : Node3D
 		_clock.Advance(delta, AdvanceSimulationTick);
 		AdvanceCollectUse(delta);
 		UpdateGameplayFeedback(delta);
+		AdvanceTargetLockGrace(delta);
 		SyncPlayerState();
 		SyncEntityViews();
 		UpdateStatus();
