@@ -291,6 +291,12 @@ public partial class Main
         Part(new(0, 1.5f, -1.9f), new(4, 3, 0.2f), wall);
         Part(new(-1.25f, 1.5f, 1.9f), new(1.5f, 3, 0.2f), wall); Part(new(1.25f, 1.5f, 1.9f), new(1.5f, 3, 0.2f), wall);
         Part(new(0, 3.15f, 0), new(4.5f, 0.3f, 4.5f), roof);
+        // Keep the bed inside the open footprint so the shelter communicates its usable rest point.
+        var bedFrame = new StandardMaterial3D { AlbedoColor = new Color(0.3f, 0.16f, 0.08f) };
+        var bedding = new StandardMaterial3D { AlbedoColor = new Color(0.72f, 0.78f, 0.86f) };
+        Part(new(-0.9f, 0.42f, -0.75f), new(1.45f, 0.25f, 2.25f), bedFrame);
+        Part(new(-0.9f, 0.62f, -0.75f), new(1.3f, 0.18f, 2.1f), bedding);
+        Part(new(-0.9f, 0.78f, -1.55f), new(1.3f, 0.22f, 0.28f), bedding);
         if (structure.IsClosed) Part(new(0, 1.2f, 1.88f), new(1, 2.4f, 0.12f), roof);
         root.AddChild(new Label3D { Text = structure.IsClosed ? "STARTER HUT · DOOR CLOSED" : "STARTER HUT · DOOR OPEN",
             Position = new Vector3(0, 3.8f, 0), Billboard = BaseMaterial3D.BillboardModeEnum.Enabled, FontSize = 34, OutlineSize = 7, NoDepthTest = true });
