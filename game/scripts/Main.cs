@@ -30,6 +30,7 @@ public partial class Main : Node3D
 	private readonly Dictionary<string, EntityView> _entityViews = new(StringComparer.Ordinal);
 	private readonly Dictionary<string, Button> _entityButtons = new(StringComparer.Ordinal);
 	private readonly Dictionary<WorldTarget, MeshInstance3D> _resourceMarkers = [];
+	private readonly Dictionary<string, MeshInstance3D> _fireplaceViews = [];
 	private FoodConsumptionService? _foodConsumption;
 	private WanderingService? _wandering;
 	private WoodHaulingService? _woodHauling;
@@ -366,6 +367,7 @@ public partial class Main : Node3D
 		_simulationTick = 0;
 		ClearEntityViews();
 		ClearResourceMarkers();
+		ClearFireplaceViews();
 		DetachSocialFeedback();
 		_world = session.World;
 		_treeRegrowth = new TreeRegrowthService(_world);
@@ -405,6 +407,7 @@ public partial class Main : Node3D
 		_squad = new SquadOrderService(_world, GetNavigationAdapter);
 
 		RebuildResourceMarkersFromWorld();
+		RebuildFireplaceViews();
 
 		var player = session.Player;
 		_playerCharacter.GlobalPosition = new Vector3(
@@ -711,6 +714,28 @@ public partial class Main : Node3D
 		_resourceMarkers.Clear();
 	}
 
+	private void ClearFireplaceViews()
+	{
+		foreach (var view in _fireplaceViews.Values) view.QueueFree();
+		_fireplaceViews.Clear();
+	}
+
+	private void RebuildFireplaceViews()
+	{
+		ClearFireplaceViews();
+		foreach (var fire in _world.Fireplaces)
+		{
+			var view = new MeshInstance3D
+			{
+				Name = fire.Id,
+				Mesh = new CylinderMesh { TopRadius = 0.35f, BottomRadius = 0.45f, Height = 0.25f },
+				Position = new Vector3(fire.Position.X, fire.Position.Y + 0.12f, fire.Position.Z),
+				MaterialOverride = new StandardMaterial3D { AlbedoColor = new Color(0.9f, 0.25f, 0.05f), EmissionEnabled = true, Emission = new Color(0.5f, 0.08f, 0.01f) }
+			};
+			AddChild(view); _fireplaceViews[fire.Id] = view;
+		}
+	}
+
 	private void RebuildResourceMarkersFromWorld()
 	{
 		foreach (var source in _world.FoodSources)
@@ -939,6 +964,7 @@ public partial class Main : Node3D
 		ClearEntityViews();
 		ClearResourceMarkers();
 		RebuildResourceMarkersFromWorld();
+		RebuildFireplaceViews();
 		_playerProfile = _world.PlayerProfile;
 		_sessionSeed = _world.SessionSeed ?? NewGameSession.DefaultSeed;
 		if (_world.PlayerEntityId is { } playerId
