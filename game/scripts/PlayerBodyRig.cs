@@ -36,12 +36,13 @@ public sealed class PlayerBodyRig
         return joint;
     }
 
-    private static void Part(Node3D parent, Mesh mesh, Vector3 position, Color color)
+    private static void Part(Node3D parent, Mesh mesh, Vector3 position, Color color, Vector3? scale = null)
     {
         parent.AddChild(new MeshInstance3D
         {
             Mesh = mesh,
             Position = position,
+            Scale = scale ?? Vector3.One,
             MaterialOverride = new StandardMaterial3D { AlbedoColor = color }
         });
     }
@@ -60,10 +61,14 @@ public sealed class PlayerBodyRig
 
         Torso = Joint(Root, "Torso", new Vector3(0, p.LegLength, 0));
         // Pelvis stays with the hips, the chest block sits on the twisting torso joint.
-        Part(Root, new BoxMesh { Size = new Vector3(0.4f * scale * p.HipSpan, 0.2f * scale, torsoDepth * 0.95f) },
-            new Vector3(0, p.LegLength, 0), trousers);
-        Part(Torso, new BoxMesh { Size = new Vector3(torsoWidth * p.ShoulderSpan, p.TorsoLength, torsoDepth) },
-            new Vector3(0, p.TorsoLength * 0.5f + 0.04f, 0), shirt);
+        // Rounded core volumes avoid the disconnected block silhouette while the
+        // surrounding pivots still provide precise animation and combat control.
+        Part(Root, new SphereMesh { Radius = 0.5f, Height = 2f },
+            new Vector3(0, p.LegLength, 0), trousers,
+            new Vector3(0.42f * scale * p.HipSpan, 0.22f * scale, torsoDepth * 0.52f));
+        Part(Torso, new SphereMesh { Radius = 0.5f, Height = 2f },
+            new Vector3(0, p.TorsoLength * 0.5f + 0.04f, 0), shirt,
+            new Vector3(torsoWidth * p.ShoulderSpan, p.TorsoLength, torsoDepth));
         if (p.ChestSize > 0)
         {
             foreach (var x in new[] { -0.09f, 0.09f })
