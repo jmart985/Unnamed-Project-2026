@@ -51,6 +51,26 @@ public sealed class PlayerBodyAndSwingTests
     }
 
     [Fact]
+    public void BodyPartAdjustmentsAreBoundedAndMirrorSymmetricParts()
+    {
+        var left = PlayerBodyPartAdjustment.Create("LeftShoulder", 0.2, -0.1, 0.05);
+        var right = PlayerBodyCustomization.Mirror(left);
+
+        Assert.Equal("RightShoulder", right.PartName);
+        Assert.Equal(-0.2, right.X);
+        Assert.Equal(-0.1, right.Y);
+        Assert.Equal(0.05, right.Z);
+        Assert.Equal("Head", PlayerBodyCustomization.Reset("Head").PartName);
+    }
+
+    [Fact]
+    public void BodyPartAdjustmentsRejectUnsupportedOrUnboundedValues()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => PlayerBodyPartAdjustment.Create("Head", 0.26));
+        Assert.Throws<ArgumentException>(() => PlayerBodyCustomization.Reset("Tail"));
+    }
+
+    [Fact]
     public void InvalidProfileIsRejected()
     {
         Assert.Throws<ArgumentException>(() =>
