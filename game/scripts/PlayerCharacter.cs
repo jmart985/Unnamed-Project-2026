@@ -28,6 +28,10 @@ public partial class PlayerCharacter : CharacterBody3D
 	[Export] public float AttackDuration { get; set; } = 0.22f;
 	[Export] public float AttackCooldown { get; set; } = 0.35f;
 	[Export] public float MouseSensitivity { get; set; } = 0.01f;
+	[Export] public float CameraZoomDistance { get; set; } = 5.5f;
+	[Export] public float CameraFirstPersonDistance { get; set; } = 0.12f;
+	[Export] public float CameraZoomStep { get; set; } = 0.75f;
+	[Export] public float CameraZoomSmoothing { get; set; } = 12.0f;
 	[Export] public bool LeftShieldEquipped { get; set; }
 	[Export] public bool RightShieldEquipped { get; set; }
 
@@ -41,6 +45,7 @@ public partial class PlayerCharacter : CharacterBody3D
 	private bool _swingLeft;
 	private float _headPitch;
 	private float _headPitchTarget;
+	private float _cameraZoomDistance;
 
 	public bool IsAttacking => _swing.IsActive;
 	public string EntityId { get; private set; } = string.Empty;
@@ -82,7 +87,8 @@ public partial class PlayerCharacter : CharacterBody3D
 		collision.Shape = new CapsuleShape3D { Radius = radius, Height = proportions.Height };
 		collision.Position = new Vector3(0, proportions.Height * 0.5f, 0);
 		var camera = GetNode<Camera3D>("Camera3D");
-		camera.Position = new Vector3(0, proportions.Height * 1.45f, 5.5f);
+		_cameraZoomDistance = CameraZoomDistance;
+		camera.Position = new Vector3(0, proportions.Height * 1.45f, _cameraZoomDistance);
 
 		BuildGait();
 	}
@@ -166,6 +172,15 @@ public partial class PlayerCharacter : CharacterBody3D
 			_headPitchTarget = Mathf.Clamp(_headPitchTarget - motion.Relative.Y * MouseSensitivity, -0.6f, 0.6f);
 			return;
 		}
+		if (@event is InputEventMouseButton wheel && wheel.Pressed
+			&& wheel.ButtonIndex is MouseButton.WheelUp or MouseButton.WheelDown)
+		{
+			_cameraZoomDistance = Mathf.Clamp(_cameraZoomDistance +
+				(wheel.ButtonIndex == MouseButton.WheelUp ? -CameraZoomStep : CameraZoomStep),
+				CameraFirstPersonDistance, CameraZoomDistance);
+			GetViewport().SetInputAsHandled();
+			return;
+		}
 
 		if (@event is InputEventKey key && (!key.Pressed || key.Echo))
 		{
@@ -226,7 +241,10 @@ public partial class PlayerCharacter : CharacterBody3D
             StrikeReleased?.Invoke(_swingLeft, CombatAim.PartForPitch(_headPitch, _swingLeft));
         }
 
-        ApplyAttackPose();
+		ApplyAttackPose();
+		var camera = GetNode<Camera3D>("Camera3D");
+		camera.Position = new Vector3(camera.Position.X, camera.Position.Y,
+			Mathf.MoveToward(camera.Position.Z, _cameraZoomDistance, CameraZoomSmoothing * physicsDelta));
 
         if (IsOnFloor())
         {

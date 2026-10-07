@@ -25,6 +25,7 @@ public partial class Main
     private WorldTarget? _collectTarget;
     private string? _swingTargetId;
     private Label _actionHud = null!;
+    private Label _targetReticle = null!;
     private Label3D _targetResponse = null!;
     private string? _responseTargetId;
     private double _feedbackSeconds;
@@ -107,6 +108,19 @@ public partial class Main
         _actionHud.AddThemeConstantOverride("shadow_offset_x", 2);
         _actionHud.AddThemeConstantOverride("shadow_offset_y", 2);
         _menuHud.AddChild(_actionHud);
+        _targetReticle = new Label
+        {
+            Name = "TargetReticle", Text = "+", HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center, MouseFilter = Control.MouseFilterEnum.Ignore,
+            Size = new Vector2(32, 32), Position = new Vector2(-16, -16), Visible = false
+        };
+        _targetReticle.SetAnchorsPreset(Control.LayoutPreset.Center);
+        _targetReticle.AddThemeFontSizeOverride("font_size", 24);
+        _targetReticle.AddThemeColorOverride("font_color", new Color(1, 1, 1, 0.9f));
+        _targetReticle.AddThemeColorOverride("font_shadow_color", Colors.Black);
+        _targetReticle.AddThemeConstantOverride("shadow_offset_x", 2);
+        _targetReticle.AddThemeConstantOverride("shadow_offset_y", 2);
+        _menuHud.AddChild(_targetReticle);
         _targetResponse = new Label3D { Name = "TargetResponse", Visible = false,
             Billboard = BaseMaterial3D.BillboardModeEnum.Enabled, FontSize = 40, PixelSize = 0.008f };
         AddChild(_targetResponse);
@@ -143,6 +157,7 @@ public partial class Main
         UpdateSocialPopups(delta);
         _feedbackSeconds = Math.Max(0, _feedbackSeconds - delta);
         _actionHud.Visible = _sessionActive && _menuState.ActiveMenu is null;
+        _targetReticle.Visible = GameplayActionsAllowed;
         var collect = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.Collect).Desktop);
         var interact = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.Interact).Desktop);
         var greet = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.Greet).Desktop);

@@ -177,6 +177,7 @@ public partial class Main
             ? targets.OrderBy(target => camera.UnprojectPosition(target.Center).DistanceSquaredTo(center))
                 .ThenBy(target => target.Center.DistanceSquaredTo(camera.GlobalPosition)).First().Target
             : targets[(previous + 1) % targets.Count].Target;
+        _targetLocked = _selectedTarget is not null;
         if (_selectedEntityId is { } id) ShowSelectedSchedule(id);
         _lastActionMessage = _selectedTarget is { } target ? $"Selected {target.Kind}: {target.Id}." : "No visible targets within 40 m.";
         UpdateInspector();
@@ -186,22 +187,32 @@ public partial class Main
     private void UpdateWorldSelection()
     {
         if (_targetHud is null) return;
-        if (_selectedTarget is { } selected && !TargetExists(selected)) _selectedTarget = null;
+        if (_selectedTarget is { } selected && (!TargetExists(selected) || _targetLocked && !VisibleWorldTargets().Any(view => view.Target == selected)))
+        {
+            _selectedTarget = null;
+            _targetLocked = false;
+        }
         var gameplay = _sessionActive && _menuState.ActiveMenu is null;
         _targetHud.Visible = gameplay;
         UpdateGameplayFeedback(0);
+        if (_targetReticle is not null)
+        {
+            _targetReticle.Text = _targetLocked ? "◆" : "+";
+            _targetReticle.AddThemeColorOverride("font_color", _targetLocked
+                ? new Color(1, 0.78f, 0.18f, 0.95f) : new Color(1, 1, 1, 0.9f));
+        }
         _targetRing.Visible = false;
         ((StandardMaterial3D)_targetRing.MaterialOverride).AlbedoColor = new Color(1, 0.85f, 0.1f);
         var binding = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.CycleTarget).Desktop);
-        var hint = $"{binding}: select / cycle visible targets (40 m)";
+        var hint = $"{binding}: {(_targetLocked ? "switch / unlock target" : "lock target at reticle")} (40 m)";
         if (_selectedTarget is not { } target)
         {
-            _targetHud.Text = $"TARGET: None\n{hint}";
+            _targetHud.Text = $"TARGET LOCK: None\n{hint}";
             return;
         }
         var targets = WorldTargets();
         var view = targets.FirstOrDefault(view => view.Target == target);
-        if (view is null) { _selectedTarget = null; _targetHud.Text = $"TARGET: None\n{hint}"; return; }
+        if (view is null) { _selectedTarget = null; _targetLocked = false; _targetHud.Text = $"TARGET LOCK: None\n{hint}"; return; }
         var camera = GetViewport().GetCamera3D();
         var visible = camera is not null && TargetVisible(view, camera, targets);
         _targetRing.Visible = gameplay && visible;
@@ -266,7 +277,7 @@ public partial class Main
                     detail = "Loose rock · collect to carry";
                 else
                     detail = ContainerSummary(pile.Contents);
-                _targetHud.Text = $"TARGET: {target.Kind} · {target.Id}{(visible ? "" : " (out of view)")}\n{detail}\n{hint}";
+                _targetHud.Text = $"TARGET LOCK: {target.Kind} · {target.Id}{(visible ? "" : " (out of view)")}\n{detail}\n{hint}";
                 return;
             }
             var contents = target.Kind switch
@@ -278,7 +289,7 @@ public partial class Main
             };
             detail = contents.Counts.Count == 0 ? "Empty" : string.Join(", ", contents.Counts.OrderBy(item => item.Key).Select(item => $"{item.Key}: {item.Value}"));
         }
-        _targetHud.Text = $"TARGET: {target.Kind} · {target.Id}{(visible ? "" : " (out of view)")}\n{detail}\n{hint}";
+        _targetHud.Text = $"TARGET LOCK: {target.Kind} · {target.Id}{(visible ? "" : " (out of view)")}\n{detail}\n{hint}";
     }
 
     private static string ContainerSummary(ResourceContainer container) => container.Counts.Count == 0
