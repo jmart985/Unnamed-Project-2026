@@ -76,6 +76,7 @@ public partial class Main : Node3D
 	private HSlider _muscleChoice = null!;
 	private Label _weightLabel = null!;
 	private Label _muscleLabel = null!;
+	private Label _creationPreview = null!;
 	private Label _creationError = null!;
 	private PlayerCharacterProfile? _playerProfile;
 	private int _sessionSeed = NewGameSession.DefaultSeed;
@@ -100,8 +101,12 @@ public partial class Main : Node3D
 		_muscleChoice = GetNode<HSlider>("CharacterCreation/Panel/Form/Muscle");
 		_weightLabel = GetNode<Label>("CharacterCreation/Panel/Form/WeightLabel");
 		_muscleLabel = GetNode<Label>("CharacterCreation/Panel/Form/MuscleLabel");
-		_weightChoice.ValueChanged += value => _weightLabel.Text = $"Weight: {value * 100:0}%";
-		_muscleChoice.ValueChanged += value => _muscleLabel.Text = $"Muscle: {value * 100:0}%";
+		_creationPreview = GetNode<Label>("CharacterCreation/Panel/Form/Preview");
+		_weightChoice.ValueChanged += value => { _weightLabel.Text = $"Weight: {value * 100:0}%"; UpdateCreationPreview(); };
+		_muscleChoice.ValueChanged += value => { _muscleLabel.Text = $"Muscle: {value * 100:0}%"; UpdateCreationPreview(); };
+		_heightChoice.ItemSelected += _ => UpdateCreationPreview();
+		_bodyTypeChoice.ItemSelected += _ => UpdateCreationPreview();
+		_sexChoice.ItemSelected += _ => UpdateCreationPreview();
 		_creationError = GetNode<Label>("CharacterCreation/Panel/Form/Error");
 		_statusLabel = GetNode<Label>("Controls/Panel/Scroll/Margin/VBox/Status");
 		_pauseButton = GetNode<Button>("Controls/Panel/Scroll/Margin/VBox/Pause");
@@ -349,6 +354,28 @@ public partial class Main : Node3D
 		_sexChoice.Select((int)PlayerSex.Female);
 		_weightChoice.Value = 0.5;
 		_muscleChoice.Value = 0.5;
+		UpdateCreationPreview();
+	}
+
+	private void UpdateCreationPreview()
+	{
+		if (_creationPreview is null || _heightChoice.Selected < 0 || _bodyTypeChoice.Selected < 0 || _sexChoice.Selected < 0) return;
+		try
+		{
+			var profile = PlayerCharacterProfile.Create(
+				"Preview",
+				(PlayerHeight)_heightChoice.Selected,
+				(PlayerBodyType)_bodyTypeChoice.Selected,
+				(PlayerSex)_sexChoice.Selected,
+				_weightChoice.Value,
+				_muscleChoice.Value);
+			var body = PlayerBodyProportions.From(profile);
+			_creationPreview.Text = $"Preview: {body.Height:0.00}m tall · torso {body.TorsoWidth:0.00}m wide · limbs {body.LimbThickness:0.00}m";
+		}
+		catch (ArgumentException)
+		{
+			_creationPreview.Text = "Preview unavailable for the selected values.";
+		}
 	}
 
 	private void StartNewGame()

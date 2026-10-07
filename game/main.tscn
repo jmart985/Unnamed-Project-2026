@@ -190,6 +190,11 @@ max_value = 1.0
 step = 0.01
 value = 0.5
 
+[node name="Preview" type="Label" parent="CharacterCreation/Panel/Form" unique_id=1406898261]
+layout_mode = 2
+text = "Preview: choose a name and body settings"
+autowrap_mode = 2
+
 [node name="Error" type="Label" parent="CharacterCreation/Panel/Form" unique_id=1083019040]
 modulate = Color(1, 0.35, 0.35, 1)
 layout_mode = 2
