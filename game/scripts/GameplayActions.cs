@@ -259,6 +259,12 @@ public partial class Main
             return;
         }
 
+        if (_selectedTarget.Kind == TargetKind.Stockpile)
+        {
+            ShowActionFeedback(new PlayerResourceService(_world, _speciesCatalog).StoreWood(_selectedTarget.Id).Message);
+            return;
+        }
+
         if (_selectedTarget.Kind == TargetKind.ConstructionSite)
         {
             OpenConstructionSite(_selectedTarget.Id);

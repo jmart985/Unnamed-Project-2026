@@ -55,6 +55,23 @@ public sealed class PlayerResourceService(World world, SpeciesCatalog species)
             : new(PlayerResourceResultCode.Full, $"Gathering rejected: {result}.");
     }
 
+    public PlayerResourceResult StoreWood(string stockpileId)
+    {
+        if (!TryPlayer(out var player)) return new(PlayerResourceResultCode.Unavailable, "The player cannot store items while incapacitated.");
+        var stockpile = world.Stockpiles.FirstOrDefault(target => target.Id == stockpileId);
+        if (stockpile is null) return new(PlayerResourceResultCode.Missing, "The storage location no longer exists.");
+        if (MeleeReachValidator.Validate(player!.Position, stockpile.Position, Reach) != MeleeReachResult.InRange)
+            return new(PlayerResourceResultCode.OutOfRange, "Move within 2 m of storage to deposit wood.");
+        var amount = player.Inventory.GetValueOrDefault(ItemIds.Wood);
+        if (amount <= 0) return new(PlayerResourceResultCode.Empty, "You are not carrying wood.");
+        var transferable = Math.Min(amount, stockpile.Contents.RemainingCapacity);
+        if (transferable <= 0) return new(PlayerResourceResultCode.Full, "Storage is full.");
+        var result = ResourceTransferService.TryDeliver(player, stockpile.Contents, ItemIds.Wood, transferable);
+        return result == ResourceMutationResult.Success
+            ? new(PlayerResourceResultCode.Used, $"Stored {transferable} wood. Storage now holds {stockpile.Contents.Counts.GetValueOrDefault(ItemIds.Wood)}.")
+            : new(PlayerResourceResultCode.Full, $"Storage rejected the delivery: {result}.");
+    }
+
     public PlayerResourceResult ChopTree(string id)
     {
         if (!TryPlayer(out var player)) return new(PlayerResourceResultCode.Unavailable, "The player cannot chop while incapacitated.");

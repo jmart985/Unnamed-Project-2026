@@ -85,4 +85,20 @@ public sealed class PlayerToolServiceTests
         restored.Restore(source.Capture());
         Assert.Equal(source.Progress(tree.Id), restored.Progress(tree.Id));
     }
+
+    [Fact]
+    public void GatheredWoodCanBeDepositedIntoSettlementStorage()
+    {
+        var catalog = SpeciesCatalog.LoadFromFile(Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
+        var session = NewGameSession.Create(catalog, PlayerCharacterProfile.Create("Hauler"), survivalGathering: true);
+        var storage = session.World.Stockpiles.Single();
+        session.World.TrySetEntityPosition(session.PlayerEntityId, storage.Position);
+        session.Player.TryAddCarried(ItemIds.Wood, 3);
+
+        var result = new PlayerResourceService(session.World, catalog).StoreWood(storage.Id);
+
+        Assert.Equal(PlayerResourceResultCode.Used, result.Code);
+        Assert.Equal(3, storage.Contents.Counts[ItemIds.Wood]);
+        Assert.Equal(0, session.Player.Inventory.GetValueOrDefault(ItemIds.Wood));
+    }
 }
