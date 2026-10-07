@@ -189,6 +189,23 @@ public partial class Main
             GD.PushError($"MENU VALIDATION FAILED: {exception}");
             GetTree().Quit(1);
         }
+        finally
+        {
+            DeleteValidationFile(_saveSlotPath);
+            DeleteValidationFile(_buttonBindings.Path);
+        }
+    }
+
+    private static void DeleteValidationFile(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return;
+        try
+        {
+            if (File.Exists(path)) File.Delete(path);
+            if (File.Exists(path + ".tmp")) File.Delete(path + ".tmp");
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
     }
 
     private static void PressMenuButton(Control panel, string text) => panel.FindChildren("*", "Button", true, false)
