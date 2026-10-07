@@ -36,13 +36,14 @@ public sealed class PlayerBodyRig
         return joint;
     }
 
-    private static void Part(Node3D parent, Mesh mesh, Vector3 position, Color color, Vector3? scale = null)
+    private static void Part(Node3D parent, Mesh mesh, Vector3 position, Color color, Vector3? scale = null, Vector3? rotationDegrees = null)
     {
         parent.AddChild(new MeshInstance3D
         {
             Mesh = mesh,
             Position = position,
             Scale = scale ?? Vector3.One,
+            RotationDegrees = rotationDegrees ?? Vector3.Zero,
             MaterialOverride = new StandardMaterial3D { AlbedoColor = color }
         });
     }
@@ -121,8 +122,9 @@ public sealed class PlayerBodyRig
             new Vector3(0, -length * 0.25f, 0), trousers);
         var knee = Joint(hip, side + "Knee", new Vector3(0, -length * 0.5f, 0));
         Part(knee, new CapsuleMesh { Radius = thickness * 0.42f, Height = length * 0.5f }, new Vector3(0, -length * 0.25f, 0), trousers);
-        Part(knee, new BoxMesh { Size = new Vector3(thickness, 0.07f, thickness * 1.8f) },
-            new Vector3(0, -length * 0.5f + 0.035f, -thickness * 0.4f), new Color(0.12f, 0.1f, 0.09f));
+        Part(knee, new CapsuleMesh { Radius = thickness * 0.52f, Height = thickness * 1.75f },
+            new Vector3(0, -length * 0.5f + thickness * 0.38f, -thickness * 0.42f), new Color(0.12f, 0.1f, 0.09f),
+            rotationDegrees: new Vector3(90, 0, 0));
         return (hip, knee);
     }
 }
