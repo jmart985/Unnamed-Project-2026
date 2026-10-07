@@ -113,8 +113,8 @@ public partial class Main
         GetWindow().FocusExited += CancelGameplayActions;
         _playerCharacter.AttackStarted += () =>
         {
-            _swingTargetId = GameplayActionsAllowed ? _selectedEntityId : null;
-            ShowActionFeedback(_swingTargetId is null ? "Select an entity with the target key before attacking." : "Swinging…");
+            _swingTargetId = GameplayActionsAllowed && _selectedTarget is { Kind: TargetKind.Entity or TargetKind.ResourcePile } target ? target.Id : null;
+            ShowActionFeedback(_swingTargetId is null ? "Select an entity or adult tree before attacking." : "Swinging…");
         };
         _playerCharacter.StrikeReleased += ResolvePlayerStrike;
     }
@@ -204,6 +204,17 @@ public partial class Main
         var id = _swingTargetId; _swingTargetId = null;
         if (!GameplayActionsAllowed) return;
         SyncPlayerPosition();
+        if (id is not null && _selectedTarget is { Kind: TargetKind.ResourcePile } resourceTarget && resourceTarget.Id == id)
+        {
+            var actor = _world.Entities.FirstOrDefault(entity => entity.Id == _world.PlayerEntityId);
+            var result = actor?.EquippedTool == ItemIds.Axe
+                ? new PlayerResourceService(_world, _speciesCatalog).ChopTree(id)
+                : new PlayerResourceService(_world, _speciesCatalog).PunchTree(id);
+            ShowActionFeedback(result.Message);
+            ClearResourceMarkers();
+            RebuildResourceMarkersFromWorld();
+            return;
+        }
         if (id is null || !_world.TryGetEntity(id, out var defender) || defender is null)
         { ShowActionFeedback("Miss: the selected entity is unavailable."); return; }
         var targets = WorldTargets();
@@ -247,6 +258,23 @@ public partial class Main
         if (_selectedTarget.Kind == TargetKind.Farm)
         {
             OpenFarm(_selectedTarget.Id);
+            return;
+        }
+
+        if (_selectedTarget.Kind == TargetKind.Stockpile)
+        {
+            ShowActionFeedback(new PlayerResourceService(_world, _speciesCatalog).StoreWood(_selectedTarget.Id).Message);
+            return;
+        }
+
+        if (_selectedTarget.Kind == TargetKind.Fireplace)
+        {
+            var service = new FireplaceService(_world);
+            var fire = _world.Fireplaces.First(item => item.Id == _selectedTarget.Id);
+            var result = fire.IsLit && player.Inventory.GetValueOrDefault(ItemIds.Plant) > 0
+                ? service.CookMeal(player.Id, _selectedTarget.Id)
+                : service.AddFuel(player.Id, _selectedTarget.Id);
+            ShowActionFeedback(result.Message);
             return;
         }
 

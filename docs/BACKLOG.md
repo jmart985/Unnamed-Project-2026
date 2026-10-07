@@ -55,6 +55,10 @@ Ideas → Backlog → Ready → In Progress → Testing → Done.
 
 Keep each implementation issue focused enough for one reviewable PR. Split work further if needed and preserve links to the parent task. Acceptance checkboxes are not complete until verified. See [CONTRIBUTING.md](../CONTRIBUTING.md) for the AI-assisted workflow.
 
+## Survival vertical slice
+
+The next framework test is documented in [SURVIVAL_VERTICAL_SLICE.md](SURVIVAL_VERTICAL_SLICE.md). Decompose it into independent implementation issues in this order: world tree/rock fixtures, bare-hand gathering, axe recipe/equip, axe harvesting and regrowth, storage delivery, open shelter interiors, bed/sleep, and fire/warmth/cooking. Do not remove the existing starter wood pile until Slice A and its replacement acceptance test are complete.
+
 ## Follow-on milestone scope
 
 Issue [#221](https://github.com/jmart985/Unnamed-Project-2026/issues/221) defines the 0.3 Creature Core target and links its focused implementation issues. This work reuses the completed Ant Farm species catalog and wandering foundations; it does not reopen Milestone 0.1 or pull player-driven creature interactions forward from 1.0.

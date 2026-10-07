@@ -38,6 +38,59 @@ public sealed class PlayerResourceService(World world, SpeciesCatalog species)
             : new(PlayerResourceResultCode.Full, $"Collection rejected: {result}.");
     }
 
+    public PlayerResourceResult PunchTree(string id)
+    {
+        if (!TryPlayer(out var player)) return new(PlayerResourceResultCode.Unavailable, "The player cannot gather while incapacitated.");
+        if (!id.StartsWith("tree-adult-", StringComparison.Ordinal))
+            return new(PlayerResourceResultCode.NotUsable, "Only an adult tree can be punched for starter wood.");
+        var target = world.ResourcePiles.FirstOrDefault(source => source.Id == id);
+        if (target is null) return new(PlayerResourceResultCode.Missing, "The tree no longer exists.");
+        if (MeleeReachValidator.Validate(player!.Position, target.Position, Reach) != MeleeReachResult.InRange)
+            return new(PlayerResourceResultCode.OutOfRange, "Move within 2 m to punch the tree.");
+        if (target.Contents.Counts.GetValueOrDefault(ItemIds.Wood) <= 0)
+            return new(PlayerResourceResultCode.Empty, "This tree has no starter wood left.");
+        var result = ResourceTransferService.TryPickUp(target.Contents, player, ItemIds.Wood, 1);
+        return result == ResourceMutationResult.Success
+            ? new(PlayerResourceResultCode.Collected, $"Punch gathered 1 wood. Carried {player.Inventory.GetValueOrDefault(ItemIds.Wood)}.")
+            : new(PlayerResourceResultCode.Full, $"Gathering rejected: {result}.");
+    }
+
+    public PlayerResourceResult StoreWood(string stockpileId)
+    {
+        if (!TryPlayer(out var player)) return new(PlayerResourceResultCode.Unavailable, "The player cannot store items while incapacitated.");
+        var stockpile = world.Stockpiles.FirstOrDefault(target => target.Id == stockpileId);
+        if (stockpile is null) return new(PlayerResourceResultCode.Missing, "The storage location no longer exists.");
+        if (MeleeReachValidator.Validate(player!.Position, stockpile.Position, Reach) != MeleeReachResult.InRange)
+            return new(PlayerResourceResultCode.OutOfRange, "Move within 2 m of storage to deposit wood.");
+        var amount = player.Inventory.GetValueOrDefault(ItemIds.Wood);
+        if (amount <= 0) return new(PlayerResourceResultCode.Empty, "You are not carrying wood.");
+        var transferable = Math.Min(amount, stockpile.Contents.RemainingCapacity);
+        if (transferable <= 0) return new(PlayerResourceResultCode.Full, "Storage is full.");
+        var result = ResourceTransferService.TryDeliver(player, stockpile.Contents, ItemIds.Wood, transferable);
+        return result == ResourceMutationResult.Success
+            ? new(PlayerResourceResultCode.Used, $"Stored {transferable} wood. Storage now holds {stockpile.Contents.Counts.GetValueOrDefault(ItemIds.Wood)}.")
+            : new(PlayerResourceResultCode.Full, $"Storage rejected the delivery: {result}.");
+    }
+
+    public PlayerResourceResult ChopTree(string id)
+    {
+        if (!TryPlayer(out var player)) return new(PlayerResourceResultCode.Unavailable, "The player cannot chop while incapacitated.");
+        if (!string.Equals(player!.EquippedTool, ItemIds.Axe, StringComparison.Ordinal))
+            return new(PlayerResourceResultCode.NotUsable, "Equip an axe before chopping a tree.");
+        if (!id.StartsWith("tree-adult-", StringComparison.Ordinal))
+            return new(PlayerResourceResultCode.NotUsable, "Only an adult tree can be chopped.");
+        var target = world.ResourcePiles.FirstOrDefault(source => source.Id == id);
+        if (target is null) return new(PlayerResourceResultCode.Missing, "The tree no longer exists.");
+        if (MeleeReachValidator.Validate(player.Position, target.Position, Reach) != MeleeReachResult.InRange)
+            return new(PlayerResourceResultCode.OutOfRange, "Move within 2 m to chop the tree.");
+        if (target.Contents.Counts.GetValueOrDefault(ItemIds.Wood) <= 0)
+            return new(PlayerResourceResultCode.Empty, "This tree is depleted and must regrow.");
+        var result = ResourceTransferService.TryPickUp(target.Contents, player, ItemIds.Wood, 1);
+        return result == ResourceMutationResult.Success
+            ? new(PlayerResourceResultCode.Collected, $"Chopped 1 wood. Carried {player.Inventory.GetValueOrDefault(ItemIds.Wood)}.")
+            : new(PlayerResourceResultCode.Full, $"Chopping rejected: {result}.");
+    }
+
     public PlayerResourceResult UseCarriedFood()
     {
         if (!TryPlayer(out var player) || !species.TryGet(player!.SpeciesId, out var definition) || definition is null)

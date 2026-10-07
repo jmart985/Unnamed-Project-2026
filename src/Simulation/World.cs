@@ -33,12 +33,19 @@ public sealed class World
     private readonly List<Farm> _farms = [];
     private readonly ReadOnlyCollection<Farm> _farmView;
     private readonly List<SettlementConstructionSite> _constructionSites = [];
+    private readonly List<Fireplace> _fireplaces = [];
+    public IReadOnlyList<Fireplace> Fireplaces => _fireplaces;
     private readonly ReadOnlyCollection<SettlementConstructionSite> _constructionSiteView;
     private readonly HashSet<string> _targetIds = new(StringComparer.Ordinal);
     private long _lastEntityId;
     private readonly HashSet<string> _squadMembers = new(StringComparer.Ordinal);
     private readonly Dictionary<string, NpcWorkSchedule> _workSchedules = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Vector3> _homePositions = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, double> _treeRegrowthTimers = new(StringComparer.Ordinal);
+    public IReadOnlyDictionary<string, double> TreeRegrowthTimers => _treeRegrowthTimers;
+    internal void SetTreeRegrowthTimer(string treeId, double elapsed) => _treeRegrowthTimers[treeId] = elapsed;
+    internal void RemoveTreeRegrowthTimer(string treeId) => _treeRegrowthTimers.Remove(treeId);
+    internal void ClearTreeRegrowthTimers() => _treeRegrowthTimers.Clear();
     public IReadOnlyCollection<NpcScheduleSetting> WorkSchedules => Array.AsReadOnly(_workSchedules
         .OrderBy(pair => pair.Key, StringComparer.Ordinal)
         .Select(pair => new NpcScheduleSetting(pair.Key, pair.Value.StartHour, pair.Value.EndHour)).ToArray());
@@ -320,6 +327,7 @@ public sealed class World
         _constructionSites.Add(site);
         return site;
     }
+    public Fireplace AddFireplace(string id, Vector3 position) { var fire = new Fireplace(id, position); _fireplaces.Add(fire); return fire; }
 
     public bool TryRemoveConstructionSite(string? id)
     {
@@ -806,6 +814,8 @@ public sealed class World
         _workstations.Clear();
         _farms.Clear();
         _constructionSites.Clear();
+        _fireplaces.Clear();
+        _treeRegrowthTimers.Clear();
         _targetIds.Clear();
         Reservations.Reset();
         SessionSeed = null;
@@ -834,6 +844,7 @@ public sealed class World
             restored.Parent1Id = entity.Parent1Id;
             restored.Parent2Id = entity.Parent2Id;
             restored.SetSleepState(entity.SleepState, entity.BedId);
+            restored.EquippedTool = entity.EquippedTool;
             foreach (var item in entity.Inventory)
             {
                 restored.TryAddCarried(item.Key, item.Value);
@@ -841,6 +852,10 @@ public sealed class World
             if (entity.Id == snapshot.PlayerEntityId && snapshot.PlayerHealth is not null)
                 restored.Health.Restore(snapshot.PlayerHealth, snapshot.PlayerPendingDeathSeconds, snapshot.PlayerIsDead);
         }
+        foreach (var timer in snapshot.TreeRegrowthTimers ?? Array.Empty<TreeRegrowthSnapshot>())
+            _treeRegrowthTimers[timer.TreeId] = timer.ElapsedSeconds;
+        foreach (var fire in snapshot.Fireplaces ?? Array.Empty<FireplaceSnapshot>())
+            AddFireplace(fire.Id, fire.Position).Fuel = fire.Fuel;
 
         foreach (var factionId in snapshot.FactionIds!)
         {

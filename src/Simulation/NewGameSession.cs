@@ -46,7 +46,8 @@ public sealed class NewGameSession
     public static NewGameSession Create(
         SpeciesCatalog catalog,
         PlayerCharacterProfile playerProfile,
-        int seed = DefaultSeed)
+        int seed = DefaultSeed,
+        bool survivalGathering = false)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(playerProfile);
@@ -91,12 +92,27 @@ public sealed class NewGameSession
             new(152, 0, 40),
             ItemIds.Meat,
             100);
-        AddContainer(
-            (id, position, contents) => world.AddResourcePile(id, position, contents),
-            "wood-pile-1",
-            new(8, 0, -8),
-            ItemIds.Wood,
-            100);
+        if (survivalGathering)
+        {
+            // Deterministic adult trees replace the old free wood box in the
+            // player-facing survival test. They remain resource locations until
+            // the dedicated punch/chop interactions are wired in.
+            var trees = new[] { new Vector3(18, 0, -14), new Vector3(24, 0, -20), new Vector3(-22, 0, -18), new Vector3(30, 0, 12) };
+            for (var index = 0; index < trees.Length; index++)
+                AddContainer((id, position, contents) => world.AddResourcePile(id, position, contents), $"tree-adult-{index + 1}", trees[index], ItemIds.Wood, 12);
+            var rocks = new[] { new Vector3(12, 0, -12), new Vector3(15, 0, -10), new Vector3(-12, 0, -14), new Vector3(-16, 0, -12) };
+            for (var index = 0; index < rocks.Length; index++)
+                AddContainer((id, position, contents) => world.AddResourcePile(id, position, contents), $"rock-loose-{index + 1}", rocks[index], ItemIds.Rock, 1);
+        }
+        else
+        {
+            AddContainer(
+                (id, position, contents) => world.AddResourcePile(id, position, contents),
+                "wood-pile-1",
+                new(8, 0, -8),
+                ItemIds.Wood,
+                100);
+        }
         world.AddStockpile(
             "stockpile-1",
             new(-8, 0, 8),

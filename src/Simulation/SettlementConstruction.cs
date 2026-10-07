@@ -29,6 +29,22 @@ public sealed record ConstructionAction(ConstructionActionResult Result, string 
 
 public sealed class ActorConstructionService(World world, SpeciesCatalog speciesCatalog, Func<Vector3, bool>? terrainBlocked = null)
 {
+    public ConstructionAction PlaceFireplace(string actorId, string fireplaceId, Vector3 position)
+    {
+        if (!TryActor(actorId, out var actor, out var failure)) return failure;
+        if (Vector3.Distance(actor!.Position, position) > SettlementConstruction.PlacementRange)
+            return Fail(ConstructionActionResult.OutOfRange, "Place the fireplace within 8 m.");
+        if (position.Y != 0 || terrainBlocked?.Invoke(position) == true)
+            return Fail(ConstructionActionResult.InvalidTerrain, "The fireplace placement is blocked.");
+        if (world.Fireplaces.Any(fire => Vector3.Distance(fire.Position, position) < 1.5f))
+            return Fail(ConstructionActionResult.Overlap, "The fireplace overlaps an existing fire.");
+        if (actor.Inventory.GetValueOrDefault(ItemIds.Wood) < 2)
+            return Fail(ConstructionActionResult.MissingMaterial, "Carry 2 wood to build a fireplace.");
+        actor.TryRemoveCarried(ItemIds.Wood, 2);
+        world.AddFireplace(fireplaceId, position);
+        return new(ConstructionActionResult.Success, "Fireplace placed and ready for fuel.", fireplaceId);
+    }
+
     public ConstructionAction PlaceHut(string actorId, string siteId, Vector3 position)
     {
         var validation = ValidateHutPlacement(actorId, position);

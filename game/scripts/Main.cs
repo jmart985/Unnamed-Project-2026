@@ -30,6 +30,7 @@ public partial class Main : Node3D
 	private readonly Dictionary<string, EntityView> _entityViews = new(StringComparer.Ordinal);
 	private readonly Dictionary<string, Button> _entityButtons = new(StringComparer.Ordinal);
 	private readonly Dictionary<WorldTarget, MeshInstance3D> _resourceMarkers = [];
+	private readonly Dictionary<string, MeshInstance3D> _fireplaceViews = [];
 	private FoodConsumptionService? _foodConsumption;
 	private WanderingService? _wandering;
 	private WoodHaulingService? _woodHauling;
@@ -38,6 +39,7 @@ public partial class Main : Node3D
 	private SpinBox _squadX = null!;
 	private SpinBox _squadZ = null!;
 	private long _simulationTick;
+	private TreeRegrowthService? _treeRegrowth;
 	private SpeciesCatalog _speciesCatalog = null!;
 	private RelationshipEventCatalog _relationshipEventCatalog = null!;
 	private TradeGoodsCatalog _tradeGoodsCatalog = null!;
@@ -185,6 +187,7 @@ public partial class Main : Node3D
 		UpdateFarmPanel();
 		UpdateFarmPresentation();
 		if (_placingHut) UpdateHutPreview();
+		else if (_placingFireplace) UpdateFireplacePreview();
 		UpdateConstructionPanel();
 	}
 
@@ -357,7 +360,7 @@ public partial class Main : Node3D
 		string saveLoadMessage)
 	{
 		CancelGameplayActions();
-		var session = NewGameSession.Create(_speciesCatalog, profile, seed);
+		var session = NewGameSession.Create(_speciesCatalog, profile, seed, survivalGathering: true);
 		_sessionActive = false;
 		_playerCharacter.SetPhysicsProcess(false);
 		ResetTransientServices();
@@ -365,8 +368,10 @@ public partial class Main : Node3D
 		_simulationTick = 0;
 		ClearEntityViews();
 		ClearResourceMarkers();
+		ClearFireplaceViews();
 		DetachSocialFeedback();
 		_world = session.World;
+		_treeRegrowth = new TreeRegrowthService(_world);
 		AttachSocialFeedback();
 		_interactionResolver = new InteractionResolver(
 			_world,
@@ -403,6 +408,7 @@ public partial class Main : Node3D
 		_squad = new SquadOrderService(_world, GetNavigationAdapter);
 
 		RebuildResourceMarkersFromWorld();
+		RebuildFireplaceViews();
 
 		var player = session.Player;
 		_playerCharacter.GlobalPosition = new Vector3(
@@ -588,6 +594,20 @@ public partial class Main : Node3D
 	{
 		_simulationTick = checked(_simulationTick + 1);
 		AdvanceNeeds(tickSeconds);
+		var depletedTreesBefore = _world.ResourcePiles
+			.Where(source => source.Id.StartsWith("tree-adult-", StringComparison.Ordinal)
+				&& source.Contents.Counts.GetValueOrDefault(ItemIds.Wood) == 0)
+			.Select(source => source.Id).ToHashSet(StringComparer.Ordinal);
+		_treeRegrowth?.Advance(tickSeconds);
+		var depletedTreesAfter = _world.ResourcePiles
+			.Where(source => source.Id.StartsWith("tree-adult-", StringComparison.Ordinal)
+				&& source.Contents.Counts.GetValueOrDefault(ItemIds.Wood) == 0)
+			.Select(source => source.Id).ToHashSet(StringComparer.Ordinal);
+		if (!depletedTreesBefore.SetEquals(depletedTreesAfter))
+		{
+			ClearResourceMarkers();
+			RebuildResourceMarkersFromWorld();
+		}
 		foreach (var entity in _world.Entities)
 			_woodHauling!.ReconcileSchedule(entity, _clock.SimulationTime);
 		AdvanceNavigationTick(tickSeconds);
@@ -714,6 +734,28 @@ public partial class Main : Node3D
 		_resourceMarkers.Clear();
 	}
 
+	private void ClearFireplaceViews()
+	{
+		foreach (var view in _fireplaceViews.Values) view.QueueFree();
+		_fireplaceViews.Clear();
+	}
+
+	private void RebuildFireplaceViews()
+	{
+		ClearFireplaceViews();
+		foreach (var fire in _world.Fireplaces)
+		{
+			var view = new MeshInstance3D
+			{
+				Name = fire.Id,
+				Mesh = new CylinderMesh { TopRadius = 0.35f, BottomRadius = 0.45f, Height = 0.25f },
+				Position = new Vector3(fire.Position.X, fire.Position.Y + 0.12f, fire.Position.Z),
+				MaterialOverride = new StandardMaterial3D { AlbedoColor = new Color(0.9f, 0.25f, 0.05f), EmissionEnabled = true, Emission = new Color(0.5f, 0.08f, 0.01f) }
+			};
+			AddChild(view); _fireplaceViews[fire.Id] = view;
+		}
+	}
+
 	private void RebuildResourceMarkersFromWorld()
 	{
 		foreach (var source in _world.FoodSources)
@@ -723,7 +765,16 @@ public partial class Main : Node3D
 
 		foreach (var source in _world.ResourcePiles)
 		{
-			AddResourceMarker(new(TargetKind.ResourcePile, source.Id), source.Position, new Color(0.45f, 0.25f, 0.1f));
+			var target = new WorldTarget(TargetKind.ResourcePile, source.Id);
+			if (source.Id.StartsWith("tree-adult-", StringComparison.Ordinal))
+			{
+				var available = source.Contents.Counts.GetValueOrDefault(ItemIds.Wood) > 0;
+				AddResourceMarker(target, source.Position, available ? new Color(0.16f, 0.48f, 0.18f) : new Color(0.3f, 0.2f, 0.12f), tree: available);
+			}
+			else if (source.Id.StartsWith("rock-loose-", StringComparison.Ordinal))
+				AddResourceMarker(target, source.Position, new Color(0.42f, 0.44f, 0.46f), rock: true);
+			else
+				AddResourceMarker(target, source.Position, new Color(0.45f, 0.25f, 0.1f));
 		}
 
 		foreach (var stockpile in _world.Stockpiles)
@@ -732,13 +783,16 @@ public partial class Main : Node3D
 		}
 	}
 
-	private void AddResourceMarker(WorldTarget target, System.Numerics.Vector3 position, Color color)
+	private void AddResourceMarker(WorldTarget target, System.Numerics.Vector3 position, Color color, bool tree = false, bool rock = false)
 	{
+		Mesh mesh = tree
+			? new CylinderMesh { TopRadius = 0.65f, BottomRadius = 0.8f, Height = 3.2f }
+			: rock ? new SphereMesh { Radius = 0.45f, Height = 0.7f } : new BoxMesh { Size = new Vector3(1, 0.6f, 1) };
 		var marker = new MeshInstance3D
 		{
 			Name = $"{target.Kind}_{target.Id}",
-			Mesh = new BoxMesh { Size = new Vector3(1, 0.6f, 1) },
-			Position = new Vector3(position.X, 0.3f, position.Z),
+			Mesh = mesh,
+			Position = new Vector3(position.X, tree ? 1.6f : rock ? 0.35f : 0.3f, position.Z),
 			MaterialOverride = new StandardMaterial3D { AlbedoColor = color }
 		};
 		AddChild(marker);
@@ -943,6 +997,7 @@ public partial class Main : Node3D
 		ClearEntityViews();
 		ClearResourceMarkers();
 		RebuildResourceMarkersFromWorld();
+		RebuildFireplaceViews();
 		_playerProfile = _world.PlayerProfile;
 		_sessionSeed = _world.SessionSeed ?? NewGameSession.DefaultSeed;
 		if (_world.PlayerEntityId is { } playerId

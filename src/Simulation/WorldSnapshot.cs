@@ -26,10 +26,14 @@ public sealed record WorldSnapshot(
     IReadOnlyList<FarmSnapshot>? Farms = null,
     IReadOnlyList<StructureSnapshot>? Structures = null,
     IReadOnlyList<ConstructionSiteSnapshot>? ConstructionSites = null,
+    IReadOnlyList<TreeRegrowthSnapshot>? TreeRegrowthTimers = null,
     IReadOnlyList<HealthPartSnapshot>? PlayerHealth = null,
     double PlayerPendingDeathSeconds = 0,
     bool PlayerIsDead = false,
-    Vector3 PlayerFacing = default);
+    Vector3 PlayerFacing = default,
+    IReadOnlyList<FireplaceSnapshot>? Fireplaces = null);
+
+public sealed record FireplaceSnapshot(string Id, Vector3 Position, int Fuel);
 
 public sealed record StructureSnapshot(string Id, StructureType Type, Vector3 Position, bool IsClosed, IReadOnlyList<BedSnapshot>? Beds = null);
 public sealed record BedSnapshot(string Id, double RecoveryRateMultiplier, string? OccupantId);
@@ -99,7 +103,8 @@ public sealed record EntitySnapshot(
     string? Parent1Id = null,
     string? Parent2Id = null,
     SleepState SleepState = SleepState.Awake,
-    string? BedId = null);
+    string? BedId = null,
+    string? EquippedTool = null);
 
 public sealed record FoodSourceSnapshot(
     string Id,
@@ -166,7 +171,8 @@ public static class WorldSnapshotSerializer
                 entity.Parent1Id,
                 entity.Parent2Id,
                 entity.SleepState,
-                entity.BedId))
+                entity.BedId,
+                entity.EquippedTool))
             .ToArray();
         var foodSources = world.FoodSources
             .Select(source => new FoodSourceSnapshot(
@@ -236,13 +242,17 @@ public static class WorldSnapshotSerializer
                     new Dictionary<string, int>(site.Blueprint.RequiredMaterials, StringComparer.Ordinal),
                     new Dictionary<string, int>(site.Blueprint.Progress, StringComparer.Ordinal),
                     site.Blueprint.WorkRequired, site.Blueprint.WorkProgress)).ToArray(),
+            world.TreeRegrowthTimers.OrderBy(item => item.Key, StringComparer.Ordinal)
+                .Select(item => new TreeRegrowthSnapshot(item.Key, item.Value)).ToArray(),
             world.PlayerEntityId is { } playerId && world.TryGetEntity(playerId, out var player) && player is not null
                 ? player.Health.Capture() : null,
             world.PlayerEntityId is { } currentPlayerId && world.TryGetEntity(currentPlayerId, out var currentPlayer) && currentPlayer is not null
                 ? currentPlayer.Health.PendingDeathSeconds : 0,
             world.PlayerEntityId is { } deadPlayerId && world.TryGetEntity(deadPlayerId, out var deadPlayer) && deadPlayer is not null
                 && deadPlayer.Health.IsDead,
-            world.PlayerFacing);
+            world.PlayerFacing,
+            world.Fireplaces.OrderBy(item => item.Id, StringComparer.Ordinal)
+                .Select(item => new FireplaceSnapshot(item.Id, item.Position, item.Fuel)).ToArray());
     }
 
     public static string Serialize(World world, double simulationTime)
