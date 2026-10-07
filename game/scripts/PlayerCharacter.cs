@@ -34,6 +34,7 @@ public partial class PlayerCharacter : CharacterBody3D
 	private Vector3 _lastGroundedPosition;
 	private double _attackCooldownRemaining;
 	private PlayerBodyRig _body = null!;
+	private Node3D _axeView = null!;
 	private PlayerCharacterProfile _profile = PlayerCharacterProfile.Create("Player");
 	private readonly ProceduralGait _gait = new() { ReferenceSpeed = 5.0f, BobHeight = 0.03f };
 	private AttackSwing _swing = new();
@@ -74,6 +75,7 @@ public partial class PlayerCharacter : CharacterBody3D
 		var proportions = PlayerBodyProportions.From(profile);
 		_body = new PlayerBodyRig(proportions);
 		AddChild(_body.Root);
+		BuildToolVisual();
 
 		var collision = GetNode<CollisionShape3D>("CollisionShape3D");
 		var radius = Mathf.Min(0.4f * proportions.TorsoWidth, proportions.Height * 0.25f);
@@ -83,6 +85,29 @@ public partial class PlayerCharacter : CharacterBody3D
 		camera.Position = new Vector3(0, proportions.Height * 1.45f, 5.5f);
 
 		BuildGait();
+	}
+
+	private void BuildToolVisual()
+	{
+		_axeView = new Node3D { Name = "EquippedAxe", Visible = false, Position = new Vector3(0, -0.62f, 0) };
+		_body.RightElbow.AddChild(_axeView);
+		var handleMaterial = new StandardMaterial3D { AlbedoColor = new Color(0.35f, 0.16f, 0.06f) };
+		var bladeMaterial = new StandardMaterial3D { AlbedoColor = new Color(0.65f, 0.68f, 0.72f), Metallic = 0.35f, Roughness = 0.35f };
+		_axeView.AddChild(new MeshInstance3D
+		{
+			Mesh = new CylinderMesh { TopRadius = 0.035f, BottomRadius = 0.045f, Height = 0.72f },
+			RotationDegrees = new Vector3(0, 0, 90), MaterialOverride = handleMaterial
+		});
+		_axeView.AddChild(new MeshInstance3D
+		{
+			Mesh = new BoxMesh { Size = new Vector3(0.16f, 0.28f, 0.07f) },
+			Position = new Vector3(0.34f, 0, 0), MaterialOverride = bladeMaterial
+		});
+	}
+
+	public void SetAxeEquipped(bool equipped)
+	{
+		if (_axeView is not null) _axeView.Visible = equipped;
 	}
 
 	// Walk drives hips, knees, shoulders, elbows, head and torso; an attack layer overrides the swinging arm

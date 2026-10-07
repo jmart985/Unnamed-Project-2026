@@ -357,6 +357,7 @@ public partial class Main
 			return;
 		}
 		var profile = _world.PlayerProfile!;
+		_playerCharacter.SetAxeEquipped(string.Equals(player.EquippedTool, ItemIds.Axe, StringComparison.Ordinal));
 		_characterIdentity.Text = $"{profile.Name} · {profile.Height} · {profile.BodyType} · {profile.Sex}";
 		var stats = player.BaseStats;
 		_characterStatus.Text = $"STATUS\nSatiety: {player.Satiety:0.0} / 100\nCondition: {(player.Health.IsDead ? "Dead" : player.Health.IsIncapacitated ? "Incapacitated" : "Conscious")}\n\nBODY HEALTH\n" +
