@@ -44,4 +44,18 @@ public sealed class FireplaceTests
         session.World.TrySetEntityPosition(session.Player.Id, fire.Position + new Vector3(0, 0, 7));
         Assert.False(service.IsWarm(session.Player.Id));
     }
+
+    [Fact]
+    public void FireplacePlacementConsumesTwoWoodAndCreatesWorldFire()
+    {
+        var catalog = SpeciesCatalog.LoadFromFile(Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
+        var session = NewGameSession.Create(catalog, PlayerCharacterProfile.Create("Builder"));
+        session.Player.TryAddCarried(ItemIds.Wood, 2);
+        var service = new ActorConstructionService(session.World, catalog);
+        var position = session.Player.Position + new Vector3(3, 0, 0);
+        var result = service.PlaceFireplace(session.Player.Id, "fire-built", position);
+        Assert.True(result.Succeeded);
+        Assert.Single(session.World.Fireplaces);
+        Assert.Equal(0, session.Player.Inventory.GetValueOrDefault(ItemIds.Wood));
+    }
 }
