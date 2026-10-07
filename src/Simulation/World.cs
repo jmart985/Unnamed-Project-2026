@@ -842,6 +842,8 @@ public sealed class World
         }
         foreach (var timer in snapshot.TreeRegrowthTimers ?? Array.Empty<TreeRegrowthSnapshot>())
             _treeRegrowthTimers[timer.TreeId] = timer.ElapsedSeconds;
+        foreach (var fire in snapshot.Fireplaces ?? Array.Empty<FireplaceSnapshot>())
+            AddFireplace(fire.Id, fire.Position).Fuel = fire.Fuel;
 
         foreach (var factionId in snapshot.FactionIds!)
         {

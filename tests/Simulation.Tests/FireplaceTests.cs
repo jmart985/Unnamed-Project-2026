@@ -18,4 +18,17 @@ public sealed class FireplaceTests
         Assert.Equal(1, session.Player.Inventory.GetValueOrDefault(ItemIds.Food));
         Assert.False(fire.IsLit);
     }
+
+    [Fact]
+    public void FireplaceFuelSurvivesSaveLoad()
+    {
+        var catalog = SpeciesCatalog.LoadFromFile(Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
+        var session = NewGameSession.Create(catalog, PlayerCharacterProfile.Create("Fire Saver"));
+        var fire = session.World.AddFireplace("fire-save", session.Player.Position);
+        fire.Fuel = 3;
+        var json = WorldSnapshotSerializer.Serialize(session.World, 4);
+        var loaded = NewGameSession.Create(catalog, PlayerCharacterProfile.Create("Temp")).World;
+        WorldSnapshotSerializer.Load(loaded, json, catalog);
+        Assert.Equal(3, loaded.Fireplaces.Single(item => item.Id == fire.Id).Fuel);
+    }
 }
