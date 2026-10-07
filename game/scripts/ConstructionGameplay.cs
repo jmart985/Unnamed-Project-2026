@@ -8,6 +8,8 @@ public partial class Main
     private Node3D _constructionRoot = null!;
     private MeshInstance3D _hutPreview = null!;
     private Label3D _hutPreviewLabel = null!;
+    private MeshInstance3D _fireplacePreview = null!;
+    private Label3D _fireplacePreviewLabel = null!;
     private Control _placementPanel = null!;
     private Label _placementMessage = null!;
     private Control _constructionPanel = null!;
@@ -15,6 +17,7 @@ public partial class Main
     private Label _constructionMessage = null!;
     private string? _openConstructionSiteId;
     private bool _placingHut;
+    private bool _placingFireplace;
     private bool _placementValid;
     private Vector3 _placementPosition;
     private readonly Dictionary<WorldTarget, Node3D> _constructionViews = [];
@@ -42,14 +45,30 @@ public partial class Main
             FontSize = 34, OutlineSize = 7, NoDepthTest = true
         };
         _hutPreview.AddChild(_hutPreviewLabel);
+        _fireplacePreview = new MeshInstance3D
+        {
+            Name = "FireplacePreview", Mesh = new CylinderMesh { Height = 0.35f, TopRadius = 0.8f, BottomRadius = 0.8f }, Visible = false,
+            MaterialOverride = new StandardMaterial3D
+            {
+                Transparency = BaseMaterial3D.TransparencyEnum.Alpha, AlbedoColor = new Color(0.2f, 0.9f, 0.35f, 0.55f),
+                EmissionEnabled = true, Emission = new Color(1, 0.25f, 0.05f), EmissionEnergyMultiplier = 0.4f
+            }
+        };
+        AddChild(_fireplacePreview);
+        _fireplacePreviewLabel = new Label3D
+        {
+            Text = "FIREPLACE", Position = new Vector3(0, 1.1f, 0), Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+            FontSize = 30, OutlineSize = 7, NoDepthTest = true
+        };
+        _fireplacePreview.AddChild(_fireplacePreviewLabel);
 
         var placement = CreateMenuPanel("Place Starter Hut", out _placementPanel);
         _placementPanel.AnchorLeft = 0.56f; _placementPanel.AnchorRight = 0.98f; _placementPanel.AnchorBottom = 0.4f;
         _placementPanel.OffsetLeft = 0; _placementPanel.OffsetRight = -12;
         _placementMessage = MenuLabel(); placement.AddChild(_placementMessage);
         var placementActions = new HBoxContainer(); placement.AddChild(placementActions);
-        AddMenuButton(placementActions, "Confirm site", ConfirmHutPlacement);
-        AddMenuButton(placementActions, "Cancel placement", CancelHutPlacement);
+        AddMenuButton(placementActions, "Confirm site", ConfirmPlacement);
+        AddMenuButton(placementActions, "Cancel placement", CancelPlacement);
         _placementPanel.Visible = false;
 
         var construction = CreateMenuPanel("Construction Site", out _constructionPanel);
@@ -68,6 +87,9 @@ public partial class Main
         var button = AddMenuButton(root, "Place starter hut", BeginHutPlacement);
         button.Name = "Construction";
         root.MoveChild(button, 5);
+        var fireButton = AddMenuButton(root, "Place fireplace", BeginFireplacePlacement);
+        fireButton.Name = "FireplaceConstruction";
+        root.MoveChild(fireButton, 6);
         SyncConstructionPresentation();
     }
 
@@ -83,12 +105,34 @@ public partial class Main
         UpdateHutPreview();
     }
 
+    private void BeginFireplacePlacement()
+    {
+        ClosePlayerMenus();
+        _placingFireplace = true;
+        _placementPanel.Visible = true;
+        _fireplacePreview.Visible = true;
+        _playerCharacter.SetGameplayInputEnabled(false);
+        UpdateFireplacePreview();
+    }
+
     private void CancelHutPlacement()
     {
         _placingHut = false;
         _placementPanel.Visible = false;
         _hutPreview.Visible = false;
+        _placingFireplace = false;
+        _fireplacePreview.Visible = false;
         _playerCharacter.SetGameplayInputEnabled(_sessionActive && _menuState.ActiveMenu is null && !_clock.IsPaused);
+    }
+
+    private void CancelFireplacePlacement() => CancelHutPlacement();
+
+    private void CancelPlacement() => CancelHutPlacement();
+
+    private void ConfirmPlacement()
+    {
+        if (_placingFireplace) ConfirmFireplacePlacement();
+        else ConfirmHutPlacement();
     }
 
     private void UpdateHutPreview()
@@ -108,6 +152,28 @@ public partial class Main
             (_placementValid ? $"Valid · requires {SettlementConstruction.HutWood} wood and {SettlementConstruction.HutWork} work." : result.Message);
     }
 
+    private void UpdateFireplacePreview()
+    {
+        if (!_placingFireplace) return;
+        var forward = -_playerCharacter.GlobalBasis.Z;
+        _placementPosition = new Vector3(Mathf.Round(_playerCharacter.GlobalPosition.X + forward.X * 3), 0,
+            Mathf.Round(_playerCharacter.GlobalPosition.Z + forward.Z * 3));
+        var player = _world.Entities.FirstOrDefault(entity => entity.Id == PlayerId());
+        var hasWood = player?.Inventory.GetValueOrDefault(ItemIds.Wood) >= 2;
+        var inRange = player is not null && System.Numerics.Vector3.Distance(player.Position,
+            new System.Numerics.Vector3(_placementPosition.X, 0, _placementPosition.Z)) <= SettlementConstruction.PlacementRange;
+        var blocked = IsBlockedCell(_placementPosition.X - 1, _placementPosition.X + 1, _placementPosition.Z - 1, _placementPosition.Z + 1)
+            || _world.Fireplaces.Any(fire => System.Numerics.Vector3.Distance(fire.Position,
+                new System.Numerics.Vector3(_placementPosition.X, 0, _placementPosition.Z)) < 1.5f);
+        _placementValid = hasWood && inRange && !blocked;
+        _fireplacePreview.GlobalPosition = _placementPosition;
+        ((StandardMaterial3D)_fireplacePreview.MaterialOverride).AlbedoColor = _placementValid
+            ? new Color(0.2f, 0.9f, 0.35f, 0.55f) : new Color(1, 0.2f, 0.16f, 0.55f);
+        _fireplacePreviewLabel.Text = _placementValid ? "FIREPLACE · VALID" : "FIREPLACE · BLOCKED";
+        _placementMessage.Text = $"Preview: {_placementPosition.X:0}, {_placementPosition.Z:0}\n" +
+            (_placementValid ? "Valid · requires 2 wood." : hasWood ? "Move to open ground." : "Requires 2 wood.");
+    }
+
     private bool IsHutTerrainBlocked(System.Numerics.Vector3 position)
         => IsBlockedCell((int)position.X - 2, (int)position.X + 2, (int)position.Z - 2, (int)position.Z + 2);
 
@@ -120,6 +186,21 @@ public partial class Main
         CancelHutPlacement();
         SyncConstructionPresentation();
         _selectedTarget = new(TargetKind.ConstructionSite, result.CreatedId!);
+        _lastActionMessage = result.Message;
+        UpdateWorldSelection();
+    }
+
+    private void ConfirmFireplacePlacement()
+    {
+        SyncPlayerPosition();
+        var fireplaceId = $"fireplace-{_world.Fireplaces.Count + 1}";
+        var result = new ActorConstructionService(_world, _speciesCatalog, position =>
+            IsBlockedCell(position.X - 1, position.X + 1, position.Z - 1, position.Z + 1))
+            .PlaceFireplace(PlayerId(), fireplaceId, new System.Numerics.Vector3(_placementPosition.X, 0, _placementPosition.Z));
+        if (!result.Succeeded) { _placementMessage.Text = result.Message; UpdateFireplacePreview(); return; }
+        CancelFireplacePlacement();
+        RebuildFireplaceViews();
+        _selectedTarget = new(TargetKind.Fireplace, result.CreatedId!);
         _lastActionMessage = result.Message;
         UpdateWorldSelection();
     }

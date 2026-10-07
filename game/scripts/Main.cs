@@ -187,6 +187,7 @@ public partial class Main : Node3D
 		UpdateFarmPanel();
 		UpdateFarmPresentation();
 		if (_placingHut) UpdateHutPreview();
+		else if (_placingFireplace) UpdateFireplacePreview();
 		UpdateConstructionPanel();
 	}
 
