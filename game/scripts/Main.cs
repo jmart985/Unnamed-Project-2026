@@ -846,11 +846,15 @@ public partial class Main : Node3D
 		var playerStatus = _world.PlayerProfile is { } profile
 			? $"Player: {profile.Name} ({profile.Height}, {profile.BodyType}, {profile.Sex})\n"
 			: string.Empty;
+		var playerWarmth = _world.PlayerEntityId is { } playerId
+			? new FireplaceService(_world).IsWarm(playerId) ? "Warm by lit fireplace" : "No nearby warmth"
+			: "Unavailable";
 		_statusLabel.Text =
 			$"Simulation time: {_clock.SimulationTime:0.0}s | Day time: {ScheduleTime(DailyScheduleState.DaySeconds(_clock.SimulationTime) / DailyScheduleState.SecondsPerHour)}\nState: {state}\nSpeed: {(int)_clock.Speed}x\n" +
 			playerStatus +
 			$"Food: {foodConsumption.FoodUnitsRemaining} remaining, {foodConsumption.FoodUnitsConsumed} consumed\n" +
 			$"Wood: ground {groundWood}, carried {carriedWood}, stored {storedWood} (total {totalWood})\n" +
+			$"Warmth: {playerWarmth}\n" +
 			$"Save/load: {_saveLoadStatus}\n" +
 
 			$"Menu: {_menuState.ActiveMenu?.ToString() ?? "closed"} | Change button mapping in Save / Settings.\n" +
