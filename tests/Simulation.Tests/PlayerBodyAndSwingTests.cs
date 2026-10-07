@@ -30,6 +30,27 @@ public sealed class PlayerBodyAndSwingTests
     }
 
     [Fact]
+    public void BodySlidersChangeDerivedProportionsDeterministically()
+    {
+        var light = PlayerBodyProportions.From(PlayerCharacterProfile.Create("A", weight: 0, muscle: 0));
+        var strong = PlayerBodyProportions.From(PlayerCharacterProfile.Create("A", weight: 1, muscle: 1));
+
+        Assert.True(strong.TorsoWidth > light.TorsoWidth);
+        Assert.True(strong.TorsoDepth > light.TorsoDepth);
+        Assert.True(strong.LimbThickness > light.LimbThickness);
+        Assert.Equal(strong, PlayerBodyProportions.From(PlayerCharacterProfile.Create("A", weight: 1, muscle: 1)));
+    }
+
+    [Theory]
+    [InlineData(-0.01)]
+    [InlineData(1.01)]
+    public void BodySlidersRejectValuesOutsideBounds(double value)
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => PlayerCharacterProfile.Create("A", weight: value));
+        Assert.Throws<ArgumentOutOfRangeException>(() => PlayerCharacterProfile.Create("A", muscle: value));
+    }
+
+    [Fact]
     public void InvalidProfileIsRejected()
     {
         Assert.Throws<ArgumentException>(() =>

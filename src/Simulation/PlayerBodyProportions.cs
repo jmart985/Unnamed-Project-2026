@@ -45,8 +45,13 @@ public sealed record PlayerBodyProportions(
             _ => throw new ArgumentOutOfRangeException(nameof(profile))
         };
         var female = profile.Sex == PlayerSex.Female;
+        var weightScale = 0.86f + (float)profile.Weight * 0.28f;
+        var muscleScale = 0.88f + (float)profile.Muscle * 0.24f;
+        width *= weightScale;
+        depth *= weightScale;
+        limb *= muscleScale;
         // Athletic builds trade torso bulk for broader shoulders; sex shifts the shoulder/hip balance.
-        var shoulder = (female ? 0.92f : 1.06f) * (profile.BodyType == PlayerBodyType.Athletic ? 1.1f : 1f);
+        var shoulder = (female ? 0.92f : 1.06f) * (profile.BodyType == PlayerBodyType.Athletic ? 1.1f : 1f) * muscleScale;
         var hip = female ? 1.08f : 0.96f;
         return new PlayerBodyProportions(height, width, depth, limb, shoulder * width, hip * width, female ? 1f : 0f);
     }
