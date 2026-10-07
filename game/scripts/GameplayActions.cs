@@ -206,8 +206,8 @@ public partial class Main
         SyncPlayerPosition();
         if (id is not null && _selectedTarget is { Kind: TargetKind.ResourcePile } resourceTarget && resourceTarget.Id == id)
         {
-            var player = _world.Entities.FirstOrDefault(entity => entity.Id == _world.PlayerEntityId);
-            var result = player?.EquippedTool == ItemIds.Axe
+            var actor = _world.Entities.FirstOrDefault(entity => entity.Id == _world.PlayerEntityId);
+            var result = actor?.EquippedTool == ItemIds.Axe
                 ? new PlayerResourceService(_world, _speciesCatalog).ChopTree(id)
                 : new PlayerResourceService(_world, _speciesCatalog).PunchTree(id);
             ShowActionFeedback(result.Message);
