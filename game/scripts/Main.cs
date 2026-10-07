@@ -78,6 +78,7 @@ public partial class Main : Node3D
 	private Label _muscleLabel = null!;
 	private Label _creationPreview = null!;
 	private Node3D _previewRoot = null!;
+	private double _previewTime;
 	private Label _creationError = null!;
 	private PlayerCharacterProfile? _playerProfile;
 	private int _sessionSeed = NewGameSession.DefaultSeed;
@@ -193,6 +194,12 @@ public partial class Main : Node3D
 	{
 		if (!_sessionActive)
 		{
+			if (_characterCreation.Visible && _previewRoot is not null)
+			{
+				_previewTime += Math.Max(0, delta);
+				_previewRoot.Rotation = new Vector3(0, (float)(_previewTime * 0.45), 0);
+				_previewRoot.Position = new Vector3(0, Mathf.Sin((float)_previewTime * 1.4f) * 0.025f, 0);
+			}
 			return;
 		}
 
