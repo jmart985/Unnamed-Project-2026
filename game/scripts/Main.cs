@@ -72,6 +72,10 @@ public partial class Main : Node3D
 	private OptionButton _heightChoice = null!;
 	private OptionButton _bodyTypeChoice = null!;
 	private OptionButton _sexChoice = null!;
+	private HSlider _weightChoice = null!;
+	private HSlider _muscleChoice = null!;
+	private Label _weightLabel = null!;
+	private Label _muscleLabel = null!;
 	private Label _creationError = null!;
 	private PlayerCharacterProfile? _playerProfile;
 	private int _sessionSeed = NewGameSession.DefaultSeed;
@@ -92,6 +96,12 @@ public partial class Main : Node3D
 		_heightChoice = GetNode<OptionButton>("CharacterCreation/Panel/Form/Height");
 		_bodyTypeChoice = GetNode<OptionButton>("CharacterCreation/Panel/Form/BodyType");
 		_sexChoice = GetNode<OptionButton>("CharacterCreation/Panel/Form/Sex");
+		_weightChoice = GetNode<HSlider>("CharacterCreation/Panel/Form/Weight");
+		_muscleChoice = GetNode<HSlider>("CharacterCreation/Panel/Form/Muscle");
+		_weightLabel = GetNode<Label>("CharacterCreation/Panel/Form/WeightLabel");
+		_muscleLabel = GetNode<Label>("CharacterCreation/Panel/Form/MuscleLabel");
+		_weightChoice.ValueChanged += value => _weightLabel.Text = $"Weight: {value * 100:0}%";
+		_muscleChoice.ValueChanged += value => _muscleLabel.Text = $"Muscle: {value * 100:0}%";
 		_creationError = GetNode<Label>("CharacterCreation/Panel/Form/Error");
 		_statusLabel = GetNode<Label>("Controls/Panel/Scroll/Margin/VBox/Status");
 		_pauseButton = GetNode<Button>("Controls/Panel/Scroll/Margin/VBox/Pause");
@@ -337,6 +347,8 @@ public partial class Main : Node3D
 		_heightChoice.Select((int)PlayerHeight.Medium);
 		_bodyTypeChoice.Select((int)PlayerBodyType.Average);
 		_sexChoice.Select((int)PlayerSex.Female);
+		_weightChoice.Value = 0.5;
+		_muscleChoice.Value = 0.5;
 	}
 
 	private void StartNewGame()
@@ -347,7 +359,9 @@ public partial class Main : Node3D
 				_playerNameInput.Text,
 				(PlayerHeight)_heightChoice.Selected,
 				(PlayerBodyType)_bodyTypeChoice.Selected,
-				(PlayerSex)_sexChoice.Selected);
+				(PlayerSex)_sexChoice.Selected,
+				_weightChoice.Value,
+				_muscleChoice.Value);
 			StartSession(profile, NewGameSession.DefaultSeed, "New game started.");
 			_creationError.Text = string.Empty;
 		}
