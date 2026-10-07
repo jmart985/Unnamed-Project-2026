@@ -47,6 +47,11 @@ public static class PrototypeInputMap
         AddJoypadButtonAction(ControllerActions.Inventory, JoyButton.Y);
         AddJoypadButtonAction(ControllerActions.Settlement, JoyButton.Start);
         AddJoypadButtonAction(ControllerActions.CloseMenu, JoyButton.B);
+        AddJoypadButtonAction(ControllerActions.Interact, JoyButton.DpadUp);
+        AddJoypadButtonAction(ControllerActions.Greet, JoyButton.DpadDown);
+        AddJoypadButtonAction(ControllerActions.Rest, JoyButton.DpadLeft);
+        AddJoypadButtonAction(ControllerActions.CycleTarget, JoyButton.DpadRight);
+        AddJoypadButtonAction(ControllerActions.Settings, JoyButton.Back);
         AddJoypadAxisAction(ControllerActions.MoveForward, JoyAxis.LeftY, -1.0f);
         AddJoypadAxisAction(ControllerActions.MoveBackward, JoyAxis.LeftY, 1.0f);
     }
