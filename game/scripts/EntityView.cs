@@ -81,7 +81,7 @@ public partial class EntityView : CharacterBody3D
             _ => (Color.FromHsv(variation, 0.45f, 0.75f), new Color(0.85f, 0.68f + variation * 0.12f, 0.55f))
         };
 
-        if (_isCreature && _speciesId != "ape")
+        if (_isCreature)
         {
             BuildQuadruped(bodyColor, accentColor);
         }
@@ -109,15 +109,15 @@ public partial class EntityView : CharacterBody3D
     }
 
     private void AddLeg(Node3D parent, Vector3 hip, float length, float thickness, Color color, Color footColor,
-        float phase, float swing, float knee)
+        float phase, float swing, float knee, int fastGroup = 0)
     {
         var upper = AddJoint(parent, hip);
         AddPart(new BoxMesh { Size = new Vector3(thickness, length * 0.5f, thickness) }, new Vector3(0, -length * 0.25f, 0), color, parent: upper);
         var lower = AddJoint(upper, new Vector3(0, -length * 0.5f, 0));
         AddPart(new BoxMesh { Size = new Vector3(thickness * 0.8f, length * 0.5f, thickness * 0.8f) }, new Vector3(0, -length * 0.25f, 0), color, parent: lower);
         AddPart(new BoxMesh { Size = new Vector3(thickness * 1.1f, 0.06f, thickness * 1.7f) }, new Vector3(0, -length * 0.5f + 0.03f, -thickness * 0.35f), footColor, parent: lower);
-        _gait!.Limbs.Add(new ProceduralGait.Limb { Pivot = upper, Phase = phase, Amplitude = swing });
-        _gait.Limbs.Add(new ProceduralGait.Limb { Pivot = lower, Phase = phase + Mathf.Pi * 0.5f, Amplitude = -knee, Rectify = true });
+        _gait!.Limbs.Add(new ProceduralGait.Limb { Pivot = upper, Phase = phase, Amplitude = swing, FastGroup = fastGroup });
+        _gait.Limbs.Add(new ProceduralGait.Limb { Pivot = lower, Phase = phase + Mathf.Pi * 0.5f, Amplitude = -knee, Rectify = true, FastGroup = fastGroup });
     }
 
     private void AddArm(Node3D parent, Vector3 shoulder, float length, float thickness, Color sleeve, Color hand,
@@ -140,9 +140,10 @@ public partial class EntityView : CharacterBody3D
         {
             "cow" => new Vector3(0.9f, 0.8f, 1.45f),
             "wolf" => new Vector3(0.6f, 0.5f, 1.2f),
+            "ape" => new Vector3(0.82f, 0.62f, 1.15f),
             _ => new Vector3(0.75f, 0.65f, 1.25f)
         };
-        var legLength = bodySize.Y * (_speciesId == "wolf" ? 0.85f : 0.75f);
+        var legLength = bodySize.Y * (_speciesId == "wolf" ? 0.85f : _speciesId == "ape" ? 0.95f : 0.75f);
         var bodyY = legLength + bodySize.Y * 0.5f - 0.05f;
         AddCollision(legLength + bodySize.Y, Mathf.Max(bodySize.X, bodySize.Z) * 0.4f);
         _gait!.BobHeight = 0.03f;
@@ -187,11 +188,15 @@ public partial class EntityView : CharacterBody3D
         var frontZ = -bodySize.Z * 0.32f;
         var rearZ = bodySize.Z * 0.32f;
         var legX = bodySize.X * 0.32f;
-        var thickness = _speciesId == "wolf" ? 0.12f : 0.16f;
-        AddLeg(_rig, new Vector3(-legX, legLength, frontZ), legLength, thickness, bodyColor, accentColor, 0, 0.55f, 0.6f);
-        AddLeg(_rig, new Vector3(legX, legLength, rearZ), legLength, thickness, bodyColor, accentColor, 0, 0.55f, 0.6f);
-        AddLeg(_rig, new Vector3(legX, legLength, frontZ), legLength, thickness, bodyColor, accentColor, Mathf.Pi, 0.55f, 0.6f);
-        AddLeg(_rig, new Vector3(-legX, legLength, rearZ), legLength, thickness, bodyColor, accentColor, Mathf.Pi, 0.55f, 0.6f);
+        var thickness = _speciesId == "wolf" ? 0.12f : _speciesId == "ape" ? 0.18f : 0.16f;
+        var handColor = _speciesId == "ape" ? new Color(0.22f, 0.14f, 0.09f) : accentColor;
+        // Apes knuckle-walk: the long front limbs carry weight on the ground.
+        // FastGroup pairs both front limbs, then both hind legs for a gallop.
+        var ape = _speciesId == "ape";
+        AddLeg(_rig, new Vector3(-legX, legLength, frontZ), legLength, thickness, bodyColor, handColor, 0, 0.55f, 0.6f, ape ? 1 : 0);
+        AddLeg(_rig, new Vector3(legX, legLength, rearZ), legLength, thickness, bodyColor, accentColor, 0, 0.55f, 0.6f, ape ? 2 : 0);
+        AddLeg(_rig, new Vector3(legX, legLength, frontZ), legLength, thickness, bodyColor, handColor, Mathf.Pi, 0.55f, 0.6f, ape ? 1 : 0);
+        AddLeg(_rig, new Vector3(-legX, legLength, rearZ), legLength, thickness, bodyColor, accentColor, Mathf.Pi, 0.55f, 0.6f, ape ? 2 : 0);
     }
 
     private void BuildUpright(Color shirt, Color skin, float variation)

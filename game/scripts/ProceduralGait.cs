@@ -18,6 +18,7 @@ public sealed class ProceduralGait
         public bool Rectify { get; init; }
         public float IdleAmplitude { get; init; }
         public float IdleFrequency { get; init; } = 1.5f;
+        public int FastGroup { get; init; }
     }
 
     private float _phase;
@@ -46,7 +47,11 @@ public sealed class ProceduralGait
         var idle = 1 - moving;
         foreach (var limb in Limbs)
         {
-            var wave = Mathf.Sin(_phase + limb.Phase);
+            var fastGait = target > 0.78f;
+            var phase = fastGait && limb.FastGroup > 0
+                ? (limb.FastGroup == 1 ? 0f : Mathf.Pi)
+                : limb.Phase;
+            var wave = Mathf.Sin(_phase + phase);
             if (limb.Rectify) wave = Mathf.Max(0, wave);
             var angle = limb.Bias * moving + wave * limb.Amplitude * _intensity;
             angle += Mathf.Sin(_time * limb.IdleFrequency + limb.Phase) * limb.IdleAmplitude * idle;
