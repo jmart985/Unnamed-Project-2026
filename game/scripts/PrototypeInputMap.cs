@@ -40,8 +40,9 @@ public static class PrototypeInputMap
         AddKeyboardAction(ControllerActions.DebugRemoveGoal, Key.F8);
 
         AddJoypadButtonAction(ControllerActions.Jump, JoyButton.A);
-        AddJoypadButtonAction(ControllerActions.Attack, JoyButton.RightShoulder);
-        AddJoypadButtonAction(ControllerActions.AttackLeft, JoyButton.RightShoulder);
+        AddJoypadButtonAction(ControllerActions.Attack, JoyButton.LeftShoulder);
+        AddJoypadButtonAction(ControllerActions.AttackLeft, JoyButton.LeftShoulder);
+        AddJoypadButtonAction(ControllerActions.AttackRight, JoyButton.RightShoulder);
         AddJoypadButtonAction(ControllerActions.Collect, JoyButton.X);
         AddJoypadButtonAction(ControllerActions.Inventory, JoyButton.Y);
         AddJoypadButtonAction(ControllerActions.Settlement, JoyButton.Start);
@@ -91,4 +92,3 @@ public static class PrototypeInputMap
         InputMap.ActionAddEvent(actionName, new InputEventJoypadMotion { Axis = axis, AxisValue = value });
     }
 }
-
