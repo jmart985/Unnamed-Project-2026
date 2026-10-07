@@ -38,6 +38,7 @@ public partial class Main : Node3D
 	private SpinBox _squadX = null!;
 	private SpinBox _squadZ = null!;
 	private long _simulationTick;
+	private TreeRegrowthService? _treeRegrowth;
 	private SpeciesCatalog _speciesCatalog = null!;
 	private RelationshipEventCatalog _relationshipEventCatalog = null!;
 	private TradeGoodsCatalog _tradeGoodsCatalog = null!;
@@ -367,6 +368,7 @@ public partial class Main : Node3D
 		ClearResourceMarkers();
 		DetachSocialFeedback();
 		_world = session.World;
+		_treeRegrowth = new TreeRegrowthService(_world);
 		AttachSocialFeedback();
 		_interactionResolver = new InteractionResolver(
 			_world,
@@ -582,6 +584,7 @@ public partial class Main : Node3D
 	{
 		_simulationTick = checked(_simulationTick + 1);
 		AdvanceNeeds(tickSeconds);
+		_treeRegrowth?.Advance(tickSeconds);
 		foreach (var entity in _world.Entities)
 			_woodHauling!.ReconcileSchedule(entity, _clock.SimulationTime);
 		AdvanceNavigationTick(tickSeconds);
