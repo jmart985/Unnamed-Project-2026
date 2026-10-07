@@ -32,6 +32,7 @@ public partial class PlayerCharacter : CharacterBody3D
 	[Export] public float CameraFirstPersonDistance { get; set; } = 0.12f;
 	[Export] public float CameraZoomStep { get; set; } = 0.75f;
 	[Export] public float CameraZoomSmoothing { get; set; } = 12.0f;
+	[Export] public float CameraPitchOffset { get; set; } = -0.2617994f;
 	[Export] public bool LeftShieldEquipped { get; set; }
 	[Export] public bool RightShieldEquipped { get; set; }
 
@@ -89,6 +90,7 @@ public partial class PlayerCharacter : CharacterBody3D
 		var camera = GetNode<Camera3D>("Camera3D");
 		_cameraZoomDistance = CameraZoomDistance;
 		camera.Position = new Vector3(0, proportions.Height * 1.45f, _cameraZoomDistance);
+		camera.Rotation = new Vector3(CameraPitchOffset, 0, 0);
 
 		BuildGait();
 	}
@@ -288,7 +290,8 @@ public partial class PlayerCharacter : CharacterBody3D
         }
 
         // Head follows aim pitch; sits on top of the idle sway applied by the gait.
-        _headPitch = Mathf.Lerp(_headPitch, _headPitchTarget, 0.2f);
-        _body.Head.Rotation = new Vector3(_headPitch, _body.Head.Rotation.Y, 0);
+		_headPitch = Mathf.Lerp(_headPitch, _headPitchTarget, 0.2f);
+		_body.Head.Rotation = new Vector3(_headPitch, _body.Head.Rotation.Y, 0);
+		GetNode<Camera3D>("Camera3D").Rotation = new Vector3(CameraPitchOffset + _headPitch, 0, 0);
     }
 }
