@@ -17,7 +17,7 @@ public sealed class PlayerButtonBindings
         (ControllerActions.MoveLeft, "Move left"), (ControllerActions.MoveRight, "Move right"),
         (ControllerActions.Jump, "Jump"), (ControllerActions.AttackLeft, "Left attack"),
         (ControllerActions.AttackRight, "Right attack"), (ControllerActions.Collect, "Collect / hold to use"),
-        (ControllerActions.Interact, "Interact"), (ControllerActions.Greet, "Greet selected"), (ControllerActions.CycleTarget, "Cycle target"), (ControllerActions.Inventory, "Inventory"),
+        (ControllerActions.Interact, "Interact"), (ControllerActions.Greet, "Greet selected"), (ControllerActions.CycleTarget, "Target lock / switch"), (ControllerActions.Inventory, "Inventory"),
         (ControllerActions.Settlement, "Settlement"), (ControllerActions.Settings, "Save / Settings")
     ];
 

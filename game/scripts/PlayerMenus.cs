@@ -91,7 +91,7 @@ public partial class Main
 		var mapping = AddScrollTab(_settingsTabs, "Controls");
 		_bindingStatus = MenuLabel(_buttonBindings.Status);
 		mapping.AddChild(_bindingStatus);
-		mapping.AddChild(MenuLabel("Escape closes menus or cancels mapping. Pad B closes menus. Stick movement remains available."));
+		mapping.AddChild(MenuLabel("Escape clears the target lock, then closes menus or cancels mapping. Pad B closes menus. Stick movement remains available."));
 		var mappingHeader = new HBoxContainer();
 		mappingHeader.AddChild(new Label { Text = "Action", CustomMinimumSize = new Vector2(160, 0) });
 		foreach (var columnTitle in new[] { "Keyboard / Mouse", "Controller" })
