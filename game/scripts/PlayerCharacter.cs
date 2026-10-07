@@ -171,7 +171,9 @@ public partial class PlayerCharacter : CharacterBody3D
 		if (@event is InputEventMouseMotion motion)
 		{
 			RotateY(-motion.Relative.X * MouseSensitivity);
-			_headPitchTarget = Mathf.Clamp(_headPitchTarget - motion.Relative.Y * MouseSensitivity, -0.6f, 0.6f);
+			// Allow a wider upward look for close overhead targets while keeping a
+			// comfortable downward limit and preventing a full camera inversion.
+			_headPitchTarget = Mathf.Clamp(_headPitchTarget - motion.Relative.Y * MouseSensitivity, -0.6f, 1.0f);
 			return;
 		}
 		if (@event is InputEventMouseButton wheel && wheel.Pressed
