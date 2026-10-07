@@ -746,7 +746,13 @@ public partial class Main : Node3D
 
 		foreach (var source in _world.ResourcePiles)
 		{
-			AddResourceMarker(new(TargetKind.ResourcePile, source.Id), source.Position, new Color(0.45f, 0.25f, 0.1f));
+			var target = new WorldTarget(TargetKind.ResourcePile, source.Id);
+			if (source.Id.StartsWith("tree-adult-", StringComparison.Ordinal))
+				AddResourceMarker(target, source.Position, new Color(0.16f, 0.48f, 0.18f), tree: true);
+			else if (source.Id.StartsWith("rock-loose-", StringComparison.Ordinal))
+				AddResourceMarker(target, source.Position, new Color(0.42f, 0.44f, 0.46f), rock: true);
+			else
+				AddResourceMarker(target, source.Position, new Color(0.45f, 0.25f, 0.1f));
 		}
 
 		foreach (var stockpile in _world.Stockpiles)
@@ -755,13 +761,16 @@ public partial class Main : Node3D
 		}
 	}
 
-	private void AddResourceMarker(WorldTarget target, System.Numerics.Vector3 position, Color color)
+	private void AddResourceMarker(WorldTarget target, System.Numerics.Vector3 position, Color color, bool tree = false, bool rock = false)
 	{
+		Mesh mesh = tree
+			? new CylinderMesh { TopRadius = 0.65f, BottomRadius = 0.8f, Height = 3.2f }
+			: rock ? new SphereMesh { Radius = 0.45f, Height = 0.7f } : new BoxMesh { Size = new Vector3(1, 0.6f, 1) };
 		var marker = new MeshInstance3D
 		{
 			Name = $"{target.Kind}_{target.Id}",
-			Mesh = new BoxMesh { Size = new Vector3(1, 0.6f, 1) },
-			Position = new Vector3(position.X, 0.3f, position.Z),
+			Mesh = mesh,
+			Position = new Vector3(position.X, tree ? 1.6f : rock ? 0.35f : 0.3f, position.Z),
 			MaterialOverride = new StandardMaterial3D { AlbedoColor = color }
 		};
 		AddChild(marker);
