@@ -180,7 +180,7 @@ public partial class Main : Node3D
 		_clock.Advance(delta, AdvanceSimulationTick);
 		AdvanceCollectUse(delta);
 		UpdateGameplayFeedback(delta);
-		SyncPlayerPosition();
+		SyncPlayerState();
 		SyncEntityViews();
 		UpdateStatus();
 		UpdateWorkstationPanel();
@@ -571,7 +571,7 @@ public partial class Main : Node3D
 		}
 	}
 
-	private void SyncPlayerPosition()
+	private void SyncPlayerState()
 	{
 		if (_world.PlayerEntityId is not { } playerId)
 		{
@@ -582,7 +582,13 @@ public partial class Main : Node3D
 		_world.TrySetEntityPosition(
 			playerId,
 			new System.Numerics.Vector3(position.X, position.Y, position.Z));
+		var forward = -_playerCharacter.GlobalTransform.Basis.Z;
+		var facing = new System.Numerics.Vector3(forward.X, 0, forward.Z);
+		if (facing.LengthSquared() > 0.0001f)
+			_world.SetPlayerFacing(System.Numerics.Vector3.Normalize(facing));
 	}
+
+	private void SyncPlayerPosition() => SyncPlayerState();
 
 	private void AdvanceSimulationTick(double tickSeconds)
 	{
@@ -614,7 +620,7 @@ public partial class Main : Node3D
 	private void AdvanceNavigationTick(double tickSeconds)
 	{
 		// The step boundary uses the live player position, including validation/manual ticks.
-		SyncPlayerPosition();
+		SyncPlayerState();
 		foreach (var view in _entityViews.Values)
 		{
 			view.AdvanceNavigation(tickSeconds, _world, _squad, ConstrainActorSpacing);
@@ -812,7 +818,7 @@ public partial class Main : Node3D
 
 	private string GreetSelectedEntity()
 	{
-		SyncPlayerPosition();
+		SyncPlayerState();
 		return _playerCommands?.Execute(new PlayerCommand(PlayerCommandKind.Interact, _selectedEntityId)).Reason
 			?? "Friendly interaction is not initialized.";
 	}
@@ -934,6 +940,7 @@ public partial class Main : Node3D
 
 	private void SaveScenario()
 	{
+		SyncPlayerState();
 		CancelGameplayActions();
 		_clock.SetPaused(true);
 		_playerCharacter.SetPhysicsProcess(false);
@@ -1006,6 +1013,9 @@ public partial class Main : Node3D
 				player.Id,
 				profile,
 				(float)_speciesCatalog.GetRequired(player.SpeciesId).MovementSpeed);
+			var facing = new Vector3(_world.PlayerFacing.X, 0, _world.PlayerFacing.Z);
+			if (facing.LengthSquared() > 0.0001f)
+				_playerCharacter.Rotation = new Vector3(0, Mathf.Atan2(-facing.X, -facing.Z), 0);
 			_playerCharacter.Visible = true;
 			_playerCharacter.SetProcessUnhandledInput(true);
 			_playerCharacter.SetPhysicsProcess(false);

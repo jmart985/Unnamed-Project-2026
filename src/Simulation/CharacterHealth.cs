@@ -1,5 +1,7 @@
 namespace Simulation;
 
+public sealed record HealthPartSnapshot(string Name, double MaximumHealth, double CurrentHealth, bool RequiredForConsciousness);
+
 /// <summary>Mutable health for one named body part.</summary>
 public sealed class BodyPartHealth
 {
@@ -65,6 +67,41 @@ public sealed class CharacterHealth
     public bool IsDead => _isDead;
     public double HeadDeathDelaySeconds { get; }
     public double PendingDeathSeconds => _pendingDeathSeconds;
+
+    internal IReadOnlyList<HealthPartSnapshot> Capture()
+    {
+        return _parts.Select(part => new HealthPartSnapshot(
+            part.Name, part.MaximumHealth, part.CurrentHealth, part.RequiredForConsciousness)).ToArray();
+    }
+
+    internal void Restore(IReadOnlyList<HealthPartSnapshot> parts, double pendingDeathSeconds, bool isDead)
+    {
+        ArgumentNullException.ThrowIfNull(parts);
+        if (!double.IsFinite(pendingDeathSeconds) || pendingDeathSeconds < 0 || pendingDeathSeconds > HeadDeathDelaySeconds)
+            throw new ArgumentOutOfRangeException(nameof(pendingDeathSeconds));
+        if (isDead && pendingDeathSeconds > 0)
+            throw new ArgumentException("Dead health cannot retain a pending death timer.", nameof(isDead));
+        if (parts.Count != _parts.Count)
+            throw new ArgumentException("The saved body-part count does not match the character.", nameof(parts));
+        for (var index = 0; index < _parts.Count; index++)
+        {
+            var saved = parts[index];
+            var target = _parts[index];
+            if (saved is null
+                || !string.Equals(saved.Name, target.Name, StringComparison.Ordinal)
+                || saved.MaximumHealth != target.MaximumHealth
+                || saved.RequiredForConsciousness != target.RequiredForConsciousness
+                || !double.IsFinite(saved.CurrentHealth)
+                || saved.CurrentHealth < 0 || saved.CurrentHealth > target.MaximumHealth)
+                throw new ArgumentException("Saved health for a body part is invalid.", nameof(parts));
+            if (saved.CurrentHealth < target.CurrentHealth)
+                target.ApplyDamage(target.CurrentHealth - saved.CurrentHealth);
+            else if (saved.CurrentHealth > target.CurrentHealth)
+                target.Heal(saved.CurrentHealth - target.CurrentHealth);
+        }
+        _pendingDeathSeconds = pendingDeathSeconds;
+        _isDead = isDead;
+    }
 
     public bool TryGetPart(string? name, out BodyPartHealth? part)
     {

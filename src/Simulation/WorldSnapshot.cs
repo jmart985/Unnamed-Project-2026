@@ -27,6 +27,10 @@ public sealed record WorldSnapshot(
     IReadOnlyList<StructureSnapshot>? Structures = null,
     IReadOnlyList<ConstructionSiteSnapshot>? ConstructionSites = null,
     IReadOnlyList<TreeRegrowthSnapshot>? TreeRegrowthTimers = null,
+    IReadOnlyList<HealthPartSnapshot>? PlayerHealth = null,
+    double PlayerPendingDeathSeconds = 0,
+    bool PlayerIsDead = false,
+    Vector3 PlayerFacing = default,
     IReadOnlyList<FireplaceSnapshot>? Fireplaces = null);
 
 public sealed record FireplaceSnapshot(string Id, Vector3 Position, int Fuel);
@@ -136,6 +140,7 @@ public static class WorldSnapshotSerializer
     private const int FarmSchemaVersion = 12;
     private const int ConstructionSchemaVersion = 13;
     private const int BedSchemaVersion = 14;
+    private const int HealthFacingSchemaVersion = 15;
     public const int CurrentSchemaVersion = 16;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -239,6 +244,13 @@ public static class WorldSnapshotSerializer
                     site.Blueprint.WorkRequired, site.Blueprint.WorkProgress)).ToArray(),
             world.TreeRegrowthTimers.OrderBy(item => item.Key, StringComparer.Ordinal)
                 .Select(item => new TreeRegrowthSnapshot(item.Key, item.Value)).ToArray(),
+            world.PlayerEntityId is { } playerId && world.TryGetEntity(playerId, out var player) && player is not null
+                ? player.Health.Capture() : null,
+            world.PlayerEntityId is { } currentPlayerId && world.TryGetEntity(currentPlayerId, out var currentPlayer) && currentPlayer is not null
+                ? currentPlayer.Health.PendingDeathSeconds : 0,
+            world.PlayerEntityId is { } deadPlayerId && world.TryGetEntity(deadPlayerId, out var deadPlayer) && deadPlayer is not null
+                && deadPlayer.Health.IsDead,
+            world.PlayerFacing,
             world.Fireplaces.OrderBy(item => item.Id, StringComparer.Ordinal)
                 .Select(item => new FireplaceSnapshot(item.Id, item.Position, item.Fuel)).ToArray());
     }
@@ -318,6 +330,14 @@ public static class WorldSnapshotSerializer
         if (snapshot.SchemaVersion == BedSchemaVersion)
             return snapshot with { SchemaVersion = CurrentSchemaVersion, HomePositions = Array.Empty<NpcHomeSetting>() };
 
+        if (snapshot.SchemaVersion == HealthFacingSchemaVersion)
+            return snapshot with
+            {
+                SchemaVersion = CurrentSchemaVersion,
+                PlayerHealth = snapshot.PlayerHealth ?? DefaultPlayerHealth(),
+                PlayerFacing = snapshot.PlayerFacing == Vector3.Zero ? Vector3.UnitZ : snapshot.PlayerFacing
+            };
+
         if (snapshot.SchemaVersion != CurrentSchemaVersion)
         {
             throw new InvalidDataException(
@@ -342,6 +362,13 @@ public static class WorldSnapshotSerializer
         : [new FarmSnapshot("farm-1", new Vector3(5, 0, 5),
             [new FarmPlotSnapshot("farm-1-plot-1", 1, null, 0)])];
 
+    private static IReadOnlyList<HealthPartSnapshot> DefaultPlayerHealth() =>
+    [
+        new("Head", 25, 25, true), new("Torso", 50, 50, true),
+        new("LeftArm", 12.5, 12.5, false), new("RightArm", 12.5, 12.5, false),
+        new("LeftLeg", 12.5, 12.5, false), new("RightLeg", 12.5, 12.5, false)
+    ];
+
     public static double Load(
         World target,
         string json,
@@ -352,6 +379,14 @@ public static class WorldSnapshotSerializer
         ArgumentNullException.ThrowIfNull(speciesCatalog);
 
         var snapshot = Deserialize(json);
+        if (snapshot.PlayerEntityId is not null && snapshot.PlayerHealth is null)
+        {
+            using var document = JsonDocument.Parse(json);
+            var sourceSchema = document.RootElement.GetProperty("SchemaVersion").GetInt32();
+            if (sourceSchema >= CurrentSchemaVersion)
+                throw new InvalidDataException("Current session snapshots must include player health.");
+            snapshot = snapshot with { PlayerHealth = DefaultPlayerHealth(), PlayerFacing = Vector3.UnitZ };
+        }
         Validate(snapshot, target, speciesCatalog);
 
         foreach (var state in transientState)
@@ -465,6 +500,13 @@ public static class WorldSnapshotSerializer
         }
 
         ValidateSessionPlayer(snapshot, entityIds);
+        if (snapshot.PlayerEntityId is not null)
+        {
+            if (snapshot.PlayerHealth is null || snapshot.PlayerHealth.Count == 0)
+                throw new InvalidDataException("Player health is required for session snapshots.");
+            ValidatePlayerHealth(snapshot, speciesCatalog);
+            ValidateFacing(snapshot.PlayerFacing);
+        }
         if (snapshot.SquadMemberIds is null) throw new InvalidDataException("Snapshot squad membership is required.");
         var memberIds = new HashSet<string>(StringComparer.Ordinal);
         foreach (var id in snapshot.SquadMemberIds)
@@ -677,6 +719,39 @@ public static class WorldSnapshotSerializer
                     $"Snapshot contains duplicate faction hostility from '{hostility.SourceFactionId}' to '{hostility.TargetFactionId}'.");
             }
         }
+    }
+
+    private static void ValidatePlayerHealth(WorldSnapshot snapshot, SpeciesCatalog speciesCatalog)
+    {
+        var player = snapshot.Entities.Single(entity => entity.Id == snapshot.PlayerEntityId);
+        var expected = CharacterHealth.CreateHumanoid(speciesCatalog.GetRequired(player.SpeciesId).MaxHealth);
+        var saved = snapshot.PlayerHealth!;
+        if (saved.Count != expected.Parts.Count
+            || !double.IsFinite(snapshot.PlayerPendingDeathSeconds)
+            || snapshot.PlayerPendingDeathSeconds < 0
+            || snapshot.PlayerPendingDeathSeconds > expected.HeadDeathDelaySeconds
+            || (snapshot.PlayerIsDead && snapshot.PlayerPendingDeathSeconds > 0))
+            throw new InvalidDataException("Snapshot player health state is invalid.");
+        for (var index = 0; index < expected.Parts.Count; index++)
+        {
+            var part = expected.Parts[index];
+            var savedPart = saved[index];
+            if (savedPart is null
+                || !string.Equals(part.Name, savedPart.Name, StringComparison.Ordinal)
+                || part.MaximumHealth != savedPart.MaximumHealth
+                || part.RequiredForConsciousness != savedPart.RequiredForConsciousness
+                || !double.IsFinite(savedPart.CurrentHealth)
+                || savedPart.CurrentHealth < 0 || savedPart.CurrentHealth > part.MaximumHealth)
+                throw new InvalidDataException("Snapshot player health contains an invalid body part.");
+        }
+    }
+
+    private static void ValidateFacing(Vector3 facing)
+    {
+        if (!float.IsFinite(facing.X) || !float.IsFinite(facing.Y) || !float.IsFinite(facing.Z)
+            || Math.Abs(facing.Y) > 0.0001f
+            || facing.LengthSquared() < 0.999f || facing.LengthSquared() > 1.001f)
+            throw new InvalidDataException("Snapshot player facing must be a finite unit horizontal direction.");
     }
 
     private static void ValidateSessionPlayer(

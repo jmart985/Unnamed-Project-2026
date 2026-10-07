@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Text.RegularExpressions;
 using Simulation;
 
 namespace Simulation.Tests;
@@ -50,6 +51,57 @@ public sealed class WorldSnapshotTests
             Assert.Single(target.Entities, entity => entity.Id == target.PlayerEntityId).Position);
         var restoredWorkbench = Assert.Single(target.Workstations);
         Assert.Equal(SettlementRecipes.BasicMealId, restoredWorkbench.CurrentRecipe!.Id);
+    }
+
+    [Fact]
+    public void SnapshotRoundTripPreservesPlayerHealthDeathTimerAndFacing()
+    {
+        var source = NewGameSession.Create(GetSpeciesCatalog(), PlayerCharacterProfile.Create("Ada"), seed: 42);
+        var head = source.Player.Health.Parts.Single(part => part.Name == "Head");
+        source.Player.Health.TryDamage("Head", 10);
+        source.World.SetPlayerFacing(Vector3.UnitX);
+
+        var target = new World();
+        WorldSnapshotSerializer.Load(target, WorldSnapshotSerializer.Serialize(source.World, 4), GetSpeciesCatalog());
+
+        var restored = target.Entities.Single(entity => entity.Id == target.PlayerEntityId);
+        Assert.Equal(head.CurrentHealth, restored.Health.Parts.Single(part => part.Name == "Head").CurrentHealth);
+        Assert.Equal(Vector3.UnitX, target.PlayerFacing);
+        Assert.False(restored.Health.IsDead);
+    }
+
+    [Fact]
+    public void SnapshotRoundTripPreservesPlayerPendingDeathAndDeadState()
+    {
+        var source = NewGameSession.Create(GetSpeciesCatalog(), PlayerCharacterProfile.Create("Ada"));
+        source.Player.Health.TryDamage("Head", 25);
+        var pendingTarget = new World();
+        WorldSnapshotSerializer.Load(pendingTarget, WorldSnapshotSerializer.Serialize(source.World, 4), GetSpeciesCatalog());
+        var pending = pendingTarget.Entities.Single(entity => entity.Id == pendingTarget.PlayerEntityId);
+        Assert.Equal(1, pending.Health.PendingDeathSeconds);
+        Assert.False(pending.Health.IsDead);
+
+        var deadSource = NewGameSession.Create(GetSpeciesCatalog(), PlayerCharacterProfile.Create("Ada"));
+        deadSource.Player.Health.TryDamage("Torso", 50);
+        var deadTarget = new World();
+        WorldSnapshotSerializer.Load(deadTarget, WorldSnapshotSerializer.Serialize(deadSource.World, 5), GetSpeciesCatalog());
+        Assert.True(deadTarget.Entities.Single(entity => entity.Id == deadTarget.PlayerEntityId).Health.IsDead);
+    }
+
+    [Fact]
+    public void InvalidPlayerFacingDoesNotReplaceExistingWorld()
+    {
+        var source = NewGameSession.Create(GetSpeciesCatalog(), PlayerCharacterProfile.Create("Ada"));
+        var json = Regex.Replace(
+            WorldSnapshotSerializer.Serialize(source.World, 1),
+            "\\\"PlayerFacing\\\"\\s*:\\s*\\{[^}]+\\}",
+            "\\\"PlayerFacing\\\": { \\\"X\\\": 2, \\\"Y\\\": 0, \\\"Z\\\": 0 }",
+            RegexOptions.Singleline);
+        var original = NewGameSession.Create(GetSpeciesCatalog(), PlayerCharacterProfile.Create("Existing"));
+        var originalPlayer = original.Player;
+
+        Assert.Throws<InvalidDataException>(() => WorldSnapshotSerializer.Load(original.World, json, GetSpeciesCatalog()));
+        Assert.Same(originalPlayer, original.World.Entities.Single(entity => entity.Id == original.World.PlayerEntityId));
     }
 
     [Fact]
