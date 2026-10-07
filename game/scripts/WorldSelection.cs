@@ -254,6 +254,21 @@ public partial class Main
         }
         else
         {
+            if (target.Kind == TargetKind.ResourcePile)
+            {
+                var pile = _world.ResourcePiles.First(source => source.Id == target.Id);
+                if (target.Id.StartsWith("tree-adult-", StringComparison.Ordinal))
+                {
+                    var wood = pile.Contents.Counts.GetValueOrDefault(ItemIds.Wood);
+                    detail = wood == 0 ? "Depleted tree · regrowing" : "Adult tree · left click punch/chop for wood";
+                }
+                else if (target.Id.StartsWith("rock-loose-", StringComparison.Ordinal))
+                    detail = "Loose rock · collect to carry";
+                else
+                    detail = ContainerSummary(pile.Contents);
+                _targetHud.Text = $"TARGET: {target.Kind} · {target.Id}{(visible ? "" : " (out of view)")}\n{detail}\n{hint}";
+                return;
+            }
             var contents = target.Kind switch
             {
                 TargetKind.Food => _world.FoodSources.First(source => source.Id == target.Id).Contents,
