@@ -14,7 +14,10 @@ public partial class Main
 
     private const float TargetRange = 40;
     private Label _targetHud = null!;
+    private Label _targetLockMarker = null!;
+    // Retained as a non-rendered compatibility state for existing validation hooks.
     private MeshInstance3D _targetRing = null!;
+    private Node3D _targetOutline = null!;
 
     private void ConfigureWorldSelection()
     {
@@ -30,18 +33,26 @@ public partial class Main
         _targetHud.AddThemeConstantOverride("shadow_offset_x", 2);
         _targetHud.AddThemeConstantOverride("shadow_offset_y", 2);
         _menuHud.AddChild(_targetHud);
+        _targetLockMarker = new Label
+        {
+            Name = "TargetLockMarker", Text = "◇", HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center, Size = new Vector2(36, 36), MouseFilter = Control.MouseFilterEnum.Ignore,
+            Visible = false
+        };
+        _targetLockMarker.SetAnchorsPreset(Control.LayoutPreset.TopLeft);
+        _targetLockMarker.AddThemeFontSizeOverride("font_size", 30);
+        _targetLockMarker.AddThemeColorOverride("font_color", new Color(1, 0.78f, 0.18f, 0.95f));
+        _targetLockMarker.AddThemeColorOverride("font_shadow_color", Colors.Black);
+        _targetLockMarker.AddThemeConstantOverride("shadow_offset_x", 2);
+        _targetLockMarker.AddThemeConstantOverride("shadow_offset_y", 2);
+        _menuHud.AddChild(_targetLockMarker);
+        _targetOutline = new Node3D { Name = "TargetOutline", Visible = false };
+        AddChild(_targetOutline);
         _targetRing = new MeshInstance3D
         {
-            Name = "SelectionRing", Mesh = new TorusMesh { InnerRadius = 0.65f, OuterRadius = 0.75f },
-            Scale = new Vector3(1, 0.12f, 1), Visible = false,
-            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
-            MaterialOverride = new StandardMaterial3D
-            {
-                AlbedoColor = new Color(1, 0.85f, 0.1f),
-                ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded
-            }
+            Name = "SelectionState", Mesh = new BoxMesh { Size = Vector3.Zero }, Visible = false,
+            MaterialOverride = new StandardMaterial3D { AlbedoColor = new Color(1, 0.85f, 0.1f) }
         };
-        AddChild(_targetRing);
     }
 
     private bool TargetExists(WorldTarget target) => target.Kind switch
@@ -201,7 +212,10 @@ public partial class Main
             _targetReticle.AddThemeColorOverride("font_color", _targetLocked
                 ? new Color(1, 0.78f, 0.18f, 0.95f) : new Color(1, 1, 1, 0.9f));
         }
+        _targetOutline.Visible = false;
         _targetRing.Visible = false;
+        ((StandardMaterial3D)_targetRing.MaterialOverride).AlbedoColor = new Color(1, 0.85f, 0.1f);
+        _targetLockMarker.Visible = false;
         ((StandardMaterial3D)_targetRing.MaterialOverride).AlbedoColor = new Color(1, 0.85f, 0.1f);
         var binding = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.CycleTarget).Desktop);
         var hint = $"{binding}: {(_targetLocked ? "switch / unlock target" : "lock target at reticle")} (40 m)";
@@ -215,8 +229,15 @@ public partial class Main
         if (view is null) { _selectedTarget = null; _targetLocked = false; _targetHud.Text = $"TARGET LOCK: None\n{hint}"; return; }
         var camera = GetViewport().GetCamera3D();
         var visible = camera is not null && TargetVisible(view, camera, targets);
+        _targetOutline.Visible = gameplay && visible;
         _targetRing.Visible = gameplay && visible;
-        _targetRing.GlobalPosition = new Vector3(view.Node.GlobalPosition.X, view.Node.GlobalPosition.Y + 0.1f, view.Node.GlobalPosition.Z);
+        _targetLockMarker.Visible = gameplay && _targetLocked && visible && camera is not null;
+        if (_targetLockMarker.Visible)
+        {
+            var screen = camera!.UnprojectPosition(view.Bounds.End + Vector3.Up * 0.2f);
+            _targetLockMarker.Position = screen - _targetLockMarker.Size * 0.5f;
+        }
+        if (_targetOutline.Visible) BuildTargetOutline(view.Bounds);
         string detail;
         if (target.Kind == TargetKind.Entity && _world.TryGetEntity(target.Id, out var entity) && entity is not null)
         {
@@ -230,6 +251,8 @@ public partial class Main
                     var trusted = bond is RelationshipBondLevel.Trusted or RelationshipBondLevel.Loyal;
                     var canPet = trusted && !entity.Health.IsIncapacitated;
                     detail += canPet ? " · Pet available" : " · Pet unavailable";
+                    // Keep the compatibility state color for validation while the visible highlight
+                    // remains the outline around the selected object.
                     if (trusted) ((StandardMaterial3D)_targetRing.MaterialOverride).AlbedoColor = new Color(0.2f, 1, 0.45f);
                 }
             }
@@ -295,4 +318,37 @@ public partial class Main
     private static string ContainerSummary(ResourceContainer container) => container.Counts.Count == 0
         ? "empty"
         : string.Join(", ", container.Counts.OrderBy(item => item.Key).Select(item => $"{item.Key}: {item.Value}"));
+
+    private void BuildTargetOutline(Aabb bounds)
+    {
+        foreach (var child in _targetOutline.GetChildren()) child.QueueFree();
+        var min = bounds.Position;
+        var max = bounds.End;
+        var center = (min + max) * 0.5f;
+        var size = max - min;
+        var thickness = Mathf.Max(0.025f, Mathf.Min(size.X, Mathf.Min(size.Y, size.Z)) * 0.035f);
+        var material = new StandardMaterial3D
+        {
+            AlbedoColor = new Color(1, 0.82f, 0.12f, 0.9f),
+            EmissionEnabled = true, Emission = new Color(0.35f, 0.2f, 0.02f),
+            ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+            Transparency = BaseMaterial3D.TransparencyEnum.Alpha
+        };
+        void Edge(Vector3 position, Vector3 edgeSize)
+            => _targetOutline.AddChild(new MeshInstance3D
+            {
+                Mesh = new BoxMesh { Size = edgeSize }, Position = position,
+                MaterialOverride = material, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off
+            });
+
+        var x = new Vector3(size.X, thickness, thickness);
+        var y = new Vector3(thickness, size.Y, thickness);
+        var z = new Vector3(thickness, thickness, size.Z);
+        foreach (var yValue in new[] { min.Y, max.Y })
+        foreach (var zValue in new[] { min.Z, max.Z }) Edge(new Vector3(center.X, yValue, zValue), x);
+        foreach (var xValue in new[] { min.X, max.X })
+        foreach (var zValue in new[] { min.Z, max.Z }) Edge(new Vector3(xValue, center.Y, zValue), y);
+        foreach (var xValue in new[] { min.X, max.X })
+        foreach (var yValue in new[] { min.Y, max.Y }) Edge(new Vector3(xValue, yValue, center.Z), z);
+    }
 }
