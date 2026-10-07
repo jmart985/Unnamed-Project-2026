@@ -11,6 +11,7 @@ public partial class EntityView : CharacterBody3D
     private float _movementSpeed;
     private bool _isCreature;
     private string _speciesId = string.Empty;
+    private string _bodyCategory = string.Empty;
     private Node3D? _rig;
     private ProceduralGait? _gait;
     private Vector3 _lastPosition;
@@ -81,7 +82,7 @@ public partial class EntityView : CharacterBody3D
             _ => (Color.FromHsv(variation, 0.45f, 0.75f), new Color(0.85f, 0.68f + variation * 0.12f, 0.55f))
         };
 
-        if (_isCreature)
+        if (_isCreature && !string.Equals(_bodyCategory, "humanoid", StringComparison.OrdinalIgnoreCase))
         {
             BuildQuadruped(bodyColor, accentColor);
         }
@@ -298,13 +299,14 @@ public partial class EntityView : CharacterBody3D
 
     public override void _PhysicsProcess(double delta) => _navigationAdapter?.RefreshPath();
 
-    public void Bind(string entityId, float movementSpeed, bool isCreature = false, string? speciesId = null)
+    public void Bind(string entityId, float movementSpeed, bool isCreature = false, string? speciesId = null, string? bodyCategory = null)
     {
         if (!float.IsFinite(movementSpeed) || movementSpeed <= 0) throw new ArgumentOutOfRangeException(nameof(movementSpeed));
         EntityId = entityId;
         _movementSpeed = movementSpeed;
         _isCreature = isCreature;
         _speciesId = speciesId ?? (isCreature ? "creature" : "human");
+        _bodyCategory = bodyCategory ?? (isCreature ? "quadruped" : "humanoid");
     }
 
     public bool Sync(World world)
