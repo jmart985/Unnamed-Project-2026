@@ -7,6 +7,8 @@ public partial class Main
 {
     private async void RunMenuValidation()
     {
+        string? validationSavePath = null;
+        string? validationSettingsPath = null;
         try
         {
             _sessionActive = false;
@@ -20,8 +22,10 @@ public partial class Main
             // Isolate each run so a prior intentionally-corrupt fixture cannot affect the
             // current save/load assertions, even when another Godot process still holds it.
             var validationRun = Guid.NewGuid().ToString("N");
-            _saveSlotPath = ProjectSettings.GlobalizePath($"res://../.menu-validation-save-{validationRun}.json");
-            _buttonBindings.Path = ProjectSettings.GlobalizePath($"res://../.menu-validation-settings-{validationRun}.json");
+            validationSavePath = ProjectSettings.GlobalizePath($"res://../.menu-validation-save-{validationRun}.json");
+            validationSettingsPath = ProjectSettings.GlobalizePath($"res://../.menu-validation-settings-{validationRun}.json");
+            _saveSlotPath = validationSavePath;
+            _buttonBindings.Path = validationSettingsPath;
             Require(_menuState.ActiveMenu is null && !_controls.Visible && !_inventoryPanel.Visible && !_settingsPanel.Visible, "session starts closed");
             SendMenuKey(Key.I);
             Require(_menuState.ActiveMenu == PlayerMenu.Inventory && _inventoryPanel.Visible && !_controls.Visible, "I opens inventory");
@@ -191,8 +195,8 @@ public partial class Main
         }
         finally
         {
-            DeleteValidationFile(_saveSlotPath);
-            DeleteValidationFile(_buttonBindings.Path);
+            DeleteValidationFile(validationSavePath);
+            DeleteValidationFile(validationSettingsPath);
         }
     }
 
