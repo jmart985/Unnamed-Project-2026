@@ -17,6 +17,14 @@ public sealed record FireplaceAction(FireplaceActionCode Code, string Message);
 
 public sealed class FireplaceService(World world)
 {
+    public const double WarmthRadius = 6;
+
+    public bool IsWarm(string actorId)
+    {
+        if (!world.TryGetEntity(actorId, out var actor) || actor is null) return false;
+        return world.Fireplaces.Any(fire => fire.IsLit && Vector3.Distance(actor.Position, fire.Position) <= WarmthRadius);
+    }
+
     public FireplaceAction AddFuel(string actorId, string fireplaceId)
     {
         if (!world.TryGetEntity(actorId, out var actor) || actor is null) return new(FireplaceActionCode.Invalid, "The actor is unavailable.");

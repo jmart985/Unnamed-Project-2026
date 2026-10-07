@@ -31,4 +31,17 @@ public sealed class FireplaceTests
         WorldSnapshotSerializer.Load(loaded, json, catalog);
         Assert.Equal(3, loaded.Fireplaces.Single(item => item.Id == fire.Id).Fuel);
     }
+
+    [Fact]
+    public void LitFireProvidesWarmthOnlyWithinItsRadius()
+    {
+        var catalog = SpeciesCatalog.LoadFromFile(Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
+        var session = NewGameSession.Create(catalog, PlayerCharacterProfile.Create("Warmth"));
+        var fire = session.World.AddFireplace("warmth-fire", session.Player.Position);
+        fire.Fuel = 1;
+        var service = new FireplaceService(session.World);
+        Assert.True(service.IsWarm(session.Player.Id));
+        session.World.TrySetEntityPosition(session.Player.Id, fire.Position + new Vector3(0, 0, 7));
+        Assert.False(service.IsWarm(session.Player.Id));
+    }
 }
