@@ -262,8 +262,10 @@ public partial class Main
         if (view is null) { _selectedTarget = null; _targetLocked = false; _targetHud.Text = $"TARGET LOCK: None\n{hint}"; return; }
         var camera = GetViewport().GetCamera3D();
         var visible = camera is not null && TargetVisible(view, camera, targets);
-        _targetOutline.Visible = gameplay && visible;
-        _targetRing.Visible = gameplay && visible;
+		// A target outline is reserved for an explicit target lock. Hovering or
+		// selecting a row should not leave a large wire box over the scene.
+		_targetOutline.Visible = gameplay && _targetLocked && visible;
+		_targetRing.Visible = gameplay && visible;
         _targetLockMarker.Visible = gameplay && _targetLocked && visible && camera is not null;
         if (_targetLockMarker.Visible)
         {

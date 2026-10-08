@@ -1129,6 +1129,11 @@ public partial class Main : Node3D
 		// The visual workbench is also a real obstacle. Keep the collision footprint
 		// broad enough to cover the legs and shelf while leaving walkable space around it.
 		var workbenchBody = new StaticBody3D { Name = "WorkbenchCollision" };
+		// Presentation and camera occlusion use layer 2. The player still collides
+		// with it through its layer-3 mask, while the camera can pull in cleanly
+		// before the tabletop fills the view.
+		workbenchBody.CollisionLayer = 2;
+		workbenchBody.CollisionMask = 1;
 		workbenchBody.AddChild(new CollisionShape3D
 		{
 			Shape = new BoxShape3D { Size = new Vector3(2f, 1.05f, 1.4f) },

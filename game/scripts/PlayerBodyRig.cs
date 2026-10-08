@@ -44,7 +44,7 @@ public sealed class PlayerBodyRig
             Position = position,
             Scale = scale ?? Vector3.One,
             RotationDegrees = rotationDegrees ?? Vector3.Zero,
-            MaterialOverride = new StandardMaterial3D { AlbedoColor = color }
+            MaterialOverride = new StandardMaterial3D { AlbedoColor = color, Roughness = 0.82f }
         });
     }
 
@@ -67,25 +67,25 @@ public sealed class PlayerBodyRig
         Part(Root, new SphereMesh { Radius = 0.5f, Height = 2f },
             new Vector3(0, p.LegLength - 0.06f, 0), trousers,
             new Vector3(0.42f * scale * p.HipSpan, 0.22f * scale, torsoDepth * 0.52f));
+        // SphereMesh has a two-metre native height. Keep its scale at half the
+        // logical torso length so the shoulders, neck and hips share clean seams.
         Part(Torso, new SphereMesh { Radius = 0.5f, Height = 2f },
-            new Vector3(0, p.TorsoLength * 0.5f + 0.10f, 0), shirt,
-            new Vector3(torsoWidth * p.ShoulderSpan, p.TorsoLength * 0.94f, torsoDepth));
-        if (p.ChestSize > 0)
-        {
-            foreach (var x in new[] { -0.09f, 0.09f })
-            {
-                Part(Torso, new SphereMesh { Radius = 0.075f * scale, Height = 0.14f * scale },
-                    new Vector3(x * scale, p.TorsoLength * 0.72f, -torsoDepth * 0.5f), shirt);
-            }
-        }
+            new Vector3(0, p.TorsoLength * 0.48f + 0.03f, 0), shirt,
+            new Vector3(torsoWidth * p.ShoulderSpan, p.TorsoLength * 0.5f, torsoDepth));
+        // A shallow chest panel gives the shirt a front plane without the two
+        // floating spheres that previously read as detached armor pieces.
+        Part(Torso, new SphereMesh { Radius = 0.5f, Height = 2f },
+            new Vector3(0, p.TorsoLength * 0.52f, -torsoDepth * 0.48f), shirt.Lightened(0.04f),
+            new Vector3(torsoWidth * 0.34f, p.TorsoLength * 0.16f, 0.035f));
 
         var neck = Joint(Torso, "Neck", new Vector3(0, p.TorsoLength + 0.04f, 0));
         Part(neck, new CylinderMesh { TopRadius = limb * 0.55f, BottomRadius = limb * 0.65f, Height = p.NeckLength + 0.04f },
             new Vector3(0, p.NeckLength * 0.5f, 0), skin);
         Head = Joint(neck, "Head", new Vector3(0, p.NeckLength, 0));
         Part(Head, new SphereMesh { Radius = p.HeadRadius, Height = p.HeadRadius * 2.1f }, new Vector3(0, p.HeadRadius, 0), skin);
-        Part(Head, new SphereMesh { Radius = p.HeadRadius * 1.02f, Height = p.HeadRadius * 1.1f },
-            new Vector3(0, p.HeadRadius * 1.45f, p.HeadRadius * 0.12f), hair);
+        Part(Head, new SphereMesh { Radius = p.HeadRadius * 1.02f, Height = p.HeadRadius * 1.2f },
+            new Vector3(0, p.HeadRadius * 1.14f, p.HeadRadius * 0.03f), hair,
+            new Vector3(1.03f, 1.05f, 1.02f));
         foreach (var x in new[] { -0.4f, 0.4f })
         {
             Part(Head, new SphereMesh { Radius = p.HeadRadius * 0.1f, Height = p.HeadRadius * 0.2f },
@@ -98,8 +98,8 @@ public sealed class PlayerBodyRig
         (RightShoulder, RightElbow) = BuildArm(Torso, "Right", new Vector3(shoulderX, shoulderY, 0), p.ArmLength, limb, shirt, skin);
 
         var hipX = 0.1f * scale * p.HipSpan * p.TorsoWidth;
-        (LeftHip, LeftKnee) = BuildLeg("Left", new Vector3(-hipX, p.LegLength, 0), p.LegLength, limb * 1.3f, trousers);
-        (RightHip, RightKnee) = BuildLeg("Right", new Vector3(hipX, p.LegLength, 0), p.LegLength, limb * 1.3f, trousers);
+        (LeftHip, LeftKnee) = BuildLeg("Left", new Vector3(-hipX, p.LegLength, 0), p.LegLength, limb * 1.5f, trousers);
+        (RightHip, RightKnee) = BuildLeg("Right", new Vector3(hipX, p.LegLength, 0), p.LegLength, limb * 1.5f, trousers);
     }
 
     private static (Node3D Shoulder, Node3D Elbow) BuildArm(Node3D parent, string side, Vector3 position, float length,
@@ -107,11 +107,11 @@ public sealed class PlayerBodyRig
     {
         var shoulder = Joint(parent, side + "Shoulder", position);
         Part(shoulder, new SphereMesh { Radius = thickness * 0.75f, Height = thickness * 1.5f }, Vector3.Zero, sleeve);
-        Part(shoulder, new CapsuleMesh { Radius = thickness * 0.5f, Height = length * 0.5f + thickness * 0.5f },
+        Part(shoulder, new CapsuleMesh { Radius = thickness * 0.56f, Height = length * 0.5f + thickness * 0.6f },
             new Vector3(0, -length * 0.25f, 0), sleeve);
         var elbow = Joint(shoulder, side + "Elbow", new Vector3(0, -length * 0.5f, 0));
-        Part(elbow, new CapsuleMesh { Radius = thickness * 0.42f, Height = length * 0.5f }, new Vector3(0, -length * 0.25f, 0), skin);
-        Part(elbow, new SphereMesh { Radius = thickness * 0.5f, Height = thickness }, new Vector3(0, -length * 0.5f, 0), skin);
+        Part(elbow, new CapsuleMesh { Radius = thickness * 0.5f, Height = length * 0.5f + thickness * 0.15f }, new Vector3(0, -length * 0.25f, 0), skin);
+        Part(elbow, new SphereMesh { Radius = thickness * 0.62f, Height = thickness * 1.1f }, new Vector3(0, -length * 0.5f, 0), skin);
         return (shoulder, elbow);
     }
 
@@ -121,8 +121,8 @@ public sealed class PlayerBodyRig
         Part(hip, new CapsuleMesh { Radius = thickness * 0.5f, Height = length * 0.5f + thickness * 0.4f },
             new Vector3(0, -length * 0.25f, 0), trousers);
         var knee = Joint(hip, side + "Knee", new Vector3(0, -length * 0.5f, 0));
-        Part(knee, new CapsuleMesh { Radius = thickness * 0.42f, Height = length * 0.5f }, new Vector3(0, -length * 0.25f, 0), trousers);
-        Part(knee, new CapsuleMesh { Radius = thickness * 0.52f, Height = thickness * 1.75f },
+        Part(knee, new CapsuleMesh { Radius = thickness * 0.48f, Height = length * 0.5f + thickness * 0.15f }, new Vector3(0, -length * 0.25f, 0), trousers);
+        Part(knee, new CapsuleMesh { Radius = thickness * 0.58f, Height = thickness * 1.85f },
             new Vector3(0, -length * 0.5f + thickness * 0.38f, -thickness * 0.42f), new Color(0.12f, 0.1f, 0.09f),
             rotationDegrees: new Vector3(90, 0, 0));
         return (hip, knee);

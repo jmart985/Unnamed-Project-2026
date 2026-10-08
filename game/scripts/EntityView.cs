@@ -114,10 +114,13 @@ public partial class EntityView : CharacterBody3D
         float phase, float swing, float knee, int fastGroup = 0)
     {
         var upper = AddJoint(parent, hip);
-        AddPart(new BoxMesh { Size = new Vector3(thickness, length * 0.5f, thickness) }, new Vector3(0, -length * 0.25f, 0), color, parent: upper);
-        var lower = AddJoint(upper, new Vector3(0, -length * 0.5f, 0));
-        AddPart(new BoxMesh { Size = new Vector3(thickness * 0.8f, length * 0.5f, thickness * 0.8f) }, new Vector3(0, -length * 0.25f, 0), color, parent: lower);
-        AddPart(new BoxMesh { Size = new Vector3(thickness * 1.1f, 0.06f, thickness * 1.7f) }, new Vector3(0, -length * 0.5f + 0.03f, -thickness * 0.35f), footColor, parent: lower);
+		AddPart(new CapsuleMesh { Radius = thickness * 0.5f, Height = length * 0.5f + thickness * 0.45f },
+			new Vector3(0, -length * 0.25f, 0), color, parent: upper);
+		var lower = AddJoint(upper, new Vector3(0, -length * 0.5f, 0));
+		AddPart(new CapsuleMesh { Radius = thickness * 0.42f, Height = length * 0.5f },
+			new Vector3(0, -length * 0.25f, 0), color, parent: lower);
+		AddPart(new SphereMesh { Radius = thickness * 0.55f, Height = thickness * 0.65f },
+			new Vector3(0, -length * 0.5f + thickness * 0.12f, -thickness * 0.42f), footColor, parent: lower);
         _gait!.Limbs.Add(new ProceduralGait.Limb { Pivot = upper, Phase = phase, Amplitude = swing, FastGroup = fastGroup });
         _gait.Limbs.Add(new ProceduralGait.Limb { Pivot = lower, Phase = phase + Mathf.Pi * 0.5f, Amplitude = -knee, Rectify = true, FastGroup = fastGroup });
     }
@@ -127,9 +130,11 @@ public partial class EntityView : CharacterBody3D
     {
         var upper = AddJoint(parent, shoulder);
         AddPart(new SphereMesh { Radius = thickness * 0.75f, Height = thickness * 1.5f }, Vector3.Zero, sleeve, parent: upper);
-        AddPart(new BoxMesh { Size = new Vector3(thickness, length * 0.5f, thickness) }, new Vector3(0, -length * 0.25f, 0), sleeve, parent: upper);
-        var lower = AddJoint(upper, new Vector3(0, -length * 0.5f, 0));
-        AddPart(new BoxMesh { Size = new Vector3(thickness * 0.85f, length * 0.5f, thickness * 0.85f) }, new Vector3(0, -length * 0.25f, 0), hand, parent: lower);
+		AddPart(new CapsuleMesh { Radius = thickness * 0.5f, Height = length * 0.5f + thickness * 0.45f },
+			new Vector3(0, -length * 0.25f, 0), sleeve, parent: upper);
+		var lower = AddJoint(upper, new Vector3(0, -length * 0.5f, 0));
+		AddPart(new CapsuleMesh { Radius = thickness * 0.42f, Height = length * 0.5f },
+			new Vector3(0, -length * 0.25f, 0), hand, parent: lower);
         AddPart(new SphereMesh { Radius = thickness * 0.5f, Height = thickness }, new Vector3(0, -length * 0.5f, 0), hand, parent: lower);
         _gait!.Limbs.Add(new ProceduralGait.Limb { Pivot = upper, Phase = phase, Amplitude = swing, IdleAmplitude = 0.03f, IdleFrequency = 1.1f });
         _gait.Limbs.Add(new ProceduralGait.Limb { Pivot = lower, Phase = phase + Mathf.Pi * 0.5f, Amplitude = 0.25f, Bias = 0.3f });
@@ -156,9 +161,11 @@ public partial class EntityView : CharacterBody3D
         _gait.RadiansPerMeter = 3.4f;
 
         // Barrel chest and slimmer hindquarters read as one animal rather than a box.
-        AddPart(new BoxMesh { Size = bodySize }, new Vector3(0, bodyY, 0), bodyColor);
-        AddPart(new BoxMesh { Size = new Vector3(bodySize.X * 0.9f, bodySize.Y * 0.85f, bodySize.Z * 0.4f) },
-            new Vector3(0, bodyY - 0.02f, bodySize.Z * 0.38f), bodyColor.Darkened(0.08f));
+		AddPart(new SphereMesh { Radius = 0.5f, Height = 2f }, new Vector3(0, bodyY, 0), bodyColor,
+			scale: new Vector3(bodySize.X, bodySize.Y * 0.5f, bodySize.Z));
+		AddPart(new SphereMesh { Radius = 0.5f, Height = 2f },
+			new Vector3(0, bodyY - 0.02f, bodySize.Z * 0.38f), bodyColor.Darkened(0.08f),
+			scale: new Vector3(bodySize.X * 0.9f, bodySize.Y * 0.42f, bodySize.Z * 0.4f));
         if (_bodyPlan == CreatureBodyPlan.Ungulate)
         {
             AddPart(new BoxMesh { Size = new Vector3(0.5f, 0.3f, 0.5f) }, new Vector3(0.2f, bodyY + bodySize.Y * 0.25f, 0.1f), accentColor);
@@ -233,11 +240,14 @@ public partial class EntityView : CharacterBody3D
         AddCollision(totalHeight, 0.32f);
         _gait!.BobHeight = ape ? 0.05f : 0.035f;
 
-        AddPart(new BoxMesh { Size = new Vector3(chest.X * 0.85f, 0.2f, chest.Z * 0.9f) }, new Vector3(0, legLength, 0), pants);
-        var torso = AddJoint(rig, new Vector3(0, legLength, 0));
-        torso.Rotation = new Vector3(lean, 0, 0);
-        AddPart(new BoxMesh { Size = chest }, new Vector3(0, chest.Y * 0.5f + 0.05f, 0), shirt, parent: torso);
-        AddPart(new BoxMesh { Size = new Vector3(chest.X * 0.7f, 0.1f, chest.Z * 0.8f) }, new Vector3(0, 0.02f, 0), shirt.Darkened(0.25f), parent: torso);
+		AddPart(new SphereMesh { Radius = 0.5f, Height = 2f }, new Vector3(0, legLength, 0), pants,
+			scale: new Vector3(chest.X * 0.88f, 0.1f, chest.Z * 0.92f));
+		var torso = AddJoint(rig, new Vector3(0, legLength, 0));
+		torso.Rotation = new Vector3(lean, 0, 0);
+		AddPart(new SphereMesh { Radius = 0.5f, Height = 2f }, new Vector3(0, chest.Y * 0.5f + 0.05f, 0), shirt,
+			scale: new Vector3(chest.X, chest.Y * 0.5f, chest.Z), parent: torso);
+		AddPart(new SphereMesh { Radius = 0.5f, Height = 2f }, new Vector3(0, 0.02f, 0), shirt.Darkened(0.25f),
+			scale: new Vector3(chest.X * 0.72f, 0.05f, chest.Z * 0.8f), parent: torso);
         AddPart(new CylinderMesh { TopRadius = 0.07f, BottomRadius = 0.08f, Height = 0.12f }, new Vector3(0, chest.Y + 0.1f, 0), skin, parent: torso);
 
         var headPivot = AddJoint(torso, new Vector3(0, chest.Y + 0.15f, ape ? -0.08f : 0));
@@ -274,13 +284,15 @@ public partial class EntityView : CharacterBody3D
         AddLeg(_rig, new Vector3(hipX, legLength, 0), legLength, thickness, pants, new Color(0.15f, 0.12f, 0.1f), Mathf.Pi, 0.6f, 0.9f);
     }
 
-    private void AddPart(Mesh mesh, Vector3 position, Color color, Vector3? rotationDegrees = null, Node3D? parent = null)
+	private void AddPart(Mesh mesh, Vector3 position, Color color, Vector3? rotationDegrees = null,
+		Node3D? parent = null, Vector3? scale = null)
     {
         var part = new MeshInstance3D
         {
-            Mesh = mesh,
-            Position = position,
-            MaterialOverride = new StandardMaterial3D { AlbedoColor = color }
+			Mesh = mesh,
+			Position = position,
+			Scale = scale ?? Vector3.One,
+			MaterialOverride = new StandardMaterial3D { AlbedoColor = color, Roughness = 0.82f }
         };
         if (rotationDegrees is { } rotation)
         {

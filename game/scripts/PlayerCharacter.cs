@@ -32,6 +32,7 @@ public partial class PlayerCharacter : CharacterBody3D
 	[Export] public float CameraFirstPersonDistance { get; set; } = 0.12f;
 	[Export] public float CameraZoomStep { get; set; } = 0.75f;
 	[Export] public float CameraZoomSmoothing { get; set; } = 12.0f;
+	[Export] public float CameraCollisionMargin { get; set; } = 0.2f;
 	[Export] public float CameraPitchOffset { get; set; } = -0.2617994f;
 	[Export] public bool LeftShieldEquipped { get; set; }
 	[Export] public bool RightShieldEquipped { get; set; }
@@ -247,28 +248,61 @@ public partial class PlayerCharacter : CharacterBody3D
             Velocity.Y,
             Mathf.MoveToward(Velocity.Z, target.Z, rate * physicsDelta));
 
-        MoveAndSlide();
-        _gait.Advance(physicsDelta, IsOnFloor() ? new Vector2(Velocity.X, Velocity.Z).Length() : 0f);
+		MoveAndSlide();
+		_gait.Advance(physicsDelta, IsOnFloor() ? new Vector2(Velocity.X, Velocity.Z).Length() : 0f);
         if (_swing.Advance(physicsDelta))
         {
             StrikeReleased?.Invoke(_swingLeft, CombatAim.PartForPitch(_headPitch, _swingLeft));
         }
 
 		ApplyAttackPose();
-		var camera = GetNode<Camera3D>("Camera3D");
-		camera.Position = new Vector3(camera.Position.X, camera.Position.Y,
-			Mathf.MoveToward(camera.Position.Z, _cameraZoomDistance, CameraZoomSmoothing * physicsDelta));
+		UpdateCameraPosition(physicsDelta);
 
         if (IsOnFloor())
         {
             _lastGroundedPosition = GlobalPosition;
-        }
-        else if (GlobalPosition.Y < FallRespawnHeight)
-        {
-            GlobalPosition = _lastGroundedPosition + Vector3.Up * RespawnLift;
-            Velocity = Vector3.Zero;
-        }
-    }
+		}
+		else if (GlobalPosition.Y < FallRespawnHeight)
+		{
+			GlobalPosition = _lastGroundedPosition + Vector3.Up * RespawnLift;
+			Velocity = Vector3.Zero;
+		}
+	}
+
+	/// <summary>
+	/// Keeps the third-person camera from sitting inside a workbench, wall, or crowd.
+	/// The camera remains on the player's facing axis and eases back out after an
+	/// obstruction clears, so close-range interactions stay readable.
+	/// </summary>
+	private void UpdateCameraPosition(float delta)
+	{
+		var camera = GetNode<Camera3D>("Camera3D");
+		var proportions = PlayerBodyProportions.From(_profile);
+		var pivotLocal = new Vector3(0, proportions.Height * 1.28f, 0);
+		var desiredLocal = new Vector3(0, proportions.Height * 1.45f, _cameraZoomDistance);
+		var pivot = GlobalTransform * pivotLocal;
+		var desired = GlobalTransform * desiredLocal;
+		var targetDistance = _cameraZoomDistance;
+		if (GetWorld3D() is { } world)
+		{
+			var query = PhysicsRayQueryParameters3D.Create(pivot, desired, collisionMask: 2);
+			query.Exclude = new Godot.Collections.Array<Rid> { GetRid() };
+			var hit = world.DirectSpaceState.IntersectRay(query);
+			if (hit.Count > 0 && hit.TryGetValue("position", out var hitPosition))
+			{
+				var point = (Vector3)hitPosition;
+				targetDistance = Mathf.Clamp(pivot.DistanceTo(point) - CameraCollisionMargin,
+					CameraFirstPersonDistance, _cameraZoomDistance);
+			}
+		}
+
+		// Pull in immediately when an obstruction appears; ease out when clear.
+		var currentDistance = camera.Position.Z;
+		var nextDistance = targetDistance < currentDistance
+			? targetDistance
+			: Mathf.MoveToward(currentDistance, targetDistance, CameraZoomSmoothing * delta);
+		camera.Position = new Vector3(0, desiredLocal.Y, nextDistance);
+	}
 
     private void StartAttackSwing(bool left, bool shieldEquipped)
     {
