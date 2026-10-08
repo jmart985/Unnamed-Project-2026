@@ -169,8 +169,20 @@ public partial class EntityView : CharacterBody3D
         AddPart(new BoxMesh { Size = new Vector3(0.3f, 0.34f, 0.4f) }, new Vector3(0, 0.02f, -0.12f), bodyColor, new Vector3(-25, 0, 0), head);
         AddPart(new BoxMesh { Size = new Vector3(0.38f, 0.38f, 0.42f) }, new Vector3(0, 0.1f, -0.38f), bodyColor, parent: head);
         AddPart(new BoxMesh { Size = new Vector3(0.22f, 0.18f, 0.24f) }, new Vector3(0, 0.02f, -0.66f), accentColor, parent: head);
-        AddPart(new BoxMesh { Size = new Vector3(0.1f, 0.18f, 0.06f) }, new Vector3(-0.17f, 0.37f, -0.3f), accentColor, new Vector3(0, 0, 20), head);
-        AddPart(new BoxMesh { Size = new Vector3(0.1f, 0.18f, 0.06f) }, new Vector3(0.17f, 0.37f, -0.3f), accentColor, new Vector3(0, 0, -20), head);
+        if (_bodyPlan == CreatureBodyPlan.Primate)
+        {
+            // Broad brow, short muzzle and rounded ears distinguish an ape from
+            // the pointed-eared canid silhouette.
+            AddPart(new BoxMesh { Size = new Vector3(0.3f, 0.12f, 0.12f) }, new Vector3(0, 0.3f, -0.34f), accentColor, parent: head);
+            AddPart(new SphereMesh { Radius = 0.16f, Height = 0.2f }, new Vector3(0, 0.02f, -0.68f), accentColor, parent: head);
+            foreach (var x in new[] { -0.22f, 0.22f })
+                AddPart(new SphereMesh { Radius = 0.1f, Height = 0.16f }, new Vector3(x, 0.14f, -0.25f), bodyColor, parent: head);
+        }
+        else
+        {
+            AddPart(new BoxMesh { Size = new Vector3(0.1f, 0.18f, 0.06f) }, new Vector3(-0.17f, 0.37f, -0.3f), accentColor, new Vector3(0, 0, 20), head);
+            AddPart(new BoxMesh { Size = new Vector3(0.1f, 0.18f, 0.06f) }, new Vector3(0.17f, 0.37f, -0.3f), accentColor, new Vector3(0, 0, -20), head);
+        }
         foreach (var x in new[] { -0.1f, 0.1f })
         {
             AddPart(new SphereMesh { Radius = 0.04f, Height = 0.08f }, new Vector3(x, 0.17f, -0.58f), Colors.Black, parent: head);
