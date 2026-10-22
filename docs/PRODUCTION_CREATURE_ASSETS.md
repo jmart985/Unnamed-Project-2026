@@ -171,3 +171,32 @@ visual and semantic foundation.
 The cat generator produced 36 mesh parts and 26 semantic bones. Blender
 re-import confirmed all nine expected action clips before admission.
 
+## Pig / Suiform Rig v1
+
+The first suiform production asset is a project-generated pig. It is a
+separate family profile from ruminants: the body is shorter and heavier, the
+legs are compact, the snout is broad, and the tail is raised and curled. The
+editable Blender source is:
+
+`art_source/blender/generate_creature_suiform_v1.py`
+
+The generated source files are kept under:
+
+`art_source/reference/generated_creatures/pig_suiform_rig_v1.*`
+
+The runtime GLB is admitted at:
+
+`game/assets/creatures/pig/pig_suiform_rig_v1.glb`
+
+The semantic rig contains root/pelvis/three-spine/neck/head/jaw, paired front
+and rear limb chains, cloven-hoof controls, ears, and four curled tail
+segments. Included actions are `idle`, `walk`, `trot`, `run`, `graze`, `eat`,
+`hurt`, and `turn`.
+
+`EntityView` selects the GLB for `pig`, `swine`, and `boar` species IDs and
+keeps the procedural quadruped fallback. Omnivore diet tuning, rooting,
+herding, breeding, and livestock simulation remain separate domain work.
+
+The pig generator produced 43 mesh parts and 34 semantic bones. Blender
+re-import confirmed all eight expected action clips before admission.
+

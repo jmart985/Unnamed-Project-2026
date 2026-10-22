@@ -88,6 +88,7 @@ public partial class EntityView : CharacterBody3D
             "cow" => (new Color(0.92f, 0.9f, 0.85f), new Color(0.15f, 0.12f, 0.1f)),
             "wolf" => (new Color(0.45f, 0.45f, 0.5f), new Color(0.2f, 0.2f, 0.24f)),
             "ape" => (new Color(0.3f, 0.2f, 0.14f), new Color(0.55f, 0.4f, 0.3f)),
+            "pig" or "swine" or "boar" => (new Color(0.64f, 0.36f, 0.32f), new Color(0.35f, 0.16f, 0.14f)),
             _ when _isCreature => (new Color(0.6f, 0.45f + variation * 0.15f, 0.3f), new Color(0.35f, 0.25f, 0.15f)),
             _ => (Color.FromHsv(variation, 0.45f, 0.75f), new Color(0.85f, 0.68f + variation * 0.12f, 0.55f))
         };
@@ -116,6 +117,7 @@ public partial class EntityView : CharacterBody3D
             "ape" => ("res://assets/creatures/ape/ape_primate_rig_v1.glb", "ApeProductionModel", 1.75f, 0.38f),
             "fox" or "vulpine" => ("res://assets/creatures/fox/fox_vulpine_rig_v1.glb", "FoxProductionModel", 0.95f, 0.24f),
             "cat" or "feline" => ("res://assets/creatures/cat/cat_felid_rig_v1.glb", "CatProductionModel", 0.80f, 0.24f),
+            "pig" or "swine" or "boar" => ("res://assets/creatures/pig/pig_suiform_rig_v1.glb", "PigProductionModel", 0.78f, 0.30f),
             _ => (string.Empty, string.Empty, 0f, 0f)
         };
         if (string.IsNullOrEmpty(assetPath))
@@ -204,6 +206,7 @@ public partial class EntityView : CharacterBody3D
             "cow" => new Vector3(0.9f, 0.8f, 1.45f),
             "wolf" => new Vector3(0.6f, 0.5f, 1.2f),
             "ape" => new Vector3(0.82f, 0.62f, 1.15f),
+            "pig" or "swine" or "boar" => new Vector3(0.78f, 0.62f, 1.05f),
             _ when _bodyPlan == CreatureBodyPlan.Ungulate => new Vector3(0.88f, 0.78f, 1.4f),
             _ when _bodyPlan == CreatureBodyPlan.Canid => new Vector3(0.6f, 0.5f, 1.2f),
             _ when _bodyPlan == CreatureBodyPlan.Primate => new Vector3(0.82f, 0.62f, 1.15f),
