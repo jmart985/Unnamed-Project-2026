@@ -2,7 +2,7 @@
 
 Record date, status, decision, reason, consequences, and revisit trigger. Supersede old entries explicitly so future coding sessions can follow the reasoning.
 
-## D001 â€” Godot 4 .NET + C#
+## D001 — Godot 4 .NET + C#
 
 - Date: 2026-09-27
 - Status: Provisional; requested initial direction
@@ -11,7 +11,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Separate simulation rules from engine adapters where it is useful for tests. Avoid speculative portability layers.
 - Revisit: At the end of 0.1, or earlier for demonstrated tooling or engine blockers; later graphical or world-streaming demands may justify another engine.
 
-## D002 â€” Ant Farm scope
+## D002 — Ant Farm scope
 
 - Date: 2026-09-27
 - Status: Initial scope baseline
@@ -20,7 +20,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Earlier brainstorming about combat, factions, relationships, and captivity is deferred. No deadline is asserted.
 - Revisit: After the milestone acceptance scenario passes.
 
-## D003 â€” Composition and a single simulation owner
+## D003 — Composition and a single simulation owner
 
 - Date: 2026-09-27
 - Status: Provisional implementation guidance
@@ -29,7 +29,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: No custom ECS, plugin system, or inheritance tree for every species.
 - Revisit: Only when a concrete extension or measured bottleneck makes this inadequate.
 
-## D004 â€” Durable snapshots; transient jobs restart
+## D004 — Durable snapshots; transient jobs restart
 
 - Date: 2026-09-27
 - Status: Provisional implementation guidance
@@ -38,7 +38,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Activity can restart after load; resource counts and need values must remain correct.
 - Revisit: If future player commands or scheduling require exact job continuity.
 
-## D005 â€” Prototype presentation
+## D005 — Prototype presentation
 
 - Date: 2026-09-27
 - Status: Provisional planning assumption
@@ -47,7 +47,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Final art style, platforms, and world scale remain undecided.
 - Revisit: After observing the first complete loop.
 
-## D006 â€” F01 toolchain pin
+## D006 — F01 toolchain pin
 
 - Date: 2026-09-27
 - Status: Provisional; validated for the scaffold
@@ -56,7 +56,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Local setup and future CI must use these versions unless a later issue records a deliberate upgrade.
 - Revisit: If Godot or .NET compatibility blocks the prototype or a later F01 task.
 
-## D007 â€” Fixed simulation clock policy
+## D007 — Fixed simulation clock policy
 
 - Date: 2026-09-27
 - Status: Provisional; implemented for F02
@@ -65,7 +65,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Frame deltas up to 0.8 simulated seconds are fully processed; larger deltas intentionally lose excess elapsed time.
 - Revisit: If measured frame stalls or later simulation requirements need a different overflow policy.
 
-## D008 â€” Entity ID lifetime
+## D008 — Entity ID lifetime
 
 - Date: 2026-09-27
 - Status: Provisional; implemented for E01a
@@ -74,7 +74,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Repeated scenario resets in one World continue increasing IDs.
 - Revisit: If save/load or world replacement requires IDs to be restored from durable data.
 
-## D009 â€” Entity action lifecycle
+## D009 — Entity action lifecycle
 
 - Date: 2026-09-27
 - Status: Provisional; implemented for J01a
@@ -83,7 +83,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Action completion, cancellation, and preemption provide a lifecycle hook for transient reservation cleanup. Bounded retry timing remains a separate concern for follow-up job issues.
 - Revisit: If action selection needs measured scheduling or parallel work beyond the Milestone 0.1 scope.
 
-## D010 â€” Action-scoped resource reservations
+## D010 — Action-scoped resource reservations
 
 - Date: 2026-09-27
 - Status: Provisional; implemented for J01b
@@ -92,7 +92,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Reservations do not mutate durable inventories; transfer operations remain atomic and separate. Removed target IDs cannot be reused in that World.
 - Revisit: If later job systems require partial reservation transfer or target recreation semantics.
 
-## D012 â€” Arrival-gated food consumption
+## D012 — Arrival-gated food consumption
 
 - Date: 2026-09-27
 - Status: Provisional; implemented for H02b
@@ -101,7 +101,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: World owns food-source lifetimes; cancelling an eat action cancels its navigation request and releases its reservation. The Godot tick synchronizes movement before processing food outcomes.
 - Revisit: When eating duration, partial nutrition, or persisted in-progress actions become part of a later issue.
 
-## D013 â€” Bounded entity inventory
+## D013 — Bounded entity inventory
 
 - Date: 2026-09-27
 - Status: Provisional; implemented for J02a
@@ -109,7 +109,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: Hauling needs the same atomic quantity and capacity checks as ground sources and stockpiles.
 - Consequence: All entities use the same initial capacity; inventory counts remain read-only to callers and transfers use the domain resource-transfer service.
 - Revisit: If species-specific carrying capacity is required by a later milestone.
-## D013 â€” Generic cargo retention and bounded action retries
+## D013 — Generic cargo retention and bounded action retries
 
 - Date: 2026-09-27
 - Status: Provisional; implemented for J01c
@@ -126,7 +126,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Snapshot schema changes require an explicit version update; transient work is rebuilt rather than serialized.
 - Revisit: When S01b adds atomic validation and world restoration.
 
-## D015 â€” Directed relationship values
+## D015 — Directed relationship values
 
 - Date: 2026-09-30
 - Status: Provisional; implemented for C06a
@@ -135,7 +135,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: The relationship state type does not yet define memory, decay, autonomous interactions, recruitment, or captivity.
 - Revisit: When a later 0.6 issue defines how social events update or decay relationship values.
 
-## D016 â€” World-owned relationship lifecycle
+## D016 — World-owned relationship lifecycle
 
 - Date: 2026-09-30
 - Status: Provisional; implemented for C06b
@@ -144,7 +144,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Relationship records are tied to the current World's entity identities; runtime memories and event histories are not persisted.
 - Revisit: When a later 0.6 issue extends character identity beyond one World.
 
-## D017 â€” Persist directed relationship values
+## D017 — Persist directed relationship values
 
 - Date: 2026-09-30
 - Status: Provisional; implemented for C06c
@@ -153,7 +153,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Snapshots from schema versions 1 and 2 remain explicitly unsupported by the current loader.
 - Revisit: If future migration work introduces backward-compatible snapshot upgrades.
 
-## D018 â€” Atomic social relationship adjustments
+## D018 — Atomic social relationship adjustments
 
 - Date: 2026-09-30
 - Status: Provisional; implemented for C06d
@@ -162,7 +162,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: The adjustment operation does not assign default effects to named events; interaction rules supply explicit deltas.
 - Revisit: When later social interaction issues define concrete event rules or data-driven effect profiles.
 
-## D019 â€” Data-defined social event effects
+## D019 — Data-defined social event effects
 
 - Date: 2026-09-30
 - Status: Provisional; implemented for C06e
@@ -171,7 +171,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Initial values in `data/relationship_events.json` are prototype tuning only; callers explicitly decide when an event occurs.
 - Revisit: After observing the relationship behavior in a playable interaction loop.
 
-## D020 â€” Provisional relationship bond levels
+## D020 — Provisional relationship bond levels
 
 - Date: 2026-09-30
 - Status: Provisional; implemented for C06f
@@ -180,7 +180,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: The initial thresholds are tuning defaults only and can be replaced through a validated threshold profile.
 - Revisit: After bond levels are observed in a playable social interaction loop.
 
-## D021 â€” Loyalty-gated voluntary recruitment readiness
+## D021 — Loyalty-gated voluntary recruitment readiness
 
 - Date: 2026-09-30
 - Status: Provisional; implemented for C06g
@@ -189,7 +189,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Eligibility is only a read-only policy result; it does not recruit or change either character.
 - Revisit: When recruitment actions, faction ownership, or captive release enter scope.
 
-## D022 â€” Successful melee damage records harm
+## D022 — Successful melee damage records harm
 
 - Date: 2026-09-30
 - Status: Provisional; implemented for C06i
@@ -198,7 +198,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Rejected attacks do not create or change relationship state; reverse-direction relationships remain independent. This service does not provide combat input handling, retaliation, or event selection.
 - Revisit: When combat adds additional outcomes such as blocks, misses, or non-damaging threats.
 
-## D023 â€” Relationship pairs require distinct entities
+## D023 — Relationship pairs require distinct entities
 
 - Date: 2026-09-30
 - Status: Provisional; implemented for C06j
@@ -207,7 +207,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Invalid self-pairs cannot be created, retrieved, or restored. Recruitment readiness for identical candidate and recruiter IDs reports no relationship.
 - Revisit: If a future system introduces meaningful self-reflection or self-affecting needs, model those separately rather than as interpersonal relationships.
 
-## D024 â€” Combat consequences require a live combatant and applied damage
+## D024 — Combat consequences require a live combatant and applied damage
 
 - Date: 2026-09-30
 - Status: Provisional; implemented for C06k
@@ -216,7 +216,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Invalid combatants cannot mutate health or relationship values through melee resolution. `CharacterHealth.TryDamage` can report the actual health change to combat callers.
 - Revisit: When non-damaging attack outcomes such as blocks, misses, or intimidation are modeled as explicit events.
 
-## D025 â€” Deterministic player creation and session bootstrap
+## D025 — Deterministic player creation and session bootstrap
 
 - Date: 2026-10-01
 - Status: Provisional; implemented for issue #319
@@ -225,7 +225,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: The player entity is bound to the existing Godot PlayerCharacter view/controller. Placeholder geometry reflects height/body type and uses simple chest primitives for Female; final art is deferred. Seed and player profile are durable snapshot state, so the snapshot schema advances to version 4. The milestone's 10 humans are now explicitly 10 NPCs plus the player; player-directed survival actions remain outside this issue.
 - Revisit: When player-controlled eating/actions or final character art are scoped.
 
-## D026 â€” Creature Core boundary
+## D026 — Creature Core boundary
 
 - Date: 2026-10-01
 - Status: Provisional planning decision for Milestone 0.3
@@ -234,7 +234,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: The milestone reuses the existing species catalog and wandering behavior. It does not add cages, capture equipment, player commands, bonds, recruitment, breeding, combat, or advanced ecology. Durable creature lifecycle state must participate in snapshot validation and round trips.
 - Revisit: When 1.0 defines player-controlled creature interactions or a later milestone defines housing, release, taming, or escape behavior.
 
-## D027 â€” First Real Game is a small player-controlled loop
+## D027 — First Real Game is a small player-controlled loop
 
 - Date: 2026-10-01
 - Status: Accepted milestone scope; implementation pending
@@ -243,7 +243,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Construction, combat, faction play, capture, taming, recruitment, breeding, advanced creature behavior, autonomous social simulation, economy depth, and world streaming are not 1.0 commitments. Squad membership is durable, while orders/navigation reset and are re-evaluated after load; the snapshot schema must increment when membership is implemented. The milestone is accepted only when the deterministic integrated scenario and its documented failure/recovery checks pass.
 - Revisit: After the 1.0 acceptance scenario is implemented and observed in Godot; reassess deferred systems from prototype evidence rather than promoting them automatically.
 
-## D028 â€” Bounded creature temperament profile
+## D028 — Bounded creature temperament profile
 
 - Date: 2026-10-02
 - Status: Provisional; implemented for C03a and extended for #298
@@ -252,7 +252,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Every species definition must provide valid temperament data; deterministic behavior continues using boldness, curiosity, and sociability. Aggression, fear, and territoriality are data only until a separate issue defines and tests their behavior; reuse this profile rather than introducing another species registry.
 - Revisit: After the deterministic creature behavior scenario demonstrates how these dimensions produce distinct outcomes.
 
-## D029 â€” Bounded Economy Prototype scope
+## D029 — Bounded Economy Prototype scope
 
 - Date: 2026-10-01
 - Status: Accepted milestone scope; implementation pending
@@ -261,7 +261,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Dynamic prices, supply/demand, multiple settlements, route networks, autonomous caravan travel, advanced finance, economic AI, and player-facing trading are deferred. Economy depth remains outside 1.0 acceptance. Coins use the existing resource-container and snapshot model; durable settlement totals use existing World snapshot behavior, while in-progress caravan visits are transient.
 - Revisit: After the E08d integrated scenario is exercised and its economic signal is observed.
 
-## D030 â€” Durable creature captivity
+## D030 — Durable creature captivity
 
 - Date: 2026-10-02
 - Status: Implemented for C03b
@@ -270,15 +270,15 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Missing, non-creature, dead, or already-captive targets are rejected without changing entity state. Invalid captivity values are rejected during complete snapshot validation before transient services or the live World are reset.
 - Revisit: When a later milestone defines player-controlled capture eligibility, release, or captive housing.
 
-## D033 â€” User-directed creature lifecycle expansion
+## D033 — User-directed creature lifecycle expansion
 
 - Date: 2026-10-02
 - Status: Implemented for issue #300
-- Decision: Extend durable non-human creature lifecycle state through `Wild â†’ Captured â†’ Captive â†’ Domesticated`. Explicit release from Captured, Captive, or Domesticated returns the creature to Wild. Keep death authoritative in `CharacterHealth.IsDead` rather than duplicating it in lifecycle state; dead creatures cannot transition. Preserve the existing snapshot shape and schema version because the existing state field carries the additional lifecycle values.
+- Decision: Extend durable non-human creature lifecycle state through `Wild → Captured → Captive → Domesticated`. Explicit release from Captured, Captive, or Domesticated returns the creature to Wild. Keep death authoritative in `CharacterHealth.IsDead` rather than duplicating it in lifecycle state; dead creatures cannot transition. Preserve the existing snapshot shape and schema version because the existing state field carries the additional lifecycle values.
 - Reason: Issue #300 explicitly requests capture, captivity, domestication, release, and death transitions. The user authorized this as a narrow expansion beyond the accepted 0.3 foundation, guided by the long-term vision in `docs/LONG_TERM_VISION.md` at `origin/docs-ai-guidance` commit `3e9de38abf0bfd07849a612bbedc4e01c977ba71`.
 - Consequence: Release is an operation that returns state to Wild, not a separate durable state. Death remains the existing health signal and is not added to snapshots; health persistence, capture methods/equipment, housing, escape behavior, relationship-driven bonding, taming progression, UI, and autonomous creature behavior remain deferred.
 - Revisit: When a later issue defines health persistence or player-facing capture, housing, escape, or domestication behavior.
-## D031 â€” Deterministic temperament-driven roaming
+## D031 — Deterministic temperament-driven roaming
 
 - Date: 2026-10-02
 - Status: Implemented for C03c
@@ -286,16 +286,16 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: Creature Core needs explainable behavior differences from existing bounded wandering goals without introducing random state, new ecology systems, or a behavior framework.
 - Consequence: Fixed profiles and inputs produce repeatable goals, and navigation outcomes continue through the existing action lifecycle. Sociability remains profile data for future behavior rather than affecting this roaming decision.
 - Revisit: When the integrated Creature Core scenario is exercised or a later issue introduces explicit social stimuli or additional wild actions.
-## D030 â€” Bounded faction foundation
+## D030 — Bounded faction foundation
 
 - Date: 2026-10-02
-- Status: Implemented for F07aâ€“F07d
+- Status: Implemented for F07a–F07d
 - Decision: Reuse the authoritative World for a small fixed faction catalog and optional entity allegiance. Track entity-to-faction reputation as an explicit bounded value in [0, 100]; represent hostility as a separate directed faction-to-faction value, not as an inference from individual reputation. Add optional faction owner metadata to existing settlement resource containers without enforcing access policy.
 - Reason: The roadmap milestone names allegiance, reputation, hostility, and ownership, but these are foundations for later behavior rather than a requirement to simulate full faction politics now. Separating reputation from hostility avoids silently inventing a policy threshold; metadata on current containers avoids a parallel inventory/property system.
-- Consequence: Allegiance, reputation, hostility, and stockpile owner references are durable and validated with existing World snapshot rules. Snapshot schema version 8 adds optional stockpile ownership; versions 4â€“7 migrate with stockpiles unowned. Explicit invalid operations reject without partial mutation. Autonomous reputation changes, diplomacy, law/crime, territory, warfare, ownership enforcement/theft, UI, and faction authoring tools remain out of scope.
+- Consequence: Allegiance, reputation, hostility, and stockpile owner references are durable and validated with existing World snapshot rules. Snapshot schema version 8 adds optional stockpile ownership; versions 4–7 migrate with stockpiles unowned. Explicit invalid operations reject without partial mutation. Autonomous reputation changes, diplomacy, law/crime, territory, warfare, ownership enforcement/theft, UI, and faction authoring tools remain out of scope.
 - Revisit: After the F07d scenario is exercised; later behavior must be scoped from observed prototype needs.
 
-## D032 â€” Bounded creature perception queries
+## D032 — Bounded creature perception queries
 
 - Date: 2026-10-02
 - Status: Provisional; implemented for issue #296
@@ -304,16 +304,16 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Tracks are explicit immutable observations supplied to the query and are not generated, aged, or persisted by this feature. Queries do not reserve food, mutate World state, or introduce hunting/tracking behavior.
 - Revisit: When a bounded hunting/tracking consumer defines observation creation, expiry, and persistence requirements.
 
-## D031 â€” Vertical integration is an evidence gate
+## D031 — Vertical integration is an evidence gate
 
 - Date: 2026-10-02
 - Status: Provisional planning decision for Milestone 0.9; implementation pending
-- Decision: Define 0.9 as one deterministic test-region scenario composing accepted 0.3â€“0.8 systems. It adds only the integration harness and evidence; missing product behavior becomes a separately scoped issue.
-- Reason: â€œAll core systemsâ€ is otherwise unbounded and could pull multiple settlements, regional simulation, streaming, or broad AI forward without evidence.
+- Decision: Define 0.9 as one deterministic test-region scenario composing accepted 0.3–0.8 systems. It adds only the integration harness and evidence; missing product behavior becomes a separately scoped issue.
+- Reason: “All core systems” is otherwise unbounded and could pull multiple settlements, regional simulation, streaming, or broad AI forward without evidence.
 - Consequence: The milestone verifies existing creature, combat, relationship, faction, settlement, and local economy state together, with repeatability, exact resource accounting, and rejection/recovery checks. It does not expand those systems or turn the long-term vision into a delivery commitment. Issue #341 is gated on acceptance of prerequisites #325, #333, and #340.
 - Revisit: After the one-region scenario has recorded results and limitations.
 
-## D032 â€” Capability-gated creature greeting
+## D032 — Capability-gated creature greeting
 
 - Date: 2026-10-02
 - Status: Implemented for issue #297
@@ -365,7 +365,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Nothing is wired to `MeleeCombatService`; the strike event and aimed body part names match `CharacterHealth.CreateHumanoid` so reach validation and damage can attach later. Visuals are unverified in a windowed run.
 - Revisit: When combat is integrated into the playable scene (Milestone 0.5 scope), resolve strikes through the domain combat services and drive poses from equipment and injuries.
 
-## Issue #299 â€” Minimal wild-creature decision policy
+## Issue #299 — Minimal wild-creature decision policy
 
 - Date: 2026-10-02
 - Status: Implemented for issue #299
@@ -374,7 +374,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: The caller supplies already-resolved food, threat, pursuit, and area inputs. The policy does not sense threats, select targets from candidate sets, mutate the World, or execute navigation, fleeing movement, pursuit/combat, hunting, or territory behavior. Those execution systems remain deferred and must be scoped separately; existing temperament-driven roaming remains unchanged.
 - Revisit: When a later issue defines how these decisions connect to fixed-tick action execution, threat classification, target selection, and area ownership.
 
-## D034 â€” Fixed prototype trade-good values
+## D034 — Fixed prototype trade-good values
 
 - Date: 2026-10-03
 - Status: Provisional; implemented for E08a
@@ -383,7 +383,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Each catalog load exposes the same fixed values and sorted resource IDs. These values are prototype tuning, not a claim about balanced market behavior.
 - Revisit: After the E08d integrated market scenario records exchange outcomes.
 
-## D035 — Atomic fixed-price market exchange
+## D035 � Atomic fixed-price market exchange
 
 - Date: 2026-10-03
 - Status: Provisional; implemented for E08b
@@ -392,13 +392,13 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Rejections return explicit statuses and leave all counts unchanged. The counterparty is any `ResourceContainer`; caravan wiring is deferred to E08c. No dynamic pricing, credit, or UI.
 - Revisit: After E08c/E08d show how counterparties are modeled.
 
-## D036 â€” World-owned squad membership, transient movement orders
+## D036 — World-owned squad membership, transient movement orders
 
 - Date: 2026-10-03
 - Status: Implemented for #312
 - Decision: Keep one squad's stable human NPC IDs in World and schema 9. A transient SquadOrderService owns move/follow/stop and uses existing navigation and action cleanup. Movement priority 250 sits between hunger 300 and hauling 200. Orders suppress member hauling/roaming; hunger preempts and movement resumes afterward. Stop permits hunger response. Follow retargets after one unit of player movement; arrival tolerance is 0.5 units.
 - Reason: Reuse authoritative positions and reservation/cancellation rules without persisting live navigation.
-- Consequence: Schema 4â€“8 migrates to empty membership while preserving schema 8 ownership. Invalid member IDs reject before changing live state. Failed navigation waits for a changed order, avoiding request churn. No formations, creature recruitment, multiple squads, or tactical AI.
+- Consequence: Schema 4–8 migrates to empty membership while preserving schema 8 ownership. Invalid member IDs reject before changing live state. Failed navigation waits for a changed order, avoiding request churn. No formations, creature recruitment, multiple squads, or tactical AI.
 - Revisit: When a scoped issue requires spacing, recruitment eligibility, or persistent orders.
 
 ## 1.1 daily work/rest slice (2026-10-03, #200 / #380)
@@ -453,7 +453,7 @@ Reuse the existing Trusted/Loyal/Fearful classifier for pet permission and green
 
 User reported only an obstacle at the expected workbench. Replace that legacy central cube with a labeled procedural workbench using the shared NewGameSession starter placement. Keep the existing navigation exclusion and use actual mesh parts for sight/strike occlusion. The bench is a static town landmark; this visual repair does not fabricate World workstation records after loading or claim recipe/progress persistence. Existing crafting domain execution is unchanged, and playable crafting controls/workstation persistence remain separate scope. See TOWN_WORKBENCH.md for rendered evidence and reset/load/regression checks.
 
-## D037 â€” Linked settlement storage networks (2026-10-05)
+## D037 — Linked settlement storage networks (2026-10-05)
 
 - Status: Design direction; implementation not started.
 - Decision: Keep physical storage units as authoritative access points, but link units with the same settlement, storage family, and tier into one logical inventory network. Settlement management aggregates each resource ID across the network while retaining detail about physical contributors, reservations, capacity, and local buffers.
@@ -461,7 +461,7 @@ User reported only an obstacle at the expected workbench. Replace that legacy ce
 - Consequence: Production buildings may consume inputs and place outputs through their linked network using the existing atomic transfer and reservation services. Physical placement, access, capacity, ownership, destruction, and hauling distance remain meaningful. Existing containers migrate into a default network without changing totals.
 - Revisit: When the first implementation issue defines network membership, reservation participants, removal/spill behavior, and snapshot migration tests.
 
-## D038 â€” Character creation and settlement Build mode boundaries (2026-10-05)
+## D038 — Character creation and settlement Build mode boundaries (2026-10-05)
 
 - Status: Design direction; implementation not started.
 - Decision: Put authoritative body parameters (height, weight, muscle/build, named body-part X/Y/Z bounds, symmetry, and derived proportions) in 0.2 Character Core. Put Settlement-menu Build mode, ribbon selection, ghost blueprints, staged structures, linked storage, and completed object menus in 0.4 Basic Settlement. Put player-facing Sims-style sliders and advanced body-part controls in 1.0 First Real Game after the shared profile-to-rig projection is stable.
@@ -469,14 +469,14 @@ User reported only an obstacle at the expected workbench. Replace that legacy ce
 - Consequence: Body changes are validated proportions consumed by collision, joints, camera, and animation. They cannot grant arbitrary skills or bypass species capabilities. Build mode is opened through Settlement and does not edit character proportions. Each slice can be tested and persisted independently.
 - Revisit: When the 0.2 body model, 0.4 Build mode, and 1.0 player-creation acceptance scenarios provide evidence about range, rig fidelity, and usability.
 
-## D039 â€” Separate direct placement and Sims-style planning camera (2026-10-05)
+## D039 — Separate direct placement and Sims-style planning camera (2026-10-05)
 
 - Status: Design direction; implementation not started.
 - Decision: Direct placement uses the moving player, third-person camera, hotbar/ribbon selection, and player-relative placement for the 0.4 prototype. Sims-style planning uses an explicit free camera from the Settlement menu so layouts can be placed or queued without moving the player model.
 - Consequence: Both workflows submit to the same authoritative construction systems, but each has separate mode state, camera rules, input tests, and acceptance criteria. Planning-camera work follows the direct-placement slice.
 - Revisit: When bounded free-camera navigation, multi-blueprint placement, save/load, and clean return to the player-follow camera are demonstrated.
 
-## D040 â€” Entity movement safety and unstuck recovery (2026-10-05)
+## D040 — Entity movement safety and unstuck recovery (2026-10-05)
 
 - Status: Design direction; implementation not started.
 - Decision: Add a shared safety layer for humans and creatures that detects blocked progress, crowd overlap, and repeated failed movement; cancels or replans blocked orders, preserves player control, and chooses nearby valid free positions without moving through solid geometry or teleporting.
@@ -484,19 +484,10 @@ User reported only an obstacle at the expected workbench. Replace that legacy ce
 - Consequence: Recovery remains compatible with existing navigation, orders, construction movement, and save/load. Formation AI, tactical crowd behavior, and arbitrary teleportation remain out of scope.
 - Validation: Use the scenarios in docs/ENTITY_SAFETY.md, including narrow-space follow, converging crowds, no-progress detection, responsive player input, save/load, and regression checks.
 
-## D041 â€” Dense entity crowds remain physically meaningful (2026-10-05)
+## D041 — Dense entity crowds remain physically meaningful (2026-10-05)
 
 - Status: Design direction; implementation is being staged.
 - Decision: Active entities may collide with the player and with one another. A group should form a dense, difficult-to-push-through mob, while the movement-safety layer detects prolonged enclosure and creates a bounded escape or replan opportunity.
 - Reason: Entity crowds should have physical presence comparable to a mob in a survival or action game rather than behaving as ghosts.
 - Consequence: Crowd resistance and safety recovery are separate acceptance concerns. The player may be slowed or redirected by a mob, but never permanently trapped, teleported, or allowed to clip through solid geometry.
 - Revisit: When a playable crowd test demonstrates density, resistance, enclosure recovery, and normal movement regression behavior.
-
-
-## D043 — Shared creature semantics with family-specific visual rigs (2026-10-22, #430)
-
-- **Status:** Accepted as the provisional creature asset architecture; implementation remains staged.
-- **Decision:** Use one shared semantic creature contract for simulation, anatomy, capabilities, targeting, injuries, interaction, and save/load. Implement visual assets through anatomically appropriate rig families instead of one universal quadruped rig. Initial families are canid digitigrade, vulpine digitigrade, felid digitigrade, ruminant cloven-hoof, suiform cloven-hoof, single-hoof ungulate, primate, plantigrade mammal, sprawling reptile, crocodilian, and dragon composite.
-- **Reason:** A single quadruped skeleton would produce incorrect joints, feet, shoulders, gaits, collision, and interaction poses for species such as foxes, cows, apes, and lizards. Family rigs preserve anatomical credibility while keeping the simulation and species generation reusable.
-- **Consequence:** Species profiles select a family and provide validated proportions, diet, senses, capabilities, semantic mappings, sockets, collision, and animation overrides. Source bone names never become gameplay dependencies. A species cannot spawn as an active near-field runtime creature until its family mapping and Godot validation evidence pass.
-- **Revisit:** When representative family prototypes have been tested with final animation, crowd collision, performance, near/far simulation, and procedural variation. A breaking change to the semantic contract requires a versioned migration; adding a family does not.
