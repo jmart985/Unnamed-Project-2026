@@ -1,0 +1,44 @@
+{
+  "asset_id": "pig_suiform_rig_v1",
+  "display_name": "Pig / Suiform Rig v1",
+  "source": "Project-generated from procedural Blender source",
+  "creator": "Unnamed Project 2026",
+  "license": "Project-owned generated asset",
+  "usage": "Production Approved",
+  "format": "GLB",
+  "godot_units": "1 unit = 1 meter",
+  "shoulder_height_m": 0.72,
+  "orientation": "Blender -Y / Godot -Z forward",
+  "rig_family": "suiform",
+  "semantic_anatomy": [
+    "head",
+    "jaw",
+    "torso",
+    "front_leg_l",
+    "front_leg_r",
+    "rear_leg_l",
+    "rear_leg_r",
+    "tail",
+    "cloven_hoof"
+  ],
+  "animations": [
+    "idle",
+    "walk",
+    "trot",
+    "run",
+    "graze",
+    "eat",
+    "hurt",
+    "turn"
+  ],
+  "interaction_anchors": [
+    "head",
+    "jaw",
+    "front_hoof_l",
+    "front_hoof_r",
+    "tail_04"
+  ],
+  "runtime_path": "game/assets/creatures/pig/pig_suiform_rig_v1.glb",
+  "fallback": "EntityView procedural suiform body if the GLB is unavailable",
+  "notes": "Compact, heavy pig silhouette with broad snout, triangular ears, cloven hooves, and a raised curled tail."
+}
