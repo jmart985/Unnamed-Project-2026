@@ -120,7 +120,10 @@ def create_mesh() -> list[bpy.types.Object]:
     # family distinction before animation is applied.
     parts += [uv_sphere("Body", (0, 0.04, 0.78), (0.37, 0.80, 0.39), WOLF)]
     parts += [uv_sphere("Chest", (0, -0.47, 0.83), (0.33, 0.42, 0.37), WOLF_LIGHT)]
-    parts += [uv_sphere("Hindquarters", (0, 0.55, 0.80), (0.34, 0.38, 0.36), WOLF)]
+    # Keep a visible narrow waist before the rear mass instead of carrying the
+    # full chest width into the hips.
+    parts += [uv_sphere("Waist", (0, 0.32, 0.81), (0.29, 0.31, 0.32), WOLF)]
+    parts += [uv_sphere("Hindquarters", (0, 0.58, 0.80), (0.31, 0.35, 0.35), WOLF)]
     parts += [capsule_between("Neck", Vector((0, -0.56, 0.86)), Vector((0, -0.72, 1.05)), 0.20, WOLF)]
     parts += [uv_sphere("Head", (0, -0.83, 1.12), (0.25, 0.29, 0.25), WOLF)]
     parts += [uv_sphere("Muzzle", (0, -1.14, 1.05), (0.15, 0.34, 0.15), WOLF_LIGHT)]
@@ -136,8 +139,8 @@ def create_mesh() -> list[bpy.types.Object]:
     limbs = {
         "Front_L": (Vector((-0.24, -0.43, 0.84)), Vector((-0.24, -0.46, 0.47)), Vector((-0.24, -0.49, 0.14))),
         "Front_R": (Vector((0.24, -0.43, 0.84)), Vector((0.24, -0.46, 0.47)), Vector((0.24, -0.49, 0.14))),
-        "Rear_L": (Vector((-0.24, 0.49, 0.80)), Vector((-0.24, 0.57, 0.43)), Vector((-0.24, 0.49, 0.14))),
-        "Rear_R": (Vector((0.24, 0.49, 0.80)), Vector((0.24, 0.57, 0.43)), Vector((0.24, 0.49, 0.14))),
+        "Rear_L": (Vector((-0.21, 0.50, 0.88)), Vector((-0.23, 0.57, 0.40)), Vector((-0.23, 0.49, 0.14))),
+        "Rear_R": (Vector((0.21, 0.50, 0.88)), Vector((0.23, 0.57, 0.40)), Vector((0.23, 0.49, 0.14))),
     }
     for name, (hip, knee, paw) in limbs.items():
         parts += [capsule_between(f"{name}_Upper", hip, knee, 0.075, WOLF)]
@@ -190,10 +193,10 @@ def create_armature() -> bpy.types.Object:
         bone(f"{front}_lower", (0.24 * x, -0.46, 0.47), (0.24 * x, -0.49, 0.14), f"{front}_upper")
         bone(f"{front}_foot", (0.24 * x, -0.49, 0.14), (0.24 * x, -0.56, 0.08), f"{front}_lower")
         bone(f"{front}_digits", (0.24 * x, -0.56, 0.08), (0.24 * x, -0.67, 0.08), f"{front}_foot")
-        bone(f"{rear}_upper", (0.24 * x, 0.49, 0.80), (0.24 * x, 0.57, 0.43), "pelvis")
-        bone(f"{rear}_lower", (0.24 * x, 0.57, 0.43), (0.24 * x, 0.49, 0.14), f"{rear}_upper")
-        bone(f"{rear}_foot", (0.24 * x, 0.49, 0.14), (0.24 * x, 0.41, 0.08), f"{rear}_lower")
-        bone(f"{rear}_digits", (0.24 * x, 0.41, 0.08), (0.24 * x, 0.30, 0.08), f"{rear}_foot")
+        bone(f"{rear}_upper", (0.21 * x, 0.50, 0.88), (0.23 * x, 0.57, 0.40), "pelvis")
+        bone(f"{rear}_lower", (0.23 * x, 0.57, 0.40), (0.23 * x, 0.49, 0.14), f"{rear}_upper")
+        bone(f"{rear}_foot", (0.23 * x, 0.49, 0.14), (0.23 * x, 0.41, 0.08), f"{rear}_lower")
+        bone(f"{rear}_digits", (0.23 * x, 0.41, 0.08), (0.23 * x, 0.30, 0.08), f"{rear}_foot")
     previous = "pelvis"
     for index, point in enumerate([(0, 1.02, 0.83), (0, 1.20, 0.85), (0, 1.34, 0.93), (0, 1.39, 1.01)], 1):
         next_point = (0, point[1] + 0.13, point[2] + 0.03)
@@ -217,6 +220,8 @@ def attach_to_bones(parts: list[bpy.types.Object], armature: bpy.types.Object) -
             bone_name = "head"
         elif part.name.startswith("Neck"):
             bone_name = "neck_01"
+        elif part.name.startswith("Waist"):
+            bone_name = "spine_01"
         elif part.name.startswith("Tail_"):
             number = int(part.name.split("_")[1])
             bone_name = f"tail_{min(number, 4):02d}"
