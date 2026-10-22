@@ -27,6 +27,7 @@ A systemic open-world colony RPG in which people and creatures share consistent 
 - [Design principles](docs/DESIGN_PRINCIPLES.md)
 - [Gameplay loop](docs/GAMEPLAY_LOOP.md)
 - [Technical architecture](docs/TECHNICAL_ARCHITECTURE.md)
+- [Creature rig families and species generation](docs/CREATURE_RIG_FAMILIES.md)
 - [Decisions log](docs/DECISIONS.md)
 - [Milestone scope and acceptance](docs/MILESTONE_0_1.md)
 - [Combat prototype scope and acceptance](docs/MILESTONE_0_5.md)
