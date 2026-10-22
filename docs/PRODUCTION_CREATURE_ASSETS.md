@@ -44,8 +44,9 @@ species data rather than raw mesh node paths.
 
 The generator performs a Blender save, GLB export, metadata export, and rendered
 preview. The refined Blender source contains 32 semantic bones and 45 mesh parts.
-Its torso is longer and deeper than the vulpine profile, and the jaw/muzzle is
-broader while retaining a canid silhouette. The
+Its torso is longer and deeper than the vulpine profile, its rear waist tapers
+before the hindquarters, and its upper hind-leg segments are longer. The
+jaw/muzzle is broader while retaining a canid silhouette. The
 runtime adapter was kept small so asset admission does not change navigation,
 collision, or simulation ownership.
 
