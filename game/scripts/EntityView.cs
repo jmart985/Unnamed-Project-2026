@@ -80,6 +80,14 @@ public partial class EntityView : CharacterBody3D
             return;
         }
 
+        // Human NPCs use the project-owned Humanoid Rig v1 prototype when the
+        // import is available. PlayerCharacter remains separate so this asset
+        // slice cannot change the player controller or creation flow.
+        if (TryBuildProductionHumanoid())
+        {
+            return;
+        }
+
         // Deterministic per-entity variation so individuals are distinguishable without extra state.
         var hash = (uint)StringComparer.Ordinal.GetHashCode(EntityId);
         var variation = (hash % 100) / 100f;
@@ -142,6 +150,42 @@ public partial class EntityView : CharacterBody3D
         {
             var idle = animationPlayer.GetAnimationList()
                 .FirstOrDefault(name => string.Equals(name, "idle", StringComparison.OrdinalIgnoreCase));
+            if (idle is not null)
+            {
+                animationPlayer.Play(idle);
+            }
+        }
+
+        return true;
+    }
+
+    private bool TryBuildProductionHumanoid()
+    {
+        if (_isCreature || !_speciesId.Equals("human", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        const string assetPath = "res://assets/humanoids/human/human_humanoid_rig_v1.glb";
+        var packed = GD.Load<PackedScene>(assetPath);
+        if (packed is null)
+        {
+            GD.PushWarning("Human Humanoid Rig v1 is unavailable; using the procedural human fallback.");
+            return false;
+        }
+
+        var model = packed.Instantiate<Node3D>();
+        model.Name = "HumanProductionModel";
+        _rig!.AddChild(model);
+        AddCollision(totalHeight: 1.75f, radius: 0.32f);
+
+        var animationPlayer = model.FindChild("AnimationPlayer", recursive: true, owned: false) as AnimationPlayer;
+        if (animationPlayer is not null)
+        {
+            var idle = animationPlayer.GetAnimationList()
+                .FirstOrDefault(name => string.Equals(name, "human_idle", StringComparison.OrdinalIgnoreCase))
+                ?? animationPlayer.GetAnimationList()
+                    .FirstOrDefault(name => string.Equals(name, "idle", StringComparison.OrdinalIgnoreCase));
             if (idle is not null)
             {
                 animationPlayer.Play(idle);
@@ -438,4 +482,5 @@ public partial class EntityView : CharacterBody3D
             adapter.RemoveTarget(requestId);
     }
 }
+
 
