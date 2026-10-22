@@ -44,6 +44,8 @@ HOOF = material("Cow_Hoof", (0.075, 0.055, 0.045))
 HORN = material("Cow_Horn", (0.62, 0.48, 0.25))
 EYE = material("Cow_Eye", (0.08, 0.035, 0.015), 0.35)
 PINK = material("Cow_InnerEar", (0.55, 0.25, 0.24))
+UDDER = material("Cow_Udder", (0.68, 0.37, 0.34))
+TEAT = material("Cow_Teat", (0.48, 0.22, 0.20))
 
 
 def clear_scene() -> None:
@@ -66,6 +68,16 @@ def create_mesh() -> list[bpy.types.Object]:
     parts += [uv_sphere("PatchShoulder", (-0.36, -0.37, 0.98), (0.08, 0.22, 0.19), PATCH, 14, 9)]
     parts += [uv_sphere("PatchRump", (0.33, 0.50, 0.98), (0.10, 0.25, 0.21), PATCH, 14, 9)]
     parts += [uv_sphere("PatchBack", (-0.24, 0.15, 1.18), (0.12, 0.22, 0.08), PATCH, 14, 9)]
+
+    # A stylized four-quarter udder is part of the production cow silhouette.
+    # Each quarter and teat has a stable name so milking interactions can target
+    # semantic anchors without depending on mesh indices.
+    parts += [uv_sphere("Udder", (0, 0.28, 0.58), (0.28, 0.25, 0.17), UDDER)]
+    for side in (-1, 1):
+        for row, y in (("Front", 0.17), ("Rear", 0.37)):
+            suffix = "L" if side < 0 else "R"
+            parts += [uv_sphere(f"Udder_{row}_{suffix}", (0.105 * side, y, 0.57), (0.12, 0.12, 0.11), UDDER, 14, 9)]
+            parts += [capsule_between(f"Teat_{row}_{suffix}", Vector((0.105 * side, y, 0.52)), Vector((0.105 * side, y, 0.39)), 0.035, TEAT)]
 
     parts += [capsule_between("Neck", Vector((0, -0.48, 0.92)), Vector((0, -0.68, 1.20)), 0.22, BODY)]
     parts += [uv_sphere("Head", (0, -0.77, 1.29), (0.27, 0.30, 0.27), BODY)]
@@ -138,6 +150,12 @@ def create_armature() -> bpy.types.Object:
             bone(f"{prefix}_foot", hoof, (hoof[0], hoof[1] - 0.04, 0.07), f"{prefix}_lower")
             bone(f"{prefix}_hoof_l", (hoof[0] - 0.05, hoof[1] - 0.04, 0.07), (hoof[0] - 0.05, hoof[1] - 0.13, 0.07), f"{prefix}_foot")
             bone(f"{prefix}_hoof_r", (hoof[0] + 0.05, hoof[1] - 0.04, 0.07), (hoof[0] + 0.05, hoof[1] - 0.13, 0.07), f"{prefix}_foot")
+    bone("udder", (0, 0.28, 0.66), (0, 0.28, 0.52), "pelvis")
+    for side in ("l", "r"):
+        x = -1 if side == "l" else 1
+        for row, y in (("front", 0.17), ("rear", 0.37)):
+            bone(f"udder_{row}_{side}", (0.105 * x, y, 0.62), (0.105 * x, y, 0.50), "udder")
+            bone(f"teat_{row}_{side}", (0.105 * x, y, 0.50), (0.105 * x, y, 0.37), f"udder_{row}_{side}")
     previous = "pelvis"
     for index, point in enumerate([(0, 0.98, 0.77), (0, 1.10, 0.61), (0, 1.15, 0.45)], 1):
         tail = (0, point[1] + 0.04, point[2] - 0.10)
@@ -162,6 +180,12 @@ def attach_to_bones(parts: list[bpy.types.Object], armature: bpy.types.Object) -
                 bone_name = "tail_03"
             else:
                 bone_name = f"tail_{min(int(part.name.split("_")[1]), 3):02d}"
+        elif part.name == "Udder":
+            bone_name = "udder"
+        elif part.name.startswith("Udder_") or part.name.startswith("Teat_"):
+            tokens = part.name.split("_")
+            family, row, side = tokens[0].lower(), tokens[1].lower(), tokens[2].lower()
+            bone_name = f"{family}_{row}_{side}"
         elif part.name.startswith("Front_") or part.name.startswith("Rear_"):
             family, side = part.name.split("_")[0:2]
             side = side.lower()
@@ -248,11 +272,12 @@ def export() -> None:
         "shoulder_height_m": 1.25,
         "orientation": "Blender -Y / Godot -Z forward",
         "rig_family": "ruminant_ungulate",
-        "semantic_anatomy": ["head", "jaw", "torso", "front_leg_l", "front_leg_r", "rear_leg_l", "rear_leg_r", "tail", "cloven_hoof"],
+        "semantic_anatomy": ["head", "jaw", "torso", "front_leg_l", "front_leg_r", "rear_leg_l", "rear_leg_r", "tail", "cloven_hoof", "udder", "udder_front_l", "udder_front_r", "udder_rear_l", "udder_rear_r", "teat_front_l", "teat_front_r", "teat_rear_l", "teat_rear_r"],
+        "interaction_anchors": {"milking": ["teat_front_l", "teat_front_r", "teat_rear_l", "teat_rear_r"]},
         "animations": ["idle", "walk", "trot", "eat", "hurt", "turn"],
         "runtime_path": f"game/assets/creatures/cow/{MODEL_NAME}.glb",
         "fallback": "EntityView procedural ungulate body if the GLB is unavailable",
-        "notes": "Stylized cow silhouette with ruminant barrel torso, horns, cloven hooves, and a lowered tail.",
+        "notes": "Stylized cow silhouette with ruminant barrel torso, horns, cloven hooves, lowered tail, and a four-quarter udder with semantic milking anchors.",
     }
     text = json.dumps(metadata, indent=2)
     (ROOT / f"{MODEL_NAME}.json").write_text(text, encoding="utf-8")
