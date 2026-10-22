@@ -1,0 +1,35 @@
+{
+  "asset_id": "cow_ungulate_rig_v1",
+  "display_name": "Cow / Ungulate Rig v1",
+  "source": "Project-generated from procedural Blender source",
+  "creator": "Unnamed Project 2026",
+  "license": "Project-owned generated asset",
+  "usage": "Production Approved",
+  "format": "GLB",
+  "godot_units": "1 unit = 1 meter",
+  "shoulder_height_m": 1.25,
+  "orientation": "Blender -Y / Godot -Z forward",
+  "rig_family": "ruminant_ungulate",
+  "semantic_anatomy": [
+    "head",
+    "jaw",
+    "torso",
+    "front_leg_l",
+    "front_leg_r",
+    "rear_leg_l",
+    "rear_leg_r",
+    "tail",
+    "cloven_hoof"
+  ],
+  "animations": [
+    "idle",
+    "walk",
+    "trot",
+    "eat",
+    "hurt",
+    "turn"
+  ],
+  "runtime_path": "game/assets/creatures/cow/cow_ungulate_rig_v1.glb",
+  "fallback": "EntityView procedural ungulate body if the GLB is unavailable",
+  "notes": "Stylized cow silhouette with ruminant barrel torso, horns, cloven hooves, and a lowered tail."
+}
