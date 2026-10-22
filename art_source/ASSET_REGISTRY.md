@@ -13,6 +13,7 @@ Registry status is deliberately conservative. A source archive is **Reference On
 | `elf-body-downloadable` | `downloadable-elf-body-mesh.zip` | Nested archive containing `untitled.obj` | Reference Only | Unknown | Unrigged body reference; source archive is preserved unchanged. |
 | `elf-girl-fbx` | `elf-girl.zip` | FBX package with hair, face, and body textures | Reference Only | Unknown | Rig and source attribution require review. |
 | `frieren-elf` | `elf.zip` | `source/Frieren_Post.fbx`, character textures, and normalized review outputs in `art_source/reference/` | Reference Only | Unknown | Humanoid Rig v1 review candidate. Normalized to 1.75 m with `root`/`toe_l/r` mappings; license, deformation, equipment sockets, and Godot runtime checks remain open. |
+| `human-elf-adapted-rig-v1` | `elf.zip` → `art_source/blender/adapt_elf_human_rig_v1.py` | Derived neutral human body, canonical rig, editable BLEND, GLB, preview, and metadata under `art_source/reference/generated_humanoids/`; prototype runtime copy under `game/assets/humanoids/human/` | Prototype Approved | Unknown source license | Source cloak/materials were removed, project-owned neutral materials were assigned, pointed-ear geometry was neutralized, and the model was normalized to 1.75 m. Keep runtime use provisional until the source rights are verified. Human NPCs retain the procedural fallback. |
 | `elf-girl-v4` | `girl-elf.zip` | `source/all_v4.fbx` and body, cloth, hair, and eye textures | Reference Only | Unknown | Candidate for normalization after license review. |
 | `odin-elf-female` | `odin-npc-elf-female.zip` | `source/NPC_Elf_female.fbx` and body/face/hair textures | Reference Only | Unknown | Demonstrates a source `Bip001-*` style rig and optional helper bones. |
 | `odin-elf-female-02` | `odin-npc-elf-female-2.zip` | `source/NPC_Elf_female_02.fbx` and body/face/hair textures | Reference Only | Unknown | Second Odin reference character. |
@@ -40,4 +41,5 @@ The project standard is **Humanoid Rig v1**. Source rigs may keep their original
 ## Inspection evidence
 
 The Blender inspection and normalized review export are recorded in [`docs/HUMANOID_ASSET_INSPECTION.md`](../docs/HUMANOID_ASSET_INSPECTION.md). Project-generated humanoid prototypes are documented in [`docs/GENERATED_HUMANOID_PROTOTYPES.md`](../docs/GENERATED_HUMANOID_PROTOTYPES.md). The Frieren review output is the leading technical retarget candidate; it remains Reference Only until licensing, deformation review, equipment socket alignment, and Godot runtime validation are complete.
+
 

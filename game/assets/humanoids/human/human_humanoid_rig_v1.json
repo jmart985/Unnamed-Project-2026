@@ -1,0 +1,52 @@
+{
+  "asset_id": "human_elf_adapted_rig_v1",
+  "runtime_asset_id": "human_humanoid_rig_v1",
+  "display_name": "Human / Elf-derived Humanoid Rig v1 Prototype",
+  "status": "Prototype Approved",
+  "source_asset": "art_source/reference/generated_humanoids/elf.blend",
+  "source_archive": "art_source/downloaded/humanoids/elf.zip",
+  "license": "Unknown; source remains Reference Only",
+  "creator": "Unnamed Project 2026 derived adaptation",
+  "format": "GLB",
+  "godot_units": "1 unit = 1 meter",
+  "target_height_m": 1.75,
+  "post_bounds_min": [
+    -0.37277,
+    -0.173523,
+    -0.0
+  ],
+  "post_bounds_max": [
+    0.375581,
+    0.196633,
+    1.749999
+  ],
+  "post_height_m": 1.75,
+  "orientation": "Godot -Z forward, +Y up after import normalization",
+  "humanoid_rig_version": "1",
+  "canonical_pose": "A-pose-compatible source pose",
+  "mesh_count": 8,
+  "armature_bone_count": 66,
+  "armature_scale": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "required_bones_verified": true,
+  "finger_bones_verified": true,
+  "animation_clips": [
+    "human_idle"
+  ],
+  "runtime_path": "game/assets/humanoids/human/human_humanoid_rig_v1.glb",
+  "runtime_approval": "Prototype only; do not ship until source license is verified",
+  "fallback": "EntityView procedural human body if GLB import is unavailable",
+  "notes": [
+    "Derived from the reviewed elf model; source archive is not copied into the runtime tree.",
+    "Source materials and costume-specific cloak were removed; project-owned neutral materials are used.",
+    "Head lateral vertices were clamped to remove the pointed-ear silhouette.",
+    "PlayerCharacter controller replacement remains out of scope for this slice.",
+    "Simulation anatomy remains independent from visual skeleton names."
+  ],
+  "output_blend": "art_source/reference/generated_humanoids/human_elf_adapted_rig_v1.blend",
+  "output_glb": "art_source/reference/generated_humanoids/human_elf_adapted_rig_v1.glb"
+}
+
