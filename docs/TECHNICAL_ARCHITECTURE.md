@@ -75,3 +75,10 @@ After 0.1, reassess engine, presentation, and architecture using prototype resul
 World owns per-human-NPC work-hour overrides; phase derives from SimulationClock with a 240-second day beginning at 08:00. WoodHaulingService reconciles rest before navigation, cancels empty pickup trips through ActionLifecycle, and allows carried delivery. Food and squad priorities remain higher. Schema 10 adds validated WorkSchedules; schemas 4-9 use defaults. See docs/NPC_SCHEDULES.md for boundaries, precedence and validation.
 
 Relationship and faction standing notifications carry actual applied deltas after authoritative changes. Gameplay displays transient signed changes; production social profiles and faction event steps use +1/-1. Petting and selection rings use the existing recipient Trusted/Loyal bond, with Fearful overriding permission. See [SOCIAL_FEEDBACK.md](SOCIAL_FEEDBACK.md) for domestic defaults, save compatibility and feedback validation.
+
+
+## Creature rig-family boundary
+
+Creature simulation uses one shared semantic contract, while visual assets use anatomically appropriate rig families. Do not make a universal quadruped skeleton a gameplay dependency. Canids, vulpines, ungulates, felids, primates, reptiles, plantigrades, and fictional composites may each have different joint chains, feet, shoulders, gaits, collision proxies, and interaction sockets.
+
+Species definitions select a family and provide validated proportions, diet, senses, capabilities, anatomy mappings, collision data, sockets, and animation overrides. Gameplay code consumes semantic regions and capability IDs rather than imported bone names. A species remains reference/prototype-only until its family mapping, Godot GLB/glTF import, animation, collision, targeting, and crowd-safety evidence pass the family gate. See [Creature Rig Families and Species Generation](CREATURE_RIG_FAMILIES.md).
