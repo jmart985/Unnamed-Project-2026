@@ -115,27 +115,29 @@ def cone(name: str, location: tuple[float, float, float], radius: float, depth: 
 
 def create_mesh() -> list[bpy.types.Object]:
     parts: list[bpy.types.Object] = []
-    # Shoulder height is ~0.68 m; the complete model is ~1.08 m to the ears.
-    parts += [uv_sphere("Body", (0, 0.02, 0.64), (0.34, 0.68, 0.34), WOLF)]
-    parts += [uv_sphere("Chest", (0, -0.39, 0.69), (0.30, 0.36, 0.33), WOLF_LIGHT)]
-    parts += [uv_sphere("Hindquarters", (0, 0.45, 0.67), (0.31, 0.34, 0.32), WOLF)]
-    parts += [capsule_between("Neck", Vector((0, -0.47, 0.72)), Vector((0, -0.62, 0.88)), 0.18, WOLF)]
-    parts += [uv_sphere("Head", (0, -0.72, 0.94), (0.23, 0.27, 0.22), WOLF)]
-    parts += [uv_sphere("Muzzle", (0, -0.99, 0.88), (0.13, 0.30, 0.12), WOLF_LIGHT)]
-    parts += [uv_sphere("Nose", (0, -1.25, 0.88), (0.085, 0.065, 0.065), NOSE)]
-    parts += [uv_sphere("Jaw", (0, -1.04, 0.81), (0.12, 0.18, 0.075), WOLF_DARK)]
+    # The wolf is deliberately taller and longer-bodied than the vulpine
+    # profile: a deeper chest, longer back, and stronger jaw establish the
+    # family distinction before animation is applied.
+    parts += [uv_sphere("Body", (0, 0.04, 0.78), (0.37, 0.80, 0.39), WOLF)]
+    parts += [uv_sphere("Chest", (0, -0.47, 0.83), (0.33, 0.42, 0.37), WOLF_LIGHT)]
+    parts += [uv_sphere("Hindquarters", (0, 0.55, 0.80), (0.34, 0.38, 0.36), WOLF)]
+    parts += [capsule_between("Neck", Vector((0, -0.56, 0.86)), Vector((0, -0.72, 1.05)), 0.20, WOLF)]
+    parts += [uv_sphere("Head", (0, -0.83, 1.12), (0.25, 0.29, 0.25), WOLF)]
+    parts += [uv_sphere("Muzzle", (0, -1.14, 1.05), (0.15, 0.34, 0.15), WOLF_LIGHT)]
+    parts += [uv_sphere("Nose", (0, -1.43, 1.05), (0.095, 0.07, 0.07), NOSE)]
+    parts += [uv_sphere("Jaw", (0, -1.17, 0.95), (0.15, 0.23, 0.10), WOLF_DARK)]
     for side in (-1, 1):
         s = "L" if side < 0 else "R"
-        parts += [uv_sphere(f"Eye_{s}", (0.10 * side, -0.96, 1.02), (0.040, 0.025, 0.040), EYE, 16, 10)]
-        parts += [cone(f"Ear_{s}", (0.145 * side, -0.70, 1.21), 0.12, 0.34, WOLF_DARK, (0, 0, -0.08 * side))]
+        parts += [uv_sphere(f"Eye_{s}", (0.11 * side, -1.06, 1.20), (0.042, 0.027, 0.042), EYE, 16, 10)]
+        parts += [cone(f"Ear_{s}", (0.16 * side, -0.80, 1.43), 0.13, 0.38, WOLF_DARK, (0, 0, -0.08 * side))]
 
     # Digitigrade front and rear limbs; the paw and three toes make the stance
     # read as a wolf even before animations are applied.
     limbs = {
-        "Front_L": (Vector((-0.22, -0.36, 0.70)), Vector((-0.22, -0.39, 0.40)), Vector((-0.22, -0.42, 0.14))),
-        "Front_R": (Vector((0.22, -0.36, 0.70)), Vector((0.22, -0.39, 0.40)), Vector((0.22, -0.42, 0.14))),
-        "Rear_L": (Vector((-0.22, 0.40, 0.67)), Vector((-0.22, 0.48, 0.37)), Vector((-0.22, 0.40, 0.14))),
-        "Rear_R": (Vector((0.22, 0.40, 0.67)), Vector((0.22, 0.48, 0.37)), Vector((0.22, 0.40, 0.14))),
+        "Front_L": (Vector((-0.24, -0.43, 0.84)), Vector((-0.24, -0.46, 0.47)), Vector((-0.24, -0.49, 0.14))),
+        "Front_R": (Vector((0.24, -0.43, 0.84)), Vector((0.24, -0.46, 0.47)), Vector((0.24, -0.49, 0.14))),
+        "Rear_L": (Vector((-0.24, 0.49, 0.80)), Vector((-0.24, 0.57, 0.43)), Vector((-0.24, 0.49, 0.14))),
+        "Rear_R": (Vector((0.24, 0.49, 0.80)), Vector((0.24, 0.57, 0.43)), Vector((0.24, 0.49, 0.14))),
     }
     for name, (hip, knee, paw) in limbs.items():
         parts += [capsule_between(f"{name}_Upper", hip, knee, 0.075, WOLF)]
@@ -146,7 +148,7 @@ def create_mesh() -> list[bpy.types.Object]:
             parts += [uv_sphere(f"{name}_Toe_{toe}", (paw.x + toe * 0.045, paw.y - 0.12, paw.z - 0.005), (0.025, 0.055, 0.025), CLAW, 12, 8)]
 
     # Four-segment expressive tail with a slight upward curve.
-    tail_points = [Vector((0, 0.67, 0.73)), Vector((0, 0.87, 0.70)), Vector((0, 1.03, 0.71)), Vector((0, 1.14, 0.77)), Vector((0, 1.18, 0.83))]
+    tail_points = [Vector((0, 0.79, 0.87)), Vector((0, 1.02, 0.83)), Vector((0, 1.20, 0.85)), Vector((0, 1.34, 0.93)), Vector((0, 1.39, 1.01))]
     for index in range(len(tail_points) - 1):
         parts += [capsule_between(f"Tail_{index + 1:02d}", tail_points[index], tail_points[index + 1], 0.085 - index * 0.014, WOLF)]
     return parts
@@ -171,30 +173,30 @@ def create_armature() -> bpy.types.Object:
             b.use_connect = False
 
     bone("root", (0, 0, 0), (0, 0, 0.12))
-    bone("pelvis", (0, 0.55, 0.63), (0, 0.30, 0.70), "root")
-    bone("spine_01", (0, 0.30, 0.70), (0, 0.05, 0.78), "pelvis")
-    bone("spine_02", (0, 0.05, 0.78), (0, -0.22, 0.81), "spine_01")
-    bone("spine_03", (0, -0.22, 0.81), (0, -0.46, 0.84), "spine_02")
-    bone("neck_01", (0, -0.46, 0.84), (0, -0.64, 0.94), "spine_03")
-    bone("head", (0, -0.64, 0.94), (0, -0.92, 0.94), "neck_01")
-    bone("jaw", (0, -0.86, 0.88), (0, -1.06, 0.83), "head")
+    bone("pelvis", (0, 0.66, 0.75), (0, 0.35, 0.82), "root")
+    bone("spine_01", (0, 0.35, 0.82), (0, 0.04, 0.88), "pelvis")
+    bone("spine_02", (0, 0.04, 0.88), (0, -0.27, 0.91), "spine_01")
+    bone("spine_03", (0, -0.27, 0.91), (0, -0.55, 0.94), "spine_02")
+    bone("neck_01", (0, -0.55, 0.94), (0, -0.74, 1.07), "spine_03")
+    bone("head", (0, -0.74, 1.07), (0, -1.02, 1.10), "neck_01")
+    bone("jaw", (0, -0.96, 1.00), (0, -1.20, 0.94), "head")
     for side in ("l", "r"):
         x = -1 if side == "l" else 1
-        bone(f"ear_{side}", (0.15 * x, -0.70, 1.11), (0.15 * x, -0.70, 1.30), "head")
-        bone(f"eye_{side}", (0.105 * x, -0.91, 1.02), (0.105 * x, -0.98, 1.02), "head")
+        bone(f"ear_{side}", (0.16 * x, -0.80, 1.33), (0.16 * x, -0.80, 1.54), "head")
+        bone(f"eye_{side}", (0.11 * x, -1.00, 1.20), (0.11 * x, -1.07, 1.20), "head")
         front = f"front_{side}"
         rear = f"rear_{side}"
-        bone(f"{front}_upper", (0.22 * x, -0.36, 0.70), (0.22 * x, -0.39, 0.40), "spine_03")
-        bone(f"{front}_lower", (0.22 * x, -0.39, 0.40), (0.22 * x, -0.42, 0.14), f"{front}_upper")
-        bone(f"{front}_foot", (0.22 * x, -0.42, 0.14), (0.22 * x, -0.49, 0.08), f"{front}_lower")
-        bone(f"{front}_digits", (0.22 * x, -0.49, 0.08), (0.22 * x, -0.60, 0.08), f"{front}_foot")
-        bone(f"{rear}_upper", (0.22 * x, 0.40, 0.67), (0.22 * x, 0.48, 0.37), "pelvis")
-        bone(f"{rear}_lower", (0.22 * x, 0.48, 0.37), (0.22 * x, 0.40, 0.14), f"{rear}_upper")
-        bone(f"{rear}_foot", (0.22 * x, 0.40, 0.14), (0.22 * x, 0.32, 0.08), f"{rear}_lower")
-        bone(f"{rear}_digits", (0.22 * x, 0.32, 0.08), (0.22 * x, 0.21, 0.08), f"{rear}_foot")
+        bone(f"{front}_upper", (0.24 * x, -0.43, 0.84), (0.24 * x, -0.46, 0.47), "spine_03")
+        bone(f"{front}_lower", (0.24 * x, -0.46, 0.47), (0.24 * x, -0.49, 0.14), f"{front}_upper")
+        bone(f"{front}_foot", (0.24 * x, -0.49, 0.14), (0.24 * x, -0.56, 0.08), f"{front}_lower")
+        bone(f"{front}_digits", (0.24 * x, -0.56, 0.08), (0.24 * x, -0.67, 0.08), f"{front}_foot")
+        bone(f"{rear}_upper", (0.24 * x, 0.49, 0.80), (0.24 * x, 0.57, 0.43), "pelvis")
+        bone(f"{rear}_lower", (0.24 * x, 0.57, 0.43), (0.24 * x, 0.49, 0.14), f"{rear}_upper")
+        bone(f"{rear}_foot", (0.24 * x, 0.49, 0.14), (0.24 * x, 0.41, 0.08), f"{rear}_lower")
+        bone(f"{rear}_digits", (0.24 * x, 0.41, 0.08), (0.24 * x, 0.30, 0.08), f"{rear}_foot")
     previous = "pelvis"
-    for index, point in enumerate([(0, 0.87, 0.70), (0, 1.03, 0.71), (0, 1.14, 0.77), (0, 1.18, 0.83)], 1):
-        next_point = (0, point[1] + 0.12, point[2] + 0.03)
+    for index, point in enumerate([(0, 1.02, 0.83), (0, 1.20, 0.85), (0, 1.34, 0.93), (0, 1.39, 1.01)], 1):
+        next_point = (0, point[1] + 0.13, point[2] + 0.03)
         bone(f"tail_{index:02d}", point, next_point, previous)
         previous = f"tail_{index:02d}"
     bpy.ops.object.mode_set(mode="POSE")
@@ -352,7 +354,7 @@ def export() -> None:
         "usage": "Production Approved",
         "format": "GLB",
         "godot_units": "1 unit = 1 meter",
-        "shoulder_height_m": 0.70,
+        "shoulder_height_m": 0.88,
         "orientation": "Blender -Y / Godot -Z forward",
         "rig_family": "canid",
         "semantic_anatomy": ["head", "jaw", "torso", "front_leg_l", "front_leg_r", "rear_leg_l", "rear_leg_r", "tail"],
@@ -367,7 +369,7 @@ def export() -> None:
         "animations": ["idle", "walk", "trot", "run", "eat", "attack", "hurt"],
         "runtime_path": f"game/assets/creatures/wolf/{MODEL_NAME}.glb",
         "fallback": "EntityView procedural canid body if the GLB is unavailable",
-        "notes": "Stylized wolf silhouette with digitigrade legs, pointed ears, tapered muzzle, expressive tail, and three-toed paws.",
+        "notes": "Refined wolf silhouette with taller shoulder height, longer torso than the vulpine profile, stronger jaw, digitigrade legs, pointed ears, expressive tail, and three-toed paws.",
     }
     (ROOT / f"{MODEL_NAME}.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
     (RUNTIME_ROOT / f"{MODEL_NAME}.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
