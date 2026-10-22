@@ -64,7 +64,8 @@ The runtime GLB is admitted at:
 `game/assets/creatures/cow/cow_ungulate_rig_v1.glb`
 
 The silhouette uses a barrel torso, sloped chest, short neck, muzzle, horns,
-ears, four articulated legs, fetlocks, split cloven hooves, and a lowered tail.
+ears, four articulated legs, fetlocks, split cloven hooves, a lowered tail, and
+a stylized four-quarter udder with four teats for future milking interactions.
 The semantic rig exposes root/pelvis/spine/neck/head/jaw, paired front and rear
 leg chains, hoof controls, tail, ears, and horns. Included actions are `idle`,
 `walk`, `trot`, `eat`, `hurt`, and `turn`.
@@ -75,7 +76,7 @@ simulation adapter rather than by arbitrary mesh geometry. Breeding, milk,
 herd behavior, and pregnancy remain future simulation work; this slice supplies
 the reusable visual and semantic foundation only.
 
-The cow generator produced 44 mesh parts and 35 semantic bones. The GLB was
-re-imported in Blender after export and its six expected action clips were
-confirmed before admission.
+The cow generator produced 53 mesh parts and 44 semantic bones, including the
+udder and teat interaction bones. The GLB was re-imported in Blender after
+export and its six expected action clips were confirmed before admission.
 
