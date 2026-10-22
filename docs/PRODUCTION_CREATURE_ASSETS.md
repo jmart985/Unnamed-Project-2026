@@ -109,3 +109,32 @@ work; this slice supplies the reusable visual and semantic foundation.
 The ape generator produced 39 mesh parts and 30 semantic bones. Blender
 re-import confirmed all eight expected action clips before admission.
 
+## Fox / Vulpine Rig v1
+
+The first vulpine production asset is a project-generated fox. It shares the
+quadruped semantic contract with the wolf but intentionally uses a separate
+family profile. The editable Blender source is:
+
+`art_source/blender/generate_creature_vulpine_v1.py`
+
+The generated source files are kept under:
+
+`art_source/reference/generated_creatures/fox_vulpine_rig_v1.*`
+
+The runtime GLB is admitted at:
+
+`game/assets/creatures/fox/fox_vulpine_rig_v1.glb`
+
+The silhouette uses a narrow light frame, pointed muzzle, large upright ears,
+compact paws, and a proportionally long bushy tail with a pale tip. The
+semantic rig contains root/pelvis/three-spine/neck/head/jaw, paired limb and
+foot chains, ears, and four tail segments. Included actions are `idle`, `walk`,
+`trot`, `run`, `sniff`, `eat`, `hurt`, and `turn`.
+
+`EntityView` selects the asset for both `fox` and `vulpine` species IDs and keeps
+the procedural canid fallback. Scent tracking remains simulation work; the
+model only provides the stable visual and semantic foundation.
+
+The fox generator produced 36 mesh parts and 26 semantic bones. Blender
+re-import confirmed all eight expected action clips before admission.
+
