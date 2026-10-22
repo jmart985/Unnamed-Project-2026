@@ -18,7 +18,7 @@ The runtime GLB is admitted at:
 
 ## Minimum visual and rig standard
 
-- Shoulder height is approximately 0.70 m and the asset uses 1 Godot unit = 1 m.
+- Shoulder height is approximately 0.88 m and the asset uses 1 Godot unit = 1 m.
 - The silhouette uses a narrow running torso, digitigrade legs, a tapered muzzle,
   pointed ears, three-toed paws, and a four-segment tail so it reads as a wolf
   rather than a generic dog or bear.
@@ -43,7 +43,9 @@ species data rather than raw mesh node paths.
 ## Validation
 
 The generator performs a Blender save, GLB export, metadata export, and rendered
-preview. The Blender source contains 32 semantic bones and 44 mesh parts. The
+preview. The refined Blender source contains 32 semantic bones and 45 mesh parts.
+Its torso is longer and deeper than the vulpine profile, and the jaw/muzzle is
+broader while retaining a canid silhouette. The
 runtime adapter was kept small so asset admission does not change navigation,
 collision, or simulation ownership.
 

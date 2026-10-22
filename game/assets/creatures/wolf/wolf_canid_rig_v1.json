@@ -7,7 +7,7 @@
   "usage": "Production Approved",
   "format": "GLB",
   "godot_units": "1 unit = 1 meter",
-  "shoulder_height_m": 0.7,
+  "shoulder_height_m": 0.88,
   "orientation": "Blender -Y / Godot -Z forward",
   "rig_family": "canid",
   "semantic_anatomy": [
@@ -65,5 +65,5 @@
   ],
   "runtime_path": "game/assets/creatures/wolf/wolf_canid_rig_v1.glb",
   "fallback": "EntityView procedural canid body if the GLB is unavailable",
-  "notes": "Stylized wolf silhouette with digitigrade legs, pointed ears, tapered muzzle, expressive tail, and three-toed paws."
+  "notes": "Refined wolf silhouette with taller shoulder height, longer torso than the vulpine profile, stronger jaw, digitigrade legs, pointed ears, expressive tail, and three-toed paws."
 }
