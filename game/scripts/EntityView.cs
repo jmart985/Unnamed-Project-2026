@@ -71,6 +71,15 @@ public partial class EntityView : CharacterBody3D
         AddChild(_rig);
         _gait = new ProceduralGait { Body = _rig, ReferenceSpeed = Mathf.Max(_movementSpeed, 0.5f) };
 
+        // Production creature assets are selected by species while the
+        // procedural body remains an intentional fallback. This lets a single
+        // missing import or an unsupported species never prevent the simulation
+        // from spawning its entities.
+        if (TryBuildProductionCreature())
+        {
+            return;
+        }
+
         // Deterministic per-entity variation so individuals are distinguishable without extra state.
         var hash = (uint)StringComparer.Ordinal.GetHashCode(EntityId);
         var variation = (hash % 100) / 100f;
@@ -91,6 +100,39 @@ public partial class EntityView : CharacterBody3D
         {
             BuildUpright(bodyColor, accentColor, variation);
         }
+    }
+
+    private bool TryBuildProductionCreature()
+    {
+        if (!_isCreature || !string.Equals(_speciesId, "wolf", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        var packed = GD.Load<PackedScene>("res://assets/creatures/wolf/wolf_canid_rig_v1.glb");
+        if (packed is null)
+        {
+            GD.PushWarning("Wolf production model is unavailable; using the procedural canid fallback.");
+            return false;
+        }
+
+        var model = packed.Instantiate<Node3D>();
+        model.Name = "WolfProductionModel";
+        _rig!.AddChild(model);
+        AddCollision(1.0f, 0.32f);
+
+        var animationPlayer = model.FindChild("AnimationPlayer", recursive: true, owned: false) as AnimationPlayer;
+        if (animationPlayer is not null)
+        {
+            var idle = animationPlayer.GetAnimationList()
+                .FirstOrDefault(name => string.Equals(name, "idle", StringComparison.OrdinalIgnoreCase));
+            if (idle is not null)
+            {
+                animationPlayer.Play(idle);
+            }
+        }
+
+        return true;
     }
 
     private void AddCollision(float totalHeight, float radius)
