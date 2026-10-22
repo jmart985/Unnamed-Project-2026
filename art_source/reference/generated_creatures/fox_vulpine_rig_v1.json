@@ -1,0 +1,44 @@
+{
+  "asset_id": "fox_vulpine_rig_v1",
+  "display_name": "Fox / Vulpine Rig v1",
+  "source": "Project-generated from procedural Blender source",
+  "creator": "Unnamed Project 2026",
+  "license": "Project-owned generated asset",
+  "usage": "Production Approved",
+  "format": "GLB",
+  "godot_units": "1 unit = 1 meter",
+  "shoulder_height_m": 0.62,
+  "orientation": "Blender -Y / Godot -Z forward",
+  "rig_family": "vulpine",
+  "semantic_anatomy": [
+    "head",
+    "jaw",
+    "torso",
+    "front_leg_l",
+    "front_leg_r",
+    "rear_leg_l",
+    "rear_leg_r",
+    "tail",
+    "paw"
+  ],
+  "animations": [
+    "idle",
+    "walk",
+    "trot",
+    "run",
+    "sniff",
+    "eat",
+    "hurt",
+    "turn"
+  ],
+  "interaction_anchors": [
+    "head",
+    "jaw",
+    "paw_l",
+    "paw_r",
+    "tail_04"
+  ],
+  "runtime_path": "game/assets/creatures/fox/fox_vulpine_rig_v1.glb",
+  "fallback": "EntityView procedural canid body if the GLB is unavailable",
+  "notes": "Light fox silhouette with pointed muzzle, large ears, compact paws, and a long bushy tail; intentionally distinct from the wolf asset."
+}
