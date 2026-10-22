@@ -1,0 +1,45 @@
+{
+  "asset_id": "cat_felid_rig_v1",
+  "display_name": "Cat / Felid Rig v1",
+  "source": "Project-generated from procedural Blender source",
+  "creator": "Unnamed Project 2026",
+  "license": "Project-owned generated asset",
+  "usage": "Production Approved",
+  "format": "GLB",
+  "godot_units": "1 unit = 1 meter",
+  "shoulder_height_m": 0.55,
+  "orientation": "Blender -Y / Godot -Z forward",
+  "rig_family": "felid",
+  "semantic_anatomy": [
+    "head",
+    "jaw",
+    "torso",
+    "front_leg_l",
+    "front_leg_r",
+    "rear_leg_l",
+    "rear_leg_r",
+    "tail",
+    "paw"
+  ],
+  "animations": [
+    "idle",
+    "walk",
+    "trot",
+    "run",
+    "stalk",
+    "pounce",
+    "eat",
+    "hurt",
+    "turn"
+  ],
+  "interaction_anchors": [
+    "head",
+    "jaw",
+    "paw_l",
+    "paw_r",
+    "tail_04"
+  ],
+  "runtime_path": "game/assets/creatures/cat/cat_felid_rig_v1.glb",
+  "fallback": "EntityView procedural felid body if the GLB is unavailable",
+  "notes": "Compact feline silhouette with flexible torso, short muzzle, triangular ears, articulated paws, and long balancing tail."
+}

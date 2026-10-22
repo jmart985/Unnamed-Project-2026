@@ -141,3 +141,33 @@ model only provides the stable visual and semantic foundation.
 The fox generator produced 36 mesh parts and 26 semantic bones. Blender
 re-import confirmed all eight expected action clips before admission.
 
+## Cat / Felid Rig v1
+
+The first feline production asset is a project-generated cat. It is a distinct
+felid family profile rather than a recolored canid. The editable Blender source
+is:
+
+`art_source/blender/generate_creature_felid_v1.py`
+
+The generated source files are kept under:
+
+`art_source/reference/generated_creatures/cat_felid_rig_v1.*`
+
+The runtime GLB is admitted at:
+
+`game/assets/creatures/cat/cat_felid_rig_v1.glb`
+
+The silhouette uses a compact feline body, short muzzle, large triangular ears,
+articulated paws, and a segmented tail. The semantic rig contains root/pelvis/
+three-spine/neck/head/jaw, ear controls, paired front and rear limb chains,
+foot controls, and four tail segments. Included actions are `idle`, `walk`,
+`trot`, `run`, `stalk`, `pounce`, `eat`, `hurt`, and `turn`.
+
+`EntityView` selects the GLB for both `cat` and `feline` species IDs and keeps
+the procedural quadruped fallback. Hunting, scent, domestication, breeding, and
+other feline behavior remain simulation work; this slice supplies the reusable
+visual and semantic foundation.
+
+The cat generator produced 36 mesh parts and 26 semantic bones. Blender
+re-import confirmed all nine expected action clips before admission.
+
