@@ -80,3 +80,32 @@ The cow generator produced 53 mesh parts and 44 semantic bones, including the
 udder and teat interaction bones. The GLB was re-imported in Blender after
 export and its six expected action clips were confirmed before admission.
 
+## Ape / Primate Rig v1
+
+The first primate production asset is a project-generated ape. It is a distinct
+primate family implementation rather than a humanoid or canid mesh reused with
+different colors. The editable Blender source is:
+
+`art_source/blender/generate_creature_primate_v1.py`
+
+The generated source files are kept under:
+
+`art_source/reference/generated_creatures/ape_primate_rig_v1.*`
+
+The runtime GLB is admitted at:
+
+`game/assets/creatures/ape/ape_primate_rig_v1.glb`
+
+The silhouette uses a broad chest, heavy brow, short muzzle, rounded ears, long
+forelimbs, large hands, separate knuckle pads, plantigrade feet, and a short
+tail. The semantic rig contains the canonical torso/head chains plus clavicles,
+hands, feet, knuckle controls, and tail controls. Included actions are `idle`,
+`walk`, `knuckle_walk`, `run`, `climb_pose`, `eat`, `hurt`, and `turn`.
+
+`EntityView` selects the GLB for ape entities and retains the procedural primate
+fallback. Advanced climbing, tool use, and species behavior remain simulation
+work; this slice supplies the reusable visual and semantic foundation.
+
+The ape generator produced 39 mesh parts and 30 semantic bones. Blender
+re-import confirmed all eight expected action clips before admission.
+

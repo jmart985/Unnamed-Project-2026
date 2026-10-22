@@ -113,6 +113,7 @@ public partial class EntityView : CharacterBody3D
         {
             "wolf" => ("res://assets/creatures/wolf/wolf_canid_rig_v1.glb", "WolfProductionModel", 1.0f, 0.32f),
             "cow" => ("res://assets/creatures/cow/cow_ungulate_rig_v1.glb", "CowProductionModel", 1.65f, 0.45f),
+            "ape" => ("res://assets/creatures/ape/ape_primate_rig_v1.glb", "ApeProductionModel", 1.75f, 0.38f),
             _ => (string.Empty, string.Empty, 0f, 0f)
         };
         if (string.IsNullOrEmpty(assetPath))
