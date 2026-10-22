@@ -1,0 +1,46 @@
+{
+  "asset_id": "ape_primate_rig_v1",
+  "display_name": "Ape / Primate Rig v1",
+  "source": "Project-generated from procedural Blender source",
+  "creator": "Unnamed Project 2026",
+  "license": "Project-owned generated asset",
+  "usage": "Production Approved",
+  "format": "GLB",
+  "godot_units": "1 unit = 1 meter",
+  "shoulder_height_m": 1.35,
+  "orientation": "Blender -Y / Godot -Z forward",
+  "rig_family": "primate",
+  "semantic_anatomy": [
+    "head",
+    "jaw",
+    "torso",
+    "clavicle_l",
+    "clavicle_r",
+    "hand_l",
+    "hand_r",
+    "knuckle_l",
+    "knuckle_r",
+    "foot_l",
+    "foot_r",
+    "tail"
+  ],
+  "animations": [
+    "idle",
+    "walk",
+    "knuckle_walk",
+    "run",
+    "climb_pose",
+    "eat",
+    "hurt",
+    "turn"
+  ],
+  "interaction_anchors": [
+    "hand_l",
+    "hand_r",
+    "knuckle_l",
+    "knuckle_r"
+  ],
+  "runtime_path": "game/assets/creatures/ape/ape_primate_rig_v1.glb",
+  "fallback": "EntityView procedural primate body if the GLB is unavailable",
+  "notes": "Broad-shouldered ape silhouette with long forelimbs, knuckle contacts, hands, feet, brow, muzzle, ears, and short tail."
+}
