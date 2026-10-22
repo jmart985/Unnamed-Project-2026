@@ -104,22 +104,33 @@ public partial class EntityView : CharacterBody3D
 
     private bool TryBuildProductionCreature()
     {
-        if (!_isCreature || !string.Equals(_speciesId, "wolf", StringComparison.Ordinal))
+        if (!_isCreature)
         {
             return false;
         }
 
-        var packed = GD.Load<PackedScene>("res://assets/creatures/wolf/wolf_canid_rig_v1.glb");
+        var (assetPath, displayName, totalHeight, radius) = _speciesId switch
+        {
+            "wolf" => ("res://assets/creatures/wolf/wolf_canid_rig_v1.glb", "WolfProductionModel", 1.0f, 0.32f),
+            "cow" => ("res://assets/creatures/cow/cow_ungulate_rig_v1.glb", "CowProductionModel", 1.65f, 0.45f),
+            _ => (string.Empty, string.Empty, 0f, 0f)
+        };
+        if (string.IsNullOrEmpty(assetPath))
+        {
+            return false;
+        }
+
+        var packed = GD.Load<PackedScene>(assetPath);
         if (packed is null)
         {
-            GD.PushWarning("Wolf production model is unavailable; using the procedural canid fallback.");
+            GD.PushWarning($"{displayName} is unavailable; using the procedural creature fallback.");
             return false;
         }
 
         var model = packed.Instantiate<Node3D>();
-        model.Name = "WolfProductionModel";
+        model.Name = displayName;
         _rig!.AddChild(model);
-        AddCollision(1.0f, 0.32f);
+        AddCollision(totalHeight, radius);
 
         var animationPlayer = model.FindChild("AnimationPlayer", recursive: true, owned: false) as AnimationPlayer;
         if (animationPlayer is not null)
@@ -195,10 +206,15 @@ public partial class EntityView : CharacterBody3D
             _ when _bodyPlan == CreatureBodyPlan.Primate => new Vector3(0.82f, 0.62f, 1.15f),
             _ => new Vector3(0.75f, 0.65f, 1.25f)
         };
+        var ape = _bodyPlan == CreatureBodyPlan.Primate;
         var legLength = bodySize.Y * (_bodyPlan == CreatureBodyPlan.Canid ? 0.85f
-            : _bodyPlan == CreatureBodyPlan.Primate ? 0.95f : 0.75f);
-        var bodyY = legLength + bodySize.Y * 0.5f - 0.05f;
-        AddCollision(legLength + bodySize.Y, Mathf.Max(bodySize.X, bodySize.Z) * 0.4f);
+            : ape ? 0.95f : 0.75f);
+        // A great-ape silhouette is defined by long weight-bearing forelimbs,
+        // shorter hind legs, and no canine-style tail.
+        var frontLegLength = ape ? bodySize.Y * 1.15f : legLength;
+        var rearLegLength = ape ? bodySize.Y * 0.82f : legLength;
+        var bodyY = Mathf.Max(frontLegLength, rearLegLength) + bodySize.Y * 0.5f - 0.05f;
+        AddCollision(Mathf.Max(frontLegLength, rearLegLength) + bodySize.Y, Mathf.Max(bodySize.X, bodySize.Z) * 0.4f);
         _gait!.BobHeight = 0.03f;
         _gait.RadiansPerMeter = 3.4f;
 
@@ -247,10 +263,13 @@ public partial class EntityView : CharacterBody3D
 
         _gait.Limbs.Add(new ProceduralGait.Limb { Pivot = head, Phase = 0.5f, Amplitude = 0.07f, IdleAmplitude = 0.12f, IdleFrequency = 0.7f });
 
-        var tail = AddJoint(_rig, new Vector3(0, bodyY + bodySize.Y * 0.2f, bodySize.Z * 0.5f));
-        var tailLength = _bodyPlan == CreatureBodyPlan.Canid ? 0.6f : 0.5f;
-        AddPart(new BoxMesh { Size = new Vector3(0.1f, 0.1f, tailLength) }, new Vector3(0, -0.07f, tailLength * 0.5f), accentColor, new Vector3(25, 0, 0), tail);
-        _gait.Limbs.Add(new ProceduralGait.Limb { Pivot = tail, Axis = Vector3.Up, Phase = 0, Amplitude = 0.35f, IdleAmplitude = 0.3f, IdleFrequency = 1.3f });
+        if (!ape)
+        {
+            var tail = AddJoint(_rig, new Vector3(0, bodyY + bodySize.Y * 0.2f, bodySize.Z * 0.5f));
+            var tailLength = _bodyPlan == CreatureBodyPlan.Canid ? 0.6f : 0.5f;
+            AddPart(new BoxMesh { Size = new Vector3(0.1f, 0.1f, tailLength) }, new Vector3(0, -0.07f, tailLength * 0.5f), accentColor, new Vector3(25, 0, 0), tail);
+            _gait.Limbs.Add(new ProceduralGait.Limb { Pivot = tail, Axis = Vector3.Up, Phase = 0, Amplitude = 0.35f, IdleAmplitude = 0.3f, IdleFrequency = 1.3f });
+        }
 
         var frontZ = -bodySize.Z * 0.32f;
         var rearZ = bodySize.Z * 0.32f;
@@ -259,11 +278,10 @@ public partial class EntityView : CharacterBody3D
         var handColor = _bodyPlan == CreatureBodyPlan.Primate ? new Color(0.22f, 0.14f, 0.09f) : accentColor;
         // Apes knuckle-walk: the long front limbs carry weight on the ground.
         // FastGroup pairs both front limbs, then both hind legs for a gallop.
-        var ape = _bodyPlan == CreatureBodyPlan.Primate;
-        AddLeg(_rig, new Vector3(-legX, legLength, frontZ), legLength, thickness, bodyColor, handColor, 0, 0.55f, 0.6f, ape ? 1 : 0);
-        AddLeg(_rig, new Vector3(legX, legLength, rearZ), legLength, thickness, bodyColor, accentColor, 0, 0.55f, 0.6f, ape ? 2 : 0);
-        AddLeg(_rig, new Vector3(legX, legLength, frontZ), legLength, thickness, bodyColor, handColor, Mathf.Pi, 0.55f, 0.6f, ape ? 1 : 0);
-        AddLeg(_rig, new Vector3(-legX, legLength, rearZ), legLength, thickness, bodyColor, accentColor, Mathf.Pi, 0.55f, 0.6f, ape ? 2 : 0);
+        AddLeg(_rig, new Vector3(-legX, frontLegLength, frontZ), frontLegLength, thickness, bodyColor, handColor, 0, 0.55f, 0.6f, ape ? 1 : 0);
+        AddLeg(_rig, new Vector3(legX, rearLegLength, rearZ), rearLegLength, thickness, bodyColor, accentColor, 0, 0.55f, 0.6f, ape ? 2 : 0);
+        AddLeg(_rig, new Vector3(legX, frontLegLength, frontZ), frontLegLength, thickness, bodyColor, handColor, Mathf.Pi, 0.55f, 0.6f, ape ? 1 : 0);
+        AddLeg(_rig, new Vector3(-legX, rearLegLength, rearZ), rearLegLength, thickness, bodyColor, accentColor, Mathf.Pi, 0.55f, 0.6f, ape ? 2 : 0);
     }
 
     private void BuildUpright(Color shirt, Color skin, float variation)
@@ -414,3 +432,4 @@ public partial class EntityView : CharacterBody3D
             adapter.RemoveTarget(requestId);
     }
 }
+
