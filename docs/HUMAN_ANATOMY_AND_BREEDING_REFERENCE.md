@@ -1,6 +1,6 @@
 # Human Anatomy and Species Breeding Reference
 
-**Status:** Reference and architecture guidance only, issue #432  
+**Status:** Reference and architecture guidance only, issue #432
 **Implementation status:** No runtime breeding, pregnancy, genetics, or hybrid systems are implemented by this document.
 
 ## Purpose
