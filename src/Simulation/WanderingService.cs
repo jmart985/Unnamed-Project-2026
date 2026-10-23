@@ -7,6 +7,8 @@ public enum WanderingStatus
     NotWanderer,
     Traveling,
     Arrived,
+    ReturningToTerritory,
+    ReturnedToTerritory,
     NeedsFood,
     Waiting,
     ActionRejected,
@@ -33,6 +35,8 @@ public sealed class WanderingService : ITransientSimulationState
     private const double ArrivalTolerance = 0.1;
     private const uint FnvOffsetBasis = 2166136261;
     private const uint FnvPrime = 16777619;
+    private const int TerritoryGoalCount = 16;
+    private const double GoldenAngleRadians = 2.399963229728653;
 
     private readonly World _world;
     private readonly Func<EntityRecord, INavigationAdapter> _navigationForEntity;
@@ -40,6 +44,7 @@ public sealed class WanderingService : ITransientSimulationState
     private readonly int _decisionSeed;
     private readonly Dictionary<string, ActiveTrip> _activeTrips = new(StringComparer.Ordinal);
     private readonly Dictionary<string, int> _tripCounts = new(StringComparer.Ordinal);
+    private readonly RetryScheduler _returnRetries = new();
 
     public WanderingService(
         World world,
@@ -93,21 +98,48 @@ public sealed class WanderingService : ITransientSimulationState
             return new WanderingResult(WanderingStatus.NotWanderer);
         }
 
+        var territory = entity.SpeciesId != "human"
+            && entity.CaptivityState == CreatureCaptivityState.Wild
+            && _world.TryGetWildTerritory(entity.Id, out var assignedTerritory)
+                ? assignedTerritory
+                : null;
+
         if (entity.Needs.IsHungry)
         {
             CancelTrip(entity);
             return new WanderingResult(WanderingStatus.NeedsFood);
         }
 
+        if (territory is null || territory.Contains(entity.Position))
+            _returnRetries.Clear(entity.Id);
+        var isOutsideTerritory = territory is not null && !territory.Contains(entity.Position);
+
         if (_activeTrips.TryGetValue(entity.Id, out var activeTrip))
         {
-            if (entity.Actions.Current?.Id != activeTrip.ActionId)
+            if (activeTrip.IsReturnTrip && !isOutsideTerritory && activeTrip.Territory == territory)
+            {
+                _activeTrips.Remove(entity.Id);
+                activeTrip.Navigator.Cancel(activeTrip.NavigationRequestId);
+                if (entity.Actions.Current?.Id == activeTrip.ActionId)
+                    entity.Actions.Complete();
+                entity.Activity = "Idle";
+                entity.WaitingReason = null;
+                _returnRetries.Clear(entity.Id);
+                return new WanderingResult(
+                    WanderingStatus.ReturnedToTerritory,
+                    entity.Position,
+                    Behavior: activeTrip.Behavior);
+            }
+
+            if (entity.Actions.Current?.Id != activeTrip.ActionId
+                || activeTrip.Territory != territory
+                || (!activeTrip.IsReturnTrip && isOutsideTerritory))
             {
                 CancelTrip(entity);
             }
             else
             {
-                return AdvanceTrip(entity, activeTrip);
+                return AdvanceTrip(entity, activeTrip, simulationTick);
             }
         }
 
@@ -116,7 +148,27 @@ public sealed class WanderingService : ITransientSimulationState
             return new WanderingResult(WanderingStatus.ActionRejected);
         }
 
-        return BeginTrip(entity, species, simulationTick);
+        if (isOutsideTerritory)
+        {
+            if (_returnRetries.IsWaiting(entity.Id, simulationTick))
+            {
+                entity.Activity = "Waiting";
+                entity.WaitingReason = "Waiting before retrying the territory return route.";
+                return new WanderingResult(
+                    WanderingStatus.Waiting,
+                    territory!.Center,
+                    entity.WaitingReason);
+            }
+
+            var returnTarget = new WildCreatureDecisionTarget($"territory-{entity.Id}", territory!.Center);
+            var decision = WildCreatureDecisionPolicy.Decide(
+                entity,
+                new WildCreatureDecisionContext(isOutsideArea: true, returnAreaTarget: returnTarget));
+            if (decision.Decision == WildCreatureDecision.ReturnToArea)
+                return BeginTrip(entity, species, simulationTick, territory, decision.Target!.Position, isReturnTrip: true);
+        }
+
+        return BeginTrip(entity, species, simulationTick, territory, targetOverride: null, isReturnTrip: false);
     }
 
     public void Reset()
@@ -135,12 +187,16 @@ public sealed class WanderingService : ITransientSimulationState
 
         _activeTrips.Clear();
         _tripCounts.Clear();
+        _returnRetries.Reset();
     }
 
     private WanderingResult BeginTrip(
         EntityRecord entity,
         SpeciesDefinition species,
-        long simulationTick)
+        long simulationTick,
+        WildTerritory? territory,
+        Vector3? targetOverride,
+        bool isReturnTrip)
     {
         var temperament = IndividualTemperament.ForEntity(entity.Id, species.Temperament);
         var hasSameSpeciesCompanions = _world.Entities.Any(other =>
@@ -152,8 +208,14 @@ public sealed class WanderingService : ITransientSimulationState
                 ? WildBehavior.CuriousExploration
                 : WildBehavior.CautiousRoaming;
         var tripCount = _tripCounts.GetValueOrDefault(entity.Id);
-        var firstGoalIndex = GetStableStartIndex(entity.Id, simulationTick, tripCount, _goals.Count);
-        var target = SelectGoal(entity, behavior, firstGoalIndex);
+        var firstGoalIndex = GetStableStartIndex(
+            entity.Id,
+            simulationTick,
+            tripCount,
+            territory is null ? _goals.Count : TerritoryGoalCount);
+        var target = targetOverride ?? (territory is null
+            ? SelectGoal(entity, behavior, firstGoalIndex)
+            : SelectTerritoryGoal(entity, behavior, territory, firstGoalIndex));
         _tripCounts[entity.Id] = checked(tripCount + 1);
 
         INavigationAdapter? navigator = null;
@@ -181,10 +243,13 @@ public sealed class WanderingService : ITransientSimulationState
                 return new WanderingResult(WanderingStatus.ActionRejected, target, Behavior: behavior);
             }
 
-            _activeTrips[entity.Id] = new ActiveTrip(actionId, target, behavior, navigator, requestId);
-            entity.Activity = "Wandering";
+            _activeTrips[entity.Id] = new ActiveTrip(actionId, target, behavior, navigator, requestId, territory, isReturnTrip);
+            entity.Activity = isReturnTrip ? "ReturningToTerritory" : "Wandering";
             entity.WaitingReason = null;
-            return new WanderingResult(WanderingStatus.Traveling, target, Behavior: behavior);
+            return new WanderingResult(
+                isReturnTrip ? WanderingStatus.ReturningToTerritory : WanderingStatus.Traveling,
+                target,
+                Behavior: behavior);
         }
         catch
         {
@@ -192,6 +257,9 @@ public sealed class WanderingService : ITransientSimulationState
             {
                 navigator.Cancel(requestId);
             }
+
+            if (isReturnTrip)
+                _returnRetries.ScheduleRetry(entity.Id, simulationTick);
 
             return new WanderingResult(
                 WanderingStatus.Waiting,
@@ -201,12 +269,15 @@ public sealed class WanderingService : ITransientSimulationState
         }
     }
 
-    private WanderingResult AdvanceTrip(EntityRecord entity, ActiveTrip trip)
+    private WanderingResult AdvanceTrip(EntityRecord entity, ActiveTrip trip, long simulationTick)
     {
         var outcome = trip.Navigator.Poll(trip.NavigationRequestId, 0);
         if (outcome == NavigationOutcome.InProgress)
         {
-            return new WanderingResult(WanderingStatus.Traveling, trip.Target, Behavior: trip.Behavior);
+            return new WanderingResult(
+                trip.IsReturnTrip ? WanderingStatus.ReturningToTerritory : WanderingStatus.Traveling,
+                trip.Target,
+                Behavior: trip.Behavior);
         }
 
         if (outcome == NavigationOutcome.Arrived
@@ -216,13 +287,58 @@ public sealed class WanderingService : ITransientSimulationState
             entity.Actions.Complete();
             entity.Activity = "Idle";
             entity.WaitingReason = null;
+            if (trip.IsReturnTrip)
+            {
+                _returnRetries.Clear(entity.Id);
+                return new WanderingResult(WanderingStatus.ReturnedToTerritory, trip.Target, Behavior: trip.Behavior);
+            }
             return new WanderingResult(WanderingStatus.Arrived, trip.Target, Behavior: trip.Behavior);
         }
 
         CancelTrip(entity);
         entity.Activity = "Waiting";
-        entity.WaitingReason = $"Wandering target failed: {outcome}.";
+        entity.WaitingReason = trip.IsReturnTrip
+            ? $"Territory return route failed: {outcome}; retry deferred."
+            : $"Wandering target failed: {outcome}.";
+        if (trip.IsReturnTrip)
+            _returnRetries.ScheduleRetry(entity.Id, simulationTick);
         return new WanderingResult(WanderingStatus.Waiting, trip.Target, entity.WaitingReason, trip.Behavior);
+    }
+
+    private static Vector3 SelectTerritoryGoal(
+        EntityRecord entity,
+        WildBehavior behavior,
+        WildTerritory territory,
+        int firstGoalIndex)
+    {
+        var bestGoal = territory.Center;
+        var bestDistance = 0f;
+        var foundGoal = false;
+        for (var offset = 0; offset < TerritoryGoalCount; offset++)
+        {
+            var candidateIndex = (firstGoalIndex + offset) % TerritoryGoalCount;
+            var radialFraction = Math.Sqrt((candidateIndex + 0.5) / TerritoryGoalCount) * 0.9;
+            var angle = candidateIndex * GoldenAngleRadians;
+            var candidate = territory.Center + new Vector3(
+                (float)(Math.Cos(angle) * territory.Radius * radialFraction),
+                0,
+                (float)(Math.Sin(angle) * territory.Radius * radialFraction));
+            var candidateDistance = Vector3.DistanceSquared(entity.Position, candidate);
+            if (!territory.Contains(candidate) || candidateDistance <= ArrivalTolerance * ArrivalTolerance)
+                continue;
+
+            if (!foundGoal
+                || (behavior == WildBehavior.CuriousExploration
+                    ? candidateDistance > bestDistance
+                    : candidateDistance < bestDistance))
+            {
+                bestGoal = candidate;
+                bestDistance = candidateDistance;
+                foundGoal = true;
+            }
+        }
+
+        return bestGoal;
     }
 
     private Vector3 SelectGoal(EntityRecord entity, WildBehavior behavior, int firstGoalIndex)
@@ -333,5 +449,7 @@ public sealed class WanderingService : ITransientSimulationState
         Vector3 Target,
         WildBehavior Behavior,
         INavigationAdapter Navigator,
-        string NavigationRequestId);
+        string NavigationRequestId,
+        WildTerritory? Territory,
+        bool IsReturnTrip);
 }

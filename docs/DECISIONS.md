@@ -516,3 +516,11 @@ User reported only an obstacle at the expected workbench. Replace that legacy ce
 - Reason: Territory return needs a stable home area that survives save/load without coupling simulation state to a scene node, navigation path, or roaming service.
 - Consequence: Snapshot validation must reject unknown or duplicate territory owners and invalid geometry before applying any state. Territory assignment does not add roaming, capture policy, hunting, packs, or migration by itself.
 - Revisit: When the 1.2 territory-return and wolf hunting/feeding scenarios are integrated, or when world/region ownership replaces per-entity territory records.
+
+## D045 — Wild roaming stays within a local home territory (2026-10-23)
+
+- Status: Accepted prototype behavior for Milestone 1.2.
+- Decision: Starter wild creatures receive a 35 m home territory centered on their new-game spawn. Normal roaming selects deterministic points inside that territory. A wild creature displaced outside returns through `WildCreatureDecisionPolicy.ReturnToArea` and the existing navigation adapter. Hunger cancels travel so food behavior can take priority. Captured and domesticated creatures are not forced back to their former territory.
+- Reason: Local roaming and recovery make wildlife feel tied to a place while keeping this first behavior slice bounded and testable.
+- Consequence: Failed return routes clear their active movement and wait ten simulation ticks before another attempt. Return stops when the creature re-enters its territory; a later tick resumes normal local roaming. No threat detection, pack/herd movement, migration, or terrain-aware boundary adaptation is added.
+- Revisit: When the 1.2 hunting/feeding loop and a larger representative world are playable; tune territory sizing from observed movement and map scale.

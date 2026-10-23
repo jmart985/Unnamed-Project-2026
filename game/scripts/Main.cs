@@ -183,6 +183,8 @@ public partial class Main : Node3D
 			Callable.From(RunGameplayActionsValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-interaction-anchors"))
 			Callable.From(RunInteractionAnchorValidation).CallDeferred();
+		else if (OS.GetCmdlineUserArgs().Contains("--validate-wild-territories"))
+			Callable.From(RunWildTerritoryValidation).CallDeferred();
 	}
 
 	public override void _Process(double delta)
