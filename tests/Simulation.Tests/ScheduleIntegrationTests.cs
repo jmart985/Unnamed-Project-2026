@@ -43,6 +43,10 @@ public sealed class ScheduleIntegrationTests
         Assert.Contains(NavigationOutcome.Cancelled, nav.Requests.Values);
         Assert.Contains(NavigationOutcome.InProgress, nav.Requests.Values);
         Assert.Empty(npc.Inventory);
+        Assert.Equal(100,
+            world.ResourcePiles.Sum(pile => pile.Contents.Counts.GetValueOrDefault(ItemIds.Wood))
+            + world.Stockpiles.Sum(stockpile => stockpile.Contents.Counts.GetValueOrDefault(ItemIds.Wood))
+            + npc.Inventory.GetValueOrDefault(ItemIds.Wood));
 
         // Needs stay active at rest; food uses the real selection, reservation and consumption path.
         npc.Needs.Advance((npc.Satiety - 20) / species.HungerRate, satietyOverride: species.HungerRate);

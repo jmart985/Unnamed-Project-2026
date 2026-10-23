@@ -21,6 +21,12 @@ Wait for process completion and require exit 0 plus `SCHEDULE VALIDATION PASSED`
 
 For rendered evidence, omit `--headless` and add `--schedule-screenshot=<absolute-output-path.png>`. This also writes `schedule-inspector.png` alongside the requested file.
 
+## Boundary validation update (2026-10-23)
+
+Issue #451 refreshed the boundary check to match the current home-return behavior. At the work-to-rest transition, the validation now verifies that the haul action/request is replaced by a distinct navigation request targeting the NPC's home, while the wood total remains 100. It then places the worker near the wood source for the next-shift pickup and near the stockpile for rest-time delivery. Those short paths still use the real Godot navigation adapter; they avoid making this schedule check depend on the known crowded town crossing.
+
+The integrated natural-day fixture starts one worker at satiety 20 so it exercises the food response during the 240-second day despite the deliberately slow default needs tuning. Current headless results: `--validate-schedules` exits 0 with `SCHEDULE VALIDATION PASSED`; `--validate-schedule-integration` exits 0 with both schedule markers and finishes with 399 food remaining, 1 consumed and 100 wood conserved. This records a hunger response from a prepared hungry state; it does not claim that ordinary starting satiety falls below the hunger threshold during one four-minute game day.
+
 ## Feature evidence (2026-10-03)
 
 - .NET 10.0.401 restore, Release solution build and Debug game build succeeded. Full suite: **539 passed, 0 failed, 0 skipped**, including 30 schedule cases.
