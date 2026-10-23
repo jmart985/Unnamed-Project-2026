@@ -103,8 +103,12 @@ public sealed class WanderingService : ITransientSimulationState
             && _world.TryGetWildTerritory(entity.Id, out var assignedTerritory)
                 ? assignedTerritory
                 : null;
+        var isOutsideTerritory = territory is not null && !territory.Contains(entity.Position);
 
-        if (entity.Needs.IsHungry)
+        // A displaced wild creature must be able to return home before its food
+        // search can resume. Hungry creatures inside their territory still
+        // interrupt ordinary roaming to seek food.
+        if (entity.Needs.IsHungry && !isOutsideTerritory)
         {
             CancelTrip(entity);
             return new WanderingResult(WanderingStatus.NeedsFood);
@@ -112,7 +116,6 @@ public sealed class WanderingService : ITransientSimulationState
 
         if (territory is null || territory.Contains(entity.Position))
             _returnRetries.Clear(entity.Id);
-        var isOutsideTerritory = territory is not null && !territory.Contains(entity.Position);
 
         if (_activeTrips.TryGetValue(entity.Id, out var activeTrip))
         {

@@ -25,6 +25,8 @@ public partial class Main
             var home = territory!;
             var view = _entityViews[wolf.Id];
 
+            // Isolate territory behavior from the intentionally hungry starter state.
+            wolf.Needs.AddNutrition(100);
             _world.TrySetEntityPosition(wolf.Id, home.Center);
             view.GlobalPosition = ToGodot(home.Center);
             var roaming = _wandering!.Advance(wolf, species, simulationTick: 1);
