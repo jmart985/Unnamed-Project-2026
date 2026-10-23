@@ -57,7 +57,7 @@ public sealed class ScheduleIntegrationTests
         hauling.ReconcileSchedule(npc, clock.SimulationTime);
         Arrive(eating.Source!.Position);
         Assert.Equal(FoodConsumptionStatus.Ate, food.Advance(npc, species, ++tick).Status);
-        Assert.Equal(399, food.FoodUnitsRemaining);
+        Assert.Equal(299, food.FoodUnitsRemaining);
         Assert.Equal(1, food.FoodUnitsConsumed);
 
         world.AddSquadMember(npc.Id);
@@ -104,7 +104,7 @@ public sealed class ScheduleIntegrationTests
         Arrive(eating.Source!.Position);
         Assert.Equal(FoodConsumptionStatus.Ate, food.Advance(npc, species, ++tick).Status);
         Assert.Equal(cargo, npc.Inventory[ItemIds.Wood]);
-        Assert.Equal(398, food.FoodUnitsRemaining);
+        Assert.Equal(298, food.FoodUnitsRemaining);
         Assert.Equal(WoodHaulingStatus.TravelingToStockpile, hauling.Advance(npc, species, ++tick, clock.SimulationTime).Status);
         var saved = WorldSnapshotSerializer.Serialize(world, clock.SimulationTime);
         var invalid = JsonNode.Parse(saved)!;

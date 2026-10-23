@@ -524,3 +524,11 @@ User reported only an obstacle at the expected workbench. Replace that legacy ce
 - Reason: Local roaming and recovery make wildlife feel tied to a place while keeping this first behavior slice bounded and testable.
 - Consequence: Failed return routes clear their active movement and wait ten simulation ticks before another attempt. Return stops when the creature re-enters its territory; a later tick resumes normal local roaming. No threat detection, pack/herd movement, migration, or terrain-aware boundary adaptation is added.
 - Revisit: When the 1.2 hunting/feeding loop and a larger representative world are playable; tune territory sizing from observed movement and map scale.
+
+## D046 — Starter wolf hunting uses species-declared prey and shared food systems (2026-10-23)
+
+- Status: Accepted for the Milestone 1.2 prototype.
+- Decision: Predator species declare eligible prey IDs and carcass meat yield in the validated species catalog. A transient hunting service chooses the nearest eligible wild prey by distance and stable entity ID, uses existing navigation and combat, then delegates carcass creation and eating to the existing harvest and food systems. Hunt targets, routes, and retry timers remain transient; the world stores only the harvested carcass as durable resource state. The starter wolf begins hungry and the starter world does not provide free meat.
+- Reason: A small playable hunt-and-feed loop proves that creature traits, autonomy, combat, harvesting, and needs can interact without adding a second resource or combat pipeline.
+- Consequence: Initial prey eligibility is limited to configured species, wild and living state, the predator's local territory, smell range, and same-faction exclusion. Unreachable or invalid targets clear the hunt and are reconsidered after a bounded retry delay. `CreatureHarvestService` only accepts dead entities, preventing a live prey target from being removed as a carcass.
+- Revisit: When pack behavior, prey defense, carcass decay/handling, regional simulation, or cross-faction hostility should alter target eligibility or hunting outcomes.

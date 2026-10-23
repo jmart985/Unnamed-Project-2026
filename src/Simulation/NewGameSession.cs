@@ -8,15 +8,17 @@ public sealed class NewGameSession
     public const int HumanNpcCount = 10;
     public const float StarterCreatureTerritoryRadius = 35f;
     public static Vector3 TownWorkbenchPosition => Vector3.Zero;
-    private static readonly (string SpeciesId, Vector3 Position)[] StarterCreatureSpawns =
+    private static readonly (string SpeciesId, Vector3 Position, double Satiety)[] StarterCreatureSpawns =
     [
-        ("ape", new Vector3(90, 0, 60)),
-        ("wolf", new Vector3(150, 0, 40)),
-        ("cow", new Vector3(-60, 0, 150))
+        ("ape", new Vector3(90, 0, 60), 60),
+        ("wolf", new Vector3(150, 0, 40), 25),
+        ("cow", new Vector3(174, 0, 40), 60)
     ];
     public static int CreatureCount => StarterCreatureSpawns.Length;
     public static IReadOnlyList<string> StarterCreatureSpeciesIds { get; } =
         Array.AsReadOnly(StarterCreatureSpawns.Select(spawn => spawn.SpeciesId).ToArray());
+
+    public static Vector3 StarterCowForagePosition => new(174, 0, 41);
 
     private static readonly Vector3[] PlayerSpawnPositions =
     [
@@ -84,14 +86,8 @@ public sealed class NewGameSession
         AddContainer(
             (id, position, contents) => world.AddFoodSource(id, position, contents),
             "forage-pile-cow",
-            new(-59, 0, 150),
+            StarterCowForagePosition,
             ItemIds.Plant,
-            100);
-        AddContainer(
-            (id, position, contents) => world.AddFoodSource(id, position, contents),
-            "prey-pile-wolf",
-            new(152, 0, 40),
-            ItemIds.Meat,
             100);
         if (survivalGathering)
         {
@@ -134,7 +130,7 @@ public sealed class NewGameSession
 
         foreach (var creature in StarterCreatureSpawns)
         {
-            var entity = world.SpawnEntity(catalog.GetRequired(creature.SpeciesId), creature.Position);
+            var entity = world.SpawnEntity(catalog.GetRequired(creature.SpeciesId), creature.Position, creature.Satiety);
             if (world.SetWildTerritory(entity.Id, creature.Position, StarterCreatureTerritoryRadius)
                 != WildTerritoryResult.Accepted)
                 throw new InvalidOperationException($"Unable to assign starter territory to '{entity.Id}'.");

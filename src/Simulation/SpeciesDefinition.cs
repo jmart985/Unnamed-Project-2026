@@ -30,7 +30,9 @@ public sealed class SpeciesDefinition
         bool isDomestic = false,
         bool isPredator = false,
         double baseTrust = 0,
-        InteractionAnchorDefinition? anchors = null)
+        InteractionAnchorDefinition? anchors = null,
+        IEnumerable<string>? preySpeciesIds = null,
+        int carcassMeatUnits = 1)
     {
         Id = id;
         DisplayName = displayName;
@@ -54,6 +56,8 @@ public sealed class SpeciesDefinition
         BaseTrust = baseTrust;
         Temperament = temperament;
         Anchors = anchors ?? InteractionAnchorDefinition.Empty;
+        PreySpeciesIds = Array.AsReadOnly((preySpeciesIds ?? Array.Empty<string>()).ToArray());
+        CarcassMeatUnits = carcassMeatUnits;
         _dietItems = new HashSet<string>(Diet, StringComparer.Ordinal);
     }
 
@@ -79,6 +83,8 @@ public sealed class SpeciesDefinition
     public double BaseTrust { get; }
     public TemperamentProfile Temperament { get; }
     public InteractionAnchorDefinition Anchors { get; }
+    public ReadOnlyCollection<string> PreySpeciesIds { get; }
+    public int CarcassMeatUnits { get; }
 
     public CharacterStats CreateCharacterStats(CharacterStats defaults)
     {

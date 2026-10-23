@@ -25,6 +25,7 @@ public sealed class FoodVarietyAndEntityStatsTests
     {
         var world = new World();
         var creature = world.SpawnEntity("creature", new Vector3(2, 0, 3));
+        creature.Health.TryDamage("Torso", 50);
 
         var result = CreatureHarvestService.Harvest(world, creature, 4);
 
@@ -32,6 +33,19 @@ public sealed class FoodVarietyAndEntityStatsTests
         Assert.Empty(world.Entities);
         Assert.Equal(4, result.Carcass!.Contents.Counts[ItemIds.Meat]);
         Assert.Equal(creature.Position, result.Carcass.Position);
+    }
+
+    [Fact]
+    public void CreatureHarvestRejectsLiveEntitiesWithoutChangingWorld()
+    {
+        var world = new World();
+        var creature = world.SpawnEntity("creature", new Vector3(2, 0, 3));
+
+        var result = CreatureHarvestService.Harvest(world, creature, 4);
+
+        Assert.Equal(CreatureHarvestStatus.NotDefeated, result.Status);
+        Assert.Same(creature, Assert.Single(world.Entities));
+        Assert.Empty(world.FoodSources);
     }
 
     private static SpeciesCatalog Catalog() => SpeciesCatalog.LoadFromFile(Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
