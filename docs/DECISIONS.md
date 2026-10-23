@@ -491,3 +491,11 @@ User reported only an obstacle at the expected workbench. Replace that legacy ce
 - Reason: Entity crowds should have physical presence comparable to a mob in a survival or action game rather than behaving as ghosts.
 - Consequence: Crowd resistance and safety recovery are separate acceptance concerns. The player may be slowed or redirected by a mob, but never permanently trapped, teleported, or allowed to clip through solid geometry.
 - Revisit: When a playable crowd test demonstrates density, resistance, enclosure recovery, and normal movement regression behavior.
+
+## D042 — Human anatomy reference and future breeding compatibility boundary (2026-10-22)
+
+- Status: Reference architecture and migration target; implementation not started.
+- Decision: Keep simulation anatomy and save identifiers separate from visual skeleton bones. The current `CharacterHealth` six-region contract (`Head`, `Torso`, `LeftArm`, `RightArm`, `LeftLeg`, `RightLeg`, in that order) remains authoritative for runtime combat and existing saves. The detailed human regions in `HUMAN_ANATOMY_AND_BREEDING_REFERENCE.md` are a future migration target only. Treat species-pair compatibility defaults (`viable`, `sterile`, `incompatible`, or `unknown`) as explicit data rules rather than an inference from shared rigs or visual similarity.
+- Reason: Human anatomy and future breeding need enough semantic detail for injuries, equipment, body conditions, and lineage without coupling gameplay to an imported rig. Keeping the current six-region schema stable avoids silently invalidating combat or save restoration while the reference work remains non-runtime.
+- Consequence: This PR does not change health behavior, save schema, breeding, pregnancy, genetics, or hybrid generation. Any future region expansion must include a versioned save migration, an old-save compatibility path, deterministic tests, and an explicit mapping from visual bones to simulation regions. Breeding work must define supported species pairs and safe rejection for unknown or unsupported pairs before mutating state.
+- Revisit: When a concrete health-region migration or first playable breeding issue is scoped with schema/versioning, mapping, and deterministic acceptance tests.
