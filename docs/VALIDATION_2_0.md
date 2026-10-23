@@ -27,9 +27,22 @@ Also run `--validate-wolf-hunting` and `--validate-wild-territories` to guard th
 
 The cow's 18 m threat-detection range is provisional tuning. Detection is species-pair based and geometric in this slice; line of sight, terrain, pack/herd behavior, and ecological population changes are deferred.
 
+## Far-population transitions and save/load
+
+Far population records belong to `World` and are keyed by region and species. A transition for one species must not remove, merge, or overwrite another species in the same region. Schema 19 saves persist count, average satiety, and resource quantities; older saves restore with no far-population records.
+
+Run the Godot integration check after a Debug build:
+
+```powershell
+dotnet build game\UnnamedProject2026.csproj --configuration Debug
+& "C:\Users\James Home\Downloads\Godot_v4.7.2-stable_mono_win64\Godot_v4.7.2-stable_mono_win64\Godot_v4.7.2-stable_mono_win64_console.exe" --path game --headless -- --validate-far-population-transitions
+```
+
+Require exit code 0 and `FAR POPULATION TRANSITIONS VALIDATION PASSED`. The scenario places cow and wolf aggregates in one region, promotes and demotes only cows, then verifies both species and their resources survive save/load without duplication. Population growth, mortality, respawning, and migration are not covered by this scenario.
+
 ## Carcass freshness
 
-Harvested carcasses have a species-configurable freshness lifetime, currently 300 simulation seconds. The timer advances only when the simulation advances, so pause stops decay and 4x speed advances it four times faster. Generic food sources do not expire. If a carcass expires while an entity is traveling to it, the existing food-consumption flow releases its reservation and selects another valid source or waits. Remaining freshness is saved; schema 17 saves migrate with existing food sources treated as nonperishable to avoid deleting old resources.
+Harvested carcasses have a species-configurable freshness lifetime, currently 300 simulation seconds. The timer advances only when the simulation advances, so pause stops decay and 4x speed advances it four times faster. Generic food sources do not expire. If a carcass expires while an entity is traveling to it, the existing food-consumption flow releases its reservation and selects another valid source or waits. Remaining freshness is saved; schema 18 and earlier saves migrate with existing food sources treated as nonperishable to avoid deleting old resources.
 
 Run the Godot integration check after a Debug build:
 

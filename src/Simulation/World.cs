@@ -42,6 +42,7 @@ public sealed class World
     private readonly Dictionary<string, NpcWorkSchedule> _workSchedules = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Vector3> _homePositions = new(StringComparer.Ordinal);
     private readonly Dictionary<string, WildTerritory> _wildTerritories = new(StringComparer.Ordinal);
+    private readonly Dictionary<(string RegionId, string SpeciesId), FarEntityRecord> _farPopulations = [];
     private readonly Dictionary<string, double> _treeRegrowthTimers = new(StringComparer.Ordinal);
     public IReadOnlyDictionary<string, double> TreeRegrowthTimers => _treeRegrowthTimers;
     internal void SetTreeRegrowthTimer(string treeId, double elapsed) => _treeRegrowthTimers[treeId] = elapsed;
@@ -56,6 +57,33 @@ public sealed class World
     public IReadOnlyCollection<WildTerritory> WildTerritories => Array.AsReadOnly(_wildTerritories
         .OrderBy(pair => pair.Key, StringComparer.Ordinal)
         .Select(pair => pair.Value).ToArray());
+    public IReadOnlyCollection<FarEntityRecord> FarPopulations => Array.AsReadOnly(_farPopulations.Values
+        .OrderBy(record => record.RegionId, StringComparer.Ordinal)
+        .ThenBy(record => record.SpeciesId, StringComparer.Ordinal)
+        .ToArray());
+
+    public void SetFarPopulation(FarEntityRecord record)
+    {
+        ArgumentNullException.ThrowIfNull(record);
+        if (SpeciesCatalog is null || !SpeciesCatalog.TryGet(record.SpeciesId, out _))
+            throw new ArgumentException($"Far population species '{record.SpeciesId}' is not defined in this world.", nameof(record));
+        _farPopulations[(record.RegionId, record.SpeciesId)] = record;
+    }
+
+    public bool TryGetFarPopulation(string? regionId, string? speciesId, out FarEntityRecord? record)
+    {
+        if (string.IsNullOrWhiteSpace(regionId) || string.IsNullOrWhiteSpace(speciesId))
+        {
+            record = null;
+            return false;
+        }
+
+        return _farPopulations.TryGetValue((regionId, speciesId), out record);
+    }
+
+    public bool RemoveFarPopulation(string? regionId, string? speciesId) =>
+        !string.IsNullOrWhiteSpace(regionId) && !string.IsNullOrWhiteSpace(speciesId)
+        && _farPopulations.Remove((regionId, speciesId));
 
     public bool TryGetWildTerritory(string? entityId, out WildTerritory? territory) =>
         _wildTerritories.TryGetValue(entityId ?? string.Empty, out territory);
@@ -833,6 +861,7 @@ public sealed class World
         _workSchedules.Clear();
         _homePositions.Clear();
         _wildTerritories.Clear();
+        _farPopulations.Clear();
         _relationships.Clear();
         _factionIds.Clear();
         _factionReputations.Clear();
@@ -1009,6 +1038,14 @@ public sealed class World
         foreach (var territory in snapshot.WildTerritories!)
             _wildTerritories.Add(territory.EntityId,
                 new WildTerritory(territory.EntityId, territory.Center, territory.Radius));
+
+        foreach (var population in snapshot.FarPopulations!)
+            SetFarPopulation(new FarEntityRecord(
+                population.RegionId,
+                population.SpeciesId,
+                population.Count,
+                population.AverageSatiety,
+                population.Resources));
     }
 
     internal static bool IsValidFactionId(string? factionId)

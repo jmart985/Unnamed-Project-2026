@@ -194,6 +194,8 @@ public partial class Main : Node3D
 			Callable.From(RunWolfHuntingValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-carcass-decay"))
 			Callable.From(RunCarcassDecayValidation).CallDeferred();
+		else if (OS.GetCmdlineUserArgs().Contains("--validate-far-population-transitions"))
+			Callable.From(RunFarPopulationTransitionsValidation).CallDeferred();
 	}
 
 	public override void _Process(double delta)
