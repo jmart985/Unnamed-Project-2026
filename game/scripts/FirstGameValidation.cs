@@ -7,7 +7,10 @@ public partial class Main
 {
     private async Task ValidatePlayerLoop()
     {
-        Require(_world.Entities.Count == 14 && FoodTotal() == 400 && WoodTotal() == 100, "new game population/resources");
+        Require(_world.Entities.Count == 14 && FoodTotal() == 400 && WoodTotal() == 48
+            && _world.ResourcePiles.Count(pile => pile.Id.StartsWith("tree-adult-", StringComparison.Ordinal)) == 4
+            && _world.ResourcePiles.Count(pile => pile.Contents.Counts.ContainsKey(ItemIds.Rock)) == 4
+            && !_world.ResourcePiles.Any(pile => pile.Id == "wood-pile-1"), "survival new-game population/resources");
         var player = _world.Entities.Single(e => e.Id == _world.PlayerEntityId);
         var initialPosition = player.Position;
         var initialSatiety = player.Satiety;

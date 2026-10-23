@@ -82,6 +82,7 @@ public partial class Main : Node3D
 	private Label _creationError = null!;
 	private PlayerCharacterProfile? _playerProfile;
 	private int _sessionSeed = NewGameSession.DefaultSeed;
+	private bool _survivalGathering;
 	private bool _sessionActive;
 	private readonly PlayerMenuState _menuState = new();
 	private string _lastActionMessage = "No action requested.";
@@ -178,6 +179,8 @@ public partial class Main : Node3D
 			Callable.From(RunSquadValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-first-game"))
 			Callable.From(RunFirstGameValidation).CallDeferred();
+		else if (OS.GetCmdlineUserArgs().Contains("--validate-session-profiles"))
+			Callable.From(RunSessionProfileValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-schedules"))
 			Callable.From(RunScheduleValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-schedule-integration"))
@@ -340,7 +343,7 @@ public partial class Main : Node3D
 			return;
 		}
 
-		StartSession(profile, _sessionSeed, "Scenario reset; save slot unchanged.");
+		StartSession(profile, _sessionSeed, "Scenario reset; save slot unchanged.", _survivalGathering);
 	}
 
 	private void ConfigureCreationChoices()
@@ -404,7 +407,7 @@ public partial class Main : Node3D
 				(PlayerSex)_sexChoice.Selected,
 				_weightChoice.Value,
 				_muscleChoice.Value);
-			StartSession(profile, NewGameSession.DefaultSeed, "New game started.");
+			StartSession(profile, NewGameSession.DefaultSeed, "New game started.", survivalGathering: true);
 			_creationError.Text = string.Empty;
 		}
 		catch (ArgumentException exception)
@@ -416,10 +419,11 @@ public partial class Main : Node3D
 	private void StartSession(
 		PlayerCharacterProfile profile,
 		int seed,
-		string saveLoadMessage)
+		string saveLoadMessage,
+		bool survivalGathering = false)
 	{
 		CancelGameplayActions();
-		var session = NewGameSession.Create(_speciesCatalog, profile, seed, survivalGathering: true);
+		var session = NewGameSession.Create(_speciesCatalog, profile, seed, survivalGathering);
 		_sessionActive = false;
 		_playerCharacter.SetPhysicsProcess(false);
 		ResetTransientServices();
@@ -442,6 +446,7 @@ public partial class Main : Node3D
 			new CreatureGreetingService(_world, _speciesCatalog, _relationshipEventCatalog));
 		_playerProfile = profile;
 		_sessionSeed = seed;
+		_survivalGathering = survivalGathering;
 
 		_map.Mesh = new PlaneMesh { Size = new Vector2(WorldHalfExtent * 2, WorldHalfExtent * 2) };
 		_map.MaterialOverride = CreateMaterial(new Color(0.32f, 0.5f, 0.24f));

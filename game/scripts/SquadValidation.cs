@@ -14,7 +14,7 @@ public partial class Main
     {
         try
         {
-            StartSession(PlayerCharacterProfile.Create("Squad validation"), 42, "Squad validation session.");
+            StartSession(PlayerCharacterProfile.Create("Squad validation"), 42, "Squad validation session.", survivalGathering: firstGame);
             _clock.SetPaused(true);
             _playerCharacter.SetPhysicsProcess(false);
             await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
@@ -87,8 +87,8 @@ public partial class Main
             {
                 Require(WorldSnapshotSerializer.Serialize(_world, _clock.SimulationTime) == json, "full durable round trip");
                 Require(_world.Entities.All(entity => entity.Actions.Current is null), "no stale actions after load");
-                Require(FoodTotal() == 399 && WoodTotal() == 100, "food/wood conservation after load");
-                GD.Print("FIRST GAME VALIDATION PASSED: player movement/eating, squad orders, directed greeting, rejection, reset/load, food 399, wood 100.");
+                Require(FoodTotal() == 399 && WoodTotal() == 48, "food/wood conservation after load");
+                GD.Print("FIRST GAME VALIDATION PASSED: player movement/eating, squad orders, directed greeting, rejection, reset/load, food 399, wood 48 from four trees.");
             }
             var screenshotArgument = OS.GetCmdlineUserArgs().FirstOrDefault(argument => argument.StartsWith("--squad-screenshot=", StringComparison.Ordinal));
             if (screenshotArgument is not null)
