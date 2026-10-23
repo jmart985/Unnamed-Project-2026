@@ -112,7 +112,8 @@ public sealed record EntitySnapshot(
 public sealed record FoodSourceSnapshot(
     string Id,
     Vector3 Position,
-    ResourceContainerSnapshot Contents);
+    ResourceContainerSnapshot Contents,
+    double? FreshnessSecondsRemaining = null);
 
 public sealed record ResourceLocationSnapshot(
     string Id,
@@ -145,7 +146,7 @@ public static class WorldSnapshotSerializer
     private const int BedSchemaVersion = 14;
     private const int HealthFacingSchemaVersion = 15;
     private const int FireplaceSchemaVersion = 16;
-    public const int CurrentSchemaVersion = 17;
+    public const int CurrentSchemaVersion = 18;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -182,7 +183,8 @@ public static class WorldSnapshotSerializer
             .Select(source => new FoodSourceSnapshot(
                 source.Id,
                 source.Position,
-                CaptureContainer(source.Contents)))
+                CaptureContainer(source.Contents),
+                source.FreshnessSecondsRemaining))
             .ToArray();
         var resourcePiles = world.ResourcePiles.Select(CaptureLocation).ToArray();
         var stockpiles = world.Stockpiles.Select(CaptureLocation).ToArray();
@@ -347,6 +349,9 @@ public static class WorldSnapshotSerializer
 
         if (snapshot.SchemaVersion == FireplaceSchemaVersion)
             return snapshot with { SchemaVersion = CurrentSchemaVersion, WildTerritories = Array.Empty<WildTerritorySnapshot>() };
+
+        if (snapshot.SchemaVersion == 17)
+            return snapshot with { SchemaVersion = CurrentSchemaVersion };
 
         if (snapshot.SchemaVersion != CurrentSchemaVersion)
         {
@@ -576,6 +581,9 @@ public static class WorldSnapshotSerializer
 
             ValidatePosition(source.Position, $"food source '{source.Id}' position");
             ValidateContainer(source.Contents, source.Id);
+            if (source.FreshnessSecondsRemaining is { } freshness
+                && (!double.IsFinite(freshness) || freshness <= 0))
+                throw new InvalidDataException($"Snapshot food source '{source.Id}' freshness must be finite and greater than zero.");
         }
 
         ValidateLocations(snapshot.ResourcePiles, "resource pile", foodSourceIds, factionIds, allowFactionOwner: false);

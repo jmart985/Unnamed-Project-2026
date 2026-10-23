@@ -540,3 +540,11 @@ User reported only an obstacle at the expected workbench. Replace that legacy ce
 - Reason: The 1.2 wolf hunt made the predator loop playable, but prey had no response. A configured, deterministic evasion rule makes hunting interactive without adding a separate combat or perception framework.
 - Consequence: The starter cow detects its configured wolf predator at 18 m. Failed routes clear their action and retry after the shared bounded delay; when no threat remains, normal food and territory behavior resumes. Species data remains outside world save state, so this adds no save migration. The first version does not add pack/herd behavior, threat animations, terrain-aware escape scoring, or population/ecosystem simulation.
 - Revisit: When playtesting shows that species need distinct senses, terrain-aware escape destinations, group defense, or predator/prey hostility beyond declared prey lists.
+
+## D048 — Harvested carcass freshness is durable simulation state (2026-10-23)
+
+- Status: Accepted for the first 2.0 Living Region implementation.
+- Decision: A harvested carcass food source owns an optional finite `FreshnessSecondsRemaining` value. Species definitions provide `carcassFreshnessSeconds`, defaulting to 300 simulation seconds for legacy or omitted data. The decay service advances this timer only from simulation ticks and removes the source, its reservations, and its world marker at expiry. Generic food sources remain nonperishable. Remaining freshness is durable and is serialized in snapshot schema 18.
+- Reason: Hunting should produce food that can be eaten or stored through the shared food system without leaving unlimited meat in the world indefinitely. Simulation time keeps freshness consistent with pause and speed controls.
+- Consequence: Schema 17 and earlier snapshots retain existing food as nonperishable when migrated, so loading older saves does not unexpectedly discard resources. Expiring a carcass removes it from new selections; entities already traveling to it use the existing removed-target recovery path. This does not add meat processing, refrigeration, spoilage UI, migration, population growth, or predator group tactics.
+- Revisit: When storage and food preservation are implemented, or playtesting shows that the provisional 300-second species default does not fit the intended hunting and settlement loop.

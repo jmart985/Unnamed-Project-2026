@@ -272,6 +272,34 @@ public sealed class WorldSnapshotTests
     }
 
     [Fact]
+    public void CarcassFreshnessRoundTripsAndSchema17FoodRemainsNonperishable()
+    {
+        var sourceWorld = new World();
+        var carcassContents = new ResourceContainer("carcass-cow", 6);
+        carcassContents.TryAdd(ItemIds.Meat, 6);
+        sourceWorld.AddFoodSource("carcass-cow", Vector3.Zero, carcassContents, 123.5);
+
+        var currentJson = WorldSnapshotSerializer.Serialize(sourceWorld, 2);
+        var currentSnapshot = WorldSnapshotSerializer.Deserialize(currentJson);
+        Assert.Equal(123.5, currentSnapshot.FoodSources.Single().FreshnessSecondsRemaining);
+
+        var legacyDocument = System.Text.Json.Nodes.JsonNode.Parse(currentJson)!.AsObject();
+        legacyDocument["SchemaVersion"] = 17;
+        legacyDocument["FoodSources"]![0]!.AsObject().Remove("FreshnessSecondsRemaining");
+        var legacyJson = legacyDocument.ToJsonString();
+        var legacySnapshot = WorldSnapshotSerializer.Deserialize(legacyJson);
+        Assert.Equal(WorldSnapshotSerializer.CurrentSchemaVersion, legacySnapshot.SchemaVersion);
+        Assert.Null(legacySnapshot.FoodSources.Single().FreshnessSecondsRemaining);
+
+        var restoredWorld = new World();
+        WorldSnapshotSerializer.Load(restoredWorld, currentJson, GetSpeciesCatalog());
+        Assert.Equal(123.5, restoredWorld.FoodSources.Single().FreshnessSecondsRemaining);
+        WorldSnapshotSerializer.Load(restoredWorld, legacyJson, GetSpeciesCatalog());
+        Assert.Null(restoredWorld.FoodSources.Single().FreshnessSecondsRemaining);
+        Assert.Equal(6, restoredWorld.FoodSources.Single().Contents.Counts[ItemIds.Meat]);
+    }
+
+    [Fact]
     public void InvalidSnapshotLeavesExistingWorldUnchanged()
     {
         var world = CreatePopulatedWorld();

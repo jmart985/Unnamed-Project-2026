@@ -85,6 +85,7 @@
     "dietaryProfile": "Herbivore",
     "maxHealth": 120,
     "carcassMeatUnits": 6,
+    "carcassFreshnessSeconds": 300,
     "strength": 1.4,
     "endurance": 1.3,
     "dexterity": 0.5,

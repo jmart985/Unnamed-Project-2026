@@ -57,6 +57,7 @@ public sealed class SpeciesCatalogTests
         Assert.Equal(0.5, cow.Dexterity);
         Assert.Equal(1.4, cow.SmellRange);
         Assert.Equal(18, cow.ThreatDetectionRange);
+        Assert.Equal(300, cow.CarcassFreshnessSeconds);
         Assert.False(cow.CanUseTools);
         Assert.False(cow.CanOpenDoors);
         Assert.False(cow.CanTrack);
@@ -192,6 +193,21 @@ public sealed class SpeciesCatalogTests
         Assert.False(species.CanUseTools);
         Assert.False(species.CanOpenDoors);
         Assert.False(species.CanTrack);
+        Assert.Equal(300, species.CarcassFreshnessSeconds);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void RejectsNonpositiveCarcassFreshness(double seconds)
+    {
+        var json = $$$"""
+            [{"id":"human","movementSpeed":3,"hungerRate":0.2,"diet":["food"],"canHaul":true,"carcassFreshnessSeconds":{{{seconds}}},"temperament":{"boldness":0.5,"aggression":0.5,"fear":0.5,"curiosity":0.5,"sociability":0.5,"territoriality":0.5}}]
+            """;
+
+        var exception = Assert.Throws<InvalidDataException>(() => Load(json));
+
+        Assert.Contains("carcassFreshnessSeconds must be finite and greater than zero", exception.Message);
     }
 
     [Theory]
