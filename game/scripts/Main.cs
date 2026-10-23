@@ -188,6 +188,8 @@ public partial class Main : Node3D
 			Callable.From(RunSelectionValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-gameplay-actions"))
 			Callable.From(RunGameplayActionsValidation).CallDeferred();
+		else if (OS.GetCmdlineUserArgs().Contains("--validate-interaction-anchors"))
+			Callable.From(RunInteractionAnchorValidation).CallDeferred();
 	}
 
 	public override void _Process(double delta)
@@ -514,7 +516,7 @@ public partial class Main : Node3D
 		var movementSpeed = (float)species.MovementSpeed;
 		var view = new EntityView { Name = $"View_{entity.Id}" };
 		view.Bind(entity.Id, movementSpeed, isCreature: !string.Equals(entity.SpeciesId, "human", StringComparison.Ordinal),
-			entity.SpeciesId, species.BodyCategory);
+			entity.SpeciesId, species.BodyCategory, species.Anchors);
 		AddChild(view);
 		_entityViews.Add(entity.Id, view);
 
