@@ -28,9 +28,13 @@ When no independent Ready issue remains after the readiness/dependency audit, re
 
 ## Current accepted slices
 
-### Current project status (2026-10-05)
+### Current project status (2026-10-23)
 
-The Ant Farm board is the live routing source for implementation work. Character Core issues #135, #136, #137, and #139, far-population validation #369, actor-spacing work #415, and Basic Settlement acceptance #406 are complete and belong in **Done**. Deferred health/facing persistence #302, future capability-gated actions #306, Advanced Creature Behavior #201, Captivity Systems #225, and Breeding & Genetics #226 are planning horizons and belong in **Backlog**; they must not be treated as Ready implementation work. There are currently no independent Ready implementation issues, so new work must first be decomposed into a concrete issue with testable acceptance criteria.
+Milestone 1.2's territory and wolf hunt/feeding issues (#461–#463) are merged and validated. The 2.0 Living Region tracker is #202. Its first playable implementation is #467: wild prey reacts to configured nearby predators while the existing wolf hunt still completes. Follow #202 for evidence-based expansion; do not mistake the current predator/prey slice for the full Living Region milestone.
+
+### Historical project status (2026-10-05)
+
+At that point, the Ant Farm board was the live routing source for implementation work. Character Core issues #135, #136, #137, and #139, far-population validation #369, actor-spacing work #415, and Basic Settlement acceptance #406 were complete and belonged in **Done**. Deferred health/facing persistence #302, future capability-gated actions #306, Advanced Creature Behavior #201, Captivity Systems #225, and Breeding & Genetics #226 were planning horizons and belonged in **Backlog**. There were no independent Ready implementation issues at that time; the current route is recorded above.
 
 Do not infer readiness from an issue being open or assigned a future milestone. A closed issue with a merged pull request is Done even if an old project status was left behind; a planning issue remains Backlog until its minimum playable slice, dependencies, and validation steps are explicit.
 

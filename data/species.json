@@ -89,6 +89,7 @@
     "endurance": 1.3,
     "dexterity": 0.5,
     "smellRange": 1.4,
+    "threatDetectionRange": 18.0,
     "canUseTools": false,
     "canOpenDoors": false,
     "canTrack": false,

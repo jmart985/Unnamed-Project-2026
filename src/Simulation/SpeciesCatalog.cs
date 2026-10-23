@@ -97,6 +97,9 @@ public sealed class SpeciesCatalog
             var endurance = ValidateStat(id, entry.Endurance ?? 1, "endurance");
             var dexterity = ValidateStat(id, entry.Dexterity ?? 1, "dexterity");
             var smellRange = ValidateStat(id, entry.SmellRange ?? 1, "smellRange");
+            var threatDetectionRange = entry.ThreatDetectionRange ?? 0;
+            if (!double.IsFinite(threatDetectionRange) || threatDetectionRange < 0)
+                throw new InvalidDataException($"Species '{id}' threatDetectionRange must be finite and nonnegative.");
             var temperament = ValidateTemperament(id, entry.Temperament);
             var baseTrust = entry.BaseTrust ?? 0;
             if (!double.IsFinite(baseTrust) || baseTrust is < 0 or > 100)
@@ -130,7 +133,8 @@ public sealed class SpeciesCatalog
                 baseTrust,
                 anchors,
                 preySpeciesIds,
-                carcassMeatUnits));
+                carcassMeatUnits,
+                threatDetectionRange));
         }
 
         var knownSpeciesIds = ids;
@@ -351,6 +355,7 @@ public sealed class SpeciesCatalog
         public double? Endurance { get; init; }
         public double? Dexterity { get; init; }
         public double? SmellRange { get; init; }
+        public double? ThreatDetectionRange { get; init; }
         public bool? CanUseTools { get; init; }
         public bool? CanOpenDoors { get; init; }
         public bool? CanTrack { get; init; }
