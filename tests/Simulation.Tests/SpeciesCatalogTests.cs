@@ -122,6 +122,45 @@ public sealed class SpeciesCatalogTests
         Assert.Contains("must also be declared as an interaction anchor", exception.Message);
     }
 
+    [Theory]
+    [InlineData("locomotionAnchors")]
+    [InlineData("equipmentAnchors")]
+    [InlineData("interactionAnchors")]
+    [InlineData("breedingAnchors")]
+    public void RejectsAnchorPrefixWithoutSemanticNameInEveryCollection(string fieldName)
+    {
+        // Test both the bare prefix and a suffix containing only separators.
+        foreach (var invalidId in new[] { "anchor_", "anchor___" })
+        {
+            var json = $$$"""
+                [{"id":"human","movementSpeed":3,"hungerRate":0.2,"diet":["food"],"canHaul":true,"{{{fieldName}}}":["{{{invalidId}}}"],"temperament":{"boldness":0.5,"aggression":0.5,"fear":0.5,"curiosity":0.5,"sociability":0.5,"territoriality":0.5}}]
+                """;
+
+            var exception = Assert.Throws<InvalidDataException>(() => Load(json));
+
+            Assert.Contains("Species 'human' has invalid interaction anchors", exception.Message);
+            Assert.Contains("lowercase anchor_ naming convention", exception.Message);
+        }
+    }
+
+    [Theory]
+    [InlineData("anchor_a")]
+    [InlineData("anchor_1")]
+    [InlineData("anchor_teat_front_l")]
+    public void AcceptsNamedSpeciesExtensionAnchors(string anchorId)
+    {
+        var json = $$$"""
+            [{"id":"human","movementSpeed":3,"hungerRate":0.2,"diet":["food"],"canHaul":true,"interactionAnchors":["{{{anchorId}}}"],"breedingAnchors":["{{{anchorId}}}"],"temperament":{"boldness":0.5,"aggression":0.5,"fear":0.5,"curiosity":0.5,"sociability":0.5,"territoriality":0.5}}]
+            """;
+
+        var species = Load(json).GetRequired("human");
+
+        Assert.True(species.Anchors.SupportsInteraction(anchorId));
+        Assert.True(species.Anchors.SupportsBreeding(anchorId));
+        Assert.False(species.Anchors.SupportsInteraction(null));
+        Assert.False(species.Anchors.SupportsBreeding("anchor_missing"));
+    }
+
     [Fact]
     public void LegacySpeciesWithoutAnchorCollectionsRemainCompatible()
     {
