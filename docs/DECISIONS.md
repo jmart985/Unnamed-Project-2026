@@ -383,7 +383,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Each catalog load exposes the same fixed values and sorted resource IDs. These values are prototype tuning, not a claim about balanced market behavior.
 - Revisit: After the E08d integrated market scenario records exchange outcomes.
 
-## D035 � Atomic fixed-price market exchange
+## D035 — Atomic fixed-price market exchange
 
 - Date: 2026-10-03
 - Status: Provisional; implemented for E08b
@@ -500,3 +500,11 @@ User reported only an obstacle at the expected workbench. Replace that legacy ce
 - Reason: Breeding, medical examination, feeding, nursing, waste handling, grooming, creature handling, and species-specific social interactions need reliable alignment points across humanoids, mammals, birds, egg-layers, and future species without coupling simulation or saves to one downloaded model.
 - Consequence: Animation and IK systems resolve semantic IDs, while each species validates its own capability, state, relationship, range, and animation requirements. Existing species records may load empty anchor collections for compatibility, but new production species must declare and validate applicable anchors. Asset metadata with older anchor shapes requires migration before production use.
 - Revisit: When the first breeding or medical interaction slice defines capability/state validation, anchor resolution in imported Godot scenes, and save/load migration evidence.
+
+## D043 — Human anatomy reference and future breeding compatibility boundary (2026-10-22)
+
+- Status: Reference architecture and migration target; implementation not started.
+- Decision: Keep simulation anatomy and save identifiers separate from visual skeleton bones. The current `CharacterHealth` six-region contract (`Head`, `Torso`, `LeftArm`, `RightArm`, `LeftLeg`, `RightLeg`, in that order) remains authoritative for runtime combat and existing saves. The detailed human regions in `HUMAN_ANATOMY_AND_BREEDING_REFERENCE.md` are a future migration target only. Treat species-pair compatibility defaults (`viable`, `sterile`, `incompatible`, or `unknown`) as explicit data rules rather than an inference from shared rigs or visual similarity.
+- Reason: Human anatomy and future breeding need enough semantic detail for injuries, equipment, body conditions, and lineage without coupling gameplay to an imported rig. Keeping the current six-region schema stable avoids silently invalidating combat or save restoration while the reference work remains non-runtime.
+- Consequence: This PR does not change health behavior, save schema, breeding, pregnancy, genetics, or hybrid generation. Any future region expansion must include a versioned save migration, an old-save compatibility path, deterministic tests, and an explicit mapping from visual bones to simulation regions. Breeding work must define supported species pairs and safe rejection for unknown or unsupported pairs before mutating state.
+- Revisit: When a concrete health-region migration or first playable breeding issue is scoped with schema/versioning, mapping, and deterministic acceptance tests.
