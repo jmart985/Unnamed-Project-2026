@@ -74,7 +74,7 @@ public partial class Main
                 _clock.SetPaused(true);
                 _playerCharacter.SetPhysicsProcess(false);
             }
-            var time = WorldSnapshotSerializer.Load(_world, json, _speciesCatalog, _foodConsumption!, _wandering!, _woodHauling!, _wander!, _squad!);
+            var time = WorldSnapshotSerializer.Load(_world, json, _speciesCatalog, _foodConsumption!, _wandering!, _woodHauling!, _squad!);
             _clock.Restore(time);
             RebuildPresentationFromWorld();
             SelectEntity(ids[0]);
