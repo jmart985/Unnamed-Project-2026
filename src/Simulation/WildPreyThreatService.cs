@@ -231,7 +231,9 @@ public sealed class WildPreyThreatService : ITransientSimulationState
         {
             active.Navigator = _navigationForEntity(prey)
                 ?? throw new InvalidOperationException("The prey has no navigation adapter.");
+            active.ThreatEntityId = threat.Id;
             active.LastThreatPosition = threat.Position;
+            prey.TargetId = threat.Id;
             active.NavigationTarget = CreateFleeTarget(prey.Position, threat.Position);
             active.NavigationRequestId = active.Navigator.Request(new NavigationRequest(
                 active.NavigationTarget.Value,
@@ -320,7 +322,7 @@ public sealed class WildPreyThreatService : ITransientSimulationState
     private sealed class ActiveFlee(string actionId, string threatEntityId, Vector3 lastThreatPosition)
     {
         public string ActionId { get; } = actionId;
-        public string ThreatEntityId { get; } = threatEntityId;
+        public string ThreatEntityId { get; set; } = threatEntityId;
         public Vector3 LastThreatPosition { get; set; } = lastThreatPosition;
         public INavigationAdapter? Navigator { get; set; }
         public string? NavigationRequestId { get; set; }
