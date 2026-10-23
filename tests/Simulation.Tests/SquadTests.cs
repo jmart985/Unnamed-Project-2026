@@ -195,6 +195,31 @@ public sealed class SquadTests
     }
 
     [Fact]
+    public void FollowAssignsSeparatedTargetsAroundPlayer()
+    {
+        var world = Session();
+        var members = Members(world);
+        world.TrySetEntityPosition(world.PlayerEntityId, Vector3.Zero);
+        world.TrySetEntityPosition(members[0].Id, new(8, 0, 0));
+        world.TrySetEntityPosition(members[1].Id, new(9, 0, 0));
+        foreach (var member in members) world.AddSquadMember(member.Id);
+        var navigators = members.ToDictionary(member => member.Id, _ => new FakeNavigationAdapter());
+        var squad = new SquadOrderService(world, entity => navigators[entity.Id]);
+
+        Assert.Equal(SquadResult.Accepted, squad.Execute(SquadOrderKind.FollowPlayer).Code);
+        squad.Advance();
+
+        var targets = members.Select(member =>
+        {
+            var navigator = navigators[member.Id];
+            return navigator.RequestTargets[navigator.Requests.Keys.Single()];
+        }).ToArray();
+
+        Assert.InRange(Vector2.Distance(new(targets[0].X, targets[0].Z), new(targets[1].X, targets[1].Z)), 1.249f, 1.251f);
+        Assert.All(targets, target => Assert.InRange(new Vector2(target.X, target.Z).Length(), 2.099f, 2.101f));
+    }
+
+    [Fact]
     public void HungerPreemptsMovementAndRemovingMemberCancelsItsRequest()
     {
         var world = Session();
