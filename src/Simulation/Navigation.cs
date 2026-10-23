@@ -123,6 +123,9 @@ public sealed class FakeNavigationAdapter : INavigationAdapter
     public IReadOnlyDictionary<string, NavigationOutcome> Requests
         => _requests.ToDictionary(pair => pair.Key, pair => pair.Value.Outcome, StringComparer.Ordinal);
 
+    public IReadOnlyDictionary<string, Vector3> RequestTargets
+        => _requests.ToDictionary(pair => pair.Key, pair => pair.Value.Request.Target, StringComparer.Ordinal);
+
     public string Request(NavigationRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
