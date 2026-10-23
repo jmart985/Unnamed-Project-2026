@@ -149,4 +149,21 @@ public sealed class NearFarTransitionServiceTests
 
         Assert.Empty(restored.FarPopulations);
     }
+
+    [Fact]
+    public void Schema19SnapshotMigratesFarPopulationWithoutInventingNearMembership()
+    {
+        var catalog = SpeciesCatalog.LoadFromFile(Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
+        var source = new World();
+        new NearFarTransitionService(source, catalog).SetFarRecord(new("grove", "cow", 2, 40, []));
+        var snapshot = System.Text.Json.Nodes.JsonNode.Parse(WorldSnapshotSerializer.Serialize(source, 0))!.AsObject();
+        snapshot["SchemaVersion"] = 19;
+        snapshot.Remove("NearPopulations");
+
+        var restored = new World();
+        WorldSnapshotSerializer.Load(restored, snapshot.ToJsonString(), catalog);
+
+        Assert.Equal(2, restored.FarPopulations.Single().Count);
+        Assert.Empty(restored.NearPopulations);
+    }
 }

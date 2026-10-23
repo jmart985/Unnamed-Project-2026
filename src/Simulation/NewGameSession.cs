@@ -50,7 +50,9 @@ public sealed class NewGameSession
         SpeciesCatalog catalog,
         PlayerCharacterProfile playerProfile,
         int seed = DefaultSeed,
-        bool survivalGathering = false)
+        bool survivalGathering = false,
+        WildlifeRegionCatalog? wildlifeRegions = null,
+        bool startStarterWildlifeAsFar = false)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(playerProfile);
@@ -128,12 +130,24 @@ public sealed class NewGameSession
                 new Vector3(index - 4.5f, 0, 0)));
         }
 
-        foreach (var creature in StarterCreatureSpawns)
+        if (startStarterWildlifeAsFar)
         {
-            var entity = world.SpawnEntity(catalog.GetRequired(creature.SpeciesId), creature.Position, creature.Satiety);
-            if (world.SetWildTerritory(entity.Id, creature.Position, StarterCreatureTerritoryRadius)
-                != WildTerritoryResult.Accepted)
-                throw new InvalidOperationException($"Unable to assign starter territory to '{entity.Id}'.");
+            if (wildlifeRegions is null)
+                throw new ArgumentNullException(nameof(wildlifeRegions), "A validated wildlife catalog is required for far-start sessions.");
+            foreach (var region in wildlifeRegions.Regions)
+            foreach (var species in region.Species)
+                world.SetFarPopulation(new FarEntityRecord(region.Id, species.SpeciesId,
+                    species.SpawnPositions.Count, species.AverageSatiety, new Dictionary<string, int>()));
+        }
+        else
+        {
+            foreach (var creature in StarterCreatureSpawns)
+            {
+                var entity = world.SpawnEntity(catalog.GetRequired(creature.SpeciesId), creature.Position, creature.Satiety);
+                if (world.SetWildTerritory(entity.Id, creature.Position, StarterCreatureTerritoryRadius)
+                    != WildTerritoryResult.Accepted)
+                    throw new InvalidOperationException($"Unable to assign starter territory to '{entity.Id}'.");
+            }
         }
 
         var player = world.SpawnEntity(catalog.GetRequired("human"), GetPlayerSpawnPosition(seed));

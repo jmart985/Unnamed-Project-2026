@@ -34,6 +34,8 @@ public partial class Main : Node3D
 	private TreeRegrowthService? _treeRegrowth;
 	private CarcassDecayService? _carcassDecay;
 	private SpeciesCatalog _speciesCatalog = null!;
+	private WildlifeRegionCatalog _wildlifeRegionCatalog = null!;
+	private WildlifeProximityCoordinator? _wildlifeProximity;
 	private RelationshipEventCatalog _relationshipEventCatalog = null!;
 	private TradeGoodsCatalog _tradeGoodsCatalog = null!;
 	private InteractionResolver _interactionResolver = null!;
@@ -76,6 +78,7 @@ public partial class Main : Node3D
 	private PlayerCharacterProfile? _playerProfile;
 	private int _sessionSeed = NewGameSession.DefaultSeed;
 	private bool _survivalGathering;
+	private bool _starterWildlifeAsFar;
 	private bool _sessionActive;
 	private readonly PlayerMenuState _menuState = new();
 	private string _lastActionMessage = "No action requested.";
@@ -117,6 +120,8 @@ public partial class Main : Node3D
 		_saveSlotPath = ProjectSettings.GlobalizePath("user://ant-farm-save.json");
 		_speciesCatalog = SpeciesCatalog.LoadFromFile(
 			Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
+		_wildlifeRegionCatalog = WildlifeRegionCatalog.LoadFromFile(
+			Path.Combine(AppContext.BaseDirectory, "data", "wildlife_regions.json"), _speciesCatalog);
 		_relationshipEventCatalog = RelationshipEventCatalog.LoadFromFile(
 			Path.Combine(AppContext.BaseDirectory, "data", "relationship_events.json"));
 		_tradeGoodsCatalog = TradeGoodsCatalog.LoadFromFile(
@@ -149,7 +154,8 @@ public partial class Main : Node3D
 			StartSession(
 				PlayerCharacterProfile.Create("Test Player"),
 				NewGameSession.DefaultSeed,
-				"Test game started; character creation bypassed.");
+				"Test game started; character creation bypassed.",
+				startStarterWildlifeAsFar: true);
 		}
 		else
 		{
@@ -196,6 +202,8 @@ public partial class Main : Node3D
 			Callable.From(RunCarcassDecayValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-far-population-transitions"))
 			Callable.From(RunFarPopulationTransitionsValidation).CallDeferred();
+		else if (OS.GetCmdlineUserArgs().Contains("--validate-starter-wildlife-proximity"))
+			Callable.From(RunStarterWildlifeProximityValidation).CallDeferred();
 	}
 
 	public override void _Process(double delta)
@@ -346,7 +354,7 @@ public partial class Main : Node3D
 			return;
 		}
 
-		StartSession(profile, _sessionSeed, "Scenario reset; save slot unchanged.", _survivalGathering);
+		StartSession(profile, _sessionSeed, "Scenario reset; save slot unchanged.", _survivalGathering, _starterWildlifeAsFar);
 	}
 
 	private void ConfigureCreationChoices()
@@ -410,7 +418,8 @@ public partial class Main : Node3D
 				(PlayerSex)_sexChoice.Selected,
 				_weightChoice.Value,
 				_muscleChoice.Value);
-			StartSession(profile, NewGameSession.DefaultSeed, "New game started.", survivalGathering: true);
+			StartSession(profile, NewGameSession.DefaultSeed, "New game started.", survivalGathering: true,
+				startStarterWildlifeAsFar: true);
 			_creationError.Text = string.Empty;
 		}
 		catch (ArgumentException exception)
@@ -423,10 +432,12 @@ public partial class Main : Node3D
 		PlayerCharacterProfile profile,
 		int seed,
 		string saveLoadMessage,
-		bool survivalGathering = false)
+		bool survivalGathering = false,
+		bool startStarterWildlifeAsFar = false)
 	{
 		CancelGameplayActions();
-		var session = NewGameSession.Create(_speciesCatalog, profile, seed, survivalGathering);
+		var session = NewGameSession.Create(_speciesCatalog, profile, seed, survivalGathering,
+			_wildlifeRegionCatalog, startStarterWildlifeAsFar);
 		_sessionActive = false;
 		_playerCharacter.SetPhysicsProcess(false);
 		ResetTransientServices();
@@ -437,6 +448,7 @@ public partial class Main : Node3D
 		ClearFireplaceViews();
 		DetachSocialFeedback();
 		_world = session.World;
+		_wildlifeProximity = new WildlifeProximityCoordinator(_world, _speciesCatalog, _wildlifeRegionCatalog);
 		_treeRegrowth = new TreeRegrowthService(_world);
 		AttachSocialFeedback();
 		_interactionResolver = new InteractionResolver(
@@ -450,6 +462,7 @@ public partial class Main : Node3D
 		_playerProfile = profile;
 		_sessionSeed = seed;
 		_survivalGathering = survivalGathering;
+		_starterWildlifeAsFar = startStarterWildlifeAsFar;
 
 		_map.Mesh = new PlaneMesh { Size = new Vector2(WorldHalfExtent * 2, WorldHalfExtent * 2) };
 		_map.MaterialOverride = CreateMaterial(new Color(0.32f, 0.5f, 0.24f));
@@ -682,6 +695,8 @@ public partial class Main : Node3D
 	private void AdvanceSimulationTick(double tickSeconds)
 	{
 		_simulationTick = checked(_simulationTick + 1);
+		SyncPlayerState();
+		UpdateWildlifeProximity();
 		AdvanceNeeds(tickSeconds);
 		var depletedTreesBefore = _world.ResourcePiles
 			.Where(source => source.Id.StartsWith("tree-adult-", StringComparison.Ordinal)
@@ -706,6 +721,33 @@ public partial class Main : Node3D
 		_squad!.Advance();
 		AdvanceWoodHauling();
 		AdvanceWandering();
+	}
+
+	private void UpdateWildlifeProximity()
+	{
+		if (_world.PlayerEntityId is not { } playerId || !_world.TryGetEntity(playerId, out var player) || player is null)
+			return;
+		_wildlifeProximity?.Update(new System.Numerics.Vector3(player.Position.X, player.Position.Y, player.Position.Z));
+		SyncEntityViewMembership();
+	}
+
+	private void ActivateStarterWildlifeForValidation()
+	{
+		var region = _wildlifeRegionCatalog.Regions.Single();
+		var position = new Vector3(region.Center.X, region.Center.Y, region.Center.Z);
+		_playerCharacter.GlobalPosition = position;
+		_world.TrySetEntityPosition(_world.PlayerEntityId, new System.Numerics.Vector3(position.X, position.Y, position.Z));
+		if (!_world.FarPopulations.Any(record => record.RegionId == region.Id)) return;
+		_wildlifeProximity!.Update(new System.Numerics.Vector3(position.X, position.Y, position.Z));
+		SyncEntityViewMembership();
+	}
+
+	private void SyncEntityViewMembership()
+	{
+		foreach (var entityId in _entityViews.Keys.Where(id => !_world.TryGetEntity(id, out _)).ToArray())
+			RemoveEntityPresentation(entityId);
+		foreach (var entity in _world.Entities)
+			if (entity.Id != _world.PlayerEntityId && !_entityViews.ContainsKey(entity.Id)) AddEntityView(entity);
 	}
 
 	private void AdvanceNavigationTick(double tickSeconds)
@@ -1095,11 +1137,13 @@ public partial class Main : Node3D
 				json,
 				_speciesCatalog,
 				_foodConsumption!,
+				_creatureHunting!,
 				_wandering!,
 				_woodHauling!,
 				_squad!,
 				_wildPreyThreat!);
 			_clock.Restore(restoredTime);
+			_wildlifeProximity = new WildlifeProximityCoordinator(_world, _speciesCatalog, _wildlifeRegionCatalog);
 			_simulationTick = checked((long)Math.Round(
 				restoredTime / SimulationClock.TickIntervalSeconds,
 				MidpointRounding.AwayFromZero));

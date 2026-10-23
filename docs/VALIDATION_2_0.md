@@ -29,7 +29,7 @@ The cow's 18 m threat-detection range is provisional tuning. Detection is specie
 
 ## Far-population transitions and save/load
 
-Far population records belong to `World` and are keyed by region and species. A transition for one species must not remove, merge, or overwrite another species in the same region. Schema 19 saves persist count, average satiety, and resource quantities; older saves restore with no far-population records.
+Far and active population membership belong to `World` and are keyed by region and species. A transition for one species must not remove, merge, or overwrite another species in the same region. Schema 19 saves persist far count, average satiety, and resource quantities. Schema 20 also records which stable entity IDs represent each active population and preserves whether an entity has died; older saves restore with no active-region membership or invented wildlife.
 
 Run the Godot integration check after a Debug build:
 
@@ -39,6 +39,19 @@ dotnet build game\UnnamedProject2026.csproj --configuration Debug
 ```
 
 Require exit code 0 and `FAR POPULATION TRANSITIONS VALIDATION PASSED`. The scenario places cow and wolf aggregates in one region, promotes and demotes only cows, then verifies both species and their resources survive save/load without duplication. Population growth, mortality, respawning, and migration are not covered by this scenario.
+
+## Starter wildlife proximity
+
+`data/wildlife_regions.json` defines one provisional starter wilderness region, its 90 m activation radius, 110 m deactivation radius, and deterministic ape/wolf/cow anchors. A fresh player session stores the three starter populations as far records. Entering the inner radius activates each species once; leaving the outer radius removes active entities and returns only living survivors. The population data stays in World while proximity and navigation decisions remain transient. Schema 20 saves active entity membership; schema 19 saves load with no inferred membership.
+
+Run the integrated check after a Debug build:
+
+```powershell
+dotnet build game\UnnamedProject2026.csproj --configuration Debug
+& "C:\Users\James Home\Downloads\Godot_v4.7.2-stable_mono_win64\Godot_v4.7.2-stable_mono_win64\Godot_v4.7.2-stable_mono_win64_console.exe" --path game --headless -- --validate-starter-wildlife-proximity
+```
+
+Require exit code 0 and `STARTER WILDLIFE PROXIMITY VALIDATION PASSED`. It checks the far start, activation, duplicate prevention, save/load while active, the existing wolf hunt-and-feed loop, survivor demotion, and final count save/load. It also confirms the removed cow and dead wolf do not return to their regional counts. Re-run `--validate-wolf-hunting` and `--validate-far-population-transitions` as regressions. The radii are provisional and should be tuned from playtesting; this does not implement population growth, respawning, migration, pack behavior, or general world streaming.
 
 ## Carcass freshness
 

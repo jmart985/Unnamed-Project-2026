@@ -43,6 +43,7 @@ public sealed class World
     private readonly Dictionary<string, Vector3> _homePositions = new(StringComparer.Ordinal);
     private readonly Dictionary<string, WildTerritory> _wildTerritories = new(StringComparer.Ordinal);
     private readonly Dictionary<(string RegionId, string SpeciesId), FarEntityRecord> _farPopulations = [];
+    private readonly Dictionary<(string RegionId, string SpeciesId), NearPopulationRecord> _nearPopulations = [];
     private readonly Dictionary<string, double> _treeRegrowthTimers = new(StringComparer.Ordinal);
     public IReadOnlyDictionary<string, double> TreeRegrowthTimers => _treeRegrowthTimers;
     internal void SetTreeRegrowthTimer(string treeId, double elapsed) => _treeRegrowthTimers[treeId] = elapsed;
@@ -61,14 +62,54 @@ public sealed class World
         .OrderBy(record => record.RegionId, StringComparer.Ordinal)
         .ThenBy(record => record.SpeciesId, StringComparer.Ordinal)
         .ToArray());
+    public IReadOnlyCollection<NearPopulationRecord> NearPopulations => Array.AsReadOnly(_nearPopulations.Values
+        .OrderBy(record => record.RegionId, StringComparer.Ordinal)
+        .ThenBy(record => record.SpeciesId, StringComparer.Ordinal)
+        .ToArray());
 
     public void SetFarPopulation(FarEntityRecord record)
     {
         ArgumentNullException.ThrowIfNull(record);
         if (SpeciesCatalog is null || !SpeciesCatalog.TryGet(record.SpeciesId, out _))
             throw new ArgumentException($"Far population species '{record.SpeciesId}' is not defined in this world.", nameof(record));
+        if (_nearPopulations.ContainsKey((record.RegionId, record.SpeciesId)))
+            throw new InvalidOperationException("A population cannot be far and near at the same time.");
         _farPopulations[(record.RegionId, record.SpeciesId)] = record;
     }
+
+    public void SetNearPopulation(NearPopulationRecord record)
+    {
+        ArgumentNullException.ThrowIfNull(record);
+        if (SpeciesCatalog is null || !SpeciesCatalog.TryGet(record.SpeciesId, out _))
+            throw new ArgumentException($"Near population species '{record.SpeciesId}' is not defined in this world.", nameof(record));
+        var key = (record.RegionId, record.SpeciesId);
+        if (_farPopulations.ContainsKey(key))
+            throw new InvalidOperationException("Remove the far aggregate before activating its near entities.");
+        if (_nearPopulations.ContainsKey(key))
+            throw new InvalidOperationException("This regional species already has active membership.");
+        foreach (var id in record.EntityIds)
+        {
+            if (!TryGetEntity(id, out var entity) || entity is null || entity.SpeciesId != record.SpeciesId)
+                throw new ArgumentException($"Near population entity '{id}' must exist and match its species.", nameof(record));
+            if (_nearPopulations.Any(pair => pair.Key != key && pair.Value.EntityIds.Contains(id, StringComparer.Ordinal)))
+                throw new ArgumentException($"Near population entity '{id}' is already assigned to another population.", nameof(record));
+        }
+        _nearPopulations[key] = record;
+    }
+
+    public bool TryGetNearPopulation(string? regionId, string? speciesId, out NearPopulationRecord? record)
+    {
+        if (string.IsNullOrWhiteSpace(regionId) || string.IsNullOrWhiteSpace(speciesId))
+        {
+            record = null;
+            return false;
+        }
+        return _nearPopulations.TryGetValue((regionId, speciesId), out record);
+    }
+
+    public bool RemoveNearPopulation(string? regionId, string? speciesId) =>
+        !string.IsNullOrWhiteSpace(regionId) && !string.IsNullOrWhiteSpace(speciesId)
+        && _nearPopulations.Remove((regionId, speciesId));
 
     public bool TryGetFarPopulation(string? regionId, string? speciesId, out FarEntityRecord? record)
     {
@@ -800,6 +841,13 @@ public sealed class World
         _workSchedules.Remove(id);
         _homePositions.Remove(id);
         _wildTerritories.Remove(id);
+        foreach (var pair in _nearPopulations.ToArray())
+        {
+            if (!pair.Value.EntityIds.Contains(id, StringComparer.Ordinal)) continue;
+            var remaining = pair.Value.EntityIds.Where(entityId => entityId != id).ToArray();
+            _nearPopulations[pair.Key] = new NearPopulationRecord(pair.Key.RegionId, pair.Key.SpeciesId,
+                remaining, pair.Value.Resources);
+        }
         RemoveRelationshipsForEntity(id);
         RemoveFactionReputationsForEntity(id);
         entity.AllegianceFactionId = null;
@@ -862,6 +910,7 @@ public sealed class World
         _homePositions.Clear();
         _wildTerritories.Clear();
         _farPopulations.Clear();
+        _nearPopulations.Clear();
         _relationships.Clear();
         _factionIds.Clear();
         _factionReputations.Clear();
@@ -910,6 +959,8 @@ public sealed class World
             }
             if (entity.Id == snapshot.PlayerEntityId && snapshot.PlayerHealth is not null)
                 restored.Health.Restore(snapshot.PlayerHealth, snapshot.PlayerPendingDeathSeconds, snapshot.PlayerIsDead);
+            if (entity.IsDead && !restored.Health.IsDead)
+                restored.Health.RestoreDeadState();
         }
         foreach (var timer in snapshot.TreeRegrowthTimers ?? Array.Empty<TreeRegrowthSnapshot>())
             _treeRegrowthTimers[timer.TreeId] = timer.ElapsedSeconds;
@@ -1046,6 +1097,9 @@ public sealed class World
                 population.Count,
                 population.AverageSatiety,
                 population.Resources));
+        foreach (var population in snapshot.NearPopulations!)
+            SetNearPopulation(new NearPopulationRecord(population.RegionId, population.SpeciesId,
+                population.EntityIds, population.Resources));
     }
 
     internal static bool IsValidFactionId(string? factionId)

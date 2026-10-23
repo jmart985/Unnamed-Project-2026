@@ -30,7 +30,7 @@ When no independent Ready issue remains after the readiness/dependency audit, re
 
 ### Current project status (2026-10-23)
 
-Milestone 1.2's territory and wolf hunt/feeding issues (#461–#463) are merged and validated. The 2.0 Living Region tracker is #202. Its first playable implementation is #467, merged as PR #468: wild prey reacts to configured nearby predators while the existing wolf hunt still completes. Follow-up #469 fixes transient threat state on save load and active threat switching, merged as PR #470. Carcass freshness (#471) was merged in PR #472: decay uses simulation time and persists with schema 18. Far-population durability and per-species near/far transitions are tracked by #473; this increments snapshots to schema 19 and is the current implementation slice. Predator teamwork remains future scope; follow #202 for evidence-based expansion and do not mistake these first 2.0 behaviors for the full Living Region milestone.
+Milestone 1.2 territory and wolf hunting (#461–#463), prey response (#467/#469), carcass freshness (#471), and World-owned far-population aggregates (#473) are merged. PR #474 delivered #473 with snapshot schema 19. The next bounded Living Region slice is #475: validate one starter wildlife region, keep its distant populations abstract, activate and demote wildlife by player proximity, and persist active membership in schema 20 so survivors return to the right counts and dead/removed wildlife is not restored. Predator teamwork, migration, respawning, and broad world streaming remain future scope; use tracker #202 for later evidence-based expansion.
 
 ### Historical project status (2026-10-05)
 

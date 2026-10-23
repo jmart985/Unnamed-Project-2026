@@ -16,5 +16,6 @@
     <None Include="..\data\species.json" Link="data\species.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\data\relationship_events.json" Link="data\relationship_events.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\data\trade_goods.json" Link="data\trade_goods.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\data\wildlife_regions.json" Link="data\wildlife_regions.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
