@@ -12,6 +12,7 @@ GitHub issues and the active milestone are the source of truth for current work.
 - [Design principles](DESIGN_PRINCIPLES.md)
 - [Gameplay loop](GAMEPLAY_LOOP.md)
 - [Technical architecture](TECHNICAL_ARCHITECTURE.md)
+- [Implemented simulation ownership and data contracts](SIMULATION_CONTRACTS.md)
 - [Decisions log](DECISIONS.md)
 - [Milestone 0.1](MILESTONE_0_1.md)
 - [Issue index](BACKLOG.md)
