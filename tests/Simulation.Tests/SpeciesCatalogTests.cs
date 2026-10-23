@@ -90,6 +90,51 @@ public sealed class SpeciesCatalogTests
     }
 
     [Fact]
+    public void LoadsSemanticInteractionAnchorsForHumanoidsAndCreatures()
+    {
+        var catalog = SpeciesCatalog.LoadFromFile(GetSpeciesDataPath());
+
+        var human = catalog.GetRequired("human");
+        Assert.Contains(InteractionAnchorIds.Mouth, human.Anchors.InteractionAnchors);
+        Assert.Contains(InteractionAnchorIds.Vaginal, human.Anchors.BreedingAnchors);
+        Assert.Contains(InteractionAnchorIds.Penile, human.Anchors.BreedingAnchors);
+        Assert.Contains(InteractionAnchorIds.BreastLeft, human.Anchors.BreedingAnchors);
+        Assert.Contains(InteractionAnchorIds.HandRight, human.Anchors.EquipmentAnchors);
+        Assert.True(human.Anchors.SupportsBreeding(InteractionAnchorIds.Genital));
+
+        var cow = catalog.GetRequired("cow");
+        Assert.Contains(InteractionAnchorIds.Udder, cow.Anchors.InteractionAnchors);
+        Assert.Contains(InteractionAnchorIds.TeatLeft, cow.Anchors.BreedingAnchors);
+
+        var wolf = catalog.GetRequired("wolf");
+        Assert.Contains("anchor_scent_gland", wolf.Anchors.InteractionAnchors);
+        Assert.Empty(wolf.Anchors.EquipmentAnchors);
+    }
+
+    [Fact]
+    public void RejectsBreedingAnchorThatIsNotAnInteractionAnchor()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            Load("""
+                [{"id":"human","movementSpeed":3,"hungerRate":0.2,"diet":["food"],"canHaul":true,"interactionAnchors":["anchor_genital"],"breedingAnchors":["anchor_vaginal"],"temperament":{"boldness":0.5,"aggression":0.5,"fear":0.5,"curiosity":0.5,"sociability":0.5,"territoriality":0.5}}]
+                """));
+
+        Assert.Contains("must also be declared as an interaction anchor", exception.Message);
+    }
+
+    [Fact]
+    public void LegacySpeciesWithoutAnchorCollectionsRemainCompatible()
+    {
+        var species = Load("""
+            [{"id":"human","movementSpeed":3,"hungerRate":0.2,"diet":["food"],"canHaul":true,"temperament":{"boldness":0.5,"aggression":0.5,"fear":0.5,"curiosity":0.5,"sociability":0.5,"territoriality":0.5}}]
+            """).GetRequired("human");
+
+        Assert.Empty(species.Anchors.AnatomyRegions);
+        Assert.Empty(species.Anchors.InteractionAnchors);
+        Assert.Empty(species.Anchors.BreedingAnchors);
+    }
+
+    [Fact]
     public void UsesDocumentedDefaultsForOmittedOptionalCapabilityFields()
     {
         var species = Load("""

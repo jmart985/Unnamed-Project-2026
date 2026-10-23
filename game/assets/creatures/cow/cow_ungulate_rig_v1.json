@@ -31,12 +31,10 @@
     "teat_rear_r"
   ],
   "interaction_anchors": {
-    "milking": [
-      "teat_front_l",
-      "teat_front_r",
-      "teat_rear_l",
-      "teat_rear_r"
-    ]
+    "locomotion": ["anchor_root", "anchor_front_hoof_l", "anchor_front_hoof_r", "anchor_rear_hoof_l", "anchor_rear_hoof_r"],
+    "equipment": [],
+    "interaction": ["anchor_mouth", "anchor_anus", "anchor_genital", "anchor_udder", "anchor_teat_l", "anchor_teat_r"],
+    "breeding": ["anchor_genital", "anchor_udder", "anchor_teat_l", "anchor_teat_r"]
   },
   "animations": [
     "idle",

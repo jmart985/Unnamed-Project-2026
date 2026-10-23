@@ -491,3 +491,12 @@ User reported only an obstacle at the expected workbench. Replace that legacy ce
 - Reason: Entity crowds should have physical presence comparable to a mob in a survival or action game rather than behaving as ghosts.
 - Consequence: Crowd resistance and safety recovery are separate acceptance concerns. The player may be slowed or redirected by a mob, but never permanently trapped, teleported, or allowed to clip through solid geometry.
 - Revisit: When a playable crowd test demonstrates density, resistance, enclosure recovery, and normal movement regression behavior.
+
+
+## D042 - Semantic interaction anchors are the anatomy-to-animation boundary (2026-10-22)
+
+- Status: Accepted provisional implementation standard.
+- Decision: Species definitions expose anatomy regions, locomotion anchors, equipment/carry anchors, interaction anchors, and breeding anchors through stable lowercase semantic IDs. Interaction and breeding anchors are declared data; they do not imply gameplay state, capability, consent, fertility, or a specific animation. Imported bones, node paths, and mesh-specific labels remain behind a rig adapter.
+- Reason: Breeding, medical examination, feeding, nursing, waste handling, grooming, creature handling, and species-specific social interactions need reliable alignment points across humanoids, mammals, birds, egg-layers, and future species without coupling simulation or saves to one downloaded model.
+- Consequence: Animation and IK systems resolve semantic IDs, while each species validates its own capability, state, relationship, range, and animation requirements. Existing species records may load empty anchor collections for compatibility, but new production species must declare and validate applicable anchors. Asset metadata with older anchor shapes requires migration before production use.
+- Revisit: When the first breeding or medical interaction slice defines capability/state validation, anchor resolution in imported Godot scenes, and save/load migration evidence.
