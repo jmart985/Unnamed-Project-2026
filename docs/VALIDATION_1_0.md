@@ -82,13 +82,22 @@ disk save slot untouched.
 ## Latest audit run
 
 On 2026-10-23, the Release solution build and all **636 Simulation.Tests** passed.
-The Debug game build also passed with zero warnings/errors. A fresh Godot 4.7.2 Mono
-run of `--validate-first-game` currently exits 1 after reaching squad travel: one
-selected NPC remains `InProgress` while another reports `Cancelled` at the move to
-(4, 0, 3). The earlier successful run recorded above was from 2026-10-03 and no
-longer reproduces on current main. Issue [#450](https://github.com/jmart985/Unnamed-Project-2026/issues/450)
-tracks the navigation failure. Do not treat the historical success result as current
-evidence until the scenario passes again.
+The Debug game build passed with zero warnings/errors. After squad members began
+receiving deterministic nearby movement destinations and separated follow positions,
+three consecutive Godot 4.7.2 Mono headless runs of `--validate-first-game` each
+exited 0 and printed `FIRST GAME VALIDATION PASSED`. All three used the same built-in
+seed 42 and verified movement, eating, squad move/follow/stop, directed greeting,
+rejected commands, reset/load, 399 food, and 48 wood. Godot still prints renderer
+resource-leak warnings during headless shutdown after the success marker; these did
+not change the successful process exit code or scenario result.
+
+The historical navigation failure was reproduced before the fix: one selected NPC
+remained `InProgress` while another was reported `Cancelled` at (4, 0, 3). The squad
+service now assigns stable nearby endpoints to move orders and spaced positions around
+the player for follow orders, preserving the clicked move target and the existing
+follow distance bands. Focused unit tests verify the assigned destinations are
+separated and remain near the requested location. Issue
+[#450](https://github.com/jmart985/Unnamed-Project-2026/issues/450) tracks this repair.
 
 The focused `--validate-session-profiles` check passes. It activates the normal
 Start New Game button, verifies the tree/rock survival start, resets without losing
