@@ -33,7 +33,8 @@ public sealed record WorldSnapshot(
     Vector3 PlayerFacing = default,
     IReadOnlyList<FireplaceSnapshot>? Fireplaces = null,
     IReadOnlyList<WildTerritorySnapshot>? WildTerritories = null,
-    IReadOnlyList<FarPopulationSnapshot>? FarPopulations = null);
+    IReadOnlyList<FarPopulationSnapshot>? FarPopulations = null,
+    IReadOnlyList<NearPopulationSnapshot>? NearPopulations = null);
 
 public sealed record WildTerritorySnapshot(string EntityId, Vector3 Center, float Radius);
 public sealed record FarPopulationSnapshot(
@@ -41,6 +42,11 @@ public sealed record FarPopulationSnapshot(
     string SpeciesId,
     int Count,
     double AverageSatiety,
+    IReadOnlyDictionary<string, int> Resources);
+public sealed record NearPopulationSnapshot(
+    string RegionId,
+    string SpeciesId,
+    IReadOnlyList<string> EntityIds,
     IReadOnlyDictionary<string, int> Resources);
 
 public sealed record FireplaceSnapshot(string Id, Vector3 Position, int Fuel);
@@ -114,7 +120,8 @@ public sealed record EntitySnapshot(
     string? Parent2Id = null,
     SleepState SleepState = SleepState.Awake,
     string? BedId = null,
-    string? EquippedTool = null);
+    string? EquippedTool = null,
+    bool IsDead = false);
 
 public sealed record FoodSourceSnapshot(
     string Id,
@@ -154,7 +161,8 @@ public static class WorldSnapshotSerializer
     private const int HealthFacingSchemaVersion = 15;
     private const int FireplaceSchemaVersion = 16;
     private const int CarcassFreshnessSchemaVersion = 18;
-    public const int CurrentSchemaVersion = 19;
+    private const int FarPopulationSchemaVersion = 19;
+    public const int CurrentSchemaVersion = 20;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -185,7 +193,8 @@ public static class WorldSnapshotSerializer
                 entity.Parent2Id,
                 entity.SleepState,
                 entity.BedId,
-                entity.EquippedTool))
+                entity.EquippedTool,
+                entity.Health.IsDead))
             .ToArray();
         var foodSources = world.FoodSources
             .Select(source => new FoodSourceSnapshot(
@@ -273,6 +282,11 @@ public static class WorldSnapshotSerializer
                 record.SpeciesId,
                 record.Count,
                 record.AverageSatiety,
+                new Dictionary<string, int>(record.Resources, StringComparer.Ordinal))).ToArray(),
+            world.NearPopulations.Select(record => new NearPopulationSnapshot(
+                record.RegionId,
+                record.SpeciesId,
+                record.EntityIds.ToArray(),
                 new Dictionary<string, int>(record.Resources, StringComparer.Ordinal))).ToArray());
     }
 
@@ -299,9 +313,13 @@ public static class WorldSnapshotSerializer
             throw new InvalidDataException("Snapshot JSON is malformed.", exception);
         }
 
-        // Far populations were not represented by snapshots before schema 19.
+        // Near/far regional membership was not represented before schema 20.
         if (snapshot.SchemaVersion < CurrentSchemaVersion)
-            snapshot = snapshot with { FarPopulations = snapshot.FarPopulations ?? Array.Empty<FarPopulationSnapshot>() };
+            snapshot = snapshot with
+            {
+                FarPopulations = snapshot.FarPopulations ?? Array.Empty<FarPopulationSnapshot>(),
+                NearPopulations = snapshot.NearPopulations ?? Array.Empty<NearPopulationSnapshot>()
+            };
 
         if (snapshot.SchemaVersion is LegacySchemaVersion
             or PreviousSchemaVersion
@@ -372,6 +390,9 @@ public static class WorldSnapshotSerializer
             return snapshot with { SchemaVersion = CurrentSchemaVersion };
 
         if (snapshot.SchemaVersion == CarcassFreshnessSchemaVersion)
+            return snapshot with { SchemaVersion = CurrentSchemaVersion };
+
+        if (snapshot.SchemaVersion == FarPopulationSchemaVersion)
             return snapshot with { SchemaVersion = CurrentSchemaVersion };
 
         if (snapshot.SchemaVersion != CurrentSchemaVersion)
@@ -456,7 +477,7 @@ public static class WorldSnapshotSerializer
 
         if (snapshot.Entities is null || snapshot.FoodSources is null
             || snapshot.ResourcePiles is null || snapshot.Stockpiles is null
-            || snapshot.Relationships is null || snapshot.FarPopulations is null)
+            || snapshot.Relationships is null || snapshot.FarPopulations is null || snapshot.NearPopulations is null)
         {
             throw new InvalidDataException("Snapshot entity, resource, and relationship lists are required.");
         }
@@ -602,6 +623,35 @@ public static class WorldSnapshotSerializer
             catch (ArgumentException exception)
             {
                 throw new InvalidDataException($"Snapshot far population '{population.RegionId}/{population.SpeciesId}' is invalid.", exception);
+            }
+        }
+        var nearPopulationKeys = new HashSet<(string RegionId, string SpeciesId)>();
+        var nearEntityIds = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var population in snapshot.NearPopulations)
+        {
+            if (population is null || string.IsNullOrWhiteSpace(population.RegionId)
+                || string.IsNullOrWhiteSpace(population.SpeciesId)
+                || !nearPopulationKeys.Add((population.RegionId, population.SpeciesId))
+                || farPopulationKeys.Contains((population.RegionId, population.SpeciesId))
+                || population.EntityIds is null || population.Resources is null)
+                throw new InvalidDataException("Snapshot near populations must have distinct keys and cannot also be far populations.");
+            if (!speciesCatalog.TryGet(population.SpeciesId, out _))
+                throw new InvalidDataException($"Snapshot near population references unknown species '{population.SpeciesId}'.");
+            foreach (var entityId in population.EntityIds)
+            {
+                var entity = snapshot.Entities.FirstOrDefault(value => value.Id == entityId);
+                if (string.IsNullOrWhiteSpace(entityId) || !nearEntityIds.Add(entityId)
+                    || entity is null || entity.SpeciesId != population.SpeciesId)
+                    throw new InvalidDataException("Snapshot near population members must be distinct existing entities of the declared species.");
+            }
+            try
+            {
+                _ = new NearPopulationRecord(population.RegionId, population.SpeciesId,
+                    population.EntityIds, population.Resources);
+            }
+            catch (ArgumentException exception)
+            {
+                throw new InvalidDataException($"Snapshot near population '{population.RegionId}/{population.SpeciesId}' is invalid.", exception);
             }
         }
         if (snapshot.Workstations is null) throw new InvalidDataException("Snapshot workstations are required.");

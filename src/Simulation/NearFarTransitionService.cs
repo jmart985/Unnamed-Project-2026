@@ -7,8 +7,6 @@ public sealed class NearFarTransitionService
 {
     private readonly World _world;
     private readonly SpeciesCatalog _catalog;
-    private readonly Dictionary<(string RegionId, string SpeciesId), List<string>> _nearByRegionSpecies = [];
-    private readonly Dictionary<(string RegionId, string SpeciesId), IReadOnlyDictionary<string, int>> _activeResources = [];
 
     public NearFarTransitionService(World world, SpeciesCatalog catalog)
     {
@@ -37,58 +35,61 @@ public sealed class NearFarTransitionService
     {
         if (!_world.TryGetFarPopulation(regionId, speciesId, out var record) || record is null)
             return [];
-        if (record.Count == 0) return [];
-        if (_nearByRegionSpecies.ContainsKey((regionId, speciesId))) return [];
+        return record.Count == 0 ? [] : Promote(regionId, speciesId,
+            Enumerable.Repeat(position, record.Count).ToArray());
+    }
 
-        var species = _catalog.GetRequired(speciesId);
+    public IReadOnlyList<EntityRecord> Promote(string regionId, string speciesId, IReadOnlyList<Vector3> positions)
+    {
+        ArgumentNullException.ThrowIfNull(positions);
+        if (!_world.TryGetFarPopulation(regionId, speciesId, out var record) || record is null || record.Count == 0)
+            return [];
+        if (positions.Count != record.Count || positions.Any(position => !float.IsFinite(position.X)
+            || !float.IsFinite(position.Y) || !float.IsFinite(position.Z)))
+            throw new ArgumentException("A finite spawn position is required for every far entity.", nameof(positions));
+        if (_world.TryGetNearPopulation(regionId, speciesId, out _)) return [];
         var entities = new List<EntityRecord>(record.Count);
         try
         {
-            for (var index = 0; index < record.Count; index++)
-                entities.Add(_world.SpawnEntity(species, position, record.AverageSatiety));
+            var species = _catalog.GetRequired(speciesId);
+            for (var index = 0; index < positions.Count; index++)
+                entities.Add(_world.SpawnEntity(species, positions[index], record.AverageSatiety));
+            _world.RemoveFarPopulation(regionId, speciesId);
+            _world.SetNearPopulation(new NearPopulationRecord(regionId, speciesId,
+                entities.Select(entity => entity.Id), record.Resources));
+            return entities;
         }
         catch
         {
+            _world.RemoveNearPopulation(regionId, speciesId);
             foreach (var entity in entities) _world.TryRemoveEntity(entity.Id);
+            if (!_world.TryGetFarPopulation(regionId, speciesId, out _))
+                _world.SetFarPopulation(record);
             throw;
         }
-
-        _world.RemoveFarPopulation(regionId, speciesId);
-        _nearByRegionSpecies[(regionId, speciesId)] = entities.Select(entity => entity.Id).ToList();
-        _activeResources[(regionId, speciesId)] = record.Resources;
-        return entities;
     }
 
     /// <summary>Demotes a region when exactly one species is currently represented by this service.</summary>
     public bool Demote(string regionId)
     {
-        var active = _nearByRegionSpecies.Keys.Where(key => key.RegionId == regionId).ToArray();
+        var active = _world.NearPopulations.Where(record => record.RegionId == regionId).ToArray();
         return active.Length == 1 && Demote(regionId, active[0].SpeciesId);
     }
 
     public bool Demote(string regionId, string speciesId)
     {
-        var key = (regionId, speciesId);
-        if (!_nearByRegionSpecies.TryGetValue(key, out var entityIds)) return false;
+        if (!_world.TryGetNearPopulation(regionId, speciesId, out var near) || near is null) return false;
 
-        var entities = entityIds
+        var entities = near.EntityIds
             .Select(id => _world.TryGetEntity(id, out var entity) ? entity : null)
             .Where(entity => entity is not null)
             .Cast<EntityRecord>()
             .ToArray();
-        if (entities.Length > 0)
-        {
-            _world.SetFarPopulation(new FarEntityRecord(
-                regionId,
-                speciesId,
-                entities.Length,
-                entities.Average(entity => entity.Satiety),
-                _activeResources.GetValueOrDefault(key) ?? new Dictionary<string, int>(StringComparer.Ordinal)));
-        }
-
+        var survivors = entities.Where(entity => !entity.Health.IsDead).ToArray();
+        _world.RemoveNearPopulation(regionId, speciesId);
+        _world.SetFarPopulation(new FarEntityRecord(regionId, speciesId, survivors.Length,
+            survivors.Length > 0 ? survivors.Average(entity => entity.Satiety) : 0, near.Resources));
         foreach (var entity in entities) _world.TryRemoveEntity(entity.Id);
-        _nearByRegionSpecies.Remove(key);
-        _activeResources.Remove(key);
-        return entities.Length > 0;
+        return true;
     }
 }

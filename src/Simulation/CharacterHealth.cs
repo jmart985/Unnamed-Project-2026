@@ -157,6 +157,12 @@ public sealed class CharacterHealth
         if (_pendingDeathSeconds == 0) _isDead = true;
     }
 
+    internal void RestoreDeadState()
+    {
+        _isDead = true;
+        _pendingDeathSeconds = 0;
+    }
+
     public static CharacterHealth CreateHumanoid(double maximumHealth)
     {
         if (!double.IsFinite(maximumHealth) || maximumHealth <= 0) throw new ArgumentOutOfRangeException(nameof(maximumHealth));

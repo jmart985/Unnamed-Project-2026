@@ -17,6 +17,7 @@ public partial class Main
             _playerCharacter.SetPhysicsProcess(false);
             _clock.SetPaused(true);
             await PhysicsFrames(4);
+            ActivateStarterWildlifeForValidation();
 
             var wolf = _world.Entities.Single(entity => entity.SpeciesId == "wolf");
             var cow = _world.Entities.Single(entity => entity.SpeciesId == "cow");
