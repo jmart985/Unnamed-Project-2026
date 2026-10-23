@@ -124,31 +124,36 @@ public sealed class CreatureHuntingServiceTests
     }
 
     [Fact]
-    public void HungryDisplacedWolfReturnsToTerritoryThenResumesHunting()
+    public void HungryWolfPursuesNearbyPreyBeyondItsTerritory()
     {
         var world = new World();
         var wolf = world.SpawnEntity(Catalog.GetRequired("wolf"), new Vector3(10, 0, 0), satiety: 20);
-        var cow = world.SpawnEntity(Catalog.GetRequired("cow"), new Vector3(1, 0, 0));
+        var cow = world.SpawnEntity(Catalog.GetRequired("cow"), new Vector3(20, 0, 0));
         world.SetWildTerritory(wolf.Id, Vector3.Zero, radius: 8);
         var navigator = new FakeNavigationAdapter();
         var hunting = new CreatureHuntingService(world, Catalog, _ => navigator);
-        var wandering = new WanderingService(world, _ => navigator, [new Vector3(1, 0, 0)]);
 
-        Assert.Equal(CreatureHuntingStatus.Waiting, hunting.Advance(wolf, simulationTick: 1).Status);
-        var returning = wandering.Advance(wolf, Catalog.GetRequired("wolf"), simulationTick: 1);
-        Assert.Equal(WanderingStatus.ReturningToTerritory, returning.Status);
-        var returnRequest = Assert.Single(navigator.Requests).Key;
+        var result = hunting.Advance(wolf, simulationTick: 1);
 
-        Assert.Equal(CreatureHuntingStatus.Waiting, hunting.Advance(wolf, simulationTick: 2).Status);
-        Assert.Equal(WanderingStatus.ReturningToTerritory,
-            wandering.Advance(wolf, Catalog.GetRequired("wolf"), simulationTick: 2).Status);
-        Assert.Equal(NavigationOutcome.InProgress, navigator.Requests[returnRequest]);
-
-        Assert.True(navigator.CompleteAsArrived(returnRequest));
-        world.TrySetEntityPosition(wolf.Id, Vector3.Zero);
-        Assert.Equal(WanderingStatus.NeedsFood,
-            wandering.Advance(wolf, Catalog.GetRequired("wolf"), simulationTick: 3).Status);
-        Assert.Equal(CreatureHuntingStatus.Attacked, hunting.Advance(wolf, simulationTick: 3).Status);
+        Assert.Equal(CreatureHuntingStatus.Traveling, result.Status);
         Assert.Equal(cow.Id, wolf.TargetId);
+        Assert.Equal(cow.Position, navigator.RequestTargets.Values.Single());
+    }
+
+    [Fact]
+    public void DisplacedHungryWolfReturnsHomeWhenNoCompatiblePreyIsWithinSmellRange()
+    {
+        var world = new World();
+        var wolf = world.SpawnEntity(Catalog.GetRequired("wolf"), new Vector3(10, 0, 0), satiety: 20);
+        world.SetWildTerritory(wolf.Id, Vector3.Zero, radius: 8);
+        var navigator = new FakeNavigationAdapter();
+        var hunting = new CreatureHuntingService(world, Catalog, _ => navigator);
+        var wandering = new WanderingService(world, _ => navigator, [Vector3.One]);
+
+        Assert.Equal(CreatureHuntingStatus.NoPrey, hunting.Advance(wolf, simulationTick: 1).Status);
+        var result = wandering.Advance(wolf, Catalog.GetRequired("wolf"), simulationTick: 1);
+
+        Assert.Equal(WanderingStatus.ReturningToTerritory, result.Status);
+        Assert.Equal(Vector3.Zero, result.Target);
     }
 }

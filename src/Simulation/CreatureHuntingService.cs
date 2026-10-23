@@ -78,14 +78,6 @@ public sealed class CreatureHuntingService : ITransientSimulationState
             return new(CreatureHuntingStatus.NotHungry);
         }
 
-        if (_world.TryGetWildTerritory(hunter.Id, out var territory)
-            && territory is not null
-            && !territory.Contains(hunter.Position))
-        {
-            CancelHunt(hunter);
-            return new(CreatureHuntingStatus.Waiting, Reason: "Returning to the home territory takes priority.");
-        }
-
         if (_activeHunts.TryGetValue(hunter.Id, out var active))
         {
             if (hunter.Actions.Current?.Id != active.ActionId)
@@ -101,7 +93,7 @@ public sealed class CreatureHuntingService : ITransientSimulationState
         if (_retries.IsWaiting(hunter.Id, simulationTick))
             return new(CreatureHuntingStatus.Waiting, Reason: "Waiting before reconsidering nearby prey.");
 
-        var prey = SelectPrey(hunter, species, territory);
+        var prey = SelectPrey(hunter, species);
         if (prey is null)
         {
             _retries.ScheduleRetry(hunter.Id, simulationTick);
@@ -168,7 +160,7 @@ public sealed class CreatureHuntingService : ITransientSimulationState
             return FailHunt(hunter, active, simulationTick, "The prey is no longer available.", CreatureHuntingStatus.TargetInvalid);
         if (prey.Health.IsDead)
             return Harvest(hunter, active, prey, species, simulationTick);
-        if (!IsEligiblePrey(hunter, species, prey, GetTerritory(hunter))
+        if (!IsEligiblePrey(hunter, species, prey)
             || Distance(hunter.Position, prey.Position) > species.SmellRange)
         {
             return FailHunt(hunter, active, simulationTick, "The prey is no longer a valid nearby target.", CreatureHuntingStatus.TargetInvalid);
@@ -276,19 +268,18 @@ public sealed class CreatureHuntingService : ITransientSimulationState
         return new(status, active.PreyId, Reason: reason);
     }
 
-    private EntityRecord? SelectPrey(EntityRecord hunter, SpeciesDefinition species, WildTerritory? territory)
+    private EntityRecord? SelectPrey(EntityRecord hunter, SpeciesDefinition species)
     {
         var nearby = _perception.FindNearbyEntities(hunter.Id);
         if (nearby.Status != PerceptionQueryStatus.Success)
             return null;
-        return nearby.Results.FirstOrDefault(candidate => IsEligiblePrey(hunter, species, candidate, territory));
+        return nearby.Results.FirstOrDefault(candidate => IsEligiblePrey(hunter, species, candidate));
     }
 
     private static bool IsEligiblePrey(
         EntityRecord hunter,
         SpeciesDefinition hunterSpecies,
-        EntityRecord candidate,
-        WildTerritory? territory)
+        EntityRecord candidate)
     {
         if (ReferenceEquals(hunter, candidate)
             || candidate.Health.IsDead
@@ -300,11 +291,8 @@ public sealed class CreatureHuntingService : ITransientSimulationState
             && string.Equals(factionId, candidate.AllegianceFactionId, StringComparison.Ordinal))
             return false;
 
-        return territory is null || territory.Contains(candidate.Position);
+        return true;
     }
-
-    private WildTerritory? GetTerritory(EntityRecord hunter) =>
-        _world.TryGetWildTerritory(hunter.Id, out var territory) ? territory : null;
 
     private bool RequestNavigation(EntityRecord hunter, ActiveHunt active, Vector3? target = null)
     {

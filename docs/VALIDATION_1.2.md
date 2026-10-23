@@ -2,11 +2,11 @@
 
 ## Playable target
 
-Each starter wild creature owns a durable 35 m territory centered on its spawn. Ordinary roaming targets stay inside that territory. If a wild creature is moved outside it, the existing decision policy requests a return trip through Godot navigation. A hungry creature outside its territory completes the return before seeking food; hunger interrupts ordinary roaming once it is back inside. Captured or domesticated creatures are not forced home.
+Each starter wild creature owns a durable 35 m territory centered on its spawn. Ordinary roaming targets stay inside that territory. Hunger-driven hunting may pursue compatible prey beyond the territory when it remains within the predator's configured smell range. If no prey is available, a hungry displaced creature returns home through Godot navigation and resumes its food search there. Captured or domesticated creatures are not forced home.
 
 ## Automated checks
 
-Run the pinned Release build and simulation tests in the root README. Focused `WanderingServiceTests` cover deterministic in-territory goals, displacement and return, return-before-feeding while hungry, captured-creature behavior, and route-failure retry delay/action cleanup. `CreatureHuntingServiceTests` also verify a displaced hungry wolf can return home and then resume hunting configured prey.
+Run the pinned Release build and simulation tests in the root README. Focused `WanderingServiceTests` cover deterministic in-territory goals, displacement and return, hungry return fallback, captured-creature behavior, and route-failure retry delay/action cleanup. `CreatureHuntingServiceTests` verify that a hungry displaced wolf pursues nearby compatible prey outside its territory, and returns home when no prey is within smell range.
 
 Run the actual Godot navigation scenario:
 
