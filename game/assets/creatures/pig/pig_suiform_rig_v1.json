@@ -31,13 +31,12 @@
     "hurt",
     "turn"
   ],
-  "interaction_anchors": [
-    "head",
-    "jaw",
-    "front_hoof_l",
-    "front_hoof_r",
-    "tail_04"
-  ],
+  "interaction_anchors": {
+    "locomotion": ["anchor_root", "anchor_front_hoof_l", "anchor_front_hoof_r", "anchor_rear_hoof_l", "anchor_rear_hoof_r"],
+    "equipment": [],
+    "interaction": ["anchor_mouth", "anchor_anus", "anchor_genital"],
+    "breeding": ["anchor_genital"]
+  },
   "runtime_path": "game/assets/creatures/pig/pig_suiform_rig_v1.glb",
   "fallback": "EntityView procedural suiform body if the GLB is unavailable",
   "notes": "Compact, heavy pig silhouette with broad snout, triangular ears, cloven hooves, and a raised curled tail."

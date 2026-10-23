@@ -10,6 +10,8 @@ Unnamed Project 2026 needs many creatures with different bodies, feet, shoulders
 
 The project therefore shares **simulation semantics**, not one universal visual rig.
 
+Interaction sockets follow the separate [Interaction Anchor Standard](INTERACTION_ANCHOR_STANDARD.md). Rig families resolve those semantic IDs to bones, attachment nodes, or procedural transforms; gameplay must not depend on source bone names.
+
 ```text
 Species definition
         ↓

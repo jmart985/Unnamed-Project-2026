@@ -29,7 +29,8 @@ public sealed class SpeciesDefinition
         bool canAcceptFriendlyInteraction = false,
         bool isDomestic = false,
         bool isPredator = false,
-        double baseTrust = 0)
+        double baseTrust = 0,
+        InteractionAnchorDefinition? anchors = null)
     {
         Id = id;
         DisplayName = displayName;
@@ -52,6 +53,7 @@ public sealed class SpeciesDefinition
         IsPredator = isPredator;
         BaseTrust = baseTrust;
         Temperament = temperament;
+        Anchors = anchors ?? InteractionAnchorDefinition.Empty;
         _dietItems = new HashSet<string>(Diet, StringComparer.Ordinal);
     }
 
@@ -76,6 +78,7 @@ public sealed class SpeciesDefinition
     public bool IsPredator { get; }
     public double BaseTrust { get; }
     public TemperamentProfile Temperament { get; }
+    public InteractionAnchorDefinition Anchors { get; }
 
     public CharacterStats CreateCharacterStats(CharacterStats defaults)
     {
