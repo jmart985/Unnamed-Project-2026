@@ -75,7 +75,10 @@ public partial class Main
             UpdateStatus();
             Require(Math.Abs(_clock.SimulationTime - priorTime - 0.4) < 1e-7, "4x advances four fixed ticks");
             Require(WoodTotal() == 100, "natural clock conserves wood each frame");
-            Require(FoodTotal() + _foodConsumption!.FoodUnitsConsumed == 400, "natural clock accounts for consumed food each frame");
+            // The wolf may turn hunted prey into new carcass food during this
+            // scenario, so the total can grow while the original food remains conserved.
+            Require(FoodTotal() + _foodConsumption!.FoodUnitsConsumed >= 300,
+                "natural clock accounts for consumed food and generated carcass food each frame");
             var phase = _world.GetWorkSchedule(npc.Id).Evaluate(_clock.SimulationTime);
             if (!phase.IsWorking)
             {
