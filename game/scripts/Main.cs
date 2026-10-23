@@ -32,6 +32,7 @@ public partial class Main : Node3D
 	private SpinBox _squadZ = null!;
 	private long _simulationTick;
 	private TreeRegrowthService? _treeRegrowth;
+	private CarcassDecayService? _carcassDecay;
 	private SpeciesCatalog _speciesCatalog = null!;
 	private RelationshipEventCatalog _relationshipEventCatalog = null!;
 	private TradeGoodsCatalog _tradeGoodsCatalog = null!;
@@ -191,6 +192,8 @@ public partial class Main : Node3D
 			Callable.From(RunWildPreyThreatValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-wolf-hunting"))
 			Callable.From(RunWolfHuntingValidation).CallDeferred();
+		else if (OS.GetCmdlineUserArgs().Contains("--validate-carcass-decay"))
+			Callable.From(RunCarcassDecayValidation).CallDeferred();
 	}
 
 	public override void _Process(double delta)
@@ -453,6 +456,7 @@ public partial class Main : Node3D
 		_navigationRegion.NavigationMesh = CreateNavigationMesh();
 
 		_foodConsumption = new FoodConsumptionService(_world, _speciesCatalog, GetNavigationAdapter);
+		_carcassDecay = new CarcassDecayService(_world);
 		_creatureHunting = new CreatureHuntingService(_world, _speciesCatalog, GetNavigationAdapter);
 		_wildPreyThreat = new WildPreyThreatService(_world, _speciesCatalog, GetNavigationAdapter);
 		_wandering = new WanderingService(
@@ -694,6 +698,8 @@ public partial class Main : Node3D
 		foreach (var entity in _world.Entities)
 			_woodHauling!.ReconcileSchedule(entity, _clock.SimulationTime);
 		AdvanceNavigationTick(tickSeconds);
+		foreach (var expiredId in _carcassDecay!.Advance(tickSeconds))
+			RemoveResourceMarker(new(TargetKind.Food, expiredId));
 		AdvanceFoodConsumption();
 		_squad!.Advance();
 		AdvanceWoodHauling();
@@ -837,6 +843,12 @@ public partial class Main : Node3D
 		}
 
 		_resourceMarkers.Clear();
+	}
+
+	private void RemoveResourceMarker(WorldTarget target)
+	{
+		if (!_resourceMarkers.Remove(target, out var marker)) return;
+		marker.QueueFree();
 	}
 
 	private void ClearFireplaceViews()

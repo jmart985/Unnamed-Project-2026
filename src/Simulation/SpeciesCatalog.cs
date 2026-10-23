@@ -109,6 +109,9 @@ public sealed class SpeciesCatalog
             var carcassMeatUnits = entry.CarcassMeatUnits ?? 1;
             if (carcassMeatUnits <= 0 || carcassMeatUnits > 1000)
                 throw new InvalidDataException($"Species '{id}' carcassMeatUnits must be within [1, 1000].");
+            var carcassFreshnessSeconds = entry.CarcassFreshnessSeconds ?? 300;
+            if (!double.IsFinite(carcassFreshnessSeconds) || carcassFreshnessSeconds <= 0)
+                throw new InvalidDataException($"Species '{id}' carcassFreshnessSeconds must be finite and greater than zero.");
             definitions.Add(new SpeciesDefinition(
                 id,
                 displayName,
@@ -134,7 +137,8 @@ public sealed class SpeciesCatalog
                 anchors,
                 preySpeciesIds,
                 carcassMeatUnits,
-                threatDetectionRange));
+                threatDetectionRange,
+                carcassFreshnessSeconds));
         }
 
         var knownSpeciesIds = ids;
@@ -365,6 +369,7 @@ public sealed class SpeciesCatalog
         public double? BaseTrust { get; init; }
         public string[]? PreySpeciesIds { get; init; }
         public int? CarcassMeatUnits { get; init; }
+        public double? CarcassFreshnessSeconds { get; init; }
         public string[]? AnatomyRegions { get; init; }
         public string[]? LocomotionAnchors { get; init; }
         public string[]? EquipmentAnchors { get; init; }

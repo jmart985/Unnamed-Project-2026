@@ -24,7 +24,7 @@ public enum FoodSelectionStatus
 
 public sealed class FoodSource
 {
-    public FoodSource(string id, Vector3 position, ResourceContainer contents)
+    public FoodSource(string id, Vector3 position, ResourceContainer contents, double? freshnessSecondsRemaining = null)
     {
         if (string.IsNullOrWhiteSpace(id))
         {
@@ -37,14 +37,39 @@ public sealed class FoodSource
         }
 
         ArgumentNullException.ThrowIfNull(contents);
+        if (freshnessSecondsRemaining is { } freshness
+            && (!double.IsFinite(freshness) || freshness <= 0))
+        {
+            throw new ArgumentOutOfRangeException(nameof(freshnessSecondsRemaining), "Freshness must be finite and greater than zero.");
+        }
+
         Id = id;
         Position = position;
         Contents = contents;
+        FreshnessSecondsRemaining = freshnessSecondsRemaining;
     }
 
     public string Id { get; }
     public Vector3 Position { get; }
     public ResourceContainer Contents { get; }
+    /// <summary>Remaining simulation seconds before this perishable source expires; null means it does not expire.</summary>
+    public double? FreshnessSecondsRemaining { get; private set; }
+
+    internal bool AdvanceFreshness(double simulationSeconds)
+    {
+        if (!double.IsFinite(simulationSeconds) || simulationSeconds < 0)
+            throw new ArgumentOutOfRangeException(nameof(simulationSeconds), "Elapsed simulation time must be finite and nonnegative.");
+        if (FreshnessSecondsRemaining is not { } remaining) return false;
+        FreshnessSecondsRemaining = Math.Max(0, remaining - simulationSeconds);
+        return FreshnessSecondsRemaining <= 0;
+    }
+
+    internal void RestoreFreshness(double? remaining)
+    {
+        if (remaining is { } freshness && (!double.IsFinite(freshness) || freshness <= 0))
+            throw new ArgumentOutOfRangeException(nameof(remaining));
+        FreshnessSecondsRemaining = remaining;
+    }
 }
 
 public sealed record FoodSelectionResult(

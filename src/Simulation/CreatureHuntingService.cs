@@ -244,7 +244,8 @@ public sealed class CreatureHuntingService : ITransientSimulationState
         if (!_catalog.TryGet(prey.SpeciesId, out var preySpecies) || preySpecies is null)
             return FailHunt(hunter, active, simulationTick, "The prey species definition is missing.", CreatureHuntingStatus.TargetInvalid);
 
-        var harvest = CreatureHarvestService.Harvest(_world, prey, preySpecies.CarcassMeatUnits);
+        var harvest = CreatureHarvestService.Harvest(
+            _world, prey, preySpecies.CarcassMeatUnits, preySpecies.CarcassFreshnessSeconds);
         if (harvest.Status != CreatureHarvestStatus.Harvested || harvest.Carcass is null)
             return FailHunt(hunter, active, simulationTick, $"Carcass creation failed: {harvest.Status}.", CreatureHuntingStatus.TargetInvalid);
 

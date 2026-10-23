@@ -229,9 +229,12 @@ public sealed class World
         PlayerFacing = Vector3.Normalize(new Vector3(facing.X, 0, facing.Z));
     }
 
-    public FoodSource AddFoodSource(string id, Vector3 position, ResourceContainer contents)
+    public FoodSource AddFoodSource(string id, Vector3 position, ResourceContainer contents) =>
+        AddFoodSource(id, position, contents, null);
+
+    public FoodSource AddFoodSource(string id, Vector3 position, ResourceContainer contents, double? freshnessSecondsRemaining)
     {
-        var source = new FoodSource(id, position, contents);
+        var source = new FoodSource(id, position, contents, freshnessSecondsRemaining);
         AddTargetId(source.Id, nameof(id));
 
         _foodSources.Add(source);
@@ -919,7 +922,8 @@ public sealed class World
                 contents.AddKnown(item.Key, item.Value);
             }
 
-            AddFoodSource(source.Id, source.Position, contents);
+            var restored = AddFoodSource(source.Id, source.Position, contents);
+            restored.RestoreFreshness(source.FreshnessSecondsRemaining);
         }
 
         foreach (var pile in snapshot.ResourcePiles)
