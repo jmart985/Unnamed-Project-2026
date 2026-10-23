@@ -13,6 +13,7 @@ The active milestone changes as the roadmap advances. Do not assume Milestone 0.
 
 ## Implement and validate
 
+- Apply [`IMPLEMENTATION_GUIDELINES.md`](IMPLEMENTATION_GUIDELINES.md) when an issue needs clearer acceptance criteria, system ownership, persistence rules, validation, or scale constraints.
 - Inspect existing code and relevant design docs before changing files.
 - Prefer the smallest data-driven Godot 4 + C# implementation that satisfies the issue.
 - Add or update focused tests where practical.

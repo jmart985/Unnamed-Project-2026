@@ -1,5 +1,7 @@
 # Contributing and AI-assisted work
 
+Use [Implementation Guidelines](docs/IMPLEMENTATION_GUIDELINES.md) to make issues testable and keep system boundaries, persistence, validation, and AI handoffs consistent.
+
 1. Choose one ready issue and read its acceptance criteria, dependencies, and linked design docs.
 2. Inspect the current implementation. Propose the smallest change that satisfies the issue; split the issue if it cannot be reviewed as one focused change.
 3. Implement on a branch. Preserve documented ownership and interfaces. Record consequential design changes in docs/DECISIONS.md.

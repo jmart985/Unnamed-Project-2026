@@ -30,6 +30,7 @@ A systemic open-world colony RPG in which people and creatures share consistent 
 - [Human anatomy and breeding reference](docs/HUMAN_ANATOMY_AND_BREEDING_REFERENCE.md)
 - [Creature rig families and species generation](docs/CREATURE_RIG_FAMILIES.md)
 - [Interaction anchor standard](docs/INTERACTION_ANCHOR_STANDARD.md)
+- [Implementation guidelines for AI-assisted work](docs/IMPLEMENTATION_GUIDELINES.md)
 - [Decisions log](docs/DECISIONS.md)
 - [Milestone scope and acceptance](docs/MILESTONE_0_1.md)
 - [Combat prototype scope and acceptance](docs/MILESTONE_0_5.md)
