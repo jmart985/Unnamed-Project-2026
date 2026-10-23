@@ -31,7 +31,10 @@ public sealed record WorldSnapshot(
     double PlayerPendingDeathSeconds = 0,
     bool PlayerIsDead = false,
     Vector3 PlayerFacing = default,
-    IReadOnlyList<FireplaceSnapshot>? Fireplaces = null);
+    IReadOnlyList<FireplaceSnapshot>? Fireplaces = null,
+    IReadOnlyList<WildTerritorySnapshot>? WildTerritories = null);
+
+public sealed record WildTerritorySnapshot(string EntityId, Vector3 Center, float Radius);
 
 public sealed record FireplaceSnapshot(string Id, Vector3 Position, int Fuel);
 
@@ -141,7 +144,8 @@ public static class WorldSnapshotSerializer
     private const int ConstructionSchemaVersion = 13;
     private const int BedSchemaVersion = 14;
     private const int HealthFacingSchemaVersion = 15;
-    public const int CurrentSchemaVersion = 16;
+    private const int FireplaceSchemaVersion = 16;
+    public const int CurrentSchemaVersion = 17;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -252,7 +256,8 @@ public static class WorldSnapshotSerializer
                 && deadPlayer.Health.IsDead,
             world.PlayerFacing,
             world.Fireplaces.OrderBy(item => item.Id, StringComparer.Ordinal)
-                .Select(item => new FireplaceSnapshot(item.Id, item.Position, item.Fuel)).ToArray());
+                .Select(item => new FireplaceSnapshot(item.Id, item.Position, item.Fuel)).ToArray(),
+            world.WildTerritories.Select(item => new WildTerritorySnapshot(item.EntityId, item.Center, item.Radius)).ToArray());
     }
 
     public static string Serialize(World world, double simulationTime)
@@ -293,6 +298,7 @@ public static class WorldSnapshotSerializer
                 Farms = LegacyFarms(snapshot),
                 Structures = Array.Empty<StructureSnapshot>(),
                 ConstructionSites = Array.Empty<ConstructionSiteSnapshot>(),
+                WildTerritories = Array.Empty<WildTerritorySnapshot>(),
                 FactionIds = snapshot.FactionIds ?? Array.Empty<string>(),
                 FactionReputations = snapshot.SchemaVersion == FactionRelationsSchemaVersion
                     ? snapshot.FactionReputations
@@ -306,37 +312,41 @@ public static class WorldSnapshotSerializer
         }
 
         if (snapshot.SchemaVersion == OwnershipSchemaVersion)
-            return snapshot with { SchemaVersion = CurrentSchemaVersion, SquadMemberIds = Array.Empty<string>(), WorkSchedules = Array.Empty<NpcScheduleSetting>(), HomePositions = Array.Empty<NpcHomeSetting>(), Workstations = LegacyWorkstations(snapshot), Farms = LegacyFarms(snapshot), Structures = Array.Empty<StructureSnapshot>(), ConstructionSites = Array.Empty<ConstructionSiteSnapshot>() };
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, SquadMemberIds = Array.Empty<string>(), WorkSchedules = Array.Empty<NpcScheduleSetting>(), HomePositions = Array.Empty<NpcHomeSetting>(), Workstations = LegacyWorkstations(snapshot), Farms = LegacyFarms(snapshot), Structures = Array.Empty<StructureSnapshot>(), ConstructionSites = Array.Empty<ConstructionSiteSnapshot>(), WildTerritories = Array.Empty<WildTerritorySnapshot>() };
 
         if (snapshot.SchemaVersion == SquadSchemaVersion)
-            return snapshot with { SchemaVersion = CurrentSchemaVersion, WorkSchedules = Array.Empty<NpcScheduleSetting>(), HomePositions = Array.Empty<NpcHomeSetting>(), Workstations = LegacyWorkstations(snapshot), Farms = LegacyFarms(snapshot), Structures = Array.Empty<StructureSnapshot>(), ConstructionSites = Array.Empty<ConstructionSiteSnapshot>() };
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, WorkSchedules = Array.Empty<NpcScheduleSetting>(), HomePositions = Array.Empty<NpcHomeSetting>(), Workstations = LegacyWorkstations(snapshot), Farms = LegacyFarms(snapshot), Structures = Array.Empty<StructureSnapshot>(), ConstructionSites = Array.Empty<ConstructionSiteSnapshot>(), WildTerritories = Array.Empty<WildTerritorySnapshot>() };
 
         if (snapshot.SchemaVersion == ScheduleSchemaVersion)
-            return snapshot with { SchemaVersion = CurrentSchemaVersion, HomePositions = Array.Empty<NpcHomeSetting>(), Workstations = LegacyWorkstations(snapshot), Farms = LegacyFarms(snapshot), Structures = Array.Empty<StructureSnapshot>(), ConstructionSites = Array.Empty<ConstructionSiteSnapshot>() };
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, HomePositions = Array.Empty<NpcHomeSetting>(), Workstations = LegacyWorkstations(snapshot), Farms = LegacyFarms(snapshot), Structures = Array.Empty<StructureSnapshot>(), ConstructionSites = Array.Empty<ConstructionSiteSnapshot>(), WildTerritories = Array.Empty<WildTerritorySnapshot>() };
 
         if (snapshot.SchemaVersion == WorkstationSchemaVersion)
-            return snapshot with { SchemaVersion = CurrentSchemaVersion, HomePositions = Array.Empty<NpcHomeSetting>(), Farms = LegacyFarms(snapshot), Structures = Array.Empty<StructureSnapshot>(), ConstructionSites = Array.Empty<ConstructionSiteSnapshot>() };
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, HomePositions = Array.Empty<NpcHomeSetting>(), Farms = LegacyFarms(snapshot), Structures = Array.Empty<StructureSnapshot>(), ConstructionSites = Array.Empty<ConstructionSiteSnapshot>(), WildTerritories = Array.Empty<WildTerritorySnapshot>() };
 
         if (snapshot.SchemaVersion == FarmSchemaVersion)
-            return snapshot with { SchemaVersion = CurrentSchemaVersion, HomePositions = Array.Empty<NpcHomeSetting>(), Structures = Array.Empty<StructureSnapshot>(), ConstructionSites = Array.Empty<ConstructionSiteSnapshot>() };
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, HomePositions = Array.Empty<NpcHomeSetting>(), Structures = Array.Empty<StructureSnapshot>(), ConstructionSites = Array.Empty<ConstructionSiteSnapshot>(), WildTerritories = Array.Empty<WildTerritorySnapshot>() };
 
         if (snapshot.SchemaVersion == ConstructionSchemaVersion)
-            return snapshot with { SchemaVersion = CurrentSchemaVersion, HomePositions = Array.Empty<NpcHomeSetting>(), Structures = snapshot.Structures?.Select(structure => structure with
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, HomePositions = Array.Empty<NpcHomeSetting>(), WildTerritories = Array.Empty<WildTerritorySnapshot>(), Structures = snapshot.Structures?.Select(structure => structure with
             {
                 Beds = structure.Beds is { Count: > 0 } ? structure.Beds : structure.Type == StructureType.Hut
                     ? new[] { new BedSnapshot($"{structure.Id}-bed-1", 1.0, null) } : Array.Empty<BedSnapshot>()
             }).ToArray() ?? Array.Empty<StructureSnapshot>() };
 
         if (snapshot.SchemaVersion == BedSchemaVersion)
-            return snapshot with { SchemaVersion = CurrentSchemaVersion, HomePositions = Array.Empty<NpcHomeSetting>() };
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, HomePositions = Array.Empty<NpcHomeSetting>(), WildTerritories = Array.Empty<WildTerritorySnapshot>() };
 
         if (snapshot.SchemaVersion == HealthFacingSchemaVersion)
             return snapshot with
             {
                 SchemaVersion = CurrentSchemaVersion,
                 PlayerHealth = snapshot.PlayerHealth ?? DefaultPlayerHealth(),
-                PlayerFacing = snapshot.PlayerFacing == Vector3.Zero ? Vector3.UnitZ : snapshot.PlayerFacing
+                PlayerFacing = snapshot.PlayerFacing == Vector3.Zero ? Vector3.UnitZ : snapshot.PlayerFacing,
+                WildTerritories = Array.Empty<WildTerritorySnapshot>()
             };
+
+        if (snapshot.SchemaVersion == FireplaceSchemaVersion)
+            return snapshot with { SchemaVersion = CurrentSchemaVersion, WildTerritories = Array.Empty<WildTerritorySnapshot>() };
 
         if (snapshot.SchemaVersion != CurrentSchemaVersion)
         {
@@ -535,6 +545,17 @@ public static class WorldSnapshotSerializer
                 || !snapshot.Entities.Any(entity => entity.Id == home.EntityId && entity.SpeciesId == "human"))
                 throw new InvalidDataException("Snapshot home positions must reference distinct human NPCs.");
             ValidatePosition(home.Position, $"home '{home.EntityId}' position");
+        }
+        if (snapshot.WildTerritories is null) throw new InvalidDataException("Snapshot wild territories are required.");
+        var territoryEntityIds = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var territory in snapshot.WildTerritories)
+        {
+            if (territory is null || string.IsNullOrWhiteSpace(territory.EntityId)
+                || !entityIds.Contains(territory.EntityId) || !territoryEntityIds.Add(territory.EntityId))
+                throw new InvalidDataException("Snapshot wild territories must reference distinct existing entities.");
+            ValidatePosition(territory.Center, $"wild territory '{territory.EntityId}' center");
+            if (!float.IsFinite(territory.Radius) || territory.Radius <= 0)
+                throw new InvalidDataException($"Snapshot wild territory '{territory.EntityId}' radius must be finite and positive.");
         }
         if (snapshot.Workstations is null) throw new InvalidDataException("Snapshot workstations are required.");
         if (snapshot.Farms is null) throw new InvalidDataException("Snapshot farms are required.");

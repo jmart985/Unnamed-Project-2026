@@ -34,14 +34,14 @@ There are three distinct mechanisms; do not treat them as one event bus:
 
 ## Save/load contract
 
-[`WorldSnapshot.cs`](../src/Simulation/WorldSnapshot.cs) defines the JSON snapshot DTOs and serializer. The current schema is **16**. Loading first deserializes, migrates supported schemas 4–15, validates the complete resulting snapshot and catalog references, then applies it; invalid or unsupported input must leave the existing world unchanged. `SimulationSaveBoundary` additionally requires the clock to be paused and resets registered transient state only after successful load. [`SimulationSaveBoundaryTests.cs`](../tests/Simulation.Tests/SimulationSaveBoundaryTests.cs) and [`WorldSnapshotTests.cs`](../tests/Simulation.Tests/WorldSnapshotTests.cs) cover these boundaries.
+[`WorldSnapshot.cs`](../src/Simulation/WorldSnapshot.cs) defines the JSON snapshot DTOs and serializer. The current schema is **17**. Loading first deserializes, migrates supported schemas 4–16, validates the complete resulting snapshot and catalog references, then applies it; invalid or unsupported input must leave the existing world unchanged. `SimulationSaveBoundary` additionally requires the clock to be paused and resets registered transient state only after successful load. [`SimulationSaveBoundaryTests.cs`](../tests/Simulation.Tests/SimulationSaveBoundaryTests.cs) and [`WorldSnapshotTests.cs`](../tests/Simulation.Tests/WorldSnapshotTests.cs) cover these boundaries.
 
 Current durable snapshot data includes:
 
 - schema version, simulation time, last allocated entity ID, optional session seed/player ID/player profile, and player facing;
 - entities: stable ID, species ID, position, satiety, carried inventory, captivity state, allegiance, parent IDs, sleep/bed state, and equipped tool;
 - food sources, resource piles, stockpiles and ownership; relationships; factions, reputation and directed hostility;
-- squad membership, work schedules and home positions; workstations/recipes/progress; farms/plots; structures/beds; construction blueprints/material and work progress; tree regrowth timers; fireplace fuel;
+- squad membership, work schedules and home positions; wild territory centers/radii; workstations/recipes/progress; farms/plots; structures/beds; construction blueprints/material and work progress; tree regrowth timers; fireplace fuel;
 - player-only health-region values, pending death time, and dead state.
 
 Catalog definitions (species, recipes/content definitions) are supplied at load and are not duplicated as per-entity definition data. Save identifiers are semantic string IDs, not node paths or imported bone indices. Snapshot ordering is normalized for deterministic serialization.
@@ -50,7 +50,7 @@ Transient or reconstructible state is intentionally not in the snapshot: active 
 
 ### Known persistence gaps
 
-- NPC/creature health is not saved; only the player's health is represented in schema 16.
+- NPC/creature health is not saved; only the player's health is represented in schema 17.
 - Skills are runtime-owned by each entity but are not included in `EntitySnapshot`.
 - Any new durable state requires an explicit DTO field, validation, migration/rejection policy, and round-trip/failure tests. Do not silently rely on service or Godot-node state to restore it.
 
