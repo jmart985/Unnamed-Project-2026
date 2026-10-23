@@ -548,3 +548,11 @@ User reported only an obstacle at the expected workbench. Replace that legacy ce
 - Reason: Hunting should produce food that can be eaten or stored through the shared food system without leaving unlimited meat in the world indefinitely. Simulation time keeps freshness consistent with pause and speed controls.
 - Consequence: Schema 17 and earlier snapshots retain existing food as nonperishable when migrated, so loading older saves does not unexpectedly discard resources. Expiring a carcass removes it from new selections; entities already traveling to it use the existing removed-target recovery path. This does not add meat processing, refrigeration, spoilage UI, migration, population growth, or predator group tactics.
 - Revisit: When storage and food preservation are implemented, or playtesting shows that the provisional 300-second species default does not fit the intended hunting and settlement loop.
+
+## D049 — Far wildlife populations are World-owned durable aggregates (2026-10-23)
+
+- Status: Accepted for the first 2.0 Living Region implementation.
+- Decision: The authoritative World owns far-population aggregates keyed by the pair `(regionId, speciesId)`. Each aggregate stores count, average satiety, and resource quantities. Near/far transitions operate on one species record at a time; the legacy region-only transition overload is allowed only when that region has exactly one matching aggregate. Snapshot schema 19 persists these records; older snapshots migrate with no far-population records.
+- Reason: Regional populations must survive service recreation and save/load, and multiple species in one region must not overwrite one another during transitions.
+- Consequence: `NearFarTransitionService` is a transition adapter, not the owner of distant population state. This establishes durable storage and scoped transitions only; it does not define births, deaths, respawning, migration, pack behavior, food production, or spawn placement.
+- Revisit: When regional population rules are implemented and can define how individual state, resources, and counts change over time, or when measured save size/simulation needs require a different aggregate representation.

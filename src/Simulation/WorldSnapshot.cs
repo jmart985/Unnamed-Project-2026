@@ -32,9 +32,16 @@ public sealed record WorldSnapshot(
     bool PlayerIsDead = false,
     Vector3 PlayerFacing = default,
     IReadOnlyList<FireplaceSnapshot>? Fireplaces = null,
-    IReadOnlyList<WildTerritorySnapshot>? WildTerritories = null);
+    IReadOnlyList<WildTerritorySnapshot>? WildTerritories = null,
+    IReadOnlyList<FarPopulationSnapshot>? FarPopulations = null);
 
 public sealed record WildTerritorySnapshot(string EntityId, Vector3 Center, float Radius);
+public sealed record FarPopulationSnapshot(
+    string RegionId,
+    string SpeciesId,
+    int Count,
+    double AverageSatiety,
+    IReadOnlyDictionary<string, int> Resources);
 
 public sealed record FireplaceSnapshot(string Id, Vector3 Position, int Fuel);
 
@@ -146,7 +153,8 @@ public static class WorldSnapshotSerializer
     private const int BedSchemaVersion = 14;
     private const int HealthFacingSchemaVersion = 15;
     private const int FireplaceSchemaVersion = 16;
-    public const int CurrentSchemaVersion = 18;
+    private const int CarcassFreshnessSchemaVersion = 18;
+    public const int CurrentSchemaVersion = 19;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -259,7 +267,13 @@ public static class WorldSnapshotSerializer
             world.PlayerFacing,
             world.Fireplaces.OrderBy(item => item.Id, StringComparer.Ordinal)
                 .Select(item => new FireplaceSnapshot(item.Id, item.Position, item.Fuel)).ToArray(),
-            world.WildTerritories.Select(item => new WildTerritorySnapshot(item.EntityId, item.Center, item.Radius)).ToArray());
+            world.WildTerritories.Select(item => new WildTerritorySnapshot(item.EntityId, item.Center, item.Radius)).ToArray(),
+            world.FarPopulations.Select(record => new FarPopulationSnapshot(
+                record.RegionId,
+                record.SpeciesId,
+                record.Count,
+                record.AverageSatiety,
+                new Dictionary<string, int>(record.Resources, StringComparer.Ordinal))).ToArray());
     }
 
     public static string Serialize(World world, double simulationTime)
@@ -284,6 +298,10 @@ public static class WorldSnapshotSerializer
         {
             throw new InvalidDataException("Snapshot JSON is malformed.", exception);
         }
+
+        // Far populations were not represented by snapshots before schema 19.
+        if (snapshot.SchemaVersion < CurrentSchemaVersion)
+            snapshot = snapshot with { FarPopulations = snapshot.FarPopulations ?? Array.Empty<FarPopulationSnapshot>() };
 
         if (snapshot.SchemaVersion is LegacySchemaVersion
             or PreviousSchemaVersion
@@ -351,6 +369,9 @@ public static class WorldSnapshotSerializer
             return snapshot with { SchemaVersion = CurrentSchemaVersion, WildTerritories = Array.Empty<WildTerritorySnapshot>() };
 
         if (snapshot.SchemaVersion == 17)
+            return snapshot with { SchemaVersion = CurrentSchemaVersion };
+
+        if (snapshot.SchemaVersion == CarcassFreshnessSchemaVersion)
             return snapshot with { SchemaVersion = CurrentSchemaVersion };
 
         if (snapshot.SchemaVersion != CurrentSchemaVersion)
@@ -435,7 +456,7 @@ public static class WorldSnapshotSerializer
 
         if (snapshot.Entities is null || snapshot.FoodSources is null
             || snapshot.ResourcePiles is null || snapshot.Stockpiles is null
-            || snapshot.Relationships is null)
+            || snapshot.Relationships is null || snapshot.FarPopulations is null)
         {
             throw new InvalidDataException("Snapshot entity, resource, and relationship lists are required.");
         }
@@ -561,6 +582,27 @@ public static class WorldSnapshotSerializer
             ValidatePosition(territory.Center, $"wild territory '{territory.EntityId}' center");
             if (!float.IsFinite(territory.Radius) || territory.Radius <= 0)
                 throw new InvalidDataException($"Snapshot wild territory '{territory.EntityId}' radius must be finite and positive.");
+        }
+        var farPopulationKeys = new HashSet<(string RegionId, string SpeciesId)>();
+        foreach (var population in snapshot.FarPopulations)
+        {
+            if (population is null || string.IsNullOrWhiteSpace(population.RegionId)
+                || string.IsNullOrWhiteSpace(population.SpeciesId)
+                || !farPopulationKeys.Add((population.RegionId, population.SpeciesId)))
+                throw new InvalidDataException("Snapshot far populations must have distinct region/species IDs.");
+            if (!speciesCatalog.TryGet(population.SpeciesId, out _))
+                throw new InvalidDataException($"Snapshot far population references unknown species '{population.SpeciesId}'.");
+            if (population.Resources is null)
+                throw new InvalidDataException($"Snapshot far population '{population.RegionId}/{population.SpeciesId}' requires a resource map.");
+            try
+            {
+                _ = new FarEntityRecord(population.RegionId, population.SpeciesId, population.Count,
+                    population.AverageSatiety, population.Resources);
+            }
+            catch (ArgumentException exception)
+            {
+                throw new InvalidDataException($"Snapshot far population '{population.RegionId}/{population.SpeciesId}' is invalid.", exception);
+            }
         }
         if (snapshot.Workstations is null) throw new InvalidDataException("Snapshot workstations are required.");
         if (snapshot.Farms is null) throw new InvalidDataException("Snapshot farms are required.");
