@@ -227,7 +227,7 @@ public sealed class WanderingServiceTests
     }
 
     [Fact]
-    public void HungryWildCreatureInterruptsReturnAndResumesAfterEating()
+    public void HungryDisplacedWildCreatureReturnsHomeBeforeSeekingFood()
     {
         var world = new World(new NeedsTuning(satietyDrainPerSecond: 2));
         var species = SpeciesCatalog.LoadFromFile(GetSpeciesDataPath()).GetRequired("wolf");
@@ -241,13 +241,18 @@ public sealed class WanderingServiceTests
         var returnRequest = navigator.Requests.Keys.Single();
         wolf.Needs.Advance(1);
 
-        Assert.Equal(WanderingStatus.NeedsFood, service.Advance(wolf, species, simulationTick: 2).Status);
-        Assert.Equal(NavigationOutcome.Cancelled, navigator.Requests[returnRequest]);
+        Assert.Equal(WanderingStatus.ReturningToTerritory,
+            service.Advance(wolf, species, simulationTick: 2).Status);
+        Assert.Equal(NavigationOutcome.InProgress, navigator.Requests[returnRequest]);
+        Assert.Equal(ActionKind.Wander, wolf.Actions.Current?.Kind);
+
+        Assert.True(navigator.CompleteAsArrived(returnRequest));
+        world.TrySetEntityPosition(wolf.Id, Vector3.Zero);
+        Assert.Equal(WanderingStatus.NeedsFood, service.Advance(wolf, species, simulationTick: 3).Status);
         Assert.Null(wolf.Actions.Current);
 
         wolf.Needs.AddNutrition(50);
-        Assert.Equal(WanderingStatus.ReturningToTerritory,
-            service.Advance(wolf, species, simulationTick: 3).Status);
+        Assert.Equal(WanderingStatus.Traveling, service.Advance(wolf, species, simulationTick: 4).Status);
         Assert.Equal(2, navigator.Requests.Count);
     }
 
