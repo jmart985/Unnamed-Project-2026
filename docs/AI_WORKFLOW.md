@@ -30,7 +30,7 @@ When no independent Ready issue remains after the readiness/dependency audit, re
 
 ### Current project status (2026-10-23)
 
-Milestone 1.2's territory and wolf hunt/feeding issues (#461–#463) are merged and validated. The 2.0 Living Region tracker is #202. Its first playable implementation is #467: wild prey reacts to configured nearby predators while the existing wolf hunt still completes. Follow #202 for evidence-based expansion; do not mistake the current predator/prey slice for the full Living Region milestone.
+Milestone 1.2's territory and wolf hunt/feeding issues (#461–#463) are merged and validated. The 2.0 Living Region tracker is #202. Its first playable implementation is #467, merged as PR #468: wild prey reacts to configured nearby predators while the existing wolf hunt still completes. Follow-up #469 fixes transient threat state on save load and active threat switching. Predator teamwork remains future scope; follow #202 for evidence-based expansion and do not mistake the current predator/prey slice for the full Living Region milestone.
 
 ### Historical project status (2026-10-05)
 

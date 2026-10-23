@@ -6,7 +6,7 @@ In a fresh local region, the starter cow detects the configured wolf before it r
 
 ## Automated checks
 
-`WildPreyThreatServiceTests` cover deterministic nearest-threat selection and ties, inclusive range boundaries, configured prey relationships, friendly/dead/incapacitated/unrelated exclusions, action priority, transient cleanup when a predator leaves range, and bounded route-failure retry. `SpeciesCatalogTests` cover the nonnegative detection-range data contract, legacy zero default, and invalid negative values.
+`WildPreyThreatServiceTests` cover deterministic nearest-threat selection and ties, inclusive range boundaries, configured prey relationships, friendly/dead/incapacitated/unrelated exclusions, action priority, transient cleanup when a predator leaves range, bounded route-failure retry, switching the active threat without repeated route requests, and resetting a failed-escape retry through world load. `SpeciesCatalogTests` cover the nonnegative detection-range data contract, legacy zero default, and invalid negative values.
 
 Run the Godot integration scenario:
 

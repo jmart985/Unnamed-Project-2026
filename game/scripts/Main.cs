@@ -1083,7 +1083,8 @@ public partial class Main : Node3D
 				_foodConsumption!,
 				_wandering!,
 				_woodHauling!,
-				_squad!);
+				_squad!,
+				_wildPreyThreat!);
 			_clock.Restore(restoredTime);
 			_simulationTick = checked((long)Math.Round(
 				restoredTime / SimulationClock.TickIntervalSeconds,

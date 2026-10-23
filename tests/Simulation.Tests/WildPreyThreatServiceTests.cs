@@ -58,6 +58,58 @@ public sealed class WildPreyThreatServiceTests
     }
 
     [Fact]
+    public void ActiveThreatSwitchUpdatesIdentityAndDoesNotReissueRouteEachTick()
+    {
+        var world = new World();
+        var cow = world.SpawnEntity(Catalog.GetRequired("cow"), Vector3.Zero);
+        var firstWolf = world.SpawnEntity(Catalog.GetRequired("wolf"), new Vector3(-4, 0, 0));
+        var secondWolf = world.SpawnEntity(Catalog.GetRequired("wolf"), new Vector3(-6, 0, 0));
+        var navigator = new FakeNavigationAdapter();
+        var service = new WildPreyThreatService(world, Catalog, _ => navigator);
+
+        Assert.Equal(firstWolf.Id, service.Advance(cow, simulationTick: 1).ThreatEntityId);
+        Assert.Single(navigator.RequestTargets);
+
+        world.TrySetEntityPosition(secondWolf.Id, new Vector3(-2, 0, 0));
+        var switched = service.Advance(cow, simulationTick: 2);
+
+        Assert.Equal(WildPreyThreatStatus.Fleeing, switched.Status);
+        Assert.Equal(secondWolf.Id, switched.ThreatEntityId);
+        Assert.Equal(secondWolf.Id, cow.TargetId);
+        Assert.Equal(new Vector3(10, 0, 0), switched.FleeTarget);
+        Assert.Equal(2, navigator.RequestTargets.Count);
+        Assert.Single(navigator.Requests, pair => pair.Value == NavigationOutcome.Cancelled);
+
+        var sameThreat = service.Advance(cow, simulationTick: 3);
+
+        Assert.Equal(secondWolf.Id, sameThreat.ThreatEntityId);
+        Assert.Equal(secondWolf.Id, cow.TargetId);
+        Assert.Equal(2, navigator.RequestTargets.Count);
+    }
+
+    [Fact]
+    public void LoadingWorldResetsFleeRetryAndAllowsImmediateThreatReevaluation()
+    {
+        var world = new World();
+        var cow = world.SpawnEntity(Catalog.GetRequired("cow"), Vector3.Zero);
+        world.SpawnEntity(Catalog.GetRequired("wolf"), new Vector3(-4, 0, 0));
+        var navigator = new FakeNavigationAdapter();
+        var service = new WildPreyThreatService(world, Catalog, _ => navigator);
+        service.Advance(cow, simulationTick: 1);
+        Assert.True(navigator.MarkUnreachable(Assert.Single(navigator.Requests).Key));
+        Assert.Equal(WildPreyThreatStatus.Waiting, service.Advance(cow, simulationTick: 2).Status);
+        Assert.True(service.SuppressesOtherBehavior(cow.Id));
+
+        var save = WorldSnapshotSerializer.Serialize(world, simulationTime: 1);
+        WorldSnapshotSerializer.Load(world, save, Catalog, service);
+        var restoredCow = Assert.Single(world.Entities, entity => entity.SpeciesId == "cow");
+
+        Assert.False(service.IsFleeing(restoredCow.Id));
+        Assert.False(service.SuppressesOtherBehavior(restoredCow.Id));
+        Assert.Equal(WildPreyThreatStatus.Fleeing, service.Advance(restoredCow, simulationTick: 10).Status);
+    }
+
+    [Fact]
     public void DeadIncapacitatedFriendlyAndUnrelatedEntitiesDoNotTriggerFleeing()
     {
         var world = new World();
