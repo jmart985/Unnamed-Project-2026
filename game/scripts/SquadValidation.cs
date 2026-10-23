@@ -133,7 +133,10 @@ public partial class Main
                 && (following
                     ? NumericsVector3.DistanceSquared(entity.Position, target) <= SquadOrderService.FollowResumeDistance * SquadOrderService.FollowResumeDistance
                         && entity.Actions.Current?.Kind != ActionKind.SquadMove
-                    : NumericsVector3.DistanceSquared(entity.Position, target) <= 0.25f))) return;
+                    : _entityViews[id].NavigationTarget is { } assignedTarget
+                        && NumericsVector3.DistanceSquared(entity.Position, assignedTarget) <= 0.25f
+                        && NumericsVector3.DistanceSquared(assignedTarget, target) <= 1.0f
+                        && entity.Actions.Current?.Kind != ActionKind.SquadMove))) return;
         }
         throw new InvalidOperationException($"Squad did not reach {target}: " + string.Join("; ", ids.Select(id => $"{id} {_world.Entities.Single(e => e.Id == id).Position} {_entityViews[id].NavigationOutcome}")));
     }

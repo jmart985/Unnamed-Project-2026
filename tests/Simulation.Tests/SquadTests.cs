@@ -136,8 +136,9 @@ public sealed class SquadTests
         foreach (var nav in navigators.Values) Assert.Equal(NavigationOutcome.InProgress, Assert.Single(nav.Requests).Value);
         foreach (var member in members)
         {
-            world.TrySetEntityPosition(member.Id, target);
-            navigators[member.Id].CompleteAsArrived(navigators[member.Id].Requests.Keys.Single());
+            var requestId = navigators[member.Id].Requests.Keys.Single();
+            world.TrySetEntityPosition(member.Id, navigators[member.Id].RequestTargets[requestId]);
+            navigators[member.Id].CompleteAsArrived(requestId);
         }
         squad.Advance();
         foreach (var member in members) { Assert.Null(member.Actions.Current); Assert.Equal("Squad arrived", member.Activity); }
@@ -155,6 +156,42 @@ public sealed class SquadTests
         world.TryRemoveEntity(world.PlayerEntityId);
         Assert.Equal(SquadResult.PlayerUnavailable, squad.Execute(SquadOrderKind.FollowPlayer).Code);
         Assert.Equal(SquadOrderKind.Stop, squad.Order);
+    }
+
+    [Fact]
+    public void MoveToAssignsStableNearbySlotsWithoutChangingTheRequestedTarget()
+    {
+        var world = Session();
+        var members = Members(world);
+        foreach (var member in members) world.AddSquadMember(member.Id);
+        var navigators = members.ToDictionary(member => member.Id, _ => new FakeNavigationAdapter());
+        var squad = new SquadOrderService(world, entity => navigators[entity.Id]);
+        var requestedTarget = new Vector3(4, 0, 3);
+
+        Assert.Equal(SquadResult.Accepted, squad.Execute(SquadOrderKind.MoveTo, requestedTarget).Code);
+        squad.Advance();
+
+        var assignedTargets = members.ToDictionary(member => member.Id, member =>
+        {
+            var requestId = navigators[member.Id].Requests.Keys.Single();
+            return navigators[member.Id].RequestTargets[requestId];
+        });
+
+        Assert.Equal(requestedTarget, squad.Target);
+        Assert.Equal(1.25f, Vector3.Distance(assignedTargets[members[0].Id], assignedTargets[members[1].Id]), precision: 5);
+        Assert.All(assignedTargets.Values, assigned =>
+            Assert.InRange(Vector3.Distance(assigned, requestedTarget), 0.624f, 0.626f));
+
+        foreach (var member in members)
+        {
+            var navigator = navigators[member.Id];
+            var requestId = navigator.Requests.Keys.Single();
+            world.TrySetEntityPosition(member.Id, assignedTargets[member.Id]);
+            navigator.CompleteAsArrived(requestId);
+        }
+
+        squad.Advance();
+        Assert.All(members, member => Assert.Equal("Squad arrived", member.Activity));
     }
 
     [Fact]

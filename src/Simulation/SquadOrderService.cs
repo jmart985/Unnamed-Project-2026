@@ -14,9 +14,14 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
     public const float FollowStopDistance = 2;
     public const float FollowResumeDistance = 3;
     private const float FollowArrivalTolerance = FollowStopDistance + 0.01f;
+    private const float FollowPathArrivalTolerance = 0.5f;
+    private const float FollowStandOffDistance = FollowStopDistance + 0.1f;
+    private const float MoveToFormationSpacing = 1.25f;
     private sealed record Trip(EntityRecord Entity, INavigationAdapter Navigator, string RequestId, Vector3 Target);
     private readonly Dictionary<string, Trip> _trips = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Vector3> _finishedTargets = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Vector3> _moveTargets = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Vector2> _followOffsets = new(StringComparer.Ordinal);
     private readonly HashSet<string> _failedMembers = new(StringComparer.Ordinal);
     private long _nextActionId;
     public SquadOrderKind Order { get; private set; }
@@ -38,6 +43,15 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
         Reset();
         Order = order;
         Target = effectiveTarget;
+        if (order == SquadOrderKind.MoveTo)
+        {
+            AssignMoveTargets(effectiveTarget!.Value);
+        }
+        else if (order == SquadOrderKind.FollowPlayer && TryPlayer(out var player))
+        {
+            AssignFollowOffsets(player!.Position);
+        }
+
         foreach (var id in world.SquadMemberIds)
             if (world.TryGetEntity(id, out var entity) && entity is not null && entity.Actions.Current?.Kind != ActionKind.Eat)
                 entity.Actions.Cancel();
@@ -49,6 +63,8 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
     {
         foreach (var id in _trips.Keys.Where(id => !world.SquadMemberIds.Contains(id)).ToArray()) CancelTrip(id);
         foreach (var id in _finishedTargets.Keys.Where(id => !world.SquadMemberIds.Contains(id)).ToArray()) _finishedTargets.Remove(id);
+        foreach (var id in _moveTargets.Keys.Where(id => !world.SquadMemberIds.Contains(id)).ToArray()) _moveTargets.Remove(id);
+        foreach (var id in _followOffsets.Keys.Where(id => !world.SquadMemberIds.Contains(id)).ToArray()) _followOffsets.Remove(id);
         if (Order == SquadOrderKind.None) return;
         if (Order == SquadOrderKind.FollowPlayer && !TryPlayer(out _))
         {
@@ -65,10 +81,13 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
                 if (entity.Actions.Current is null) entity.Activity = "Squad stopped";
                 continue;
             }
-            var goal = Order == SquadOrderKind.FollowPlayer ? GetPlayerPosition() : Target!.Value;
             var following = Order == SquadOrderKind.FollowPlayer;
-            var arrivalTolerance = following ? FollowArrivalTolerance : 0.5f;
-            var distanceSquared = following ? HorizontalDistanceSquared(entity.Position, goal) : Vector3.DistanceSquared(entity.Position, goal);
+            var playerPosition = following ? GetPlayerPosition() : default;
+            var goal = following
+                ? AddHorizontal(playerPosition, _followOffsets.GetValueOrDefault(id))
+                : _moveTargets.GetValueOrDefault(id, Target!.Value);
+            var arrivalTolerance = following ? FollowPathArrivalTolerance : 0.5f;
+            var distanceSquared = following ? HorizontalDistanceSquared(entity.Position, playerPosition) : Vector3.DistanceSquared(entity.Position, goal);
             if (following && distanceSquared <= (_trips.ContainsKey(id) ? FollowArrivalTolerance * FollowArrivalTolerance : FollowResumeDistance * FollowResumeDistance))
             {
                 CancelTrip(id);
@@ -150,6 +169,8 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
     {
         foreach (var id in _trips.Keys.ToArray()) CancelTrip(id);
         _finishedTargets.Clear();
+        _moveTargets.Clear();
+        _followOffsets.Clear();
         _failedMembers.Clear();
         Order = SquadOrderKind.None;
         Target = null;
@@ -166,6 +187,91 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
     }
 
     private bool TryPlayer(out EntityRecord? player) => world.TryGetEntity(world.PlayerEntityId, out player) && player is not null && !player.Health.IsDead;
+
+    private void AssignMoveTargets(Vector3 requestedTarget)
+    {
+        var members = world.SquadMemberIds
+            .Select(id => world.TryGetEntity(id, out var entity) ? entity : null)
+            .Where(entity => entity is not null)
+            .Select(entity => entity!)
+            .ToArray();
+        if (members.Length == 0) return;
+
+        var center = members.Aggregate(Vector3.Zero, (sum, entity) => sum + entity.Position) / members.Length;
+        var direction = new Vector2(requestedTarget.X - center.X, requestedTarget.Z - center.Z);
+        if (direction.LengthSquared() <= 1e-8f)
+        {
+            direction = new Vector2(0, -1);
+        }
+        else
+        {
+            direction = Vector2.Normalize(direction);
+        }
+
+        var tangent = new Vector2(-direction.Y, direction.X);
+        var orderedMembers = members
+            .Select(entity => new
+            {
+                Entity = entity,
+                Projection = entity.Position.X * tangent.X + entity.Position.Z * tangent.Y
+            })
+            .OrderBy(entry => entry.Projection)
+            .ThenBy(entry => entry.Entity.Id, StringComparer.Ordinal)
+            .ToArray();
+
+        for (var index = 0; index < orderedMembers.Length; index++)
+        {
+            var offset = (index - (orderedMembers.Length - 1) * 0.5f) * MoveToFormationSpacing;
+            var entity = orderedMembers[index].Entity;
+            _moveTargets[entity.Id] = new Vector3(
+                requestedTarget.X + tangent.X * offset,
+                requestedTarget.Y,
+                requestedTarget.Z + tangent.Y * offset);
+        }
+    }
+
+    private void AssignFollowOffsets(Vector3 playerPosition)
+    {
+        var members = world.SquadMemberIds
+            .Select(id => world.TryGetEntity(id, out var entity) ? entity : null)
+            .Where(entity => entity is not null)
+            .Select(entity => entity!)
+            .ToArray();
+        if (members.Length == 0) return;
+
+        var center = members.Aggregate(Vector3.Zero, (sum, entity) => sum + entity.Position) / members.Length;
+        var outward = new Vector2(center.X - playerPosition.X, center.Z - playerPosition.Z);
+        if (outward.LengthSquared() <= 1e-8f) outward = new Vector2(0, -1);
+        else outward = Vector2.Normalize(outward);
+        var tangent = new Vector2(-outward.Y, outward.X);
+        var orderedMembers = members
+            .Select(entity => new { Entity = entity, Projection = entity.Position.X * tangent.X + entity.Position.Z * tangent.Y })
+            .OrderBy(entry => entry.Projection)
+            .ThenBy(entry => entry.Entity.Id, StringComparer.Ordinal)
+            .ToArray();
+        var radius = FollowStandOffDistance;
+        var useFullCircle = orderedMembers.Length > 6;
+        if (useFullCircle)
+        {
+            radius = MathF.Max(radius, MoveToFormationSpacing / (2 * MathF.Sin(MathF.PI / orderedMembers.Length)));
+        }
+
+        var angleStep = orderedMembers.Length > 1 && !useFullCircle
+            ? 2 * MathF.Asin(MathF.Min(1, MoveToFormationSpacing / (2 * radius)))
+            : 0;
+        for (var index = 0; index < orderedMembers.Length; index++)
+        {
+            var angle = useFullCircle
+                ? MathF.Tau * index / orderedMembers.Length
+                : (index - (orderedMembers.Length - 1) * 0.5f) * angleStep;
+            _followOffsets[orderedMembers[index].Entity.Id] = outward * (radius * MathF.Cos(angle))
+                + tangent * (radius * MathF.Sin(angle));
+        }
+    }
+
+    private static Vector3 AddHorizontal(Vector3 anchor, Vector2 offset)
+        => new(anchor.X + offset.X, anchor.Y, anchor.Z + offset.Y);
+
     private Vector3 GetPlayerPosition() { TryPlayer(out var player); return player!.Position; }
     private static bool Finite(Vector3 target) => float.IsFinite(target.X) && float.IsFinite(target.Y) && float.IsFinite(target.Z);
     private static SquadOrderResult Reject(SquadResult result, string reason) => new(result, $"Rejected: {reason}");
