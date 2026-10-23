@@ -12,9 +12,20 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.401
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: true
       - name: Restore
         run: dotnet restore UnnamedProject2026.slnx
       - name: Build
         run: dotnet build UnnamedProject2026.slnx --configuration Release --no-restore
       - name: Test
         run: dotnet test tests/Simulation.Tests/Simulation.Tests.csproj --configuration Release --no-build
+      - name: Import Godot project resources
+        run: godot --headless --editor --build-solutions --path game --quit
+      - name: Validate session profiles in Godot
+        run: |
+          set -euo pipefail
+          godot --headless --path game -- --validate-session-profiles 2>&1 | tee "$RUNNER_TEMP/session-profile-validation.log"
+          grep -Fq "SESSION PROFILE VALIDATION PASSED" "$RUNNER_TEMP/session-profile-validation.log"

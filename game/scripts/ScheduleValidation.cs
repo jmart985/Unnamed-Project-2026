@@ -11,6 +11,8 @@ public partial class Main
         {
             var integrated = OS.GetCmdlineUserArgs().Contains("--validate-schedule-integration");
             StartSession(PlayerCharacterProfile.Create("Schedule validation"), 42, "Schedule validation session.");
+            Require(_world.ResourcePiles.Count == 1 && WoodTotal() == 100,
+                "schedule validation uses the baseline resource profile");
             _clock.SetPaused(true);
             _playerCharacter.SetPhysicsProcess(false);
             await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);

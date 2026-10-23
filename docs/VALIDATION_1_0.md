@@ -20,6 +20,7 @@ dotnet test tests/Simulation.Tests/Simulation.Tests.csproj --configuration Relea
 dotnet build game/UnnamedProject2026.csproj --configuration Debug --no-restore
 & "C:\Developement\Godot\Godot_v4.7.2-stable_mono_win64\Godot_v4.7.2-stable_mono_win64.exe" --path game --headless --quit
 & "C:\Developement\Godot\Godot_v4.7.2-stable_mono_win64\Godot_v4.7.2-stable_mono_win64.exe" --path game --headless -- --validate-first-game
+& "C:\Developement\Godot\Godot_v4.7.2-stable_mono_win64\Godot_v4.7.2-stable_mono_win64.exe" --path game --headless -- --validate-session-profiles
 ```
 
 Godot uses the Debug assembly. In PowerShell, the GUI executable can return before
@@ -61,35 +62,48 @@ case. The engine scenario below verifies actual movement and scene wiring.
 ## Godot integration scenario
 
 `--validate-first-game` extends the existing squad harness instead of duplicating it.
-It starts seed 42 and the `Squad validation` profile, exercises actual controller
+It starts seed 42 and the `Squad validation` profile in survival-gathering mode:
+four adult tree piles hold 48 wood, four loose-rock piles hold one rock each, and
+the legacy free wood pile is absent. It exercises actual controller
 input across physics frames, advances the fixed clock and player hunger, then invokes
 the same eating and greeting handlers used by the UI. It rejects far/empty eating,
 unsupported/far/missing greetings, repeated membership, and an invalid squad target.
 
-Two selected NPCs receive the actual squad button signals and move using the real
-navigation mesh/adapter to (4, 0, 3), follow to (7, 0, -3) then (10, 0, -3), and stop.
+Two selected NPCs receive the actual squad button signals and are expected to move
+using the real navigation mesh/adapter to (4, 0, 3), follow to (7, 0, -3) then
+(10, 0, -3), and stop.
 The inspector reports arrival and membership. A paused snapshot is captured,
 invalid load is rejected atomically, the whole session is reset with seed 43/profile
 `Reset session`, and the saved snapshot is restored. Full durable serialization
 matches, loaded inspector shows membership with order None, no actions remain, and
-resource totals are 399 food/100 wood. Snapshots are in memory, leaving the player's
+resource totals are 399 food/48 wood. Snapshots are in memory, leaving the player's
 disk save slot untouched.
 
-## Actual results and recovery
+## Latest audit run
 
-- Focused integration case passes and repeats identical final snapshots internally.
-  The full suite passes **509 tests**, zero failed/skipped.
-- Restore and Release solution build pass. Two existing EntityView CS8604 warnings
-  remain. Local NuGet vulnerability metadata is unavailable (NU1900), including on
-  retry with normal network permissions; local audit freshness is unverified.
-- Debug game build and documented headless startup pass.
-- Headless and rendered full-loop scenarios exit 0 with the explicit success marker.
-  No unhandled exceptions or stuck actions remain at their completion boundary.
-- The initial engine run failed with `ArgumentNullException` for `_catalog` in
-  `FoodConsumptionService.TryPlayerEat`. Main had constructed the food service using
-  its autonomous-only overload. Supplying the already-loaded species catalog fixes
-  player eating; the subsequent full-loop run passes. The failure is retained here
-  as evidence that domain tests alone did not validate scene wiring.
+On 2026-10-23, the Release solution build and all **636 Simulation.Tests** passed.
+The Debug game build also passed with zero warnings/errors. A fresh Godot 4.7.2 Mono
+run of `--validate-first-game` currently exits 1 after reaching squad travel: one
+selected NPC remains `InProgress` while another reports `Cancelled` at the move to
+(4, 0, 3). The earlier successful run recorded above was from 2026-10-03 and no
+longer reproduces on current main. Issue [#450](https://github.com/jmart985/Unnamed-Project-2026/issues/450)
+tracks the navigation failure. Do not treat the historical success result as current
+evidence until the scenario passes again.
+
+The focused `--validate-session-profiles` check passes. It activates the normal
+Start New Game button, verifies the tree/rock survival start, resets without losing
+that profile, then verifies the deterministic baseline setup. PR CI runs this check
+with Godot 4.7.2 Mono; it does not replace the broader first-game scenario.
+
+The startup assertion also exposed that all validation sessions were inheriting the
+player's survival-gathering resources even when a focused feature scenario expected
+the deterministic baseline wood pile. Issue [#449](https://github.com/jmart985/Unnamed-Project-2026/issues/449)
+separates those profiles and adds a focused startup/reset check.
+
+The original engine run's `ArgumentNullException` for `_catalog` in
+`FoodConsumptionService.TryPlayerEat` remains as historical evidence that domain
+tests alone did not validate scene wiring. Its fix is already in the recorded
+implementation; the present blocker is the squad navigation failure above.
 
 This bounded scenario does not replace the historical ten-minute Ant Farm regression,
 test every possible route, validate health/facing persistence (#302), or establish
