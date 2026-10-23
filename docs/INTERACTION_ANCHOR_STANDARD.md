@@ -24,15 +24,21 @@ Breeding, medical, feeding, and social systems
 
 `SpeciesDefinition.Anchors` declares five separate collections:
 
-- `AnatomyRegions`: semantic body regions used by simulation and injury systems.
+- `AnatomyRegions`: proposed detailed anatomical labels for future adapters; these are not current health/save identifiers.
 - `LocomotionAnchors`: feet, paws, roots, or other ground/contact transforms.
 - `EquipmentAnchors`: hands, carry points, and other equipment attachment transforms.
 - `InteractionAnchors`: all sockets that may be targeted by an interaction system.
 - `BreedingAnchors`: the subset that can participate in a species' reproductive interaction model.
 
-Every breeding anchor must also be listed as an interaction anchor. This prevents systems from selecting a target that the scene cannot expose. Existing records that omit the optional arrays load with empty collections for compatibility; new species records should declare all applicable collections before being admitted as production content.
+Every breeding anchor must also be listed as an interaction anchor. This validates declaration consistency; it does not prove that a scene exposes the socket. Existing records that omit the optional arrays load with empty collections for compatibility; new production species must declare all five collections, using explicit empty arrays where a category is inapplicable.
 
-Anchor IDs use lowercase `anchor_` names with underscores. The runtime validates duplicates, malformed IDs, and breeding anchors missing from the interaction collection. The collections are data only: an anchor does not grant a creature permission, fertility, consent, health, or a particular animation.
+Anchor IDs use lowercase `anchor_` names with underscores and at least one letter or digit after the prefix. The runtime validates duplicates, malformed IDs, and breeding anchors missing from the interaction collection. The collections are data only: an anchor does not grant a creature permission, fertility, consent, health, or a particular animation.
+
+Species declarations describe possible body variants. An individual model exposes only anchors supported by its actual anatomy. A human species declaration containing both `anchor_vaginal` and `anchor_penile` does not assert that every human has both. Likewise, nursing anchors require appropriate body anatomy and physiological state before use. `SupportsInteraction` and `SupportsBreeding` query declarations only.
+
+### Current health and save boundary
+
+`CharacterHealth.CreateHumanoid` currently uses exactly `Head`, `Torso`, `LeftArm`, `RightArm`, `LeftLeg`, and `RightLeg`. Restoration validates exact names, count, and order. Lowercase detailed labels in `AnatomyRegions` must not be passed directly to damage, healing, or restoration APIs. They are a future mapping/migration target. This change does not replace health regions or change the save schema; an injury integration must supply explicit mappings and migration tests first.
 
 ## Canonical IDs
 
@@ -70,6 +76,8 @@ Source names such as `Bip001-Pelvis` must never become save-data or gameplay dep
 ## Current data and migration
 
 The authoritative runtime records in `data/species.json` now declare anchor collections for human, generic creature, ape, cow, and wolf. The project-generated humanoid, ape, cat, cow, fox, pig, and wolf metadata now uses the same categorized canonical IDs. Older downloaded asset metadata may still contain source-specific labels; those files remain reference/prototype metadata until they are migrated and validated against the imported rig.
+
+These metadata lists are intended anchor requirements, not verified transforms. This slice does not modify Blender/GLB geometry, create Godot sockets, or implement a rig adapter. Existing Blender generators also need migration before regeneration can preserve the new metadata. Model integration must validate anchor placement, anatomical variants, and missing-socket handling before enabling an action; a missing socket must report unavailable rather than fall back to the model origin. For cows, preserve the existing four quarter/teat targets when adding canonical mappings instead of collapsing them into two physical targets.
 
 Future breeding, nursing, medical, and adult/social systems must still validate their own state, capability, consent, and animation requirements. This standard supplies alignment targets only; it does not implement those systems.
 

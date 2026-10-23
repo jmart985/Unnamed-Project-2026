@@ -80,11 +80,13 @@ public sealed class InteractionAnchorDefinition
     public ReadOnlyCollection<string> InteractionAnchors { get; }
     public ReadOnlyCollection<string> BreedingAnchors { get; }
 
+    /// <summary>Checks the species declaration only; does not resolve an individual model socket.</summary>
     public bool SupportsInteraction(string? anchorId)
     {
         return anchorId is not null && InteractionAnchors.Contains(anchorId, StringComparer.Ordinal);
     }
 
+    /// <summary>Checks the declared subset only; does not establish reproductive eligibility.</summary>
     public bool SupportsBreeding(string? anchorId)
     {
         return anchorId is not null && BreedingAnchors.Contains(anchorId, StringComparer.Ordinal);
@@ -103,6 +105,8 @@ public sealed class InteractionAnchorDefinition
         {
             if (string.IsNullOrWhiteSpace(value)
                 || !value.StartsWith("anchor_", StringComparison.Ordinal)
+                || value.Length == "anchor_".Length
+                || !value["anchor_".Length..].Any(character => character is >= 'a' and <= 'z' or >= '0' and <= '9')
                 || value.Any(character => character is not (>= 'a' and <= 'z') and not (>= '0' and <= '9') and not '_'))
             {
                 throw new ArgumentException(
