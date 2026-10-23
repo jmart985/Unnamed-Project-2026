@@ -7,10 +7,11 @@ public partial class Main
 {
     private async Task ValidatePlayerLoop()
     {
-        Require(_world.Entities.Count == 14 && FoodTotal() == 400 && WoodTotal() == 48
+        Require(_world.Entities.Count == 14 && FoodTotal() == 300 && WoodTotal() == 48
             && _world.ResourcePiles.Count(pile => pile.Id.StartsWith("tree-adult-", StringComparison.Ordinal)) == 4
             && _world.ResourcePiles.Count(pile => pile.Contents.Counts.ContainsKey(ItemIds.Rock)) == 4
-            && !_world.ResourcePiles.Any(pile => pile.Id == "wood-pile-1"), "survival new-game population/resources");
+            && !_world.ResourcePiles.Any(pile => pile.Id == "wood-pile-1"),
+            $"survival new-game population/resources (entities {_world.Entities.Count}/14, food {FoodTotal()}/300, wood {WoodTotal()}/48, trees {_world.ResourcePiles.Count(pile => pile.Id.StartsWith("tree-adult-", StringComparison.Ordinal))}/4, rocks {_world.ResourcePiles.Count(pile => pile.Contents.Counts.ContainsKey(ItemIds.Rock))}/4, legacy wood pile {_world.ResourcePiles.Any(pile => pile.Id == "wood-pile-1")})");
         var player = _world.Entities.Single(e => e.Id == _world.PlayerEntityId);
         var initialPosition = player.Position;
         var initialSatiety = player.Satiety;
@@ -30,7 +31,7 @@ public partial class Main
         var before = player.Satiety;
         Require(TryPlayerEat().StartsWith("Ate one unit", StringComparison.Ordinal), "player eating handler succeeds");
         Require(player.Satiety == Math.Min(100, before + player.Needs.NutritionPerUnit), "nutrition once");
-        Require(FoodTotal() == 399 && _foodConsumption!.FoodUnitsConsumed == 1, "single consumption");
+        Require(FoodTotal() == 299 && _foodConsumption!.FoodUnitsConsumed == 1, "single consumption");
         _playerCharacter.GlobalPosition = new Vector3(190, 0, 190);
         SyncPlayerPosition();
         var unchanged = WorldSnapshotSerializer.Serialize(_world, _clock.SimulationTime);

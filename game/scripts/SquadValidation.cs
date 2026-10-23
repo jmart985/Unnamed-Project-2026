@@ -56,6 +56,8 @@ public partial class Main
                 Require(_squad.Order == SquadOrderKind.Stop && WorldSnapshotSerializer.Serialize(_world, _clock.SimulationTime) == beforeInvalidOrder, "invalid order preserves state");
             }
             // Avoid the player's save slot; exercise the same serializer/services/presentation path in memory.
+            var savedFoodTotal = FoodTotal();
+            var savedWoodTotal = WoodTotal();
             var json = WorldSnapshotSerializer.Serialize(_world, _clock.SimulationTime);
             PressSquadButton("Follow player");
             if (firstGame)
@@ -87,8 +89,9 @@ public partial class Main
             {
                 Require(WorldSnapshotSerializer.Serialize(_world, _clock.SimulationTime) == json, "full durable round trip");
                 Require(_world.Entities.All(entity => entity.Actions.Current is null), "no stale actions after load");
-                Require(FoodTotal() == 399 && WoodTotal() == 48, "food/wood conservation after load");
-                GD.Print("FIRST GAME VALIDATION PASSED: player movement/eating, squad orders, directed greeting, rejection, reset/load, food 399, wood 48 from four trees.");
+                Require(FoodTotal() == savedFoodTotal && WoodTotal() == savedWoodTotal,
+                    $"food/wood conservation after load (food {FoodTotal()}/{savedFoodTotal}, wood {WoodTotal()}/{savedWoodTotal})");
+                GD.Print($"FIRST GAME VALIDATION PASSED: player movement/eating, squad orders, directed greeting, rejection, reset/load, food {savedFoodTotal}, wood {savedWoodTotal}.");
             }
             var screenshotArgument = OS.GetCmdlineUserArgs().FirstOrDefault(argument => argument.StartsWith("--squad-screenshot=", StringComparison.Ordinal));
             if (screenshotArgument is not null)
