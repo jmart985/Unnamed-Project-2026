@@ -21,7 +21,7 @@ public sealed class WildlifeProximityCoordinator
         _regions = regions ?? throw new ArgumentNullException(nameof(regions));
         _transitions = new NearFarTransitionService(world, speciesCatalog);
         foreach (var region in regions.Regions)
-            if (region.Species.All(entry => world.NearPopulations.Any(near => near.RegionId == region.Id && near.SpeciesId == entry.SpeciesId)))
+            if (HasRestorableActiveMembership(world, region))
                 _activeRegionIds.Add(region.Id);
     }
 
@@ -84,7 +84,8 @@ public sealed class WildlifeProximityCoordinator
                     var before = _world.NearPopulations.FirstOrDefault(near => near.RegionId == region.Id && near.SpeciesId == species.SpeciesId);
                     if (before is null) continue;
                     var ids = before.EntityIds.ToArray();
-                    if (_transitions.Demote(region.Id, species.SpeciesId)) deactivated.AddRange(ids);
+                    if (_transitions.Demote(region.Id, species.SpeciesId))
+                        deactivated.AddRange(ids.Where(id => !_world.TryGetEntity(id, out _)));
                 }
                 _activeRegionIds.Remove(region.Id);
                 changed.Add(region.Id);
@@ -99,5 +100,27 @@ public sealed class WildlifeProximityCoordinator
         var x = left.X - right.X;
         var z = left.Z - right.Z;
         return MathF.Sqrt(x * x + z * z);
+    }
+
+    private static bool HasRestorableActiveMembership(World world, WildlifeRegionDefinition region)
+    {
+        var hasActiveMembership = false;
+        foreach (var species in region.Species)
+        {
+            if (world.TryGetNearPopulation(region.Id, species.SpeciesId, out _))
+            {
+                hasActiveMembership = true;
+                continue;
+            }
+
+            // Extinct species have a durable zero-count far record rather than an empty near
+            // membership. Treat that record as accounted for while restoring the region's
+            // active state from a save containing other, still-active species.
+            if (!world.TryGetFarPopulation(region.Id, species.SpeciesId, out var far)
+                || far is null || far.Count != 0)
+                return false;
+        }
+
+        return hasActiveMembership;
     }
 }
