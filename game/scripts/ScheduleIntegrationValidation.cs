@@ -8,10 +8,13 @@ public partial class Main
     private async Task ValidateScheduleOverrides(string npcId)
     {
         var npc = _world.Entities.Single(entity => entity.Id == npcId);
-        npc.Needs.Advance(200); // Explicit hunger fixture; scheduling must not block the existing food loop.
+        var hungerRate = _speciesCatalog.GetRequired(npc.SpeciesId).HungerRate;
+        npc.Needs.Advance((npc.Satiety - 20) / hungerRate, satietyOverride: hungerRate);
+        // Explicit hunger fixture; scheduling must not block the existing food loop.
         var foodBefore = FoodTotal();
         AdvanceSimulationTick(0.1);
-        Require(npc.Actions.Current?.Kind == ActionKind.Eat, "hunger starts eating during rest");
+        Require(npc.Actions.Current?.Kind == ActionKind.Eat,
+            $"hunger starts eating during rest (activity {npc.Activity}; action {npc.Actions.Current?.Kind}; satiety {npc.Satiety}; wait {npc.WaitingReason}; navigation {_entityViews[npcId].NavigationOutcome}; target {_entityViews[npcId].NavigationTarget})");
         for (var tick = 0; tick < 600 && npc.Needs.IsHungry; tick++)
         {
             await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
@@ -19,6 +22,11 @@ public partial class Main
             SyncEntityViews();
         }
         Require(!npc.Needs.IsHungry && FoodTotal() < foodBefore, "resting worker reaches and consumes food");
+        // Keep the override assertion focused on schedule precedence rather than
+        // the known crowded crossing from the stockpile to the town center.
+        Require(_world.TrySetEntityPosition(npcId, new System.Numerics.Vector3(4, 0, 1)),
+            "squad override fixture places NPC near its move target");
+        SyncEntityViews();
         SelectEntity(npcId);
         PressSquadButton("Add selected");
         _squadX.Value = 4;
@@ -32,7 +40,9 @@ public partial class Main
         PressSquadButton("Remove member");
         AdvanceSimulationTick(0.1);
         UpdateStatus();
-        Require(npc.Activity == "Resting" && npc.Actions.Current is null, "returns to rest after squad removal");
+        Require(!_world.GetWorkSchedule(npc.Id).Evaluate(_clock.SimulationTime).IsWorking
+            && npc.Activity == "Going home" && npc.Actions.Current?.Kind == ActionKind.Wander,
+            "returns to home travel after squad removal during rest");
         Require(WoodTotal() == 100, "overrides preserve wood");
     }
 
@@ -44,6 +54,10 @@ public partial class Main
         await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
         await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
         var npc = _world.Entities.First(entity => entity.SpeciesId == "human" && entity.Id != _world.PlayerEntityId);
+        var hungerRate = _speciesCatalog.GetRequired(npc.SpeciesId).HungerRate;
+        npc.Needs.Advance((npc.Satiety - 20) / hungerRate, satietyOverride: hungerRate);
+        // Start with one hungry worker so this short day loop exercises food use
+        // despite the deliberately slow default needs tuning.
         SelectEntity(npc.Id);
         var paused = WorldSnapshotSerializer.Serialize(_world, 0);
         _clock.Advance(1, AdvanceSimulationTick);

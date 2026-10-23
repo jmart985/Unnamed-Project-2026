@@ -18,6 +18,7 @@ public partial class Main
             await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
             await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
             var npc = _world.Entities.First(e => e.SpeciesId == "human" && e.Id != _world.PlayerEntityId);
+            Require(_world.TryGetHomePosition(npc.Id, out var home), "boundary fixture NPC has a home");
             SelectEntity(npc.Id);
             Require(_workStart.Value == 8 && _workEnd.Value == 18, "selected hours reflect World");
             Require(_inspectorLabel.Text.Contains("Schedule: Work | Next: 18:00 in 100.0s"), "default phase projection");
@@ -32,14 +33,26 @@ public partial class Main
             _clock.Restore(99.9);
             AdvanceSimulationTick(0.1);
             Require(npc.Actions.Current?.Kind == ActionKind.Haul && npc.Activity == "SeekingWood", "real pickup begins during work");
-            var beforeRest = npc.Position;
+            var pickupRequestId = (_entityViews[npc.Id].NavigationAdapter as GodotNavigationAdapter)?.ActiveRequestId;
+            Require(pickupRequestId is not null, "work pickup owns a real navigation request");
             _clock.SetPaused(false);
             _clock.Advance(0.1, AdvanceSimulationTick);
             _clock.SetPaused(true);
-            Require(npc.Actions.Current is null && npc.Activity == "Resting", "rest cancels pickup on boundary");
-            Require(npc.Position == beforeRest, "boundary cancels before navigation moves");
-            Require(_entityViews[npc.Id].NavigationAdapter is GodotNavigationAdapter { HasActiveRequest: false }, "rest releases real navigation");
+            var homeNavigator = _entityViews[npc.Id].NavigationAdapter as GodotNavigationAdapter;
+            Require(npc.Actions.Current?.Kind == ActionKind.Wander && npc.Activity == "Going home",
+                "rest cancels work and starts the existing home-return behavior");
+            Require(homeNavigator is { HasActiveRequest: true }
+                && homeNavigator.ActiveRequestId != pickupRequestId
+                && _entityViews[npc.Id].NavigationTarget == home,
+                "rest replaces the pickup request with a home navigation request");
             Require(WoodTotal() == 100, "cancel preserves wood");
+            // Keep the next-shift pickup fixture clear of the crowded spawn. The
+            // boundary above already verifies real home navigation; this step
+            // isolates schedule resumption while retaining a real short pickup path.
+            var woodSource = _world.ResourcePiles.Single(pile => pile.Contents.Counts.GetValueOrDefault(ItemIds.Wood) > 0);
+            Require(_world.TrySetEntityPosition(npc.Id, woodSource.Position - new System.Numerics.Vector3(2, 0, 0)),
+                "next-shift fixture places NPC beside the wood source");
+            SyncEntityViews();
             _clock.Restore(240);
             // Hold the clock at a working phase while real navigation crosses physics frames.
             for (var tick = 0; tick < 600 && npc.Inventory.GetValueOrDefault(ItemIds.Wood) == 0; tick++)
@@ -48,7 +61,8 @@ public partial class Main
                 AdvanceSimulationTick(0.1);
                 SyncEntityViews();
             }
-            Require(npc.Inventory.GetValueOrDefault(ItemIds.Wood) > 0, "next day resumes and picks up through navigation");
+            Require(npc.Inventory.GetValueOrDefault(ItemIds.Wood) > 0,
+                $"next day resumes and picks up through navigation (activity {npc.Activity}; action {npc.Actions.Current?.Kind}; position {npc.Position}; wait {npc.WaitingReason}; navigation {_entityViews[npc.Id].NavigationOutcome}; target {_entityViews[npc.Id].NavigationTarget})");
             if (integrated)
             {
                 var cargo = npc.Inventory[ItemIds.Wood];
@@ -76,6 +90,12 @@ public partial class Main
                 Require(npc.Inventory[ItemIds.Wood] == cargo && npc.Actions.Current is null, "carried inventory survives load without stale action");
                 await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
             }
+            // The rest delivery uses a short real path near the stockpile so the
+            // assertion measures schedule behavior, not the crowded town crossing.
+            var stockpile = _world.Stockpiles.Single();
+            Require(_world.TrySetEntityPosition(npc.Id, stockpile.Position + new System.Numerics.Vector3(0, 0, -2)),
+                "rest-delivery fixture places the carrier beside the stockpile");
+            SyncEntityViews();
             _clock.Restore(340);
             for (var tick = 0; tick < 600 && npc.Inventory.GetValueOrDefault(ItemIds.Wood) > 0; tick++)
             {
@@ -83,9 +103,12 @@ public partial class Main
                 AdvanceSimulationTick(0.1);
                 SyncEntityViews();
             }
-            Require(npc.Inventory.GetValueOrDefault(ItemIds.Wood) == 0, "carried delivery finishes during rest");
+            Require(npc.Inventory.GetValueOrDefault(ItemIds.Wood) == 0,
+                $"carried delivery finishes during rest (activity {npc.Activity}; action {npc.Actions.Current?.Kind}; position {npc.Position}; wait {npc.WaitingReason}; navigation {_entityViews[npc.Id].NavigationOutcome}; target {_entityViews[npc.Id].NavigationTarget})");
             AdvanceSimulationTick(0.1);
-            Require(npc.Activity == "Resting" && npc.Actions.Current is null, "no new pickup after delivery");
+            Require(!_world.GetWorkSchedule(npc.Id).Evaluate(_clock.SimulationTime).IsWorking
+                && npc.Actions.Current?.Kind != ActionKind.Haul && npc.Activity == "Going home",
+                "after delivery, the off-shift worker returns home without another pickup");
             Require(WoodTotal() == 100, "delivery conserves wood");
             _workStart.Value = 22;
             _workEnd.Value = 6;

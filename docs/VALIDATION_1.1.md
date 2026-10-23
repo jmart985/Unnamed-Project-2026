@@ -18,11 +18,19 @@ Selected target: #200. Feature: #380 / PR #382, accepted on main `26288f5`. Inte
 | Squad engine regression | Exit 0, `SQUAD VALIDATION PASSED`; schema 10 load |
 | Diff whitespace | `git diff --check` passed |
 
+## Current boundary repair (#451, 2026-10-23)
+
+The original engine assertion expected the NPC to become idle as `Resting` at the boundary. The current schedule behavior instead cancels the haul and starts the existing home-return trip, so the integration now checks that the haul request is replaced by a distinct home navigation request before later work can resume. To keep the rest of the gate focused and repeatable, its next-shift pickup and rest-time delivery use short real navigation paths near the source and stockpile, and the squad-override check uses a short path near its target rather than the crowded town crossing.
+
+The natural-day case primes one NPC at satiety 20 to exercise hunger and eating during the 240-second schedule loop. With the current slow default needs tuning, a fresh NPC would not become hungry during that short loop. The current engine check exits 0 with both schedule markers; it records 399 food remaining, 1 consumed and 100 wood. This is a prepared hunger-response check, not a claim about hunger depletion from normal starting needs in one game day.
+
+Current verification: Release solution build and Debug game build succeeded with zero warnings/errors; **634 Simulation.Tests passed**. Godot 4.7.2 Mono `--validate-schedules` exited 0 with `SCHEDULE VALIDATION PASSED`; `--validate-schedule-integration` exited 0 with both schedule markers.
+
 The combined domain scenario advances the actual fixed-step clock through work at 99.9s, rest at 100s, next-day work at 240s and rest at 340s. A pickup cancels and releases reservations at rest. Hungry NPCs reach and consume reserved food during rest; squad movement also overrides rest. A carried delivery is preempted by a squad order, later interrupted by hunger, saved with an active delivery, and restored. Invalid schedule hours preserve both the durable world and active action. Valid load cancels stale navigation, retains cargo, and resumes delivery during rest without another pickup. Final wood is 100, food is 398; the final durable state is identical across both executions.
 
 The engine gate exercises the same inspector button handlers used in play. It validates invalid/equal hours, edits and loaded controls, boundary cancellation before movement, next-day real navigation and delivery during rest. Saving while carrying retains cargo and removes stale navigation on valid load; invalid load preserves the old active request. The hungry worker then reaches food using real navigation, follows a direct squad order while its inspector still reports Rest, and returns to resting after squad removal.
 
-A fresh seed-42 session runs the full simulation, including needs/food/hauling/creatures, through a complete day using the existing 4x button and fixed-step clock. Pause preserves complete world state; every supplied 0.1s frame advances four ticks. Every frame asserts wood conservation and food accounting, and every rest frame rejects empty pickup actions. At **240.4s**, work resumes with **389 food remaining + 11 consumed = 400** and **100 wood stored**. Headless and rendered runs report the same totals. Boundary fixtures used in the focused scenario are separate from this natural-clock scenario.
+The original 2026-10-03 seed-42 run reported 389 food remaining plus 11 consumed at 240.4 seconds. The current audit uses an explicitly hungry worker for its bounded day check and reports 399 remaining plus 1 consumed; this newer result is the current validation evidence. Pause preserves complete world state; each supplied 0.1-second frame advances four ticks, every frame asserts wood conservation and food accounting, and every rest frame rejects empty pickup actions. Boundary navigation fixtures remain separate from the natural clock loop.
 
 ## Reproduce
 
