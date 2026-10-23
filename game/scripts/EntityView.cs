@@ -12,6 +12,7 @@ public partial class EntityView : CharacterBody3D
     private bool _isCreature;
     private string _speciesId = string.Empty;
     private string _bodyCategory = string.Empty;
+    private InteractionAnchorDefinition _anchorDefinition = InteractionAnchorDefinition.Empty;
     private CreatureBodyPlan _bodyPlan;
     private Node3D? _rig;
     private ProceduralGait? _gait;
@@ -49,6 +50,17 @@ public partial class EntityView : CharacterBody3D
     public NumericsVector3? NavigationTarget => _navigationAdapter?.LastTarget;
     public INavigationAdapter NavigationAdapter
         => _navigationAdapter ?? throw new InvalidOperationException("The entity view is not ready for navigation.");
+
+    public SemanticAnchorResolution ResolveAnchor(SemanticAnchorKind kind, string anchorId)
+    {
+        if (_rig is null)
+        {
+            return new SemanticAnchorResolution(SemanticAnchorResolutionStatus.Missing, null,
+                "The entity model is not ready.");
+        }
+
+        return SemanticAnchorResolver.Resolve(_rig, _anchorDefinition, kind, anchorId);
+    }
 
     public override void _Ready()
     {
@@ -438,7 +450,8 @@ public partial class EntityView : CharacterBody3D
 
     public override void _PhysicsProcess(double delta) => _navigationAdapter?.RefreshPath();
 
-    public void Bind(string entityId, float movementSpeed, bool isCreature = false, string? speciesId = null, string? bodyCategory = null)
+    public void Bind(string entityId, float movementSpeed, bool isCreature = false, string? speciesId = null,
+        string? bodyCategory = null, InteractionAnchorDefinition? anchorDefinition = null)
     {
         if (!float.IsFinite(movementSpeed) || movementSpeed <= 0) throw new ArgumentOutOfRangeException(nameof(movementSpeed));
         EntityId = entityId;
@@ -446,6 +459,7 @@ public partial class EntityView : CharacterBody3D
         _isCreature = isCreature;
         _speciesId = speciesId ?? (isCreature ? "creature" : "human");
         _bodyCategory = bodyCategory ?? (isCreature ? "quadruped" : "humanoid");
+        _anchorDefinition = anchorDefinition ?? InteractionAnchorDefinition.Empty;
         _bodyPlan = CreatureBodyPlanResolver.Resolve(_bodyCategory, _isCreature);
     }
 
