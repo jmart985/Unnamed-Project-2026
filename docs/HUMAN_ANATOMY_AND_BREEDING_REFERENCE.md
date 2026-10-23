@@ -22,22 +22,22 @@ The axial skeleton supports the upright body and protects the brain, spinal cord
 
 The detailed regions below are the proposed semantic anatomy for a future health and equipment expansion. They are not the current runtime or save identifiers. The current `CharacterHealth.CreateHumanoid` contract remains authoritative and contains exactly `Head`, `Torso`, `LeftArm`, `RightArm`, `LeftLeg`, and `RightLeg`, in that order. Existing combat and save/load code requires those names and count. A later issue must define a versioned migration and compatibility tests before any detailed region is added to live saves.
 
-Future migration target:
+Future migration target (lowercase semantic region IDs; display labels may be title-cased):
 
 ```text
-Head
-Jaw
-Neck
-Torso
-Pelvis
+head
+jaw
+neck
+torso
+pelvis
 
-LeftClavicle / LeftShoulder
-LeftUpperArm / LeftLowerArm / LeftHand
-RightClavicle / RightShoulder
-RightUpperArm / RightLowerArm / RightHand
+clavicle_l / shoulder_l
+upper_arm_l / lower_arm_l / hand_l
+clavicle_r / shoulder_r
+upper_arm_r / lower_arm_r / hand_r
 
-LeftUpperLeg / LeftLowerLeg / LeftFoot / LeftToes
-RightUpperLeg / RightLowerLeg / RightFoot / RightToes
+upper_leg_l / lower_leg_l / foot_l / toes_l
+upper_leg_r / lower_leg_r / foot_r / toes_r
 ```
 
 This aligns with Humanoid Rig v1:
@@ -75,7 +75,8 @@ A breeding record may eventually contain:
 ```text
 parentAId
 parentBId
-parentSpeciesId
+parentASpeciesId
+parentBSpeciesId
 offspringSpeciesId
 lineage identifiers
 sex or body type
@@ -91,6 +92,8 @@ birth or hatch health
 ```
 
 These fields are separate concerns. A creature may have a valid visual rig while being infertile, pregnant, injured, diseased, too young, too old, or otherwise unable to produce offspring.
+
+Record each parent's species independently of the parent entity reference. This preserves lineage and the exact compatibility pairing if either parent entity is later removed or cannot be loaded.
 
 ### Trait categories
 
