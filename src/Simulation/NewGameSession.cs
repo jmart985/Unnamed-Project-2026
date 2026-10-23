@@ -6,6 +6,7 @@ public sealed class NewGameSession
 {
     public const int DefaultSeed = AntFarmScenario.DefaultSeed;
     public const int HumanNpcCount = 10;
+    public const float StarterCreatureTerritoryRadius = 35f;
     public static Vector3 TownWorkbenchPosition => Vector3.Zero;
     private static readonly (string SpeciesId, Vector3 Position)[] StarterCreatureSpawns =
     [
@@ -133,7 +134,10 @@ public sealed class NewGameSession
 
         foreach (var creature in StarterCreatureSpawns)
         {
-            world.SpawnEntity(catalog.GetRequired(creature.SpeciesId), creature.Position);
+            var entity = world.SpawnEntity(catalog.GetRequired(creature.SpeciesId), creature.Position);
+            if (world.SetWildTerritory(entity.Id, creature.Position, StarterCreatureTerritoryRadius)
+                != WildTerritoryResult.Accepted)
+                throw new InvalidOperationException($"Unable to assign starter territory to '{entity.Id}'.");
         }
 
         var player = world.SpawnEntity(catalog.GetRequired("human"), GetPlayerSpawnPosition(seed));

@@ -48,6 +48,7 @@ A systemic open-world colony RPG in which people and creatures share consistent 
 - [Playable construction and starter hut](docs/PLAYABLE_CONSTRUCTION.md)
 - [Basic Settlement integrated validation](docs/VALIDATION_0_4.md)
 - [Daily schedule integrated acceptance](docs/VALIDATION_1.1.md)
+- [Wild creature territory-return validation](docs/VALIDATION_1.2.md)
 - [First Real Game integrated validation](docs/VALIDATION_1_0.md)
 - [Work sequence and issue index](docs/BACKLOG.md)
 - [Contribution and AI workflow](CONTRIBUTING.md)

@@ -186,6 +186,115 @@ public sealed class WanderingServiceTests
         Assert.Null(entity.Actions.Current);
     }
 
+    [Fact]
+    public void WildRoamingStaysInsideAssignedTerritoryAndReturnsWhenDisplaced()
+    {
+        var world = new World();
+        var species = SpeciesCatalog.LoadFromFile(GetSpeciesDataPath()).GetRequired("wolf");
+        var wolf = world.SpawnEntity(species.Id, Vector3.Zero);
+        var territory = new WildTerritory(wolf.Id, Vector3.Zero, 8);
+        Assert.Equal(WildTerritoryResult.Accepted,
+            world.SetWildTerritory(wolf.Id, territory.Center, territory.Radius));
+        var navigator = new FakeNavigationAdapter();
+        var service = new WanderingService(world, _ => navigator, [new Vector3(100, 0, 100)]);
+
+        var roaming = service.Advance(wolf, species, simulationTick: 1);
+
+        Assert.Equal(WanderingStatus.Traveling, roaming.Status);
+        Assert.NotNull(roaming.Target);
+        Assert.True(territory.Contains(roaming.Target!.Value));
+
+        var roamRequest = navigator.Requests.Keys.Single();
+        world.TrySetEntityPosition(wolf.Id, new Vector3(10, 0, 0));
+        var returning = service.Advance(wolf, species, simulationTick: 2);
+
+        Assert.Equal(NavigationOutcome.Cancelled, navigator.Requests[roamRequest]);
+        Assert.Equal(WanderingStatus.ReturningToTerritory, returning.Status);
+        Assert.Equal(territory.Center, returning.Target);
+        Assert.Equal(ActionKind.Wander, wolf.Actions.Current?.Kind);
+        Assert.Equal(territory.Center, navigator.RequestTargets.Values.Last());
+
+        var returnRequest = navigator.Requests.Keys.Last();
+        Assert.True(navigator.CompleteAsArrived(returnRequest));
+        world.TrySetEntityPosition(wolf.Id, territory.Center);
+        var arrived = service.Advance(wolf, species, simulationTick: 3);
+
+        Assert.Equal(WanderingStatus.ReturnedToTerritory, arrived.Status);
+        Assert.Null(wolf.Actions.Current);
+        var resumedRoam = service.Advance(wolf, species, simulationTick: 4);
+        Assert.Equal(WanderingStatus.Traveling, resumedRoam.Status);
+        Assert.True(territory.Contains(resumedRoam.Target!.Value));
+    }
+
+    [Fact]
+    public void HungryWildCreatureInterruptsReturnAndResumesAfterEating()
+    {
+        var world = new World(new NeedsTuning(satietyDrainPerSecond: 2));
+        var species = SpeciesCatalog.LoadFromFile(GetSpeciesDataPath()).GetRequired("wolf");
+        var wolf = world.SpawnEntity(species.Id, new Vector3(10, 0, 0), satiety: 31);
+        world.SetWildTerritory(wolf.Id, Vector3.Zero, 8);
+        var navigator = new FakeNavigationAdapter();
+        var service = new WanderingService(world, _ => navigator, [Vector3.One]);
+
+        Assert.Equal(WanderingStatus.ReturningToTerritory,
+            service.Advance(wolf, species, simulationTick: 1).Status);
+        var returnRequest = navigator.Requests.Keys.Single();
+        wolf.Needs.Advance(1);
+
+        Assert.Equal(WanderingStatus.NeedsFood, service.Advance(wolf, species, simulationTick: 2).Status);
+        Assert.Equal(NavigationOutcome.Cancelled, navigator.Requests[returnRequest]);
+        Assert.Null(wolf.Actions.Current);
+
+        wolf.Needs.AddNutrition(50);
+        Assert.Equal(WanderingStatus.ReturningToTerritory,
+            service.Advance(wolf, species, simulationTick: 3).Status);
+        Assert.Equal(2, navigator.Requests.Count);
+    }
+
+    [Fact]
+    public void CapturedCreatureDoesNotReceiveForcedTerritoryReturn()
+    {
+        var world = new World();
+        var species = SpeciesCatalog.LoadFromFile(GetSpeciesDataPath()).GetRequired("wolf");
+        var wolf = world.SpawnEntity(species.Id, new Vector3(10, 0, 0));
+        world.SetWildTerritory(wolf.Id, Vector3.Zero, 8);
+        Assert.Equal(CreatureCaptureResult.Captured, world.TryCaptureCreature(wolf.Id));
+        var navigator = new FakeNavigationAdapter();
+        var service = new WanderingService(world, _ => navigator, [new Vector3(2, 0, 0)]);
+
+        var result = service.Advance(wolf, species, simulationTick: 1);
+
+        Assert.Equal(WanderingStatus.Traveling, result.Status);
+        Assert.Equal(new Vector3(2, 0, 0), result.Target);
+        Assert.NotEqual(Vector3.Zero, result.Target);
+    }
+
+    [Fact]
+    public void RepeatedTerritoryRouteFailuresDeferRetryAndClearAction()
+    {
+        var world = new World();
+        var species = SpeciesCatalog.LoadFromFile(GetSpeciesDataPath()).GetRequired("wolf");
+        var wolf = world.SpawnEntity(species.Id, new Vector3(10, 0, 0));
+        world.SetWildTerritory(wolf.Id, Vector3.Zero, 8);
+        var navigator = new FakeNavigationAdapter();
+        var service = new WanderingService(world, _ => navigator, [Vector3.One]);
+
+        Assert.Equal(WanderingStatus.ReturningToTerritory,
+            service.Advance(wolf, species, simulationTick: 1).Status);
+        var firstRequest = navigator.Requests.Keys.Single();
+        Assert.True(navigator.MarkUnreachable(firstRequest));
+        var failed = service.Advance(wolf, species, simulationTick: 2);
+        Assert.Equal(WanderingStatus.Waiting, failed.Status);
+        Assert.Contains("retry deferred", failed.WaitingReason, StringComparison.OrdinalIgnoreCase);
+        Assert.Null(wolf.Actions.Current);
+        Assert.Equal(WanderingStatus.Waiting, service.Advance(wolf, species, simulationTick: 11).Status);
+        Assert.Single(navigator.Requests);
+
+        Assert.Equal(WanderingStatus.ReturningToTerritory,
+            service.Advance(wolf, species, simulationTick: 12).Status);
+        Assert.Equal(2, navigator.Requests.Count);
+    }
+
     private static SpeciesDefinition GetCreatureSpecies()
     {
         return SpeciesCatalog.LoadFromFile(GetSpeciesDataPath()).GetRequired("creature");
