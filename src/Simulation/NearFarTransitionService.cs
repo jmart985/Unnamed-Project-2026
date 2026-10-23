@@ -86,10 +86,35 @@ public sealed class NearFarTransitionService
             .Cast<EntityRecord>()
             .ToArray();
         var survivors = entities.Where(entity => !entity.Health.IsDead).ToArray();
+        var aggregated = survivors.Where(entity => !HasDurableIndividualProgress(entity)).ToArray();
+        var aggregatedIds = aggregated.Select(entity => entity.Id).ToHashSet(StringComparer.Ordinal);
         _world.RemoveNearPopulation(regionId, speciesId);
-        _world.SetFarPopulation(new FarEntityRecord(regionId, speciesId, survivors.Length,
-            survivors.Length > 0 ? survivors.Average(entity => entity.Satiety) : 0, near.Resources));
-        foreach (var entity in entities) _world.TryRemoveEntity(entity.Id);
+        _world.SetFarPopulation(new FarEntityRecord(regionId, speciesId, aggregated.Length,
+            aggregated.Length > 0 ? aggregated.Average(entity => entity.Satiety) : 0, near.Resources));
+        foreach (var entity in entities)
+            if (entity.Health.IsDead || aggregatedIds.Contains(entity.Id))
+                _world.TryRemoveEntity(entity.Id);
         return true;
+    }
+
+    private bool HasDurableIndividualProgress(EntityRecord entity)
+    {
+        if (entity.CaptivityState != CreatureCaptivityState.Wild
+            || entity.AllegianceFactionId is not null
+            || entity.Inventory.Count > 0
+            || entity.EquippedTool is not null
+            || entity.Parent1Id is not null
+            || entity.Parent2Id is not null
+            || entity.SleepState != SleepState.Awake
+            || entity.BedId is not null
+            || _world.SquadMemberIds.Contains(entity.Id, StringComparer.Ordinal))
+            return true;
+
+        return _world.Relationships.Any(relationship =>
+                   (relationship.ObserverEntityId == entity.Id || relationship.TargetEntityId == entity.Id)
+                   && (relationship.Familiarity != 0 || relationship.Trust != 0
+                       || relationship.Fear != 0 || relationship.Loyalty != 0))
+               || _world.FactionReputations.Any(reputation =>
+                   reputation.EntityId == entity.Id && reputation.Value != 0);
     }
 }

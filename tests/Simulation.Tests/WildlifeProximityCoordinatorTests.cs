@@ -76,6 +76,86 @@ public sealed class WildlifeProximityCoordinatorTests
     }
 
     [Fact]
+    public void RestoredActiveRegionRecognizesExtinctSpeciesWithZeroCountFarRecord()
+    {
+        var species = Species;
+        var regions = Regions(species);
+        var session = NewGameSession.Create(species, PlayerCharacterProfile.Create("Tester"), wildlifeRegions: regions,
+            startStarterWildlifeAsFar: true);
+        var world = session.World;
+        var region = Assert.Single(regions.Regions);
+        var coordinator = new WildlifeProximityCoordinator(world, species, regions);
+        coordinator.Update(region.Center);
+
+        var cow = Assert.Single(world.Entities, entity => entity.SpeciesId == "cow");
+        Assert.True(world.TryRemoveEntity(cow.Id));
+        var outside = region.Center + new Vector3(region.DeactivationRadius + 1, 0, 0);
+        coordinator.Update(outside);
+        Assert.Equal(0, world.FarPopulations.Single(record => record.SpeciesId == "cow").Count);
+
+        coordinator.Update(region.Center);
+        Assert.Equal(2, world.NearPopulations.Count);
+        Assert.Equal(0, world.FarPopulations.Single(record => record.SpeciesId == "cow").Count);
+
+        var restored = new World();
+        WorldSnapshotSerializer.Load(restored, WorldSnapshotSerializer.Serialize(world, 12), species);
+        var restoredCoordinator = new WildlifeProximityCoordinator(restored, species, regions);
+        restoredCoordinator.Update(outside);
+
+        Assert.Empty(restored.NearPopulations);
+        Assert.Equal(1, restored.FarPopulations.Single(record => record.SpeciesId == "ape").Count);
+        Assert.Equal(1, restored.FarPopulations.Single(record => record.SpeciesId == "wolf").Count);
+        Assert.Equal(0, restored.FarPopulations.Single(record => record.SpeciesId == "cow").Count);
+    }
+
+    [Fact]
+    public void DemotionPreservesIndividuallySignificantCreaturesAndTheirHistoryAcrossSaveLoad()
+    {
+        var species = Species;
+        var regions = Regions(species);
+        var session = NewGameSession.Create(species, PlayerCharacterProfile.Create("Tester"), wildlifeRegions: regions,
+            startStarterWildlifeAsFar: true);
+        var world = session.World;
+        var region = Assert.Single(regions.Regions);
+        var coordinator = new WildlifeProximityCoordinator(world, species, regions);
+        coordinator.Update(region.Center);
+        var player = Assert.Single(world.Entities, entity => entity.Id == session.PlayerEntityId);
+        var ape = Assert.Single(world.Entities, entity => entity.SpeciesId == "ape");
+        var wolf = Assert.Single(world.Entities, entity => entity.SpeciesId == "wolf");
+        Assert.Equal(RelationshipAdjustmentResult.Applied,
+            world.ApplyRelationshipAdjustment(ape.Id, player.Id, new(20, 10, 0, 0)));
+        Assert.Equal(CreatureCaptureResult.Captured, world.TryCaptureCreature(wolf.Id));
+
+        var outside = region.Center + new Vector3(region.DeactivationRadius + 1, 0, 0);
+        coordinator.Update(outside);
+        Assert.Empty(world.NearPopulations);
+        Assert.True(world.TryGetEntity(ape.Id, out var retainedApe));
+        Assert.True(world.TryGetEntity(wolf.Id, out var retainedWolf));
+        Assert.Equal(CreatureCaptivityState.Captured, retainedWolf!.CaptivityState);
+        Assert.True(world.TryGetRelationship(ape.Id, player.Id, out var relationship));
+        Assert.Equal(20, relationship!.Familiarity);
+        Assert.Equal(0, world.FarPopulations.Single(record => record.SpeciesId == "ape").Count);
+        Assert.Equal(0, world.FarPopulations.Single(record => record.SpeciesId == "wolf").Count);
+        Assert.Equal(1, world.FarPopulations.Single(record => record.SpeciesId == "cow").Count);
+
+        var restored = new World();
+        WorldSnapshotSerializer.Load(restored, WorldSnapshotSerializer.Serialize(world, 12), species);
+        Assert.True(restored.TryGetEntity(ape.Id, out _));
+        Assert.True(restored.TryGetEntity(wolf.Id, out var restoredWolf));
+        Assert.Equal(CreatureCaptivityState.Captured, restoredWolf!.CaptivityState);
+        Assert.True(restored.TryGetRelationship(ape.Id, player.Id, out var restoredRelationship));
+        Assert.Equal(20, restoredRelationship!.Familiarity);
+
+        var restoredCoordinator = new WildlifeProximityCoordinator(restored, species, regions);
+        var activated = restoredCoordinator.Update(region.Center);
+        Assert.Single(activated.ActivatedEntityIds);
+        Assert.Single(restored.Entities, entity => entity.SpeciesId == "ape");
+        Assert.Single(restored.Entities, entity => entity.SpeciesId == "wolf");
+        Assert.Equal(CreatureCaptivityState.Captured,
+            Assert.Single(restored.Entities, entity => entity.SpeciesId == "wolf").CaptivityState);
+    }
+
+    [Fact]
     public void RejectsInvalidRegionBoundsAndUnknownSpecies()
     {
         var species = Species;
