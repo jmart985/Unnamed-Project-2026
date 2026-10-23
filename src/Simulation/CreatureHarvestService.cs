@@ -1,6 +1,6 @@
 namespace Simulation;
 
-public enum CreatureHarvestStatus { Harvested, InvalidEntity, InvalidAmount }
+public enum CreatureHarvestStatus { Harvested, InvalidEntity, InvalidAmount, NotDefeated }
 
 public sealed record CreatureHarvestResult(CreatureHarvestStatus Status, FoodSource? Carcass = null, int MeatUnits = 0);
 
@@ -12,6 +12,9 @@ public static class CreatureHarvestService
         ArgumentNullException.ThrowIfNull(world);
         ArgumentNullException.ThrowIfNull(creature);
         if (meatUnits <= 0) return new(CreatureHarvestStatus.InvalidAmount);
+        if (!world.TryGetEntity(creature.Id, out var liveCreature) || !ReferenceEquals(creature, liveCreature))
+            return new(CreatureHarvestStatus.InvalidEntity);
+        if (!creature.Health.IsDead) return new(CreatureHarvestStatus.NotDefeated);
         if (!world.TryRemoveEntity(creature.Id)) return new(CreatureHarvestStatus.InvalidEntity);
 
         var contents = new ResourceContainer($"carcass-{creature.Id}", meatUnits);

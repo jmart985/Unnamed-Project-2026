@@ -25,7 +25,7 @@ public sealed class FirstGameIntegrationTests
         var hauling = new WoodHaulingService(world, e => navigators[e.Id]);
         var commands = new PlayerCommandBoundary(world, clock, new CreatureGreetingService(world, species, events));
         Assert.Equal(14, world.Entities.Count);
-        Assert.Equal(400, FoodTotal(world));
+        Assert.Equal(300, FoodTotal(world));
         Assert.Equal(100, WoodTotal(world));
         var initialSatiety = session.Player.Satiety;
         clock.Advance(1, seconds => { foreach (var entity in world.Entities) entity.Needs.Advance(seconds, satietyOverride: species.GetRequired(entity.SpeciesId).HungerRate); });
@@ -37,7 +37,7 @@ public sealed class FirstGameIntegrationTests
         var beforeEating = session.Player.Satiety;
         Assert.Equal(PlayerEatStatus.Ate, food.TryPlayerEat(source.Id).Status);
         Assert.Equal(Math.Min(100, beforeEating + session.Player.Needs.NutritionPerUnit), session.Player.Satiety);
-        Assert.Equal(399, FoodTotal(world));
+        Assert.Equal(299, FoodTotal(world));
         Assert.Equal(1, food.FoodUnitsConsumed);
 
         // Explicit unavailable and out-of-range sources reject without changing the World.
@@ -102,7 +102,7 @@ public sealed class FirstGameIntegrationTests
         clock.Restore(restoredTime);
         Assert.True(clock.IsPaused);
         Assert.Equal(saved, WorldSnapshotSerializer.Serialize(world, clock.SimulationTime));
-        Assert.Equal(399, FoodTotal(world));
+        Assert.Equal(299, FoodTotal(world));
         Assert.Equal(100, WoodTotal(world));
         Assert.Equal(2, world.SquadMemberIds.Count);
         Assert.Equal(SquadOrderKind.None, squad.Order);

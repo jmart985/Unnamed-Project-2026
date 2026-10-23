@@ -4,6 +4,7 @@ public enum ActionKind
 {
     Idle,
     Wander,
+    Hunt,
     Haul,
     Eat,
     SquadMove
@@ -52,6 +53,7 @@ public sealed class ActionCandidate
     {
         ActionKind.Eat => 300,
         ActionKind.SquadMove => 250,
+        ActionKind.Hunt => 225,
         ActionKind.Haul => 200,
         ActionKind.Wander => 100,
         ActionKind.Idle => 0,

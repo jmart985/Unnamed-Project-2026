@@ -102,6 +102,10 @@ public sealed class SpeciesCatalog
             if (!double.IsFinite(baseTrust) || baseTrust is < 0 or > 100)
                 throw new InvalidDataException($"Species '{id}' baseTrust must be finite and within [0, 100].");
             var anchors = ValidateAnchors(id, entry);
+            var preySpeciesIds = ValidatePreySpeciesIds(id, entry.PreySpeciesIds);
+            var carcassMeatUnits = entry.CarcassMeatUnits ?? 1;
+            if (carcassMeatUnits <= 0 || carcassMeatUnits > 1000)
+                throw new InvalidDataException($"Species '{id}' carcassMeatUnits must be within [1, 1000].");
             definitions.Add(new SpeciesDefinition(
                 id,
                 displayName,
@@ -124,8 +128,16 @@ public sealed class SpeciesCatalog
                 entry.IsDomestic ?? false,
                 entry.IsPredator ?? dietaryProfile == DietaryProfile.Carnivore,
                 baseTrust,
-                anchors));
+                anchors,
+                preySpeciesIds,
+                carcassMeatUnits));
         }
+
+        var knownSpeciesIds = ids;
+        foreach (var definition in definitions)
+        foreach (var preySpeciesId in definition.PreySpeciesIds)
+            if (!knownSpeciesIds.Contains(preySpeciesId))
+                throw new InvalidDataException($"Species '{definition.Id}' references unknown prey species ID '{preySpeciesId}'.");
 
         return new SpeciesCatalog(definitions);
     }
@@ -229,6 +241,22 @@ public sealed class SpeciesCatalog
         return diet;
     }
 
+    private static string[] ValidatePreySpeciesIds(string speciesId, string[]? preySpeciesIds)
+    {
+        if (preySpeciesIds is null || preySpeciesIds.Length == 0)
+            return Array.Empty<string>();
+
+        var uniqueIds = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var preySpeciesId in preySpeciesIds)
+        {
+            var validatedId = ValidateId(preySpeciesId);
+            if (!uniqueIds.Add(validatedId))
+                throw new InvalidDataException($"Species '{speciesId}' lists prey species ID '{validatedId}' more than once.");
+        }
+
+        return preySpeciesIds;
+    }
+
     private static TemperamentProfile ValidateTemperament(string speciesId, TemperamentData? temperament)
     {
         if (temperament is null)
@@ -330,6 +358,8 @@ public sealed class SpeciesCatalog
         public bool? IsDomestic { get; init; }
         public bool? IsPredator { get; init; }
         public double? BaseTrust { get; init; }
+        public string[]? PreySpeciesIds { get; init; }
+        public int? CarcassMeatUnits { get; init; }
         public string[]? AnatomyRegions { get; init; }
         public string[]? LocomotionAnchors { get; init; }
         public string[]? EquipmentAnchors { get; init; }

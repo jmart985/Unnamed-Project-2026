@@ -60,7 +60,7 @@ public sealed class NewGameSessionTests
         Assert.Equal(NewGameSession.CreatureCount, starterCreatures.Length);
         Assert.Equal(NewGameSession.HumanNpcCount + NewGameSession.CreatureCount + 1,
             session.World.Entities.Count);
-        Assert.Equal(4, session.World.FoodSources.Count);
+        Assert.Equal(3, session.World.FoodSources.Count);
         Assert.All(session.World.FoodSources, source => Assert.Equal(100, source.Contents.Counts.Values.Sum()));
         foreach (var speciesId in ExpectedStarterCreatureSpeciesIds)
         {
@@ -70,10 +70,21 @@ public sealed class NewGameSessionTests
             Assert.Equal(species.MovementSpeed, creature.BaseStats.MovementSpeed);
             Assert.Equal(species.Strength, creature.BaseStats.Strength);
             Assert.Equal(species.Endurance, creature.BaseStats.Endurance);
-            Assert.Contains(session.World.FoodSources, source =>
-                source.Contents.Counts.Any(item => item.Value > 0 && species.Eats(item.Key))
-                && Vector3.DistanceSquared(creature.Position, source.Position)
-                    <= species.SmellRange * species.SmellRange);
+            if (species.Id == "wolf")
+            {
+                Assert.True(species.IsPredator);
+                Assert.Contains("cow", species.PreySpeciesIds);
+                Assert.True(creature.Needs.IsHungry);
+                Assert.DoesNotContain(session.World.FoodSources, source =>
+                    source.Contents.Counts.GetValueOrDefault(ItemIds.Meat) > 0);
+            }
+            else
+            {
+                Assert.Contains(session.World.FoodSources, source =>
+                    source.Contents.Counts.Any(item => item.Value > 0 && species.Eats(item.Key))
+                    && Vector3.DistanceSquared(creature.Position, source.Position)
+                        <= species.SmellRange * species.SmellRange);
+            }
         }
         Assert.Equal(100, session.World.FoodSources.Single(source =>
             source.Contents.Counts.ContainsKey(ItemIds.Food)).Contents.Counts[ItemIds.Food]);

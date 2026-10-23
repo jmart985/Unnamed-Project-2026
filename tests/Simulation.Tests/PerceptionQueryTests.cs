@@ -14,7 +14,7 @@ public sealed class PerceptionQueryTests
         var nearer = AddFood(world, "food-b", new Vector3(1, 0, 0), ItemIds.Meat);
         AddFood(world, "food-a", new Vector3(-1, 0, 0), ItemIds.Meat);
         AddFood(world, "plant", new Vector3(0, 0, 1), ItemIds.Plant);
-        AddFood(world, "out-of-range", new Vector3(0, 0, 3.01f), ItemIds.Meat);
+        AddFood(world, "out-of-range", new Vector3(0, 0, 30.01f), ItemIds.Meat);
         AddFood(world, "depleted", new Vector3(0, 0, 0.5f), ItemIds.Meat, 0);
         var service = CreateService(world);
         var availableMeatBefore = farther.Contents.Counts[ItemIds.Meat];
@@ -38,7 +38,7 @@ public sealed class PerceptionQueryTests
         var farther = world.SpawnEntity("cow", new Vector3(0, 0, 3));
         var firstAtSameDistance = world.SpawnEntity("ape", new Vector3(1, 0, 0));
         var secondAtSameDistance = world.SpawnEntity("human", new Vector3(-1, 0, 0));
-        world.SpawnEntity("cow", new Vector3(0, 0, 3.1f));
+        world.SpawnEntity("cow", new Vector3(0, 0, 30.1f));
 
         var result = CreateService(world).FindNearbyEntities(observer.Id);
 
@@ -59,7 +59,7 @@ public sealed class PerceptionQueryTests
             new CreatureTrack("target-z", new Vector3(0, 0, 2), 2),
             new CreatureTrack("target-b", new Vector3(1, 0, 0), 1),
             new CreatureTrack(wolf.Id, Vector3.Zero, 0),
-            new CreatureTrack("target-far", new Vector3(0, 0, 3.01f), 3),
+            new CreatureTrack("target-far", new Vector3(0, 0, 30.01f), 3),
             new CreatureTrack("target-a", new Vector3(-1, 0, 0), 1)
         };
         var service = CreateService(world);

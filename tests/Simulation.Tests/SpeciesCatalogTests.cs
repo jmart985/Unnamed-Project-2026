@@ -70,7 +70,7 @@ public sealed class SpeciesCatalogTests
         Assert.Equal(1.0, wolf.Strength);
         Assert.Equal(1.1, wolf.Endurance);
         Assert.Equal(0.8, wolf.Dexterity);
-        Assert.Equal(3.0, wolf.SmellRange);
+        Assert.Equal(30.0, wolf.SmellRange);
         Assert.False(wolf.CanUseTools);
         Assert.False(wolf.CanOpenDoors);
         Assert.True(wolf.CanTrack);

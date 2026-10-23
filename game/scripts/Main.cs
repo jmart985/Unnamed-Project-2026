@@ -23,6 +23,7 @@ public partial class Main : Node3D
 	private readonly Dictionary<WorldTarget, MeshInstance3D> _resourceMarkers = [];
 	private readonly Dictionary<string, MeshInstance3D> _fireplaceViews = [];
 	private FoodConsumptionService? _foodConsumption;
+	private CreatureHuntingService? _creatureHunting;
 	private WanderingService? _wandering;
 	private WoodHaulingService? _woodHauling;
 	private SquadOrderService? _squad;
@@ -185,6 +186,8 @@ public partial class Main : Node3D
 			Callable.From(RunInteractionAnchorValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-wild-territories"))
 			Callable.From(RunWildTerritoryValidation).CallDeferred();
+		else if (OS.GetCmdlineUserArgs().Contains("--validate-wolf-hunting"))
+			Callable.From(RunWolfHuntingValidation).CallDeferred();
 	}
 
 	public override void _Process(double delta)
@@ -447,6 +450,7 @@ public partial class Main : Node3D
 		_navigationRegion.NavigationMesh = CreateNavigationMesh();
 
 		_foodConsumption = new FoodConsumptionService(_world, _speciesCatalog, GetNavigationAdapter);
+		_creatureHunting = new CreatureHuntingService(_world, _speciesCatalog, GetNavigationAdapter);
 		_wandering = new WanderingService(
 			_world,
 			GetNavigationAdapter,
@@ -500,6 +504,7 @@ public partial class Main : Node3D
 	private void ResetTransientServices()
 	{
 		_foodConsumption?.Reset();
+		_creatureHunting?.Reset();
 		_wandering?.Reset();
 		_woodHauling?.Reset();
 		_squad?.Reset();
@@ -619,6 +624,21 @@ public partial class Main : Node3D
 		UpdateInspector();
 	}
 
+	private void RemoveEntityPresentation(string entityId)
+	{
+		if (_entityViews.Remove(entityId, out var view))
+		{
+			view.CancelNavigation();
+			view.QueueFree();
+		}
+		if (_entityButtons.Remove(entityId, out var button)) button.QueueFree();
+		if (_selectedEntityId == entityId)
+		{
+			_selectedEntityId = null;
+			UpdateInspector();
+		}
+	}
+
 	private void SyncEntityViews()
 	{
 		foreach (var view in _entityViews.Values)
@@ -718,18 +738,42 @@ public partial class Main : Node3D
 
 	private void AdvanceFoodConsumption()
 	{
-		foreach (var entity in _world.Entities)
+		foreach (var entity in _world.Entities.ToArray())
 		{
 			if (string.Equals(entity.Id, _world.PlayerEntityId, StringComparison.Ordinal))
 			{
 				continue;
 			}
 
-			_foodConsumption!.Advance(
+			if (_creatureHunting!.IsHunting(entity.Id))
+			{
+				HandleHuntingResult(_creatureHunting.Advance(entity, _simulationTick));
+				continue;
+			}
+
+			var foodResult = _foodConsumption!.Advance(
 				entity,
 				_speciesCatalog.GetRequired(entity.SpeciesId),
 				_simulationTick);
+			if (foodResult.Status is FoodConsumptionStatus.Traveling or FoodConsumptionStatus.Ate)
+				continue;
+
+			HandleHuntingResult(_creatureHunting.Advance(entity, _simulationTick));
 		}
+	}
+
+	private void HandleHuntingResult(CreatureHuntingResult result)
+	{
+		if (result.Status != CreatureHuntingStatus.Harvested
+			|| result.TargetEntityId is not { } preyId
+			|| result.Carcass is not { } carcass)
+			return;
+
+		RemoveEntityPresentation(preyId);
+		AddResourceMarker(
+			new(TargetKind.Food, carcass.Id),
+			carcass.Position,
+			new Color(0.55f, 0.18f, 0.12f));
 	}
 
 	private void AdvanceWandering()
