@@ -41,6 +41,7 @@ public sealed class World
     private readonly HashSet<string> _squadMembers = new(StringComparer.Ordinal);
     private readonly Dictionary<string, NpcWorkSchedule> _workSchedules = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Vector3> _homePositions = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, WildTerritory> _wildTerritories = new(StringComparer.Ordinal);
     private readonly Dictionary<string, double> _treeRegrowthTimers = new(StringComparer.Ordinal);
     public IReadOnlyDictionary<string, double> TreeRegrowthTimers => _treeRegrowthTimers;
     internal void SetTreeRegrowthTimer(string treeId, double elapsed) => _treeRegrowthTimers[treeId] = elapsed;
@@ -52,6 +53,30 @@ public sealed class World
     public IReadOnlyCollection<NpcHomeSetting> HomePositions => Array.AsReadOnly(_homePositions
         .OrderBy(pair => pair.Key, StringComparer.Ordinal)
         .Select(pair => new NpcHomeSetting(pair.Key, pair.Value)).ToArray());
+    public IReadOnlyCollection<WildTerritory> WildTerritories => Array.AsReadOnly(_wildTerritories
+        .OrderBy(pair => pair.Key, StringComparer.Ordinal)
+        .Select(pair => pair.Value).ToArray());
+
+    public bool TryGetWildTerritory(string? entityId, out WildTerritory? territory) =>
+        _wildTerritories.TryGetValue(entityId ?? string.Empty, out territory);
+
+    public WildTerritoryResult SetWildTerritory(string? entityId, Vector3 center, float radius)
+    {
+        if (!TryGetEntity(entityId, out var entity) || entity is null)
+            return WildTerritoryResult.InvalidEntity;
+        if (!WildTerritory.IsValidGeometry(center, radius))
+            return WildTerritoryResult.InvalidGeometry;
+
+        var territory = new WildTerritory(entity.Id, center, radius);
+        if (_wildTerritories.TryGetValue(entity.Id, out var current) && current == territory)
+            return WildTerritoryResult.Unchanged;
+
+        _wildTerritories[entity.Id] = territory;
+        return WildTerritoryResult.Accepted;
+    }
+
+    public bool RemoveWildTerritory(string? entityId) =>
+        !string.IsNullOrWhiteSpace(entityId) && _wildTerritories.Remove(entityId);
 
     public bool HasDailySchedule(EntityRecord entity) => entity.SpeciesId == "human" && entity.Id != PlayerEntityId
         && TryGetEntity(entity.Id, out var owned) && ReferenceEquals(entity, owned);
@@ -743,6 +768,7 @@ public sealed class World
         _squadMembers.Remove(id);
         _workSchedules.Remove(id);
         _homePositions.Remove(id);
+        _wildTerritories.Remove(id);
         RemoveRelationshipsForEntity(id);
         RemoveFactionReputationsForEntity(id);
         entity.AllegianceFactionId = null;
@@ -803,6 +829,7 @@ public sealed class World
         _squadMembers.Clear();
         _workSchedules.Clear();
         _homePositions.Clear();
+        _wildTerritories.Clear();
         _relationships.Clear();
         _factionIds.Clear();
         _factionReputations.Clear();
@@ -975,6 +1002,9 @@ public sealed class World
             _workSchedules.Add(setting.EntityId, new(setting.StartHour, setting.EndHour));
         foreach (var home in snapshot.HomePositions!)
             _homePositions.Add(home.EntityId, home.Position);
+        foreach (var territory in snapshot.WildTerritories!)
+            _wildTerritories.Add(territory.EntityId,
+                new WildTerritory(territory.EntityId, territory.Center, territory.Radius));
     }
 
     internal static bool IsValidFactionId(string? factionId)

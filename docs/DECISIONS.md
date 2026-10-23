@@ -508,3 +508,11 @@ User reported only an obstacle at the expected workbench. Replace that legacy ce
 - Reason: Human anatomy and future breeding need enough semantic detail for injuries, equipment, body conditions, and lineage without coupling gameplay to an imported rig. Keeping the current six-region schema stable avoids silently invalidating combat or save restoration while the reference work remains non-runtime.
 - Consequence: This PR does not change health behavior, save schema, breeding, pregnancy, genetics, or hybrid generation. Any future region expansion must include a versioned save migration, an old-save compatibility path, deterministic tests, and an explicit mapping from visual bones to simulation regions. Breeding work must define supported species pairs and safe rejection for unknown or unsupported pairs before mutating state.
 - Revisit: When a concrete health-region migration or first playable breeding issue is scoped with schema/versioning, mapping, and deterministic acceptance tests.
+
+## D044 — Wild home territories are durable World-owned data (2026-10-23)
+
+- Status: Accepted for the Milestone 1.2 prototype.
+- Decision: Store an optional territory per entity in `World`, keyed by its stable entity ID and defined by a finite center and positive finite radius. Territory data is descriptive state only; behavior systems must separately check whether the entity is currently wild before using it. Removing an entity or resetting a World removes its territory. Persist it in snapshot schema 17; older supported snapshots migrate with no territory assigned.
+- Reason: Territory return needs a stable home area that survives save/load without coupling simulation state to a scene node, navigation path, or roaming service.
+- Consequence: Snapshot validation must reject unknown or duplicate territory owners and invalid geometry before applying any state. Territory assignment does not add roaming, capture policy, hunting, packs, or migration by itself.
+- Revisit: When the 1.2 territory-return and wolf hunting/feeding scenarios are integrated, or when world/region ownership replaces per-entity territory records.
