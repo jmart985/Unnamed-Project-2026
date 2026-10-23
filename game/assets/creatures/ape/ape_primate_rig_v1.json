@@ -34,12 +34,12 @@
     "hurt",
     "turn"
   ],
-  "interaction_anchors": [
-    "hand_l",
-    "hand_r",
-    "knuckle_l",
-    "knuckle_r"
-  ],
+  "interaction_anchors": {
+    "locomotion": ["anchor_root", "anchor_foot_l", "anchor_foot_r", "anchor_hand_l", "anchor_hand_r"],
+    "equipment": ["anchor_hand_l", "anchor_hand_r", "anchor_carry"],
+    "interaction": ["anchor_mouth", "anchor_anus", "anchor_genital", "anchor_hand_l", "anchor_hand_r"],
+    "breeding": ["anchor_genital"]
+  },
   "runtime_path": "game/assets/creatures/ape/ape_primate_rig_v1.glb",
   "fallback": "EntityView procedural primate body if the GLB is unavailable",
   "notes": "Broad-shouldered ape silhouette with long forelimbs, knuckle contacts, hands, feet, brow, muzzle, ears, and short tail."

@@ -33,6 +33,12 @@
   ],
   "required_bones_verified": true,
   "finger_bones_verified": true,
+  "interaction_anchors": {
+    "locomotion": ["anchor_root", "anchor_foot_l", "anchor_foot_r"],
+    "equipment": ["anchor_hand_l", "anchor_hand_r", "anchor_carry"],
+    "interaction": ["anchor_mouth", "anchor_anus", "anchor_genital", "anchor_urethral", "anchor_navel", "anchor_vaginal", "anchor_penile", "anchor_testicular", "anchor_breast_l", "anchor_breast_r", "anchor_hand_l", "anchor_hand_r"],
+    "breeding": ["anchor_genital", "anchor_urethral", "anchor_vaginal", "anchor_penile", "anchor_testicular", "anchor_breast_l", "anchor_breast_r"]
+  },
   "animation_clips": [
     "human_idle"
   ],

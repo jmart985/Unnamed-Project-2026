@@ -17,6 +17,11 @@
     "canAcceptFriendlyInteraction": false,
     "canHaul": true,
     "bodyCategory": "humanoid",
+    "anatomyRegions": ["head", "neck", "torso", "pelvis", "left_upper_arm", "left_lower_arm", "left_hand", "right_upper_arm", "right_lower_arm", "right_hand", "left_upper_leg", "left_lower_leg", "left_foot", "right_upper_leg", "right_lower_leg", "right_foot"],
+    "locomotionAnchors": ["anchor_root", "anchor_foot_l", "anchor_foot_r"],
+    "equipmentAnchors": ["anchor_hand_l", "anchor_hand_r", "anchor_carry"],
+    "interactionAnchors": ["anchor_mouth", "anchor_anus", "anchor_genital", "anchor_urethral", "anchor_navel", "anchor_vaginal", "anchor_penile", "anchor_testicular", "anchor_breast_l", "anchor_breast_r", "anchor_hand_l", "anchor_hand_r"],
+    "breedingAnchors": ["anchor_genital", "anchor_urethral", "anchor_vaginal", "anchor_penile", "anchor_testicular", "anchor_breast_l", "anchor_breast_r"],
     "temperament": { "boldness": 0.5, "aggression": 0.25, "fear": 0.5, "curiosity": 0.4, "sociability": 0.6, "territoriality": 0.2 }
   },
   {
@@ -37,6 +42,11 @@
     "canAcceptFriendlyInteraction": true,
     "canHaul": false,
     "bodyCategory": "quadruped",
+    "anatomyRegions": ["head", "neck", "torso", "front_leg_l", "front_leg_r", "rear_leg_l", "rear_leg_r", "tail"],
+    "locomotionAnchors": ["anchor_root", "anchor_front_foot_l", "anchor_front_foot_r", "anchor_rear_foot_l", "anchor_rear_foot_r"],
+    "equipmentAnchors": [],
+    "interactionAnchors": ["anchor_mouth", "anchor_anus", "anchor_genital"],
+    "breedingAnchors": ["anchor_genital"],
     "temperament": { "boldness": 0.3, "aggression": 0.15, "fear": 0.75, "curiosity": 0.3, "sociability": 0.5, "territoriality": 0.35 }
   },
   {
@@ -57,6 +67,11 @@
     "canAcceptFriendlyInteraction": true,
     "canHaul": true,
     "bodyCategory": "primate",
+    "anatomyRegions": ["head", "neck", "torso", "pelvis", "left_arm", "right_arm", "left_hand", "right_hand", "left_leg", "right_leg", "left_foot", "right_foot"],
+    "locomotionAnchors": ["anchor_root", "anchor_foot_l", "anchor_foot_r", "anchor_hand_l", "anchor_hand_r"],
+    "equipmentAnchors": ["anchor_hand_l", "anchor_hand_r", "anchor_carry"],
+    "interactionAnchors": ["anchor_mouth", "anchor_anus", "anchor_genital", "anchor_hand_l", "anchor_hand_r"],
+    "breedingAnchors": ["anchor_genital"],
     "temperament": { "boldness": 0.75, "aggression": 0.55, "fear": 0.3, "curiosity": 0.9, "sociability": 0.8, "territoriality": 0.65 }
   },
   {
@@ -79,6 +94,11 @@
     "canAcceptFriendlyInteraction": true,
     "canHaul": true,
     "bodyCategory": "ungulate",
+    "anatomyRegions": ["head", "neck", "torso", "front_leg_l", "front_leg_r", "rear_leg_l", "rear_leg_r", "tail", "udder"],
+    "locomotionAnchors": ["anchor_root", "anchor_front_hoof_l", "anchor_front_hoof_r", "anchor_rear_hoof_l", "anchor_rear_hoof_r"],
+    "equipmentAnchors": [],
+    "interactionAnchors": ["anchor_mouth", "anchor_anus", "anchor_genital", "anchor_udder", "anchor_teat_l", "anchor_teat_r"],
+    "breedingAnchors": ["anchor_genital", "anchor_udder", "anchor_teat_l", "anchor_teat_r"],
     "temperament": { "boldness": 0.35, "aggression": 0.1, "fear": 0.7, "curiosity": 0.25, "sociability": 0.9, "territoriality": 0.2 }
   },
   {
@@ -100,6 +120,11 @@
     "canAcceptFriendlyInteraction": false,
     "canHaul": false,
     "bodyCategory": "canid",
+    "anatomyRegions": ["head", "neck", "torso", "front_leg_l", "front_leg_r", "rear_leg_l", "rear_leg_r", "tail"],
+    "locomotionAnchors": ["anchor_root", "anchor_front_paw_l", "anchor_front_paw_r", "anchor_rear_paw_l", "anchor_rear_paw_r"],
+    "equipmentAnchors": [],
+    "interactionAnchors": ["anchor_mouth", "anchor_anus", "anchor_genital", "anchor_scent_gland"],
+    "breedingAnchors": ["anchor_genital"],
     "temperament": { "boldness": 0.85, "aggression": 0.75, "fear": 0.25, "curiosity": 0.65, "sociability": 0.45, "territoriality": 0.8 }
   }
 ]

@@ -101,6 +101,7 @@ public sealed class SpeciesCatalog
             var baseTrust = entry.BaseTrust ?? 0;
             if (!double.IsFinite(baseTrust) || baseTrust is < 0 or > 100)
                 throw new InvalidDataException($"Species '{id}' baseTrust must be finite and within [0, 100].");
+            var anchors = ValidateAnchors(id, entry);
             definitions.Add(new SpeciesDefinition(
                 id,
                 displayName,
@@ -122,7 +123,8 @@ public sealed class SpeciesCatalog
                 entry.CanAcceptFriendlyInteraction ?? false,
                 entry.IsDomestic ?? false,
                 entry.IsPredator ?? dietaryProfile == DietaryProfile.Carnivore,
-                baseTrust));
+                baseTrust,
+                anchors));
         }
 
         return new SpeciesCatalog(definitions);
@@ -265,6 +267,25 @@ public sealed class SpeciesCatalog
         return value;
     }
 
+    private static InteractionAnchorDefinition ValidateAnchors(string speciesId, SpeciesData entry)
+    {
+        try
+        {
+            var anchors = new InteractionAnchorDefinition(
+                entry.AnatomyRegions,
+                entry.LocomotionAnchors,
+                entry.EquipmentAnchors,
+                entry.InteractionAnchors,
+                entry.BreedingAnchors);
+
+            return anchors;
+        }
+        catch (ArgumentException exception)
+        {
+            throw new InvalidDataException($"Species '{speciesId}' has invalid interaction anchors: {exception.Message}", exception);
+        }
+    }
+
     private static DietaryProfile InferDietaryProfile(IEnumerable<string> diet)
     {
         var plant = diet.Any(ItemIds.IsPlantFood);
@@ -309,6 +330,11 @@ public sealed class SpeciesCatalog
         public bool? IsDomestic { get; init; }
         public bool? IsPredator { get; init; }
         public double? BaseTrust { get; init; }
+        public string[]? AnatomyRegions { get; init; }
+        public string[]? LocomotionAnchors { get; init; }
+        public string[]? EquipmentAnchors { get; init; }
+        public string[]? InteractionAnchors { get; init; }
+        public string[]? BreedingAnchors { get; init; }
         public TemperamentData? Temperament { get; init; }
     }
 

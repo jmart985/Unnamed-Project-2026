@@ -32,13 +32,12 @@
     "hurt",
     "turn"
   ],
-  "interaction_anchors": [
-    "head",
-    "jaw",
-    "paw_l",
-    "paw_r",
-    "tail_04"
-  ],
+  "interaction_anchors": {
+    "locomotion": ["anchor_root", "anchor_front_paw_l", "anchor_front_paw_r", "anchor_rear_paw_l", "anchor_rear_paw_r"],
+    "equipment": [],
+    "interaction": ["anchor_mouth", "anchor_anus", "anchor_genital"],
+    "breeding": ["anchor_genital"]
+  },
   "runtime_path": "game/assets/creatures/cat/cat_felid_rig_v1.glb",
   "fallback": "EntityView procedural felid body if the GLB is unavailable",
   "notes": "Compact feline silhouette with flexible torso, short muzzle, triangular ears, articulated paws, and long balancing tail."

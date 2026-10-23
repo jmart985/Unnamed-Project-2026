@@ -54,6 +54,12 @@
     "eye_l",
     "eye_r"
   ],
+  "interaction_anchors": {
+    "locomotion": ["anchor_root", "anchor_front_paw_l", "anchor_front_paw_r", "anchor_rear_paw_l", "anchor_rear_paw_r"],
+    "equipment": [],
+    "interaction": ["anchor_mouth", "anchor_anus", "anchor_genital", "anchor_scent_gland"],
+    "breeding": ["anchor_genital"]
+  },
   "animations": [
     "idle",
     "walk",
