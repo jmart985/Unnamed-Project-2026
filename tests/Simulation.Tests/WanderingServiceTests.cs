@@ -119,6 +119,58 @@ public sealed class WanderingServiceTests
     }
 
     [Fact]
+    public void ReassignedActionCancelsNavigationAndAllowsWanderingToResumeLater()
+    {
+        var world = new World();
+        var species = GetCreatureSpecies();
+        var navigator = new FakeNavigationAdapter();
+        var service = new WanderingService(world, _ => navigator, [new Vector3(2, 0, 0)]);
+        var creature = world.SpawnEntity(species.Id, Vector3.Zero);
+
+        var started = service.Advance(creature, species);
+        var requestId = navigator.Requests.Keys.Single();
+        var replaced = creature.Actions.TryStart(new ActionCandidate("eat-creature", ActionKind.Eat));
+
+        var blocked = service.Advance(creature, species);
+
+        Assert.Equal(ActionStartResult.Preempted, replaced);
+        Assert.Equal(WanderingStatus.ActionRejected, blocked.Status);
+        Assert.Equal("eat-creature", creature.Actions.Current?.Id);
+        Assert.Equal(NavigationOutcome.Cancelled, navigator.Poll(requestId, 0));
+
+        creature.Actions.Cancel();
+        var resumed = service.Advance(creature, species);
+
+        Assert.Equal(WanderingStatus.Traveling, resumed.Status);
+        Assert.NotEqual(requestId, navigator.Requests.Keys.Last());
+        Assert.Equal(ActionKind.Wander, creature.Actions.Current?.Kind);
+    }
+
+    [Fact]
+    public void ResetCancelsActiveNavigationAndClearsDeterministicTripState()
+    {
+        var world = new World();
+        var species = GetCreatureSpecies();
+        var navigator = new FakeNavigationAdapter();
+        var goals = new[] { new Vector3(2, 0, 0), new Vector3(-2, 0, 0) };
+        var service = new WanderingService(world, _ => navigator, goals, decisionSeed: 42);
+        var creature = world.SpawnEntity(species.Id, Vector3.Zero);
+
+        var firstTrip = service.Advance(creature, species, simulationTick: 7);
+        var firstRequestId = navigator.Requests.Keys.Single();
+        service.Reset();
+
+        Assert.Equal(NavigationOutcome.Cancelled, navigator.Poll(firstRequestId, 0));
+        Assert.Null(creature.Actions.Current);
+
+        var afterReset = service.Advance(creature, species, simulationTick: 7);
+
+        Assert.Equal(WanderingStatus.Traveling, afterReset.Status);
+        Assert.Equal(firstTrip.Target, afterReset.Target);
+        Assert.Equal(ActionKind.Wander, creature.Actions.Current?.Kind);
+    }
+
+    [Fact]
     public void HumanCannotUseCreatureWanderingService()
     {
         var world = new World();

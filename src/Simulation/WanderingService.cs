@@ -103,7 +103,7 @@ public sealed class WanderingService : ITransientSimulationState
         {
             if (entity.Actions.Current?.Id != activeTrip.ActionId)
             {
-                _activeTrips.Remove(entity.Id);
+                CancelTrip(entity);
             }
             else
             {

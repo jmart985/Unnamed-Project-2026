@@ -66,7 +66,7 @@ public partial class Main
                 catch (InvalidDataException) { }
                 Require(WorldSnapshotSerializer.Serialize(_world, _clock.SimulationTime) == carrying, "invalid hours preserve carried snapshot");
                 Require(_entityViews[npc.Id].NavigationAdapter is GodotNavigationAdapter { HasActiveRequest: true }, "invalid load preserves delivery navigation");
-                var carryingTime = WorldSnapshotSerializer.Load(_world, carrying, _speciesCatalog, _foodConsumption!, _wandering!, _woodHauling!, _wander!, _squad!);
+                var carryingTime = WorldSnapshotSerializer.Load(_world, carrying, _speciesCatalog, _foodConsumption!, _wandering!, _woodHauling!, _squad!);
                 _clock.Restore(carryingTime);
                 Require(_entityViews[npc.Id].NavigationAdapter is GodotNavigationAdapter { HasActiveRequest: false }, "valid load cancels old delivery navigation");
                 var npcId = npc.Id;
@@ -91,7 +91,7 @@ public partial class Main
             _workEnd.Value = 6;
             _applySchedule.EmitSignal(BaseButton.SignalName.Pressed);
             var json = WorldSnapshotSerializer.Serialize(_world, _clock.SimulationTime);
-            var time = WorldSnapshotSerializer.Load(_world, json, _speciesCatalog, _foodConsumption!, _wandering!, _woodHauling!, _wander!, _squad!);
+            var time = WorldSnapshotSerializer.Load(_world, json, _speciesCatalog, _foodConsumption!, _wandering!, _woodHauling!, _squad!);
             _clock.Restore(time);
             RebuildPresentationFromWorld();
             SelectEntity(npc.Id);

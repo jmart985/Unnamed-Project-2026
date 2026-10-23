@@ -11,15 +11,6 @@ public partial class Main : Node3D
 	private readonly SimulationClock _clock = new();
 	private readonly SaveSlotStore _saveSlotStore = new();
 	private World _world = new();
-	private static readonly System.Numerics.Vector3[] CreatureWanderGoals =
-	[
-		new(70f, 0, 50f),
-		new(110f, 0, 80f),
-		new(150f, 0, 40f),
-		new(90f, 0, 140f),
-		new(-60f, 0, 150f),
-		new(-140f, 0, 90f)
-	];
 	private const float WorldHalfExtent = 200f;
 	private const float TownHalfExtent = 60f;
 	private static readonly float[] NavigationGridLines =
@@ -34,7 +25,6 @@ public partial class Main : Node3D
 	private FoodConsumptionService? _foodConsumption;
 	private WanderingService? _wandering;
 	private WoodHaulingService? _woodHauling;
-	private WanderService? _wander;
 	private SquadOrderService? _squad;
 	private SpinBox _squadX = null!;
 	private SpinBox _squadZ = null!;
@@ -468,7 +458,6 @@ public partial class Main : Node3D
 			],
 			_sessionSeed);
 		_woodHauling = new WoodHaulingService(_world, GetNavigationAdapter);
-		_wander = new WanderService(_world, GetNavigationAdapter);
 		_squad = new SquadOrderService(_world, GetNavigationAdapter);
 
 		RebuildResourceMarkersFromWorld();
@@ -511,7 +500,6 @@ public partial class Main : Node3D
 		_foodConsumption?.Reset();
 		_wandering?.Reset();
 		_woodHauling?.Reset();
-		_wander?.Reset();
 		_squad?.Reset();
 	}
 
@@ -756,13 +744,6 @@ public partial class Main : Node3D
 				entity,
 				_speciesCatalog.GetRequired(entity.SpeciesId),
 				_simulationTick);
-			var species = _speciesCatalog.GetRequired(entity.SpeciesId);
-			if (species.CanHaul)
-			{
-				continue;
-			}
-
-			_wander!.Advance(entity, species, CreatureWanderGoals);
 		}
 	}
 
@@ -1044,7 +1025,6 @@ public partial class Main : Node3D
 				_foodConsumption!,
 				_wandering!,
 				_woodHauling!,
-				_wander!,
 				_squad!);
 			_clock.Restore(restoredTime);
 			_simulationTick = checked((long)Math.Round(
