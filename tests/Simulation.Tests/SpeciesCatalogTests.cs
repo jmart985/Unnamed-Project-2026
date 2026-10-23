@@ -23,6 +23,7 @@ public sealed class SpeciesCatalogTests
         Assert.Equal(1.0, human.Endurance);
         Assert.Equal(1.0, human.Dexterity);
         Assert.Equal(1.0, human.SmellRange);
+        Assert.Equal(0, human.ThreatDetectionRange);
         Assert.True(human.CanUseTools);
         Assert.True(human.CanOpenDoors);
         Assert.False(human.CanTrack);
@@ -55,6 +56,7 @@ public sealed class SpeciesCatalogTests
         Assert.Equal(1.3, cow.Endurance);
         Assert.Equal(0.5, cow.Dexterity);
         Assert.Equal(1.4, cow.SmellRange);
+        Assert.Equal(18, cow.ThreatDetectionRange);
         Assert.False(cow.CanUseTools);
         Assert.False(cow.CanOpenDoors);
         Assert.False(cow.CanTrack);
@@ -383,6 +385,20 @@ public sealed class SpeciesCatalogTests
             """);
 
         Assert.False(catalog.GetRequired("human").CanAcceptFriendlyInteraction);
+    }
+
+    [Fact]
+    public void MissingThreatDetectionRangeDefaultsToDisabledAndNegativeValuesAreRejected()
+    {
+        var legacySpecies = Load("""
+            [{"id":"human","movementSpeed":3,"hungerRate":0.2,"diet":["food"],"canHaul":true,"temperament":{"boldness":0.5,"aggression":0.5,"fear":0.5,"curiosity":0.5,"sociability":0.5,"territoriality":0.5}}]
+            """).GetRequired("human");
+        Assert.Equal(0, legacySpecies.ThreatDetectionRange);
+
+        var exception = Assert.Throws<InvalidDataException>(() => Load("""
+            [{"id":"human","movementSpeed":3,"hungerRate":0.2,"diet":["food"],"canHaul":true,"threatDetectionRange":-1,"temperament":{"boldness":0.5,"aggression":0.5,"fear":0.5,"curiosity":0.5,"sociability":0.5,"territoriality":0.5}}]
+            """));
+        Assert.Contains("threatDetectionRange must be finite and nonnegative", exception.Message);
     }
 
     [Fact]

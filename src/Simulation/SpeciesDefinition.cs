@@ -32,7 +32,8 @@ public sealed class SpeciesDefinition
         double baseTrust = 0,
         InteractionAnchorDefinition? anchors = null,
         IEnumerable<string>? preySpeciesIds = null,
-        int carcassMeatUnits = 1)
+        int carcassMeatUnits = 1,
+        double threatDetectionRange = 0)
     {
         Id = id;
         DisplayName = displayName;
@@ -58,6 +59,7 @@ public sealed class SpeciesDefinition
         Anchors = anchors ?? InteractionAnchorDefinition.Empty;
         PreySpeciesIds = Array.AsReadOnly((preySpeciesIds ?? Array.Empty<string>()).ToArray());
         CarcassMeatUnits = carcassMeatUnits;
+        ThreatDetectionRange = threatDetectionRange;
         _dietItems = new HashSet<string>(Diet, StringComparer.Ordinal);
     }
 
@@ -85,6 +87,7 @@ public sealed class SpeciesDefinition
     public InteractionAnchorDefinition Anchors { get; }
     public ReadOnlyCollection<string> PreySpeciesIds { get; }
     public int CarcassMeatUnits { get; }
+    public double ThreatDetectionRange { get; }
 
     public CharacterStats CreateCharacterStats(CharacterStats defaults)
     {

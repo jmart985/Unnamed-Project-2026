@@ -24,6 +24,7 @@ public partial class Main : Node3D
 	private readonly Dictionary<string, MeshInstance3D> _fireplaceViews = [];
 	private FoodConsumptionService? _foodConsumption;
 	private CreatureHuntingService? _creatureHunting;
+	private WildPreyThreatService? _wildPreyThreat;
 	private WanderingService? _wandering;
 	private WoodHaulingService? _woodHauling;
 	private SquadOrderService? _squad;
@@ -186,6 +187,8 @@ public partial class Main : Node3D
 			Callable.From(RunInteractionAnchorValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-wild-territories"))
 			Callable.From(RunWildTerritoryValidation).CallDeferred();
+		else if (OS.GetCmdlineUserArgs().Contains("--validate-wild-prey-threat"))
+			Callable.From(RunWildPreyThreatValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-wolf-hunting"))
 			Callable.From(RunWolfHuntingValidation).CallDeferred();
 	}
@@ -451,6 +454,7 @@ public partial class Main : Node3D
 
 		_foodConsumption = new FoodConsumptionService(_world, _speciesCatalog, GetNavigationAdapter);
 		_creatureHunting = new CreatureHuntingService(_world, _speciesCatalog, GetNavigationAdapter);
+		_wildPreyThreat = new WildPreyThreatService(_world, _speciesCatalog, GetNavigationAdapter);
 		_wandering = new WanderingService(
 			_world,
 			GetNavigationAdapter,
@@ -505,6 +509,7 @@ public partial class Main : Node3D
 	{
 		_foodConsumption?.Reset();
 		_creatureHunting?.Reset();
+		_wildPreyThreat?.Reset();
 		_wandering?.Reset();
 		_woodHauling?.Reset();
 		_squad?.Reset();
@@ -614,6 +619,7 @@ public partial class Main : Node3D
 			UpdateInspector();
 			return;
 		}
+		_wildPreyThreat?.OnEntityRemoved(entityId);
 
 		_entityViews.Remove(entityId, out var view);
 		view?.CancelNavigation();
@@ -626,6 +632,7 @@ public partial class Main : Node3D
 
 	private void RemoveEntityPresentation(string entityId)
 	{
+		_wildPreyThreat?.OnEntityRemoved(entityId);
 		if (_entityViews.Remove(entityId, out var view))
 		{
 			view.CancelNavigation();
@@ -745,6 +752,10 @@ public partial class Main : Node3D
 				continue;
 			}
 
+			var threatResult = _wildPreyThreat!.Advance(entity, _simulationTick);
+			if (threatResult.Status is WildPreyThreatStatus.Fleeing or WildPreyThreatStatus.Waiting)
+				continue;
+
 			if (_creatureHunting!.IsHunting(entity.Id))
 			{
 				HandleHuntingResult(_creatureHunting.Advance(entity, _simulationTick));
@@ -781,7 +792,8 @@ public partial class Main : Node3D
 		foreach (var entity in _world.Entities)
 		{
 			if (string.Equals(entity.Id, _world.PlayerEntityId, StringComparison.Ordinal)
-				|| (_squad?.Order != SquadOrderKind.None && _world.SquadMemberIds.Contains(entity.Id)))
+				|| (_squad?.Order != SquadOrderKind.None && _world.SquadMemberIds.Contains(entity.Id))
+				|| _wildPreyThreat!.SuppressesOtherBehavior(entity.Id))
 			{
 				continue;
 			}
