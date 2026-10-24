@@ -15,6 +15,43 @@ public sealed class MeleeCombatServiceTests
     }
 
     [Fact]
+    public void SuccessfulAttackNotifiesDamageResponderWithAppliedDamage()
+    {
+        var world = new World();
+        var attacker = world.SpawnEntity("human", Vector3.Zero);
+        var defender = world.SpawnEntity("human", Vector3.One);
+        var responder = new RecordingDamageResponder();
+
+        var result = MeleeCombatService.Resolve(
+            world,
+            new(attacker.Id, defender.Id, "Torso", 999),
+            maximumReach: 2,
+            damageResponder: responder);
+
+        Assert.Equal(MeleeAttackResult.Success, result.Result);
+        Assert.Equal(50, result.AppliedDamage);
+        Assert.Equal([(attacker.Id, defender.Id, 50d)], responder.Applications);
+    }
+
+    [Fact]
+    public void RejectedAttackDoesNotNotifyDamageResponder()
+    {
+        var world = new World();
+        var attacker = world.SpawnEntity("human", Vector3.Zero);
+        var defender = world.SpawnEntity("wolf", Vector3.One);
+        var responder = new RecordingDamageResponder();
+
+        var result = MeleeCombatService.Resolve(
+            world,
+            new(attacker.Id, defender.Id, "Tail", 10),
+            maximumReach: 2,
+            damageResponder: responder);
+
+        Assert.Equal(MeleeAttackResult.UnknownBodyPart, result.Result);
+        Assert.Empty(responder.Applications);
+    }
+
+    [Fact]
     public void InvalidRequestsDoNotMutateDefender()
     {
         var world = new World(); var attacker = world.SpawnEntity("human", Vector3.Zero); var defender = world.SpawnEntity("human", Vector3.One);
@@ -108,5 +145,13 @@ public sealed class MeleeCombatServiceTests
 
         Assert.Equal(MeleeAttackResult.NoDamage, result.Result);
         Assert.Equal(25, defender.Health.Parts.Single(part => part.Name == "Head").CurrentHealth);
+    }
+
+    private sealed class RecordingDamageResponder : IMeleeDamageResponder
+    {
+        public List<(string AttackerId, string DefenderId, double AppliedDamage)> Applications { get; } = [];
+
+        public void OnDamageApplied(string attackerId, string defenderId, double appliedDamage)
+            => Applications.Add((attackerId, defenderId, appliedDamage));
     }
 }

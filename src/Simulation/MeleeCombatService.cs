@@ -1,6 +1,11 @@
 namespace Simulation;
 
 public sealed record MeleeAttackRequest(string AttackerId, string DefenderId, string BodyPart, double Damage);
+public interface IMeleeDamageResponder
+{
+    void OnDamageApplied(string attackerId, string defenderId, double appliedDamage);
+}
+
 public enum MeleeAttackResult
 {
     Success,
@@ -16,7 +21,11 @@ public sealed record MeleeAttackResolution(MeleeAttackResult Result, double Appl
 
 public static class MeleeCombatService
 {
-    public static MeleeAttackResolution Resolve(World? world, MeleeAttackRequest? request, double maximumReach = double.MaxValue)
+    public static MeleeAttackResolution Resolve(
+        World? world,
+        MeleeAttackRequest? request,
+        double maximumReach = double.MaxValue,
+        IMeleeDamageResponder? damageResponder = null)
     {
         if (world is null
             || request is null
@@ -41,15 +50,7 @@ public static class MeleeCombatService
         if (!defender.Health.TryDamage(request.BodyPart, request.Damage, out var applied))
             return new(MeleeAttackResult.DefenderUnavailable);
         if (applied <= 0) return new(MeleeAttackResult.NoDamage);
-        
-        // Trigger behavioral response to damage
-        if (world != null)
-        {
-            // In a real system, the trigger would be an event subscriber.
-            // For the prototype, we inject the call here.
-            var trigger = new BehavioralTrigger(world);
-            trigger.OnDamageTaken(request.AttackerId, request.DefenderId, applied);
-        }
+        damageResponder?.OnDamageApplied(request.AttackerId, request.DefenderId, applied);
 
         return new(MeleeAttackResult.Success, applied, defender.Health.IsIncapacitated, defender.Health.IsDead);
     }
