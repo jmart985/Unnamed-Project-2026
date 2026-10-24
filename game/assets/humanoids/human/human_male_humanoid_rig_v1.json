@@ -1,0 +1,39 @@
+{
+  "asset_id": "human_male_humanoid_rig_v1",
+  "display_name": "Human Male Humanoid Rig v1 Prototype",
+  "status": "Prototype Approved",
+  "source_asset": "art_source/reference/generated_humanoids/human_elf_adapted_rig_v1.blend",
+  "source_archive": "art_source/downloaded/humanoids/elf.zip",
+  "license": "Unknown; inherited source remains Reference Only",
+  "creator": "Unnamed Project 2026 derived adaptation",
+  "format": "GLB",
+  "godot_units": "1 unit = 1 meter",
+  "target_height_m": 1.75,
+  "measured_height_m": 1.745,
+  "humanoid_rig_version": "1",
+  "canonical_pose": "A-pose-compatible source pose",
+  "mesh_count": 8,
+  "armature_bone_count": 66,
+  "required_bones_verified": true,
+  "animation_clips": [
+    "human_idle"
+  ],
+  "interaction_anchors": {
+    "locomotion": ["anchor_root", "anchor_foot_l", "anchor_foot_r"],
+    "equipment": ["anchor_hand_l", "anchor_hand_r", "anchor_carry"],
+    "interaction": ["anchor_mouth", "anchor_anus", "anchor_genital", "anchor_urethral", "anchor_navel", "anchor_penile", "anchor_testicular", "anchor_breast_l", "anchor_breast_r", "anchor_hand_l", "anchor_hand_r"],
+    "breeding": ["anchor_genital", "anchor_urethral", "anchor_penile", "anchor_testicular", "anchor_breast_l", "anchor_breast_r"]
+  },
+  "runtime_path": "game/assets/humanoids/human/human_male_humanoid_rig_v1.glb",
+  "runtime_approval": "Prototype only; do not ship until source license is verified",
+  "notes": [
+    "Separate male-presenting visual variant derived from the project's canonical elf-adapted human source rig; the source blend is unchanged.",
+    "The variant uses the same Humanoid Rig v1 skeleton and human_idle clip so existing retargeting can be evaluated.",
+    "Model appearance is a prototype for director/playtest review; NPC body-type selection is not changed by this asset-only task.",
+    "anchor_vaginal is intentionally not present on this male-presenting model; semantic anchors are presentation locators, not simulation state.",
+    "Source license remains unknown, so this asset is not approved for a public or commercial build."
+  ],
+  "output_blend": "art_source/reference/generated_humanoids/human_male_humanoid_rig_v1.blend",
+  "output_glb": "game/assets/humanoids/human/human_male_humanoid_rig_v1.glb",
+  "preview": "art_source/reference/generated_humanoids/human_male_humanoid_rig_v1_preview.png"
+}
