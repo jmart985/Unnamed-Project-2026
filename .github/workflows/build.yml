@@ -6,6 +6,7 @@ on:
 
 jobs:
   dotnet:
+    name: Build and validate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,26 +25,10 @@ jobs:
         run: dotnet test UnnamedProject2026.slnx --configuration Release --no-build
       - name: Import Godot project resources
         run: godot --headless --editor --build-solutions --path game --quit
-      - name: Validate session profiles in Godot
-        run: |
-          set -euo pipefail
-          godot --headless --path game -- --validate-session-profiles 2>&1 | tee "$RUNNER_TEMP/session-profile-validation.log"
-          grep -Fq "SESSION PROFILE VALIDATION PASSED" "$RUNNER_TEMP/session-profile-validation.log"
-      - name: Validate first-game scenario in Godot
-        run: |
-          set -euo pipefail
-          godot --headless --path game -- --validate-first-game 2>&1 | tee "$RUNNER_TEMP/first-game-validation.log"
-          grep -Fq "FIRST GAME VALIDATION PASSED" "$RUNNER_TEMP/first-game-validation.log"
-      - name: Validate NPC schedule scenarios in Godot
-        run: |
-          set -euo pipefail
-          godot --headless --path game -- --validate-schedules 2>&1 | tee "$RUNNER_TEMP/schedule-validation.log"
-          grep -Fq "SCHEDULE VALIDATION PASSED" "$RUNNER_TEMP/schedule-validation.log"
-      - name: Validate integrated NPC schedule scenario in Godot
-        run: |
-          set -euo pipefail
-          godot --headless --path game -- --validate-schedule-integration 2>&1 | tee "$RUNNER_TEMP/schedule-integration-validation.log"
-          grep -Fq "SCHEDULE INTEGRATION PASSED" "$RUNNER_TEMP/schedule-integration-validation.log"
+      - name: Run all registered Godot scenarios
+        env:
+          GODOT_VALIDATION_LOG_DIR: ${{ runner.temp }}
+        run: bash scripts/validate-godot-scenarios.sh
       - name: Upload scenario logs
         if: always()
         uses: actions/upload-artifact@v4
