@@ -36,6 +36,7 @@ public sealed class CreatureHuntingService : ITransientSimulationState
     private readonly SpeciesCatalog _catalog;
     private readonly PerceptionQueryService _perception;
     private readonly Func<EntityRecord, INavigationAdapter> _navigationForEntity;
+    private readonly IMeleeDamageResponder _damageResponder;
     private readonly Dictionary<string, ActiveHunt> _activeHunts = new(StringComparer.Ordinal);
     private readonly RetryScheduler _retries = new();
     private long _nextHuntId;
@@ -43,12 +44,14 @@ public sealed class CreatureHuntingService : ITransientSimulationState
     public CreatureHuntingService(
         World world,
         SpeciesCatalog catalog,
-        Func<EntityRecord, INavigationAdapter> navigationForEntity)
+        Func<EntityRecord, INavigationAdapter> navigationForEntity,
+        IMeleeDamageResponder? damageResponder = null)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
         _navigationForEntity = navigationForEntity ?? throw new ArgumentNullException(nameof(navigationForEntity));
         _perception = new PerceptionQueryService(world, catalog);
+        _damageResponder = damageResponder ?? new BehavioralTrigger(world);
     }
 
     public bool IsHunting(string? entityId) =>
@@ -211,7 +214,8 @@ public sealed class CreatureHuntingService : ITransientSimulationState
         var attack = MeleeCombatService.Resolve(
             _world,
             new MeleeAttackRequest(hunter.Id, prey.Id, "Torso", hunter.BaseStats.Strength * DamagePerStrength),
-            maximumReach: AttackReach);
+            maximumReach: AttackReach,
+            damageResponder: _damageResponder);
         if (attack.Result == MeleeAttackResult.Success)
         {
             active.NextAttackTick = simulationTick > long.MaxValue - AttackIntervalTicks
