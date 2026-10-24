@@ -5,6 +5,48 @@ namespace UnnamedProject2026;
 
 public partial class Main
 {
+    private void ValidateStarterNpcWorkbenchClearance()
+    {
+        var workbenchBody = _workbench.GetChildren().OfType<StaticBody3D>().Single(body => body.Name == "WorkbenchCollision");
+        var benchCollider = workbenchBody.GetChildren().OfType<CollisionShape3D>().Single();
+        var benchBounds = CollisionBounds(benchCollider);
+        var playerCollider = _playerCharacter.GetChildren().OfType<CollisionShape3D>().Single();
+        var playerBounds = CollisionBounds(playerCollider);
+        var starterIds = _world.Entities
+            .Where(entity => entity.SpeciesId == "human" && entity.Id != _world.PlayerEntityId)
+            .Select(entity => entity.Id)
+            .ToArray();
+        Require(starterIds.Length == NewGameSession.HumanNpcCount, "all starter humans are present for clearance validation");
+
+        var npcBounds = new List<(string Id, Aabb Bounds)>();
+        foreach (var id in starterIds)
+        {
+            var collider = _entityViews[id].GetChildren().OfType<CollisionShape3D>().Single();
+            var bounds = CollisionBounds(collider);
+            Require(!bounds.Intersects(benchBounds), $"starter human {id} capsule clears workbench collision");
+            Require(!bounds.Intersects(playerBounds), $"starter human {id} capsule clears player collision");
+            npcBounds.Add((id, bounds));
+        }
+
+        for (var first = 0; first < npcBounds.Count; first++)
+        for (var second = first + 1; second < npcBounds.Count; second++)
+            Require(!npcBounds[first].Bounds.Intersects(npcBounds[second].Bounds),
+                $"starter humans {npcBounds[first].Id} and {npcBounds[second].Id} do not overlap");
+    }
+
+    private static Aabb CollisionBounds(CollisionShape3D collider)
+    {
+        var localBounds = collider.Shape switch
+        {
+            BoxShape3D box => new Aabb(-box.Size * 0.5f, box.Size),
+            CapsuleShape3D capsule => new Aabb(
+                new Vector3(-capsule.Radius, -capsule.Height * 0.5f, -capsule.Radius),
+                new Vector3(capsule.Radius * 2, capsule.Height, capsule.Radius * 2)),
+            _ => throw new InvalidOperationException($"Unsupported starter collision shape: {collider.Shape?.GetType().Name ?? "missing"}.")
+        };
+        return collider.GlobalTransform * localBounds;
+    }
+
     private async Task ValidatePlayerLoop()
     {
         Require(_world.Entities.Count == 14 && FoodTotal() == 300 && WoodTotal() == 48
