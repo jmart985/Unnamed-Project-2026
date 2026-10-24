@@ -8,7 +8,8 @@ public enum ActionKind
     Flee,
     Haul,
     Eat,
-    SquadMove
+    SquadMove,
+    CommandMove
 }
 
 public enum ActionStatus
@@ -55,6 +56,7 @@ public sealed class ActionCandidate
         ActionKind.Eat => 300,
         ActionKind.Flee => 350,
         ActionKind.SquadMove => 250,
+        ActionKind.CommandMove => 250,
         ActionKind.Hunt => 225,
         ActionKind.Haul => 200,
         ActionKind.Wander => 100,

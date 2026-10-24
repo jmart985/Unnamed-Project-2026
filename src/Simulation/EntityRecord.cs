@@ -51,6 +51,7 @@ public sealed class EntityRecord
     public string? EquippedTool { get; internal set; }
     public string? Parent1Id { get; internal set; }
     public string? Parent2Id { get; internal set; }
+    public EntityOrder? OrderIntent { get; internal set; }
 
     internal void SetSleepState(SleepState state, string? bedId)
     {

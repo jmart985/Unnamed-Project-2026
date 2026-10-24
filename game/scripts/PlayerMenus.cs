@@ -258,6 +258,7 @@ public partial class Main
 		}
 		foreach (var node in _settlementDetails.GetChildren().OfType<Control>())
 			node.Visible = node.Name.ToString() is "InspectorHeading" or "Inspector"
+				|| (_settlementTabs.CurrentTab is 1 or 2 && node.Name.ToString() == "IndividualOrders")
 				|| (_settlementTabs.CurrentTab == 1 && node.Name.ToString() is "ScheduleHeading" or "ScheduleHours" or "RemoveSelected")
 				|| (_settlementTabs.CurrentTab == 2 && node.Name.ToString() is "SquadHeading" or "SquadMembership" or "SquadTarget" or "SquadOrders");
 		GetNode<ScrollContainer>("Controls/Panel/Scroll").ScrollVertical = 0;
