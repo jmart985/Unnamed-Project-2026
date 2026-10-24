@@ -165,9 +165,33 @@ public partial class Main
             .ThenBy(entity => entity.Id, StringComparer.Ordinal)
             .First();
         var spawn = npc.Position;
-        var destination = new NumericsVector3(bench.X, bench.Y, bench.Z + 1.8f);
+        var crossingStart = new NumericsVector3(bench.X, bench.Y, bench.Z - 5f);
+        var crossingEnd = new NumericsVector3(bench.X, bench.Y, bench.Z + 5f);
+        npc.Actions.Cancel();
+        _entityViews[npc.Id].CancelNavigation();
+        Require(_world.TrySetEntityPosition(npc.Id, crossingStart), $"place starter human {npc.Id} on the near side of workbench route");
+        _entityViews[npc.Id].Sync(_world);
         SelectEntity(npc.Id);
         PressSquadButton("Add selected");
+        _squadX.Value = crossingEnd.X;
+        _squadZ.Value = crossingEnd.Z;
+        PressSquadButton("Move to");
+        await MoveSquadTo(crossingEnd, [npc.Id], duringTick: () =>
+        {
+            var position = _world.Entities.Single(entity => entity.Id == npc.Id).Position;
+            var overlapsWorkbench = MathF.Abs(position.X - bench.X) < 1f + 0.32f
+                && MathF.Abs(position.Z - bench.Z) < 0.7f + 0.32f;
+            Require(!overlapsWorkbench,
+                $"starter human {npc.Id} routes around rather than through the workbench collision footprint; position {position}");
+        });
+        Require(_world.Entities.Single(entity => entity.Id == npc.Id).Position.Z > bench.Z + 4f,
+            $"starter human {npc.Id} completes the route across the workbench footprint");
+        _squadX.Value = spawn.X;
+        _squadZ.Value = spawn.Z;
+        PressSquadButton("Move to");
+        await MoveSquadTo(spawn, [npc.Id]);
+
+        var destination = new NumericsVector3(bench.X, bench.Y, bench.Z + 2f);
         _squadX.Value = destination.X;
         _squadZ.Value = destination.Z;
         PressSquadButton("Move to");
@@ -191,12 +215,13 @@ public partial class Main
         button.EmitSignal(BaseButton.SignalName.Pressed);
     }
 
-    private async Task MoveSquadTo(NumericsVector3 target, string[] ids, bool following = false)
+    private async Task MoveSquadTo(NumericsVector3 target, string[] ids, bool following = false, Action? duringTick = null)
     {
         for (var tick = 0; tick < 600; tick++)
         {
             await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
             AdvanceSimulationTick(0.1);
+            duringTick?.Invoke();
             SyncEntityViews();
             UpdateStatus();
             if (ids.All(id => _world.TryGetEntity(id, out var entity) && entity is not null

@@ -14,7 +14,7 @@ public partial class Main : Node3D
 	private const float WorldHalfExtent = 200f;
 	private const float TownHalfExtent = 60f;
 	private static readonly float[] NavigationGridLines =
-		[-200f, -120f, -60f, -38f, -30f, -22f, -14f, -1f, 1f, 14f, 22f, 30f, 38f, 60f, 120f, 200f];
+		[-200f, -120f, -60f, -38f, -30f, -22f, -14f, -1f, 1f, 8f, 12f, 14f, 22f, 30f, 38f, 60f, 120f, 200f];
 	private static readonly (float Min, float Max)[] BuildingBands =
 		[(-38f, -30f), (-22f, -14f), (14f, 22f), (30f, 38f)];
 	private Node3D? _scenery;
@@ -1209,6 +1209,16 @@ public partial class Main : Node3D
 	private static bool IsBlockedCell(float minX, float maxX, float minZ, float maxZ)
 	{
 		if (minX == -1f && maxX == 1f && minZ == -1f && maxZ == 1f)
+		{
+			return true;
+		}
+
+		const float workbenchNavigationClearance = 2f;
+		var workbench = NewGameSession.TownWorkbenchPosition;
+		if (minX == workbench.X - workbenchNavigationClearance
+			&& maxX == workbench.X + workbenchNavigationClearance
+			&& minZ == workbench.Z - workbenchNavigationClearance
+			&& maxZ == workbench.Z + workbenchNavigationClearance)
 		{
 			return true;
 		}

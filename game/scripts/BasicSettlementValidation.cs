@@ -67,7 +67,8 @@ public partial class Main
 
     private void RunWorkbenchAcceptanceStep(EntityRecord player)
     {
-        _playerCharacter.GlobalPosition = new Vector3(0, 0, -1.5f);
+        var workbenchPosition = _world.Workstations.Single(workstation => workstation.Id == "workbench-1").Position;
+        _playerCharacter.GlobalPosition = new Vector3(workbenchPosition.X, workbenchPosition.Y, workbenchPosition.Z - 1.5f);
         SyncPlayerPosition();
         Require(ResourceTransferService.TryPickUp(_world.FoodSources.First(source => source.Contents.Counts.ContainsKey(ItemIds.Plant)).Contents,
                 player, ItemIds.Plant, 1) == ResourceMutationResult.Success

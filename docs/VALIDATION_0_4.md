@@ -12,7 +12,7 @@ From a fresh seed-42 game, the player can complete one integrated settlement cyc
 4. Target the completed hut, press Interact to close/open the door, then press Rest to reserve the sheltered bed and enter rest.
 5. Save/load while resting, then press Rest again to wake and release the bed.
 
-The validation uses the same authoritative `World` collections and the same player-facing workbench, farm, construction, door and rest controls used in normal play. Inventory transitions use the atomic transfer services; no parallel UI-only settlement state is introduced.
+The validation uses the same authoritative `World` collections and the same player-facing workbench, farm, construction, door and rest controls used in normal play. Inventory transitions use the atomic transfer services; no parallel UI-only settlement state is introduced. The workbench step positions the player relative to the World-owned workstation, so the check remains valid when the landmark moves. Its Godot navigation validation routes an NPC across the relocated workbench's excluded navigation cell and checks every movement step against the physical bench footprint. The 2026-10-23 regression run passed with the relocated workbench, including the complete farm, construction, rest and persistence checks.
 
 ## Evidence from 2026-10-04
 
