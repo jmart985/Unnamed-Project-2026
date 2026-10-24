@@ -125,9 +125,15 @@ public sealed class NewGameSession
         var humanNpcs = new List<EntityRecord>();
         for (var index = 0; index < HumanNpcCount; index++)
         {
+            var spawnPosition = index switch
+            {
+                4 => new Vector3(TownWorkbenchPosition.X - 2f, 0, TownWorkbenchPosition.Z + 2f),
+                5 => new Vector3(TownWorkbenchPosition.X + 2f, 0, TownWorkbenchPosition.Z + 2f),
+                _ => new Vector3(index - 4.5f, 0, TownWorkbenchPosition.Z)
+            };
             humanNpcs.Add(world.SpawnEntity(
                 catalog.GetRequired("human"),
-                new Vector3(index - 4.5f, 0, 0)));
+                spawnPosition));
         }
 
         if (startStarterWildlifeAsFar)

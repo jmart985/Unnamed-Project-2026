@@ -15,6 +15,8 @@ public partial class Main
         try
         {
             StartSession(PlayerCharacterProfile.Create("Squad validation"), 42, "Squad validation session.", survivalGathering: firstGame);
+            if (firstGame) ValidateStarterNpcWorkbenchClearance();
+            if (!firstGame) RestoreLegacyStarterNpcLayoutForSquadFixture();
             _clock.SetPaused(true);
             _playerCharacter.SetPhysicsProcess(false);
             await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
@@ -25,7 +27,13 @@ public partial class Main
                     $"actor {id} visual forward matches the canonical -Z direction");
             }
             if (firstGame) await ValidatePlayerLoop();
-            var ids = _world.Entities.Where(e => e.SpeciesId == "human" && e.Id != _world.PlayerEntityId).Take(2).Select(e => e.Id).ToArray();
+            if (firstGame)
+            {
+                await ValidateRelocatedStarterHumanCanLeaveWorkbench();
+                RestoreLegacyStarterNpcLayoutForSquadFixture();
+            }
+            var ids = _world.Entities.Where(e => e.SpeciesId == "human" && e.Id != _world.PlayerEntityId)
+                .Take(2).Select(e => e.Id).ToArray();
             foreach (var id in ids)
             {
                 SelectEntity(id);
@@ -128,6 +136,46 @@ public partial class Main
             GD.PushError($"{(firstGame ? "FIRST GAME" : "SQUAD")} VALIDATION FAILED: {exception}");
             GetTree().Quit(1);
         }
+    }
+
+    private void RestoreLegacyStarterNpcLayoutForSquadFixture()
+    {
+        var starterHumans = _world.Entities
+            .Where(entity => entity.SpeciesId == "human" && entity.Id != _world.PlayerEntityId)
+            .OrderBy(entity => entity.Id, StringComparer.Ordinal)
+            .ToArray();
+        for (var index = 0; index < starterHumans.Length; index++)
+        {
+            var npc = starterHumans[index];
+            npc.Actions.Cancel();
+            _entityViews[npc.Id].CancelNavigation();
+            var position = new NumericsVector3(index - 4.5f, 0, 0);
+            Require(_world.TrySetEntityPosition(npc.Id, position), $"reset squad fixture position for {npc.Id}");
+            _entityViews[npc.Id].Sync(_world);
+        }
+    }
+
+    private async Task ValidateRelocatedStarterHumanCanLeaveWorkbench()
+    {
+        var bench = NewGameSession.TownWorkbenchPosition;
+        var npc = _world.Entities
+            .Where(entity => entity.SpeciesId == "human" && entity.Id != _world.PlayerEntityId)
+            .Where(entity => MathF.Abs(entity.Position.Z - (bench.Z + 2f)) < 0.01f)
+            .OrderBy(entity => NumericsVector3.DistanceSquared(entity.Position,
+                new NumericsVector3(bench.X, bench.Y, bench.Z)))
+            .ThenBy(entity => entity.Position.X)
+            .First();
+        var awayFromBench = npc.Position.X < bench.X ? -2f : 2f;
+        var destination = npc.Position + new NumericsVector3(awayFromBench, 0, 0);
+        SelectEntity(npc.Id);
+        PressSquadButton("Add selected");
+        _squadX.Value = destination.X;
+        _squadZ.Value = destination.Z;
+        PressSquadButton("Move to");
+        await MoveSquadTo(destination, [npc.Id]);
+        PressSquadButton("Stop");
+        PressSquadButton("Remove member");
+        Require(!_world.SquadMemberIds.Contains(npc.Id), $"relocated starter human {npc.Id} test order is cleaned up");
     }
 
     private void PressSquadButton(string text)

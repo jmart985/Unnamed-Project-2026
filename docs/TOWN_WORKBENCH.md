@@ -6,6 +6,8 @@ The model fits the existing central 2 m × 2 m navigation exclusion. Visual sele
 
 This is a presentation correction. Existing workstation recipe and inventory execution remain unchanged. Crafting selection/controls are not yet connected to the bench, and the existing snapshot contract does not serialize workstation state. Showing the static landmark after load does not manufacture a new authoritative workstation or pretend that crafting progress was restored. Workstation persistence and a playable crafting UI require separate concrete scope; no new save schema, recipe catalog, jobs or framework is added here.
 
+The two starter humans that spawned beneath the workbench now start just beyond the workbench collision footprint and central navigation cutout. The other eight retain their existing positions. The first-game Godot validation checks actual player, NPC, and workbench collision-shape bounds before physics can depenetrate anything, then orders a relocated NPC through real navigation to verify it can leave its spawn. Population count, IDs, schedules, and starting resources remain unchanged.
+
 ## Validation
 
 Use the pinned README setup. Build the Debug game, then run Godot with `--path game --headless -- --validate-workbench`; omit `--headless` to capture rendered evidence. Require exit 0 and `WORKBENCH VALIDATION PASSED`. The scenario checks the existing domain placement, absence of the old obstacle node, label/bench visibility, actual sight-ray obstruction at the tabletop and clearance beneath it, unchanged navigation exclusion, and repeated reset/load without duplicate geometry. Its disposable save is `user://workbench-validation-save.json`.
