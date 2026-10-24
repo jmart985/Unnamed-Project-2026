@@ -97,7 +97,8 @@ public sealed class MilestoneAcceptanceScenarioTests
     private static void AssertResourceBounds(World world)
     {
         foreach (var container in world.FoodSources.Select(x => x.Contents).Concat(world.ResourcePiles.Select(x => x.Contents)).Concat(world.Stockpiles.Select(x => x.Contents))) Assert.InRange(container.Counts.Values.Sum(), 0, container.Capacity);
-        Assert.All(world.Entities, x => Assert.InRange(x.Inventory.Values.Sum(), 0, x.InventoryCapacity));
+        Assert.All(world.Entities, entity => Assert.All(entity.Inventory.Values,
+            count => Assert.InRange(count, 0, EntityRecord.MaxCarriedCountPerItem)));
     }
 
     private sealed class InstantNavigation : INavigationAdapter

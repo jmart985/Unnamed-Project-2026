@@ -10,6 +10,7 @@ public sealed record CharacterStats
     public const double DefaultHealth = 100;
     public const double DefaultStamina = 100;
     public const double DefaultMovementSpeed = 3;
+    /// <summary>Baseline carried load, in kilograms, before strength and endurance modifiers.</summary>
     public const int DefaultCarryCapacity = 10;
     public const double DefaultPerception = 1;
     public const double DefaultDefense = 0;
@@ -52,14 +53,17 @@ public sealed record CharacterStats
     public double MaxHealth { get; }
     public double MaxStamina { get; }
     public double MovementSpeed { get; }
+    /// <summary>Baseline soft carried-load threshold in kilograms before strength is applied.</summary>
     public int CarryCapacity { get; }
     public double Perception { get; }
     public double Defense { get; }
     public double Strength { get; }
     public double Endurance { get; }
 
-    /// Carry capacity scales with strength while preserving the configured baseline.
-    public int EffectiveCarryCapacity => checked((int)Math.Round(CarryCapacity * Strength, MidpointRounding.AwayFromZero));
+    /// <summary>Soft fatigue threshold in kilograms. This is not a hard inventory limit.</summary>
+    public double EffectiveCarryCapacityKg => CarryCapacity * Strength;
+
+    public int EffectiveCarryCapacity => checked((int)Math.Round(EffectiveCarryCapacityKg, MidpointRounding.AwayFromZero));
 
     public static CharacterStats Default { get; } = new();
 

@@ -103,12 +103,14 @@ public sealed class WorldTests
     }
 
     [Fact]
-    public void EntityInventoryUsesTheWorldConfiguredCapacity()
+    public void EntityInventoryAllowsDifferentStacksWithoutAnAggregateLimit()
     {
-        var world = new World(inventoryCapacity: 3);
+        var entity = new World().SpawnEntity("human", Vector3.Zero);
 
-        Assert.Equal(3, world.SpawnEntity("human", Vector3.Zero).InventoryCapacity);
-        Assert.Throws<ArgumentOutOfRangeException>(() => new World(inventoryCapacity: -1));
+        Assert.Equal(ResourceMutationResult.Success, entity.TryAddCarried(ItemIds.Wood, 999));
+        Assert.Equal(ResourceMutationResult.Success, entity.TryAddCarried(ItemIds.Food, 999));
+        Assert.Equal(ResourceMutationResult.CapacityExceeded, entity.TryAddCarried(ItemIds.Wood, 1));
+        Assert.Equal(1998, entity.Inventory.Values.Sum());
     }
 
     [Fact]

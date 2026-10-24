@@ -20,6 +20,24 @@ public sealed class FireplaceTests
     }
 
     [Fact]
+    public void FullFoodStackDoesNotConsumeCookingIngredientsOrFuel()
+    {
+        var catalog = SpeciesCatalog.LoadFromFile(Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
+        var session = NewGameSession.Create(catalog, PlayerCharacterProfile.Create("Cook"));
+        var fire = session.World.AddFireplace("fire-2", session.Player.Position);
+        fire.Fuel = 1;
+        session.Player.TryAddCarried(ItemIds.Plant, 1);
+        session.Player.TryAddCarried(ItemIds.Food, 999);
+
+        var result = new FireplaceService(session.World).CookMeal(session.Player.Id, fire.Id);
+
+        Assert.Equal(FireplaceActionCode.ItemStackFull, result.Code);
+        Assert.Equal(1, session.Player.Inventory[ItemIds.Plant]);
+        Assert.Equal(999, session.Player.Inventory[ItemIds.Food]);
+        Assert.Equal(1, fire.Fuel);
+    }
+
+    [Fact]
     public void FireplaceFuelSurvivesSaveLoad()
     {
         var catalog = SpeciesCatalog.LoadFromFile(Path.Combine(AppContext.BaseDirectory, "data", "species.json"));

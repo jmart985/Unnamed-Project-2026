@@ -28,7 +28,7 @@ The focused scenario validates the integrated happy path plus failure recovery:
 
 - Workbench before/after inventory: one plant and one wood leave carried inventory through load controls; five work steps produce and collect two food.
 - Farm before/after inventory: one plant is consumed; five growth controls mature the plot; harvest adds three food.
-- Construction before/after inventory: two food are atomically deposited to the stockpile to free carry capacity; six wood are picked up, supplied one at a time, and consumed by the site before five work steps complete the hut.
+- Construction before/after inventory: two food are deposited into finite-capacity stockpile storage; six wood are picked up, supplied one at a time, and consumed by the site before five work steps complete the hut.
 - Door and shelter: the hut is targetable after site replacement; Interact toggles door closed/open; Rest reserves the bed and marks the player sleeping; save/load preserves the occupied bed and sleep state; Rest wakes and releases occupancy.
 - Mid-progress durability: a second validation setup saves and loads partial workstation input/work, planted farm growth, an in-progress construction site, a completed shelter, occupied bed and sleeping player.
 - Invalid-load rollback: corrupted construction material progress is rejected and leaves the live world unchanged.

@@ -43,7 +43,7 @@ public sealed class PlayerFarmServiceTests
     }
 
     [Fact]
-    public void PrematureAndOverCapacityHarvestsPreserveTheMatureCrop()
+    public void PrematureAndFullItemStackHarvestsPreserveTheMatureCrop()
     {
         var session = CreateSession();
         session.World.TrySetEntityPosition(session.PlayerEntityId, new Vector3(5, 0, 5));
@@ -55,11 +55,12 @@ public sealed class PlayerFarmServiceTests
         var plot = session.World.Farms.Single().Plots.Single();
         Assert.Equal(0, plot.Growth);
         for (var step = 0; step < SettlementCrops.GrowthSteps; step++) service.AdvanceGrowth("farm-1", plot.Id);
-        session.Player.TryAddCarried(ItemIds.Wood, session.Player.InventoryCapacity);
+        session.Player.TryAddCarried(ItemIds.Wood, 999);
+        session.Player.TryAddCarried(ItemIds.Food, 999 - SettlementCrops.HarvestFood + 1);
 
-        Assert.Equal(FarmActionResult.CarryCapacityExceeded, service.Harvest("farm-1", plot.Id).Result);
+        Assert.Equal(FarmActionResult.ItemStackLimitExceeded, service.Harvest("farm-1", plot.Id).Result);
         Assert.True(plot.IsMature);
-        Assert.Equal(0, session.Player.Inventory.GetValueOrDefault(ItemIds.Food));
+        Assert.Equal(999 - SettlementCrops.HarvestFood + 1, session.Player.Inventory[ItemIds.Food]);
     }
 
     [Fact]

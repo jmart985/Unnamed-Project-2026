@@ -9,7 +9,7 @@ Milestone 0.4 issue #403 turns the existing farming foundation into one usable, 
 3. Stand within 2 m and press Interact (default `F`).
 4. Plant one carried plant, apply five growth steps, then harvest three food.
 
-The world label and target HUD distinguish Empty, Growing and Harvest Ready. The panel reports every rejection. Planting, tending and harvesting reject missing/stale farms or plots, distance greater than 2 m, incapacitation, occupied/empty/premature states, missing seed and insufficient carry capacity without partially changing inventory or the plot.
+The world label and target HUD distinguish Empty, Growing and Harvest Ready. The panel reports every rejection. Planting, tending and harvesting reject missing/stale farms or plots, distance greater than 2 m, incapacitation, occupied/empty/premature states, missing seed, and a full carried food stack without partially changing inventory or the plot.
 
 ## Shared actor actions
 

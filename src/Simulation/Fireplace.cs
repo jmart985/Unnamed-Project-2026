@@ -12,7 +12,7 @@ public sealed class Fireplace
     public bool IsLit => Fuel > 0;
 }
 
-public enum FireplaceActionCode { Success, Missing, OutOfRange, MissingFuel, MissingIngredients, Invalid }
+public enum FireplaceActionCode { Success, Missing, OutOfRange, MissingFuel, MissingIngredients, ItemStackFull, Invalid }
 public sealed record FireplaceAction(FireplaceActionCode Code, string Message);
 
 public sealed class FireplaceService(World world)
@@ -43,6 +43,7 @@ public sealed class FireplaceService(World world)
         if (fire is null) return new(FireplaceActionCode.Missing, "The fireplace is unavailable.");
         if (Vector3.Distance(actor.Position, fire.Position) > 2 || !fire.IsLit) return new(FireplaceActionCode.MissingFuel, "A lit nearby fire is required.");
         if (actor.Inventory.GetValueOrDefault(ItemIds.Plant) < 1) return new(FireplaceActionCode.MissingIngredients, "Carry a plant ingredient to cook.");
+        if (!actor.CanAddCarried(ItemIds.Food, 1)) return new(FireplaceActionCode.ItemStackFull, "The carried food stack is full.");
         actor.TryRemoveCarried(ItemIds.Plant, 1); actor.TryAddCarried(ItemIds.Food, 1); fire.Fuel--;
         return new(FireplaceActionCode.Success, "Cooked one meal over the fire.");
     }
