@@ -12,7 +12,7 @@
   "measured_height_m": 1.745,
   "humanoid_rig_version": "1",
   "canonical_pose": "A-pose-compatible source pose",
-  "mesh_count": 8,
+  "mesh_count": 11,
   "armature_bone_count": 66,
   "required_bones_verified": true,
   "animation_clips": [
@@ -29,7 +29,7 @@
   "notes": [
     "Separate male-presenting visual variant derived from the project's canonical elf-adapted human source rig; the source blend is unchanged.",
     "The variant uses the same Humanoid Rig v1 skeleton and human_idle clip so existing retargeting can be evaluated.",
-    "The source blouse sleeves are retained and lightly tapered; a fitted outer torso layer hides the source chest contour and overlaps trousers that replace the source skirt.",
+    "The source blouse sleeves are retained and lightly tapered; a fitted outer torso layer hides the source chest contour, while body-conforming trousers reuse the lower-body skin weights to follow the thighs and calves.",
     "Model appearance is a prototype for director/playtest review; NPC body-type selection is not changed by this asset-only task.",
     "anchor_vaginal is intentionally not present on this male-presenting model; semantic anchors are presentation locators, not simulation state.",
     "Source license remains unknown, so this asset is not approved for a public or commercial build."
