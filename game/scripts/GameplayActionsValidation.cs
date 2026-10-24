@@ -14,15 +14,40 @@ public partial class Main
             Require(_world.Workstations.Single().Id == "workbench-1"
                 && _world.Workstations.Single().Position == NewGameSession.TownWorkbenchPosition,
                 "reuse existing starter workstation placement");
+            var benchPosition = _world.Workstations.Single().Position;
+            Require(Mathf.Abs(benchPosition.X) > 5.5f && Mathf.Abs(benchPosition.Z) > 5.2f
+                && _workbench.Position.IsEqualApprox(new Vector3(benchPosition.X, benchPosition.Y + 1.05f, benchPosition.Z)),
+                "rendered workbench and collision sit in the paved work area outside both road strips");
+            var camera = GetNode<Camera3D>("Camera3D");
+            if (DisplayServer.GetName() != "headless")
+            {
+                var entityVisibility = _entityViews.ToDictionary(pair => pair.Key, pair => pair.Value.Visible, StringComparer.Ordinal);
+                var playerWasVisible = _playerCharacter.Visible;
+                var controlsWereVisible = _controls.Visible;
+                foreach (var view in _entityViews.Values) view.Visible = false;
+                _playerCharacter.Visible = false;
+                _controls.Visible = false;
+                camera.Current = true;
+                camera.GlobalPosition = benchPositionToGodot(benchPosition, 6, 5, 7);
+                camera.LookAt(benchPositionToGodot(benchPosition, 0, 0.7f, 0));
+                await ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
+                var evidenceDirectory = ProjectSettings.GlobalizePath("res://../docs/evidence/workbench");
+                Directory.CreateDirectory(evidenceDirectory);
+                Require(GetViewport().GetTexture().GetImage().SavePng(Path.Combine(evidenceDirectory, "workbench-off-road.png")) == Error.Ok,
+                    "rendered workbench placement evidence");
+                foreach (var (id, view) in _entityViews) view.Visible = entityVisibility[id];
+                _playerCharacter.Visible = playerWasVisible;
+                _controls.Visible = controlsWereVisible;
+            }
             Require(GetNodeOrNull<Node3D>("Obstacle") is null && _workbench.IsVisibleInTree()
                 && _workbench.GetNode<Label3D>("WorkbenchLabel").Text == "Workbench", "visible identifiable bench replaces old cube");
             var parts = _workbench.FindChildren("*", "MeshInstance3D", true, false).Count;
             Require(parts > 4 && _workbench.Mesh.GetAabb().Size.Y < 0.3f, "tabletop, supports and work tools rendered");
             Require(IsBlockedCell(-1, 1, -1, 1), "existing navigation footprint retained");
             var target = new WorldTarget(TargetKind.Entity, "validation-target");
-            Require(!TargetLineClear(new(-2, 1.05f, 0), new(2, 1.05f, 0), target, []), "tabletop obstructs real sight/strike ray");
-            Require(TargetLineClear(new(-2, 0.55f, 0), new(2, 0.55f, 0), target, []), "empty space below bench is not the old solid obstacle bounds");
-            _playerCharacter.GlobalPosition = new Vector3(0, 0, -1.5f); SyncPlayerPosition();
+            Require(!TargetLineClear(benchPositionToGodot(benchPosition, -2, 1.05f, 0), benchPositionToGodot(benchPosition, 2, 1.05f, 0), target, []), "tabletop obstructs real sight/strike ray");
+            Require(TargetLineClear(benchPositionToGodot(benchPosition, -2, 0.55f, 0), benchPositionToGodot(benchPosition, 2, 0.55f, 0), target, []), "empty space below bench is not the old solid obstacle bounds");
+            _playerCharacter.GlobalPosition = benchPositionToGodot(benchPosition, 0, 0, -1.5f); SyncPlayerPosition();
             var player = _world.Entities.Single(entity => entity.Id == _world.PlayerEntityId);
             var plantSource = _world.FoodSources.First(source => source.Contents.Counts.ContainsKey(ItemIds.Plant));
             var woodSource = _world.ResourcePiles.Single(source => source.Contents.Counts.ContainsKey(ItemIds.Wood));
@@ -39,8 +64,8 @@ public partial class Main
             PressMenuButton(_workstationPanel, "Collect output");
             Require(player.Inventory.GetValueOrDefault(ItemIds.Food) == 2, "load, work and collect path produces exactly two food");
             foreach (var view in _entityViews.Values) view.Visible = false;
-            var camera = GetNode<Camera3D>("Camera3D"); camera.Current = true;
-            camera.GlobalPosition = new Vector3(4.2f, 3.2f, 4.6f); camera.LookAt(new Vector3(0, 0.7f, 0));
+            camera.Current = true;
+            camera.GlobalPosition = benchPositionToGodot(benchPosition, 4.2f, 3.2f, 4.6f); camera.LookAt(benchPositionToGodot(benchPosition, 0, 0.7f, 0));
             await PhysicsFrames(5);
             if (DisplayServer.GetName() != "headless")
             {
@@ -84,6 +109,9 @@ public partial class Main
         }
         catch (Exception exception) { GD.PushError($"WORKBENCH VALIDATION FAILED: {exception}"); GetTree().Quit(1); }
     }
+
+    private static Vector3 benchPositionToGodot(System.Numerics.Vector3 origin, float x, float y, float z)
+        => new(origin.X + x, origin.Y + y, origin.Z + z);
 
     private async void RunSocialFeedbackValidation()
     {

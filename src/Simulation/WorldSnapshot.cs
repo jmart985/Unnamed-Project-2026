@@ -162,7 +162,9 @@ public static class WorldSnapshotSerializer
     private const int FireplaceSchemaVersion = 16;
     private const int CarcassFreshnessSchemaVersion = 18;
     private const int FarPopulationSchemaVersion = 19;
-    public const int CurrentSchemaVersion = 20;
+    private const int NearPopulationSchemaVersion = 20;
+    private const int StarterWorkbenchRelocationSchemaVersion = 21;
+    public const int CurrentSchemaVersion = StarterWorkbenchRelocationSchemaVersion;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -313,6 +315,14 @@ public static class WorldSnapshotSerializer
             throw new InvalidDataException("Snapshot JSON is malformed.", exception);
         }
 
+        // The starter workbench moved off the central crossroads. Preserve its
+        // inventory/recipe state while relocating only the original fixed instance.
+        if (snapshot.SchemaVersion >= WorkstationSchemaVersion
+            && snapshot.SchemaVersion < StarterWorkbenchRelocationSchemaVersion)
+        {
+            snapshot = snapshot with { Workstations = MigrateStarterWorkbenchPosition(snapshot.Workstations) };
+        }
+
         // Near/far regional membership was not represented before schema 20.
         if (snapshot.SchemaVersion < CurrentSchemaVersion)
             snapshot = snapshot with
@@ -392,7 +402,7 @@ public static class WorldSnapshotSerializer
         if (snapshot.SchemaVersion == CarcassFreshnessSchemaVersion)
             return snapshot with { SchemaVersion = CurrentSchemaVersion };
 
-        if (snapshot.SchemaVersion == FarPopulationSchemaVersion)
+        if (snapshot.SchemaVersion is FarPopulationSchemaVersion or NearPopulationSchemaVersion)
             return snapshot with { SchemaVersion = CurrentSchemaVersion };
 
         if (snapshot.SchemaVersion != CurrentSchemaVersion)
@@ -413,6 +423,15 @@ public static class WorldSnapshotSerializer
             new ResourceContainerSnapshot("workbench-1-output", 10, new Dictionary<string, int>()),
             new WorkstationRecipeSnapshot(recipe.Id, recipe.Inputs, recipe.Outputs, recipe.WorkRequired, 0))];
     }
+
+    private static IReadOnlyList<WorkstationSnapshot>? MigrateStarterWorkbenchPosition(
+        IReadOnlyList<WorkstationSnapshot>? workstations) => workstations?.Select(workstation =>
+        {
+            if (workstation is null) return null!;
+            return workstation.Id == "workbench-1" && workstation.Position == Vector3.Zero
+                ? workstation with { Position = NewGameSession.TownWorkbenchPosition }
+                : workstation;
+        }).ToArray();
 
     private static IReadOnlyList<FarmSnapshot> LegacyFarms(WorldSnapshot snapshot) => snapshot.SessionSeed is null
         ? Array.Empty<FarmSnapshot>()

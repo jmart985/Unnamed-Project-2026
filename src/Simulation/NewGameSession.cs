@@ -7,7 +7,8 @@ public sealed class NewGameSession
     public const int DefaultSeed = AntFarmScenario.DefaultSeed;
     public const int HumanNpcCount = 10;
     public const float StarterCreatureTerritoryRadius = 35f;
-    public static Vector3 TownWorkbenchPosition => Vector3.Zero;
+    // Keep production work off the two paved road strips and the central crossroads.
+    public static Vector3 TownWorkbenchPosition => new(10, 0, 10);
     private static readonly (string SpeciesId, Vector3 Position, double Satiety)[] StarterCreatureSpawns =
     [
         ("ape", new Vector3(90, 0, 60), 60),
@@ -125,15 +126,9 @@ public sealed class NewGameSession
         var humanNpcs = new List<EntityRecord>();
         for (var index = 0; index < HumanNpcCount; index++)
         {
-            var spawnPosition = index switch
-            {
-                4 => new Vector3(TownWorkbenchPosition.X - 2f, 0, TownWorkbenchPosition.Z + 2f),
-                5 => new Vector3(TownWorkbenchPosition.X + 2f, 0, TownWorkbenchPosition.Z + 2f),
-                _ => new Vector3(index - 4.5f, 0, TownWorkbenchPosition.Z)
-            };
             humanNpcs.Add(world.SpawnEntity(
                 catalog.GetRequired("human"),
-                spawnPosition));
+                new Vector3(index - 4.5f, 0, 0)));
         }
 
         if (startStarterWildlifeAsFar)
