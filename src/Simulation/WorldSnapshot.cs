@@ -566,7 +566,7 @@ public static class WorldSnapshotSerializer
                     $"Snapshot entity '{entity.Id}' references unknown faction '{factionId}'.");
             }
 
-            ValidateInventory(entity.Inventory, target.InventoryCapacity, entity.Id);
+            ValidateInventory(entity.Inventory, entity.Id);
             highestEntityId = Math.Max(highestEntityId, ParseEntityId(entity.Id));
         }
         if (snapshot.LastAllocatedEntityId < highestEntityId)
@@ -1008,7 +1008,6 @@ public static class WorldSnapshotSerializer
 
     private static void ValidateInventory(
         IReadOnlyDictionary<string, int>? inventory,
-        int capacity,
         string entityId)
     {
         if (inventory is null)
@@ -1016,17 +1015,14 @@ public static class WorldSnapshotSerializer
             throw new InvalidDataException($"Snapshot entity '{entityId}' inventory is required.");
         }
 
-        var usedCapacity = 0L;
         foreach (var item in inventory)
         {
             ValidateItemCount(item.Key, item.Value, $"entity '{entityId}' inventory");
-            usedCapacity += item.Value;
-        }
-
-        if (usedCapacity > capacity)
-        {
-            throw new InvalidDataException(
-                $"Snapshot entity '{entityId}' inventory exceeds capacity {capacity}.");
+            if (item.Value > EntityRecord.MaxCarriedCountPerItem)
+            {
+                throw new InvalidDataException(
+                    $"Snapshot entity '{entityId}' inventory exceeds the per-item limit for '{item.Key}'.");
+            }
         }
     }
 

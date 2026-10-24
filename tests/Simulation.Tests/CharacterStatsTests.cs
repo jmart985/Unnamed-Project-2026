@@ -24,8 +24,29 @@ public sealed class CharacterStatsTests
         var weak = new CharacterStats(strength: 1, endurance: 1);
 
         Assert.Equal(20, strong.EffectiveCarryCapacity);
+        Assert.Equal(20, strong.EffectiveCarryCapacityKg);
+        Assert.Equal(0.0005, LoadFatigue.PerSecond(10, weak), precision: 8);
+        Assert.Equal(0.000075, LoadFatigue.PerSecond(1.5, weak), precision: 8);
         Assert.True(LoadFatigue.PerSecond(10, strong) < LoadFatigue.PerSecond(10, weak));
         Assert.True(LoadFatigue.PerSecond(30, weak) > LoadFatigue.PerSecond(10, weak));
+    }
+
+    [Fact]
+    public void CarriedWeightUsesItemDefinitionsAndDrivesFatigue()
+    {
+        var world = new World();
+        var loaded = world.SpawnEntity("human", System.Numerics.Vector3.Zero);
+        var unloaded = world.SpawnEntity("human", System.Numerics.Vector3.One);
+        loaded.TryAddCarried(ItemIds.Wood, 999);
+        loaded.TryAddCarried(ItemIds.Axe, 1);
+        unloaded.TryAddCarried(ItemIds.Food, 999);
+
+        Assert.Equal(1.5, loaded.CarriedWeightKg);
+        Assert.Equal(0, unloaded.CarriedWeightKg);
+        loaded.AdvanceNeeds(10);
+        unloaded.AdvanceNeeds(10);
+
+        Assert.True(loaded.Needs.Fatigue > unloaded.Needs.Fatigue);
     }
 
     [Theory]

@@ -92,19 +92,24 @@ public sealed class PlayerWorkstationServiceTests
     }
 
     [Fact]
-    public void FullPlayerInventoryCannotCollectOrLoseFinishedOutput()
+    public void OutputCollectionPartiallyFillsTheRemainingItemStack()
     {
         var session = CreateSession();
         session.World.TrySetEntityPosition(session.PlayerEntityId, session.World.Workstations.Single().Position);
         var station = session.World.Workstations.Single();
         station.OutputStorage.TryAdd(ItemIds.Food, 2);
-        session.Player.TryAddCarried(ItemIds.Wood, session.Player.InventoryCapacity);
+        session.Player.TryAddCarried(ItemIds.Wood, 999);
+        session.Player.TryAddCarried(ItemIds.Food, 998);
 
         var result = new PlayerWorkstationService(session.World).CollectOutput(station.Id);
 
-        Assert.Equal(WorkstationActionResult.OutputCapacityExceeded, result.Result);
-        Assert.Equal(session.Player.InventoryCapacity, session.Player.Inventory[ItemIds.Wood]);
-        Assert.Equal(2, station.OutputStorage.Counts[ItemIds.Food]);
+        Assert.True(result.Succeeded);
+        Assert.Equal(999, session.Player.Inventory[ItemIds.Food]);
+        Assert.Equal(1, station.OutputStorage.Counts[ItemIds.Food]);
+
+        Assert.Equal(WorkstationActionResult.CarriedItemStackFull,
+            new PlayerWorkstationService(session.World).CollectOutput(station.Id).Result);
+        Assert.Equal(1, station.OutputStorage.Counts[ItemIds.Food]);
     }
 
     private static NewGameSession CreateSession() => NewGameSession.Create(
