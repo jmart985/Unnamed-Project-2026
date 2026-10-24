@@ -6,9 +6,11 @@ modified; all products are written to new male-variant paths.
 
 from pathlib import Path
 import math
+import json
+import struct
 import bpy
 import bmesh
-from mathutils import Matrix, Vector
+from mathutils import Matrix, Quaternion, Vector
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -16,6 +18,24 @@ SOURCE = ROOT / "art_source/reference/generated_humanoids/human_elf_adapted_rig_
 OUT_BLEND = ROOT / "art_source/reference/generated_humanoids/human_male_humanoid_rig_v1.blend"
 OUT_GLB = ROOT / "game/assets/humanoids/human/human_male_humanoid_rig_v1.glb"
 OUT_PREVIEW = ROOT / "art_source/reference/generated_humanoids/human_male_humanoid_rig_v1_preview.png"
+
+ANCHOR_TARGETS = {
+    "anchor_root": ("root", (0.0, 0.036, 0.0)),
+    "anchor_foot_l": ("foot_l", (0.053, 0.044, 0.084)),
+    "anchor_foot_r": ("foot_r", (-0.053, 0.044, 0.084)),
+    "anchor_hand_l": ("hand_l", None),
+    "anchor_hand_r": ("hand_r", None),
+    "anchor_carry": ("pelvis", (0.0, 0.105, 0.98)),
+    "anchor_mouth": ("head", (0.0, -0.135, 1.555)),
+    "anchor_anus": ("pelvis", (0.0, 0.085, 0.89)),
+    "anchor_genital": ("pelvis", (0.0, -0.125, 0.87)),
+    "anchor_urethral": ("pelvis", (0.0, -0.145, 0.875)),
+    "anchor_navel": ("spine_01", (0.0, -0.125, 1.055)),
+    "anchor_penile": ("pelvis", (0.0, -0.15, 0.87)),
+    "anchor_testicular": ("pelvis", (0.0, -0.105, 0.83)),
+    "anchor_breast_l": ("spine_03", (0.085, -0.14, 1.25)),
+    "anchor_breast_r": ("spine_03", (-0.085, -0.14, 1.25)),
+}
 
 
 def smoothstep(a, b, x):
@@ -36,8 +56,8 @@ def deform_upper_body():
     for vertex in body.data.vertices:
         x, y, z = vertex.co
         torso_mask = 1.0 - smoothstep(0.17, 0.34, abs(x))
-        waist = 1.0 - 0.10 * (1.0 - smoothstep(1.04, 1.18, z)) * smoothstep(0.88, 1.03, z)
-        chest = 1.0 + 0.07 * smoothstep(1.19, 1.30, z) * (1.0 - smoothstep(1.43, 1.50, z))
+        waist = 1.0 - 0.025 * (1.0 - smoothstep(1.04, 1.18, z)) * smoothstep(0.88, 1.03, z)
+        chest = 1.0 + 0.045 * smoothstep(1.19, 1.30, z) * (1.0 - smoothstep(1.43, 1.50, z))
         factor = 1.0 + (waist * chest - 1.0) * torso_mask
         vertex.co.x = x * factor
 
@@ -72,10 +92,14 @@ def deform_upper_body():
             factor = 1.0 + 0.12 * smoothstep(1.27, 1.39, z)
         vertex.co.x = x * (1.0 + (factor - 1.0) * torso_mask)
         if 0.20 < abs(x) < 0.68 and 1.10 < z < 1.48:
-            # The source blouse has oversized lantern sleeves. Reduce their
-            # cross-section while preserving their length and arm attachments.
-            vertex.co.y = 0.036 + (y - 0.036) * 0.74
-            vertex.co.z = 1.38 + (z - 1.38) * 0.78
+            # The reference blouse has soft, gathered sleeves with a flared
+            # cuff. Keep a little ease at the shoulder, then taper the cloth
+            # toward the wrist so the silhouette follows the underlying arm.
+            cuff_taper = smoothstep(0.20, 0.68, abs(x))
+            depth_scale = 0.84 - 0.06 * cuff_taper
+            height_scale = 0.86 - 0.06 * cuff_taper
+            vertex.co.y = 0.036 + (y - 0.036) * depth_scale
+            vertex.co.z = 1.38 + (z - 1.38) * height_scale
 
 
 def make_male_shirt_torso():
@@ -85,19 +109,21 @@ def make_male_shirt_torso():
     vertices = []
     faces = []
     weights = []
-    segments = 32
+    segments = 48
     center_y = -0.040
-    # A fitted shirt shell hides the source chest contour while following a
-    # broader shoulder line and a straighter waist. Front depth exceeds the
-    # source garment by a small margin so the two meshes do not intersect.
+    # Build a clean outer shirt front over the source body contour. The profile
+    # stays close at the waist, opens through the chest and shoulders, and
+    # falls over the trousers like the layered tunic silhouette in the reference.
     rings = [
-        (0.960, 0.142, 0.145, 0.115),
-        (1.010, 0.145, 0.155, 0.118),
-        (1.060, 0.145, 0.165, 0.115),
-        (1.115, 0.148, 0.170, 0.120),
-        (1.205, 0.160, 0.180, 0.125),
-        (1.300, 0.180, 0.190, 0.130),
-        (1.375, 0.195, 0.175, 0.125),
+        (0.850, 0.132, 0.135, 0.108),
+        (0.900, 0.135, 0.139, 0.111),
+        (0.960, 0.138, 0.144, 0.114),
+        (1.010, 0.134, 0.146, 0.116),
+        (1.060, 0.141, 0.155, 0.116),
+        (1.115, 0.150, 0.168, 0.120),
+        (1.205, 0.159, 0.175, 0.125),
+        (1.300, 0.169, 0.182, 0.128),
+        (1.375, 0.179, 0.176, 0.126),
         (1.415, 0.160, 0.140, 0.110),
         (1.455, 0.082, 0.105, 0.085),
     ]
@@ -117,7 +143,11 @@ def make_male_shirt_torso():
             angle = 2.0 * math.pi * step / segments
             sine = math.sin(angle)
             depth = front_depth if sine < 0.0 else back_depth
-            vertices.append((radius_x * math.cos(angle), center_y + sine * depth, z))
+            hem_weight = 1.0 - smoothstep(0.92, 1.16, z)
+            fold = 1.0 + 0.014 * hem_weight * math.cos(angle * 8.0 + z * 2.5)
+            hem_wave = 0.010 * hem_weight * math.cos(angle * 6.0)
+            vertices.append((radius_x * math.cos(angle) * fold,
+                             center_y + sine * depth * fold, z + hem_wave))
             weights.append(weights_at(z))
     for ring_index in range(len(rings) - 1):
         low = ring_index * segments
@@ -150,6 +180,7 @@ def make_male_shirt_torso():
                 groups[name].add([index], weight, "REPLACE")
     modifier = torso.modifiers.new("MaleTorsoArmature", "ARMATURE")
     modifier.object = armature
+
 
 def make_short_hair():
     hair = bpy.data.objects["HumanHair"]
@@ -283,24 +314,7 @@ def add_semantic_anchors():
     armature = next(obj for obj in bpy.context.scene.objects if obj.type == "ARMATURE")
     # Anchors are presentation-only locators parented to the nearest anatomical
     # bone. Their stable names match the semantic IDs declared by the species.
-    anchors = {
-        "anchor_root": ("root", (0.0, 0.036, 0.0)),
-        "anchor_foot_l": ("foot_l", (0.053, 0.044, 0.084)),
-        "anchor_foot_r": ("foot_r", (-0.053, 0.044, 0.084)),
-        "anchor_hand_l": ("hand_l", (0.655, 0.032, 1.38)),
-        "anchor_hand_r": ("hand_r", (-0.655, 0.032, 1.38)),
-        "anchor_carry": ("pelvis", (0.0, 0.105, 0.98)),
-        "anchor_mouth": ("head", (0.0, -0.135, 1.555)),
-        "anchor_anus": ("pelvis", (0.0, 0.085, 0.89)),
-        "anchor_genital": ("pelvis", (0.0, -0.125, 0.87)),
-        "anchor_urethral": ("pelvis", (0.0, -0.145, 0.875)),
-        "anchor_navel": ("spine_01", (0.0, -0.125, 1.055)),
-        "anchor_penile": ("pelvis", (0.0, -0.15, 0.87)),
-        "anchor_testicular": ("pelvis", (0.0, -0.105, 0.83)),
-        "anchor_breast_l": ("spine_03", (0.085, -0.14, 1.25)),
-        "anchor_breast_r": ("spine_03", (-0.085, -0.14, 1.25)),
-    }
-    for name, (bone_name, position) in anchors.items():
+    for name, (bone_name, position) in ANCHOR_TARGETS.items():
         if bone_name not in armature.data.bones:
             raise RuntimeError(f"Anchor {name} refers to missing bone {bone_name}.")
         locator = bpy.data.objects.new(name, None)
@@ -310,7 +324,24 @@ def add_semantic_anchors():
         locator.parent = armature
         locator.parent_type = "BONE"
         locator.parent_bone = bone_name
-        locator.matrix_world = Matrix.Translation(Vector(position))
+        # Bone-parented objects must use a transform relative to the bone's
+        # REST matrix. Assigning matrix_world here makes Blender show the
+        # desired location but leaves a baked offset that glTF applies again
+        # after the bone transform (notably putting hand sockets above the
+        # head). Store the target in the bone's rest-local space instead.
+        locator.matrix_parent_inverse = Matrix.Identity(4)
+        bone = armature.data.bones[bone_name]
+        # Blender's bone-parented object origin is at the bone tail; glTF's
+        # bone node origin is at the head. Remove that implicit tail offset,
+        # then apply the authored rest-world target in bone-local space.
+        tail_offset = Matrix.Translation(Vector((0.0, -bone.length, 0.0)))
+        if position is None:
+            # The hand socket is exactly at the hand bone head.
+            locator.matrix_basis = tail_offset
+        else:
+            bone_world_rest = armature.matrix_world @ bone.matrix_local
+            target_world = Matrix.Translation(Vector(position))
+            locator.matrix_basis = tail_offset @ bone_world_rest.inverted() @ target_world
     bpy.context.view_layer.update()
 
 
@@ -385,6 +416,89 @@ def validate_asset():
         raise RuntimeError("The male variant must contain at least one mesh.")
 
 
+def validate_exported_anchors():
+    """Check exported GLB world-space sockets against their hand bones."""
+    armature = next(obj for obj in bpy.context.scene.objects if obj.type == "ARMATURE")
+    blob = OUT_GLB.read_bytes()
+    if blob[:4] != b"glTF":
+        raise RuntimeError("Exported runtime asset is not a binary glTF file.")
+    json_length = struct.unpack_from("<I", blob, 12)[0]
+    document = json.loads(blob[20:20 + json_length].decode("utf-8"))
+    nodes = document.get("nodes", [])
+    indices_by_name = {}
+    parent_by_index = {}
+    for index, node in enumerate(nodes):
+        indices_by_name.setdefault(node.get("name", ""), []).append(index)
+        for child_index in node.get("children", []):
+            parent_by_index[child_index] = index
+
+    def local_matrix(node):
+        if "matrix" in node:
+            values = node["matrix"]
+            return Matrix(tuple(tuple(values[column * 4 + row] for column in range(4))
+                                for row in range(4)))
+        translation = Vector(node.get("translation", (0.0, 0.0, 0.0)))
+        rotation = node.get("rotation", (0.0, 0.0, 0.0, 1.0))
+        quaternion = Quaternion((rotation[3], rotation[0], rotation[1], rotation[2]))
+        scale = node.get("scale", (1.0, 1.0, 1.0))
+        return (Matrix.Translation(translation) @ quaternion.to_matrix().to_4x4()
+                @ Matrix.Diagonal((scale[0], scale[1], scale[2], 1.0)))
+
+    world_cache = {}
+
+    def world_matrix(index):
+        if index not in world_cache:
+            parent_index = parent_by_index.get(index)
+            world_cache[index] = (world_matrix(parent_index) @ local_matrix(nodes[index])
+                                  if parent_index is not None else local_matrix(nodes[index]))
+        return world_cache[index]
+
+    def unique_node(name):
+        matches = indices_by_name.get(name, [])
+        if len(matches) != 1:
+            raise RuntimeError(f"Expected one exported GLB node named {name}; found {len(matches)}.")
+        return matches[0]
+
+    for anchor_name, (bone_name, _) in ANCHOR_TARGETS.items():
+        anchor_index = unique_node(anchor_name)
+        parent_index = parent_by_index.get(anchor_index)
+        if parent_index is None or nodes[parent_index].get("name") != bone_name:
+            raise RuntimeError(f"Exported anchor {anchor_name} is not parented to bone node {bone_name}.")
+
+    max_hand_anchor_error = 0.0
+    for side in ("l", "r"):
+        hand_position = world_matrix(unique_node(f"hand_{side}")).translation
+        anchor_position = world_matrix(unique_node(f"anchor_hand_{side}")).translation
+        distance = (anchor_position - hand_position).length
+        max_hand_anchor_error = max(max_hand_anchor_error, distance)
+        if distance > 0.01:
+            raise RuntimeError(
+                f"anchor_hand_{side} is {distance:.3f} m from its hand bone in exported GLB; expected <= 0.010 m."
+            )
+
+    # Verify every explicit world-space target after the exporter has composed
+    # the glTF node hierarchy, rather than merely checking names/parenting.
+    max_target_error = 0.0
+    for name, (_, position) in ANCHOR_TARGETS.items():
+        if position is None:
+            continue
+        blender_position = armature.matrix_world @ Vector(position)
+        expected_gltf_position = Vector((blender_position.x, blender_position.z, -blender_position.y))
+        actual_gltf_position = world_matrix(unique_node(name)).translation
+        error = (actual_gltf_position - expected_gltf_position).length
+        max_target_error = max(max_target_error, error)
+        if error > 0.02:
+            raise RuntimeError(
+                f"{name} is {error:.3f} m from its authored world-space target in exported GLB; expected <= 0.020 m."
+            )
+
+    print(
+        "Exported anchor checks passed: all 15 nodes retain their bone parents; "
+        f"hand-anchor offset {max_hand_anchor_error:.3f} m; "
+        f"maximum authored world-position error {max_target_error:.4f} m."
+    )
+
+
 def main():
     bpy.ops.wm.open_mainfile(filepath=str(SOURCE))
     deform_upper_body()
@@ -424,6 +538,7 @@ def main():
         export_yup=True,
         export_apply=False,
     )
+    validate_exported_anchors()
     bpy.ops.wm.save_as_mainfile(filepath=str(OUT_BLEND))
     print(f"Male variant written: {OUT_BLEND}")
     print(f"Runtime GLB written: {OUT_GLB}")
