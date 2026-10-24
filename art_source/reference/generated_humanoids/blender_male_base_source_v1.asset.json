@@ -1,0 +1,55 @@
+{
+  "asset_id": "blender-human-base-meshes-v1.4.1-male",
+  "source_name": "Blender Human Base Meshes v1.4.1 / GEO-body_male_realistic",
+  "creator": "Blender community and Blender Studio",
+  "source_url": "https://www.blender.org/download/demo-files/",
+  "source_bundle": "human-base-meshes-bundle-v1.4.1.zip",
+  "source_archive_sha256": "811F43ACCBB31A88266D932F8F5563B2D13586FCA0BA2693AAD1F5FE582B3515",
+  "date_acquired": "2026-10-23",
+  "license": {
+    "name": "CC0 1.0 Universal",
+    "identifier": "CC0-1.0",
+    "commercial_use": true,
+    "modification": true,
+    "attribution_required": false,
+    "project_credit": "Blender community / Blender Studio Human Base Meshes v1.4.1",
+    "evidence_url": "https://www.blender.org/download/demo-files/"
+  },
+  "classification": "Prototype Approved",
+  "original_format": ".blend",
+  "working_format": ".blend",
+  "godot_format": "glTF 2.0 binary (.glb)",
+  "selected_objects": [
+    "GEO-body_male_realistic",
+    "GEO-body_male_realistic.eye.L",
+    "GEO-body_male_realistic.eye.R"
+  ],
+  "working_copy_objects": [
+    "BlenderMaleBodyBase",
+    "BlenderMaleEye.L",
+    "BlenderMaleEye.R"
+  ],
+  "mesh": {
+    "body_vertices": 10582,
+    "body_faces": 10590,
+    "body_triangles": 21160,
+    "source_height_m": 1.689961,
+    "normalized_height_m": 1.75,
+    "materials": "Project-owned skin, clothing, and eye materials replace source presentation materials."
+  },
+  "skeleton": {
+    "source_rigged": false,
+    "source_bone_count": 0,
+    "runtime_rig": "Humanoid Rig v1",
+    "runtime_rig_source_license": "Unknown; inherited from the existing elf-adapted human reference.",
+    "weighting": "Blender automatic heat weights, normalized to at most four influences per vertex; palm weights are reinforced against canonical hand-bone segments."
+  },
+  "animation": {
+    "source_animations": [],
+    "runtime_clips": ["human_idle"],
+    "retargeted_to_canonical_rig": true
+  },
+  "usage": "Prototype body source only. The CC0 body is reusable, but the assembled runtime GLB remains prototype-only until the inherited rig and animation rights are resolved.",
+  "working_copy": "art_source/reference/generated_humanoids/blender_male_base_source_v1.blend",
+  "runtime_asset": "game/assets/humanoids/human/human_male_humanoid_rig_v1.glb"
+}

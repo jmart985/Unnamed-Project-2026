@@ -1,0 +1,132 @@
+{
+  "profile_id": "human_humanoid_clothing_fit_v1",
+  "status": "Prototype measurement reference",
+  "units": "meters",
+  "measurement_method": "Evaluated the source body and clothing meshes in Blender, then cast rays from body-surface vertices along their outward normals to the clothing surface. Values below are medians unless stated otherwise.",
+  "references": {
+    "shirt": {
+      "asset_id": "human_elf_adapted_rig_v1",
+      "source_blend": "human_elf_adapted_rig_v1.blend",
+      "body_object": "HumanBody",
+      "clothing_object": "HumanShirt",
+      "license_status": "Reference only; source license remains unverified",
+      "measured_clearance_m": {
+        "torso_front_lower_chest": {
+          "sample_count": 95,
+          "p10": 0.0048,
+          "median": 0.0084,
+          "p90": 0.011,
+          "height_range_m": [1.1, 1.28]
+        },
+        "torso_back_lower_chest": {
+          "sample_count": 66,
+          "p10": 0.0015,
+          "median": 0.004,
+          "p90": 0.0059,
+          "height_range_m": [1.1, 1.28]
+        },
+        "torso_front_upper_chest": {
+          "sample_count": 58,
+          "p10": 0.0046,
+          "median": 0.0083,
+          "p90": 0.0122,
+          "height_range_m": [1.28, 1.44]
+        },
+        "torso_back_upper_chest": {
+          "sample_count": 74,
+          "p10": 0.0029,
+          "median": 0.0053,
+          "p90": 0.0075,
+          "height_range_m": [1.28, 1.44]
+        },
+        "clavicle": {
+          "sample_count_per_side": 26,
+          "median": 0.0073,
+          "p10": 0.0034,
+          "p90": 0.0137
+        },
+        "neckline_boundary": {
+          "sample_count": 28,
+          "source_neck_base_z_m": 1.4314,
+          "front_center_z_m": 1.4328,
+          "front_side_z_m": 1.4681,
+          "back_center_z_m": 1.461,
+          "back_side_z_m": 1.4681,
+          "source_half_width_m": 0.045,
+          "note": "Measured from the highest connected closed boundary loop on HumanShirt; it is the collar opening loop."
+        },
+        "upper_arm": {
+          "sample_count_per_side": [54, 57],
+          "median": 0.0324,
+          "p10": 0.0136,
+          "p90": 0.0577,
+          "note": "This reference sleeve is loose. Its median is recorded, but the male fitted sleeve uses the validated 0.014 m clearance below."
+        }
+      }
+    },
+    "fitted_trousers": {
+      "asset_id": "human_male_humanoid_rig_v1",
+      "source_blend": "human_male_humanoid_rig_v1.blend",
+      "body_object": "HumanBody",
+      "clothing_object": "HumanTrousers",
+      "measurement_basis": "Measured from the prototype whose trouser fit was reviewed and accepted; body and trouser surfaces share topology and skin weights.",
+      "measured_clearance_m": {
+        "front_lower_leg": 0.014,
+        "front_knee": 0.014,
+        "front_thigh": 0.014,
+        "back_lower_leg": 0.014,
+        "back_knee": 0.014,
+        "back_thigh": 0.014,
+        "side_lower_leg": 0.014,
+        "side_knee": 0.014,
+        "side_thigh": 0.014,
+        "sample_count": 768,
+        "p10": 0.014,
+        "median": 0.014,
+        "p90": 0.014
+      }
+    }
+  },
+  "applied_profile": {
+    "body_height_ratios": {
+      "shirt_hem": 0.514,
+      "shirt_lower_chest_start": 0.656,
+      "shirt_upper_chest_start": 0.764,
+      "shirt_collar": 0.84
+    },
+    "shirt_clearance_m": {
+      "torso_front_lower_chest": 0.0084,
+      "torso_back_lower_chest": 0.004,
+      "torso_side_lower_chest": 0.0062,
+      "torso_front_upper_chest": 0.0083,
+      "torso_back_upper_chest": 0.0053,
+      "torso_side_upper_chest": 0.0068,
+      "clavicle": 0.0073,
+      "upper_arm": 0.014,
+      "lower_arm": 0.014,
+      "waist_and_hem_overlap": 0.014,
+      "neckline_front_center_offset_from_neck_base": 0.002,
+      "neckline_back_center_offset_from_neck_base": 0.03,
+      "neckline_side_offset_from_neck_base": 0.037,
+      "neckline_source_half_width": 0.045,
+      "neckline_target_half_width": 0.08
+    },
+    "trousers_clearance_m": {
+      "all_fitted_regions": 0.014
+    },
+    "solidify": {
+      "shirt_thickness_m": 0.01,
+      "shirt_min_thickness_m": 0.003,
+      "shirt_min_skin_gap_m": 0.001,
+      "shirt_offset": -1.0,
+      "shirt_inward_depth_range_m": [0.003, 0.01],
+      "shirt_outward_depth_m": 0.0,
+      "trousers_thickness_m": 0.01,
+      "trousers_offset": -1.0,
+      "trousers_inward_depth_m": 0.01,
+      "trousers_outward_depth_m": 0.0
+    },
+    "side_clearance_note": "The reference shirt has no dependable side-ray coverage beneath the arms. Side chest values are the midpoint of measured front and back values for that same chest band.",
+    "shirt_arm_clearance_note": "The reference shirt's arm median is loose at 0.0324 m. The 0.014 m fitted sleeve target matches the measured clearance of the accepted male trousers and the reference shirt's tighter 10th-percentile sleeve fit."
+  }
+}
