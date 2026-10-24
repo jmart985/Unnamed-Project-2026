@@ -19,6 +19,11 @@ public partial class Main
             _playerCharacter.SetPhysicsProcess(false);
             await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
             await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
+            foreach (var (id, view) in _entityViews)
+            {
+                Require(view.VisualForward.Dot(-view.GlobalBasis.Z) > 0.99f,
+                    $"actor {id} visual forward matches the canonical -Z direction");
+            }
             if (firstGame) await ValidatePlayerLoop();
             var ids = _world.Entities.Where(e => e.SpeciesId == "human" && e.Id != _world.PlayerEntityId).Take(2).Select(e => e.Id).ToArray();
             foreach (var id in ids)
@@ -33,7 +38,15 @@ public partial class Main
             _squadZ.Value = 3;
             PressSquadButton("Move to");
             PressSquadButton("Move to");
+            var moveStarts = ids.ToDictionary(id => id, id => _entityViews[id].GlobalPosition, StringComparer.Ordinal);
             await MoveSquadTo(new NumericsVector3(4, 0, 3), ids);
+            foreach (var id in ids)
+            {
+                var displacement = _entityViews[id].GlobalPosition - moveStarts[id];
+                Require(displacement.LengthSquared() > 0.01f
+                    && _entityViews[id].VisualForward.Dot(displacement.Normalized()) > 0.8f,
+                    $"moving actor {id} faces the direction it traveled");
+            }
             Require(_inspectorLabel.Text.Contains("Squad member: True"), "inspector membership");
             Require(_inspectorLabel.Text.Contains("Squad arrived"), "inspector arrival");
             _playerCharacter.GlobalPosition = new Vector3(7, 0, -3);

@@ -341,6 +341,9 @@ public partial class Main
             human.Actions.Cancel();
             ToggleMenu(PlayerMenu.Inventory); SendMenuKey(Key.G); SendMenuKey(Key.F); ClosePlayerMenus();
             Require(player.Inventory[ItemIds.Food] == foodBeforeGive - 1, "menus isolate interactions");
+            cow.Actions.Cancel();
+            _entityViews[cow.Id].CancelNavigation();
+            _entityViews[cow.Id]._Process(0.1);
             SelectEntity(cow.Id); SendMenuKey(Key.G);
             Require(_actionHud.Text.StartsWith("Greeted", StringComparison.Ordinal) && _targetResponse.Visible
                 && _targetHud.Text.Contains("Trusted") && !_targetHud.Text.Contains("Familiarity"), "G exposes recipient bond without numeric relationship totals");
