@@ -9,7 +9,7 @@ public sealed class PlayerWorkstationServiceTests
     public void PlayerCanLoadWorkCompleteMealAndCollectOutput()
     {
         var session = CreateSession();
-        session.World.TrySetEntityPosition(session.PlayerEntityId, Vector3.Zero);
+        session.World.TrySetEntityPosition(session.PlayerEntityId, session.World.Workstations.Single().Position);
         session.Player.TryAddCarried(ItemIds.Plant, 1);
         session.Player.TryAddCarried(ItemIds.Wood, 1);
         var service = new PlayerWorkstationService(session.World);
@@ -28,7 +28,7 @@ public sealed class PlayerWorkstationServiceTests
     public void RejectedActionsDoNotMutateInventoryOrProgress()
     {
         var session = CreateSession();
-        session.World.TrySetEntityPosition(session.PlayerEntityId, Vector3.Zero);
+        session.World.TrySetEntityPosition(session.PlayerEntityId, session.World.Workstations.Single().Position);
         var station = session.World.Workstations.Single();
         var service = new PlayerWorkstationService(session.World);
 
@@ -38,7 +38,7 @@ public sealed class PlayerWorkstationServiceTests
         Assert.Empty(station.InputStorage.Counts);
         Assert.Equal(0, station.CurrentRecipe!.WorkProgress);
 
-        session.World.TrySetEntityPosition(session.PlayerEntityId, new Vector3(2.01f, 0, 0));
+        session.World.TrySetEntityPosition(session.PlayerEntityId, station.Position + new Vector3(2.01f, 0, 0));
         Assert.Equal(WorkstationActionResult.OutOfRange, service.LoadOne(station.Id, ItemIds.Plant).Result);
     }
 
@@ -46,7 +46,7 @@ public sealed class PlayerWorkstationServiceTests
     public void OutputCapacityFailurePreservesInputsAndProgress()
     {
         var session = CreateSession();
-        session.World.TrySetEntityPosition(session.PlayerEntityId, Vector3.Zero);
+        session.World.TrySetEntityPosition(session.PlayerEntityId, session.World.Workstations.Single().Position);
         var station = session.World.Workstations.Single();
         station.OutputStorage.TryAdd(ItemIds.Food, 9);
         session.Player.TryAddCarried(ItemIds.Plant, 1);
@@ -64,7 +64,7 @@ public sealed class PlayerWorkstationServiceTests
     public void IncapacitatedPlayerCannotMutateWorkbenchState()
     {
         var session = CreateSession();
-        session.World.TrySetEntityPosition(session.PlayerEntityId, Vector3.Zero);
+        session.World.TrySetEntityPosition(session.PlayerEntityId, session.World.Workstations.Single().Position);
         session.Player.TryAddCarried(ItemIds.Plant, 1);
         var head = session.Player.Health.Parts.Single(part => part.Name == "Head");
         session.Player.Health.TryDamage("Head", head.MaximumHealth);
@@ -80,7 +80,7 @@ public sealed class PlayerWorkstationServiceTests
     public void LoadingStopsAtTheRecipeRequirementSoOtherInputsCannotBeCrowdedOut()
     {
         var session = CreateSession();
-        session.World.TrySetEntityPosition(session.PlayerEntityId, Vector3.Zero);
+        session.World.TrySetEntityPosition(session.PlayerEntityId, session.World.Workstations.Single().Position);
         session.Player.TryAddCarried(ItemIds.Plant, 2);
         var service = new PlayerWorkstationService(session.World);
 
@@ -95,7 +95,7 @@ public sealed class PlayerWorkstationServiceTests
     public void FullPlayerInventoryCannotCollectOrLoseFinishedOutput()
     {
         var session = CreateSession();
-        session.World.TrySetEntityPosition(session.PlayerEntityId, Vector3.Zero);
+        session.World.TrySetEntityPosition(session.PlayerEntityId, session.World.Workstations.Single().Position);
         var station = session.World.Workstations.Single();
         station.OutputStorage.TryAdd(ItemIds.Food, 2);
         session.Player.TryAddCarried(ItemIds.Wood, session.Player.InventoryCapacity);

@@ -467,7 +467,7 @@ public partial class Main : Node3D
 		_map.Mesh = new PlaneMesh { Size = new Vector2(WorldHalfExtent * 2, WorldHalfExtent * 2) };
 		_map.MaterialOverride = CreateMaterial(new Color(0.32f, 0.5f, 0.24f));
 		BuildScenery();
-		BuildTownWorkbench();
+		BuildTownWorkbench(_world.Workstations.Single(workstation => workstation.Id == "workbench-1").Position);
 		_navigationRegion.NavigationMesh = CreateNavigationMesh();
 
 		_foodConsumption = new FoodConsumptionService(_world, _speciesCatalog, GetNavigationAdapter);
@@ -1161,6 +1161,8 @@ public partial class Main : Node3D
 
 	private void RebuildPresentationFromWorld()
 	{
+		BuildTownWorkbench(_world.Workstations.FirstOrDefault(workstation => workstation.Id == "workbench-1")?.Position
+			?? NewGameSession.TownWorkbenchPosition);
 		ClearEntityViews();
 		ClearResourceMarkers();
 		RebuildResourceMarkersFromWorld();
@@ -1219,14 +1221,13 @@ public partial class Main : Node3D
 
 	private static StandardMaterial3D CreateMaterial(Color color) => new() { AlbedoColor = color };
 
-	private void BuildTownWorkbench()
+	private void BuildTownWorkbench(System.Numerics.Vector3 placement)
 	{
 		foreach (var child in _workbench.GetChildren())
 		{
 			_workbench.RemoveChild(child);
 			child.QueueFree();
 		}
-		var placement = NewGameSession.TownWorkbenchPosition;
 		_workbench.Position = new Vector3(placement.X, placement.Y + 1.05f, placement.Z);
 		_workbench.Mesh = new BoxMesh { Size = new Vector3(2, 0.18f, 1.4f) };
 		_workbench.MaterialOverride = CreateMaterial(new Color(0.52f, 0.31f, 0.15f));

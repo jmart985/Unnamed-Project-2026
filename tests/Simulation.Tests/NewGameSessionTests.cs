@@ -126,15 +126,13 @@ public sealed class NewGameSessionTests
                 .ToArray();
 
             Assert.Equal(NewGameSession.HumanNpcCount, starterHumans.Length);
+            Assert.Equal(new Vector3(10, 0, 10), session.World.Workstations.Single().Position);
+            Assert.True(MathF.Abs(session.World.Workstations.Single().Position.X) > 5.5f);
+            Assert.True(MathF.Abs(session.World.Workstations.Single().Position.Z) > 5.2f);
             for (var index = 0; index < starterHumans.Length; index++)
             {
                 var npc = starterHumans[index];
-                var expectedPosition = index switch
-                {
-                    4 => new Vector3(NewGameSession.TownWorkbenchPosition.X - 2f, 0, NewGameSession.TownWorkbenchPosition.Z + 2f),
-                    5 => new Vector3(NewGameSession.TownWorkbenchPosition.X + 2f, 0, NewGameSession.TownWorkbenchPosition.Z + 2f),
-                    _ => new Vector3(index - 4.5f, 0, NewGameSession.TownWorkbenchPosition.Z)
-                };
+                var expectedPosition = new Vector3(index - 4.5f, 0, 0);
                 Assert.Equal(expectedPosition, npc.Position);
                 // Test distance from the NPC capsule to the workbench's 2.0 m x 1.4 m footprint.
                 var distanceX = MathF.Max(MathF.Abs(npc.Position.X - NewGameSession.TownWorkbenchPosition.X) - 1.0f, 0);

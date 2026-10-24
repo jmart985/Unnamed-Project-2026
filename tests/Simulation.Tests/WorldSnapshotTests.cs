@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using Simulation;
 
@@ -120,6 +121,33 @@ public sealed class WorldSnapshotTests
         Assert.Equal(1, restored.InputStorage.Counts[ItemIds.Plant]);
         Assert.Equal(1, restored.InputStorage.Counts[ItemIds.Wood]);
         Assert.Equal(3, restored.CurrentRecipe!.WorkProgress);
+    }
+
+    [Theory]
+    [InlineData(11)]
+    [InlineData(19)]
+    [InlineData(20)]
+    public void OlderSnapshotsMoveStarterWorkbenchWithoutLosingItsState(int oldSchema)
+    {
+        var source = NewGameSession.Create(GetSpeciesCatalog(), PlayerCharacterProfile.Create("Ada"));
+        var station = source.World.Workstations.Single();
+        station.InputStorage.TryAdd(ItemIds.Plant, 1);
+        station.InputStorage.TryAdd(ItemIds.Wood, 1);
+        station.ApplyWork(3);
+        var snapshot = JsonNode.Parse(WorldSnapshotSerializer.Serialize(source.World, 4))!;
+        snapshot["SchemaVersion"] = oldSchema;
+        snapshot["Workstations"]![0]!["Position"] = new JsonObject { ["X"] = 0, ["Y"] = 0, ["Z"] = 0 };
+
+        var target = new World();
+        WorldSnapshotSerializer.Load(target, snapshot.ToJsonString(), GetSpeciesCatalog());
+
+        var restored = Assert.Single(target.Workstations);
+        Assert.Equal(NewGameSession.TownWorkbenchPosition, restored.Position);
+        Assert.Equal(1, restored.InputStorage.Counts[ItemIds.Plant]);
+        Assert.Equal(1, restored.InputStorage.Counts[ItemIds.Wood]);
+        Assert.Equal(3, restored.CurrentRecipe!.WorkProgress);
+        Assert.Equal(WorldSnapshotSerializer.CurrentSchemaVersion,
+            WorldSnapshotSerializer.Deserialize(WorldSnapshotSerializer.Serialize(target, 4)).SchemaVersion);
     }
 
     [Fact]

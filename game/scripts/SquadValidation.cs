@@ -29,7 +29,7 @@ public partial class Main
             if (firstGame) await ValidatePlayerLoop();
             if (firstGame)
             {
-                await ValidateRelocatedStarterHumanCanLeaveWorkbench();
+                await ValidateStarterHumanCanTravelToAndFromWorkbench();
                 RestoreLegacyStarterNpcLayoutForSquadFixture();
             }
             var ids = _world.Entities.Where(e => e.SpeciesId == "human" && e.Id != _world.PlayerEntityId)
@@ -155,27 +155,33 @@ public partial class Main
         }
     }
 
-    private async Task ValidateRelocatedStarterHumanCanLeaveWorkbench()
+    private async Task ValidateStarterHumanCanTravelToAndFromWorkbench()
     {
         var bench = NewGameSession.TownWorkbenchPosition;
         var npc = _world.Entities
             .Where(entity => entity.SpeciesId == "human" && entity.Id != _world.PlayerEntityId)
-            .Where(entity => MathF.Abs(entity.Position.Z - (bench.Z + 2f)) < 0.01f)
             .OrderBy(entity => NumericsVector3.DistanceSquared(entity.Position,
                 new NumericsVector3(bench.X, bench.Y, bench.Z)))
-            .ThenBy(entity => entity.Position.X)
+            .ThenBy(entity => entity.Id, StringComparer.Ordinal)
             .First();
-        var awayFromBench = npc.Position.X < bench.X ? -2f : 2f;
-        var destination = npc.Position + new NumericsVector3(awayFromBench, 0, 0);
+        var spawn = npc.Position;
+        var destination = new NumericsVector3(bench.X, bench.Y, bench.Z + 1.8f);
         SelectEntity(npc.Id);
         PressSquadButton("Add selected");
         _squadX.Value = destination.X;
         _squadZ.Value = destination.Z;
         PressSquadButton("Move to");
         await MoveSquadTo(destination, [npc.Id]);
+        Require(NumericsVector3.Distance(_world.Entities.Single(entity => entity.Id == npc.Id).Position,
+            new NumericsVector3(bench.X, bench.Y, bench.Z)) <= PlayerWorkstationService.InteractionRange + 0.5f,
+            $"starter human {npc.Id} reaches the workbench approach from the crossroads");
+        _squadX.Value = spawn.X;
+        _squadZ.Value = spawn.Z;
+        PressSquadButton("Move to");
+        await MoveSquadTo(spawn, [npc.Id]);
         PressSquadButton("Stop");
         PressSquadButton("Remove member");
-        Require(!_world.SquadMemberIds.Contains(npc.Id), $"relocated starter human {npc.Id} test order is cleaned up");
+        Require(!_world.SquadMemberIds.Contains(npc.Id), $"starter human {npc.Id} route test is cleaned up");
     }
 
     private void PressSquadButton(string text)
