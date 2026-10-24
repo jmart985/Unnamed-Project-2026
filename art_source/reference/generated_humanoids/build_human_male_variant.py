@@ -508,9 +508,6 @@ def make_male_shirt_torso():
         thickness_group.add([shirt_index], applied_thickness / target_thickness, "REPLACE")
         applied_thicknesses.append(applied_thickness)
 
-    skin = shirt.modifiers.new("HumanMaleShirtArmature", "ARMATURE")
-    skin.object = armature
-    skin.use_vertex_groups = True
     shell = shirt.modifiers.new("HumanMaleShirtFabricThickness", "SOLIDIFY")
     shell.thickness = target_thickness
     shell.offset = thickness_profile["shirt_offset"]
@@ -520,6 +517,9 @@ def make_male_shirt_torso():
     shell.use_rim = True
     if abs(shell.offset + 1.0) > 1e-6 or not shell.vertex_group:
         raise RuntimeError("Male shirt thickness must preserve its measured outer fit and adapt to local clearance.")
+    skin = shirt.modifiers.new("HumanMaleShirtArmature", "ARMATURE")
+    skin.object = armature
+    skin.use_vertex_groups = True
     shirt.data.materials.append(
         make_project_material("Human_Male_Workwear", (0.24, 0.29, 0.16), roughness=0.9)
     )
@@ -811,6 +811,16 @@ def make_trousers():
     shell.use_rim = True
     if abs(shell.thickness - thickness_profile["trousers_inward_depth_m"]) > 1e-6 or abs(shell.offset + 1.0) > 1e-6:
         raise RuntimeError("Male trousers Solidify depths do not sum to the profile thickness.")
+    bpy.context.view_layer.objects.active = trousers
+    trousers.select_set(True)
+    armature_modifier = next(
+        (modifier for modifier in trousers.modifiers if modifier.type == "ARMATURE"), None
+    )
+    if armature_modifier is None:
+        raise RuntimeError("Generated trousers must retain the body's armature skinning.")
+    while trousers.modifiers.find(shell.name) > trousers.modifiers.find(armature_modifier.name):
+        if "FINISHED" not in bpy.ops.object.modifier_move_up(modifier=shell.name):
+            raise RuntimeError("Could not place trouser thickness before the armature modifier.")
 
     for polygon in trousers.data.polygons:
         polygon.use_smooth = True
@@ -1073,10 +1083,10 @@ def validate_asset():
             continue
     if len(thickness_values) != len(shirt.data.vertices) or min(thickness_values) < 0.29 or max(thickness_values) > 1.0:
         raise RuntimeError("Male shirt thickness weights do not cover the measured 3–10 mm range.")
-    if [mod.type for mod in shirt.modifiers].index("ARMATURE") > [
+    if [mod.type for mod in shirt.modifiers].index("SOLIDIFY") > [
         mod.type for mod in shirt.modifiers
-    ].index("SOLIDIFY"):
-        raise RuntimeError("Male shirt must deform on the rig before fabric thickness is generated.")
+    ].index("ARMATURE"):
+        raise RuntimeError("Male shirt thickness must be generated before it is skinned to the rig.")
     trousers = bpy.data.objects.get("HumanTrousers")
     if trousers is None or trousers.get("fit_profile_id") != FIT_PROFILE["profile_id"]:
         raise RuntimeError("The male trousers must use the measured clothing-fit profile.")
@@ -1087,10 +1097,10 @@ def validate_asset():
     trouser_shells = [mod for mod in trousers.modifiers if mod.type == "SOLIDIFY"]
     if len(trouser_shells) != 1 or abs(trouser_shells[0].thickness - expected_trouser_thickness) > 1e-6:
         raise RuntimeError("Male trousers must have the measured-profile fabric Solidify thickness.")
-    if [mod.type for mod in trousers.modifiers].index("ARMATURE") > [
+    if [mod.type for mod in trousers.modifiers].index("SOLIDIFY") > [
         mod.type for mod in trousers.modifiers
-    ].index("SOLIDIFY"):
-        raise RuntimeError("Male trousers must deform on the rig before fabric thickness is generated.")
+    ].index("ARMATURE"):
+        raise RuntimeError("Male trouser thickness must be generated before it is skinned to the rig.")
 
 
 def validate_exported_anchors():
@@ -1176,6 +1186,88 @@ def validate_exported_anchors():
     )
 
 
+def validate_exported_garment_shells():
+    """Require the runtime shirt and trousers to export as closed, thick meshes."""
+    blob = OUT_GLB.read_bytes()
+    if blob[:4] != b"glTF":
+        raise RuntimeError("Exported runtime asset is not a binary glTF file.")
+    json_length = struct.unpack_from("<I", blob, 12)[0]
+    document = json.loads(blob[20:20 + json_length].decode("utf-8"))
+    bin_header = 20 + json_length
+    bin_length, bin_kind = struct.unpack_from("<II", blob, bin_header)
+    if bin_kind != 0x004E4942:
+        raise RuntimeError("Exported GLB is missing its binary geometry chunk.")
+    binary = blob[bin_header + 8:bin_header + 8 + bin_length]
+    component_formats = {5121: ("B", 1), 5123: ("H", 2), 5125: ("I", 4), 5126: ("f", 4)}
+    type_widths = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4}
+
+    def accessor_values(accessor_index):
+        accessor = document["accessors"][accessor_index]
+        view = document["bufferViews"][accessor["bufferView"]]
+        component_format, component_size = component_formats[accessor["componentType"]]
+        width = type_widths[accessor["type"]]
+        item_size = component_size * width
+        stride = view.get("byteStride", item_size)
+        start = view.get("byteOffset", 0) + accessor.get("byteOffset", 0)
+        values = []
+        for item_index in range(accessor["count"]):
+            unpacked = struct.unpack_from(
+                "<" + component_format * width, binary, start + item_index * stride
+            )
+            values.append(unpacked[0] if width == 1 else unpacked)
+        return values
+
+    nodes_by_name = {}
+    for node in document.get("nodes", []):
+        if "mesh" in node:
+            nodes_by_name.setdefault(node.get("name", ""), []).append(node["mesh"])
+
+    weld_tolerance_m = 1e-5
+    for garment_name in ("HumanMaleShirt", "HumanTrousers"):
+        mesh_indices = nodes_by_name.get(garment_name, [])
+        if len(mesh_indices) != 1:
+            raise RuntimeError(
+                f"Expected one runtime GLB mesh node named {garment_name}; found {len(mesh_indices)}."
+            )
+        edge_counts = {}
+        triangle_count = 0
+        welded_vertices = set()
+        for primitive in document["meshes"][mesh_indices[0]]["primitives"]:
+            if primitive.get("mode", 4) != 4:
+                raise RuntimeError(f"Runtime garment {garment_name} is not exported as triangles.")
+            positions = accessor_values(primitive["attributes"]["POSITION"])
+            coordinates = [
+                tuple(round(component / weld_tolerance_m) for component in position)
+                for position in positions
+            ]
+            welded_vertices.update(coordinates)
+            indices = accessor_values(primitive["indices"]) if "indices" in primitive else list(range(len(positions)))
+            if len(indices) % 3:
+                raise RuntimeError(f"Runtime garment {garment_name} has an incomplete triangle.")
+            triangle_count += len(indices) // 3
+            for offset in range(0, len(indices), 3):
+                triangle = [coordinates[indices[offset + vertex]] for vertex in range(3)]
+                for edge_index in range(3):
+                    first = triangle[edge_index]
+                    second = triangle[(edge_index + 1) % 3]
+                    edge = (first, second) if first <= second else (second, first)
+                    edge_counts[edge] = edge_counts.get(edge, 0) + 1
+
+        boundary_edges = sum(count == 1 for count in edge_counts.values())
+        nonmanifold_edges = sum(count != 2 for count in edge_counts.values())
+        if triangle_count == 0 or not welded_vertices:
+            raise RuntimeError(f"Runtime garment {garment_name} exported without geometry.")
+        if boundary_edges or nonmanifold_edges:
+            raise RuntimeError(
+                f"Runtime garment {garment_name} is not a closed fabric shell: "
+                f"{boundary_edges} boundary edges, {nonmanifold_edges} edges with incidence other than 2."
+            )
+        print(
+            f"Runtime garment shell passed: {garment_name}, {len(welded_vertices)} welded vertices, "
+            f"{triangle_count} triangles, closed rims and inner surface present."
+        )
+
+
 def main():
     bpy.ops.wm.open_mainfile(filepath=str(SOURCE))
     deform_upper_body()
@@ -1218,9 +1310,12 @@ def main():
         export_animations=True,
         export_skins=True,
         export_yup=True,
-        export_apply=False,
+        # The exporter applies non-armature modifiers but preserves skinning.
+        # This bakes Solidify into the GLB instead of exporting an open sheet.
+        export_apply=True,
     )
     validate_exported_anchors()
+    validate_exported_garment_shells()
     bpy.ops.wm.save_as_mainfile(filepath=str(OUT_BLEND))
     print(f"Male variant written: {OUT_BLEND}")
     print(f"Runtime GLB written: {OUT_GLB}")

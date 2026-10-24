@@ -31,7 +31,10 @@ using the measured reference values; its sleeves use the 14 mm fitted reference
 clearance. The neckline follows the measured collar profile, and the shell
 keeps the exact measured outer fit. Solidify adds 3–10 mm inward, adapting its
 thickness to leave at least 1 mm between the inner surface and skin. Its
-armature modifier runs before Solidify so the garment bends with the body.
+Solidify modifier runs before the armature modifier, so thickness is part of the
+skinned mesh rather than a post-skin surface effect. The GLB export applies
+non-armature modifiers while retaining the armature, and the exported shirt and
+trousers are checked for closed inner surfaces and rims.
 
 ## Modeling guidance for humanoid outfits
 
