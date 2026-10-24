@@ -1,30 +1,29 @@
 namespace UnnamedProject2026;
 
-/// Engine adapter action names mirror the domain action contract without requiring
-/// the Godot project to compile domain source files into its generated project.
+/// Compatibility facade for Godot scripts. Simulation owns the stable action-name values.
 public static class ControllerActions
 {
-    public const string MoveLeft = "move_left";
-    public const string MoveRight = "move_right";
-    public const string MoveForward = "move_forward";
-    public const string MoveBackward = "move_backward";
-    public const string Jump = "jump";
-    public const string Attack = "combat_attack";
-    public const string AttackLeft = "combat_attack_left";
-    public const string AttackRight = "combat_attack_right";
-    public const string Collect = "collect";
-    public const string Interact = "interact";
-    public const string Greet = "greet";
-    public const string Rest = "rest";
-    public const string CycleTarget = "cycle_target";
-    public const string Inventory = "open_inventory";
-    public const string Settlement = "open_settlement";
-    public const string Settings = "open_settings";
+    public const string MoveLeft = Simulation.ControllerActions.MoveLeft;
+    public const string MoveRight = Simulation.ControllerActions.MoveRight;
+    public const string MoveForward = Simulation.ControllerActions.MoveForward;
+    public const string MoveBackward = Simulation.ControllerActions.MoveBackward;
+    public const string Jump = Simulation.ControllerActions.Jump;
+    public const string Attack = Simulation.ControllerActions.Attack;
+    public const string AttackLeft = Simulation.ControllerActions.AttackLeft;
+    public const string AttackRight = Simulation.ControllerActions.AttackRight;
+    public const string Collect = Simulation.ControllerActions.Collect;
+    public const string Interact = Simulation.ControllerActions.Interact;
+    public const string Greet = Simulation.ControllerActions.Greet;
+    public const string Rest = Simulation.ControllerActions.Rest;
+    public const string CycleTarget = Simulation.ControllerActions.CycleTarget;
+    public const string Inventory = Simulation.ControllerActions.Inventory;
+    public const string Settlement = Simulation.ControllerActions.Settlement;
+    public const string Settings = Simulation.ControllerActions.Settings;
     public static IReadOnlyList<string> All => Simulation.ControllerActions.All;
-    public const string CloseMenu = "close_menu";
-    public const string DebugRoute = "debug_route";
-    public const string DebugUnreachable = "debug_unreachable";
-    public const string DebugCancel = "debug_cancel";
-    public const string DebugRemoveGoal = "debug_remove_goal";
+    public const string CloseMenu = Simulation.ControllerActions.CloseMenu;
+    public const string DebugRoute = Simulation.ControllerActions.DebugRoute;
+    public const string DebugUnreachable = Simulation.ControllerActions.DebugUnreachable;
+    public const string DebugCancel = Simulation.ControllerActions.DebugCancel;
+    public const string DebugRemoveGoal = Simulation.ControllerActions.DebugRemoveGoal;
 }
 
