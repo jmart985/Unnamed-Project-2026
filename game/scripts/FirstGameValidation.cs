@@ -15,6 +15,7 @@ public partial class Main
         var player = _world.Entities.Single(e => e.Id == _world.PlayerEntityId);
         var initialPosition = player.Position;
         var initialSatiety = player.Satiety;
+        await ValidatePlayerForwardAndBackwardInput();
         _playerCharacter.SetPhysicsProcess(true);
         Input.ActionPress(ControllerActions.MoveRight);
         try { for (var frame = 0; frame < 12; frame++) await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame); }
@@ -57,6 +58,56 @@ public partial class Main
         _selectedEntityId = "missing";
         Require(GreetSelectedEntity().Contains("no longer exists", StringComparison.Ordinal), "missing greeting rejection");
         Require(unchanged == WorldSnapshotSerializer.Serialize(_world, _clock.SimulationTime), "greeting rejections preserve World");
+    }
+
+    private async Task ValidatePlayerForwardAndBackwardInput()
+    {
+        var originalPosition = _playerCharacter.GlobalPosition;
+        var originalRotation = _playerCharacter.Rotation;
+        var start = new Vector3(150, 0, 150);
+        var expectedForward = Vector3.Forward;
+        try
+        {
+            _playerCharacter.GlobalPosition = start;
+            _playerCharacter.Rotation = Vector3.Zero;
+            SyncPlayerPosition();
+            _playerCharacter.SetPhysicsProcess(true);
+            Input.ActionPress(ControllerActions.MoveForward);
+            try
+            {
+                for (var frame = 0; frame < 12; frame++)
+                    await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
+            }
+            finally
+            {
+                Input.ActionRelease(ControllerActions.MoveForward);
+            }
+            var forwardDelta = _playerCharacter.GlobalPosition - start;
+            Require(forwardDelta.Dot(expectedForward) > 0.05f, "W moves along the character's visual forward (-Z) direction");
+
+            var backwardStart = _playerCharacter.GlobalPosition;
+            Input.ActionPress(ControllerActions.MoveBackward);
+            try
+            {
+                for (var frame = 0; frame < 36; frame++)
+                    await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
+            }
+            finally
+            {
+                Input.ActionRelease(ControllerActions.MoveBackward);
+            }
+            var backwardDelta = _playerCharacter.GlobalPosition - backwardStart;
+            Require(backwardDelta.Dot(expectedForward) < -0.05f, "S moves opposite the character's visual forward direction");
+        }
+        finally
+        {
+            Input.ActionRelease(ControllerActions.MoveForward);
+            Input.ActionRelease(ControllerActions.MoveBackward);
+            _playerCharacter.SetPhysicsProcess(false);
+            _playerCharacter.GlobalPosition = originalPosition;
+            _playerCharacter.Rotation = originalRotation;
+            SyncPlayerPosition();
+        }
     }
 
     private long FoodTotal() => _world.FoodSources.Sum(s => s.Contents.Counts.Where(i => ItemIds.IsEdibleFood(i.Key)).Sum(i => (long)i.Value))

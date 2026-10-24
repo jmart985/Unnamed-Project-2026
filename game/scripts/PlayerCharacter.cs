@@ -230,6 +230,7 @@ public partial class PlayerCharacter : CharacterBody3D
 			Velocity = new Vector3(Velocity.X, JumpVelocity, Velocity.Z);
 		}
 
+		// GetAxis takes (negative, positive); forward is the negative local -Z direction.
 		var forward = GameplayInputEnabled ? Input.GetAxis(ControllerActions.MoveForward, ControllerActions.MoveBackward) : 0;
 		var strafe = GameplayInputEnabled ? Input.GetAxis(ControllerActions.MoveLeft, ControllerActions.MoveRight) : 0;
 		var localDirection = new Vector3(strafe, 0.0f, forward);

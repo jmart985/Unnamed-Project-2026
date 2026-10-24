@@ -15,6 +15,7 @@ public partial class EntityView : CharacterBody3D
     private InteractionAnchorDefinition _anchorDefinition = InteractionAnchorDefinition.Empty;
     private CreatureBodyPlan _bodyPlan;
     private Node3D? _rig;
+    private Node3D? _visualModelRoot;
     private ProceduralGait? _gait;
     private Vector3 _lastPosition;
     private float _smoothedSpeed;
@@ -24,7 +25,11 @@ public partial class EntityView : CharacterBody3D
 
     public bool HasGreetingAttention => _greeterPosition is not null;
 
-    public Vector3 VisualForward => _rig is null ? -GlobalBasis.Z : -_rig.GlobalBasis.Z;
+    // Imported Blender rigs in this prototype use +Z as their source forward;
+    // normalize them at the asset boundary so every actor uses the same -Z rule.
+    public Vector3 VisualForward => _visualModelRoot is null
+        ? (_rig is null ? -GlobalBasis.Z : -_rig.GlobalBasis.Z)
+        : _visualModelRoot.GlobalBasis.Z;
 
     public void AcknowledgeGreeting(Func<Vector3?> greeterPosition)
     {
@@ -152,9 +157,7 @@ public partial class EntityView : CharacterBody3D
             return false;
         }
 
-        var model = packed.Instantiate<Node3D>();
-        model.Name = displayName;
-        _rig!.AddChild(model);
+        var model = AddImportedModel(packed, displayName);
         AddCollision(totalHeight, radius);
 
         var animationPlayer = model.FindChild("AnimationPlayer", recursive: true, owned: false) as AnimationPlayer;
@@ -186,9 +189,7 @@ public partial class EntityView : CharacterBody3D
             return false;
         }
 
-        var model = packed.Instantiate<Node3D>();
-        model.Name = "HumanProductionModel";
-        _rig!.AddChild(model);
+        var model = AddImportedModel(packed, "HumanProductionModel");
         AddCollision(totalHeight: 1.75f, radius: 0.32f);
 
         var animationPlayer = model.FindChild("AnimationPlayer", recursive: true, owned: false) as AnimationPlayer;
@@ -205,6 +206,22 @@ public partial class EntityView : CharacterBody3D
         }
 
         return true;
+    }
+
+    private Node3D AddImportedModel(PackedScene packed, string displayName)
+    {
+        // Keep source-forward correction on a wrapper so imported idle animations
+        // cannot overwrite the project's canonical -Z orientation.
+        _visualModelRoot = new Node3D
+        {
+            Name = $"{displayName}ForwardAdapter",
+            Rotation = Vector3.Up * Mathf.Pi
+        };
+        _rig!.AddChild(_visualModelRoot);
+        var model = packed.Instantiate<Node3D>();
+        model.Name = displayName;
+        _visualModelRoot.AddChild(model);
+        return model;
     }
 
     private void AddCollision(float totalHeight, float radius)
