@@ -51,15 +51,23 @@ def deform_upper_body():
     body = bpy.data.objects["HumanBody"]
     shirt = bpy.data.objects["HumanShirt"]
 
-    # Keep the base mesh recognizable while making the torso less hourglass-
-    # shaped and giving the upper frame a modestly broader adult-male profile.
+    # The source body is intentionally retained, but its proportions need to
+    # read clearly at the game's normal camera distance. Broaden the chest and
+    # shoulder transition, reduce the waist pinch, and widen/project the jaw.
     for vertex in body.data.vertices:
         x, y, z = vertex.co
-        torso_mask = 1.0 - smoothstep(0.17, 0.34, abs(x))
-        waist = 1.0 - 0.025 * (1.0 - smoothstep(1.04, 1.18, z)) * smoothstep(0.88, 1.03, z)
-        chest = 1.0 + 0.045 * smoothstep(1.19, 1.30, z) * (1.0 - smoothstep(1.43, 1.50, z))
+        torso_mask = 1.0 - smoothstep(0.16, 0.31, abs(x))
+        waist = 1.0 - 0.07 * smoothstep(0.88, 0.98, z) * (1.0 - smoothstep(1.00, 1.12, z))
+        chest = 1.0 + 0.22 * smoothstep(1.12, 1.27, z) * (1.0 - smoothstep(1.40, 1.48, z))
         factor = 1.0 + (waist * chest - 1.0) * torso_mask
         vertex.co.x = x * factor
+
+        # Flatten the paired chest forms in the elf-derived base mesh. This
+        # keeps the unclothed body silhouette masculine as well as the shirt.
+        chest_zone = smoothstep(1.11, 1.20, z) * (1.0 - smoothstep(1.32, 1.40, z))
+        breast_lobe = math.exp(-((abs(x) - 0.085) / 0.052) ** 2)
+        front_surface = smoothstep(0.055, 0.14, -y)
+        vertex.co.y += 0.055 * chest_zone * breast_lobe * front_surface
 
         # The source was elf-derived; shorten the lateral ear tips while
         # preserving the skull and face profile for the human variant.
@@ -67,37 +75,37 @@ def deform_upper_body():
             sign = 1.0 if x >= 0.0 else -1.0
             vertex.co.x = sign * (0.12 + (abs(x) - 0.12) * 0.08)
 
-        # Slightly widen the lower face to avoid the source's very narrow jaw.
-        jaw_mask = (1.0 - smoothstep(0.09, 0.16, abs(x))) * smoothstep(1.47, 1.52, z) * (1.0 - smoothstep(1.56, 1.61, z))
-        vertex.co.x *= 1.0 + 0.12 * jaw_mask
+        jaw_mask = (1.0 - smoothstep(0.07, 0.145, abs(x))) * smoothstep(1.46, 1.52, z) * (1.0 - smoothstep(1.57, 1.64, z))
+        vertex.co.x *= 1.0 + 0.24 * jaw_mask
+        if y < -0.055:
+            vertex.co.y -= 0.016 * jaw_mask * smoothstep(0.055, 0.12, -y)
 
     brows = bpy.data.objects["HumanBrows"]
+    brow_center_z = sum(vertex.co.z for vertex in brows.data.vertices) / max(1, len(brows.data.vertices))
     for vertex in brows.data.vertices:
-        vertex.co.x *= 1.28
-        vertex.co.z = 1.622 + (vertex.co.z - 1.622) * 1.30
+        vertex.co.x *= 1.18
+        vertex.co.z = brow_center_z + (vertex.co.z - brow_center_z) * 1.55
         vertex.co.y -= 0.006
+
+    eyes = bpy.data.objects.get("HumanEyes")
+    if eyes is not None and eyes.data.vertices:
+        center = sum((vertex.co for vertex in eyes.data.vertices), Vector()) / len(eyes.data.vertices)
+        for vertex in eyes.data.vertices:
+            vertex.co = center + (vertex.co - center) * 0.90
 
     lashes = bpy.data.objects.get("HumanLashes")
     if lashes is not None:
         bpy.data.objects.remove(lashes, do_unlink=True)
 
+    # Keep the source sleeves' skinning so they follow the idle and locomotion
+    # poses. Reduce the gathered blouse volume and taper the cuff while leaving
+    # enough ease for the shoulders and elbows to move without clipping.
     for vertex in shirt.data.vertices:
         x, y, z = vertex.co
-        torso_mask = 1.0 - smoothstep(0.20, 0.35, abs(x))
-        if z < 1.14:
-            factor = 0.91
-        elif z < 1.27:
-            factor = 0.91 + 0.09 * smoothstep(1.14, 1.27, z)
-        else:
-            factor = 1.0 + 0.12 * smoothstep(1.27, 1.39, z)
-        vertex.co.x = x * (1.0 + (factor - 1.0) * torso_mask)
         if 0.20 < abs(x) < 0.68 and 1.10 < z < 1.48:
-            # The reference blouse has soft, gathered sleeves with a flared
-            # cuff. Keep a little ease at the shoulder, then taper the cloth
-            # toward the wrist so the silhouette follows the underlying arm.
             cuff_taper = smoothstep(0.20, 0.68, abs(x))
-            depth_scale = 0.84 - 0.06 * cuff_taper
-            height_scale = 0.86 - 0.06 * cuff_taper
+            depth_scale = 0.80 - 0.08 * cuff_taper
+            height_scale = 0.82 - 0.08 * cuff_taper
             vertex.co.y = 0.036 + (y - 0.036) * depth_scale
             vertex.co.z = 1.38 + (z - 1.38) * height_scale
 
@@ -105,37 +113,37 @@ def deform_upper_body():
 def make_male_shirt_torso():
     source = bpy.data.objects["HumanShirt"]
     armature = source.parent
-    transform = source.matrix_world.copy()
+    cloth_material = source.data.materials[0]
+
     vertices = []
     faces = []
     weights = []
     segments = 48
-    center_y = -0.040
-    # Build a clean outer shirt front over the source body contour. The profile
-    # stays close at the waist, opens through the chest and shoulders, and
-    # falls over the trousers like the layered tunic silhouette in the reference.
+    center_y = -0.015
+    # A shaped, waist-length work shirt overlays the source's animated sleeves.
+    # Its chest and shoulder width is intentionally more pronounced than the
+    # waist; the offset front/back profile follows the body without a rigid orb.
     rings = [
-        (0.850, 0.132, 0.135, 0.108),
-        (0.900, 0.135, 0.139, 0.111),
-        (0.960, 0.138, 0.144, 0.114),
-        (1.010, 0.134, 0.146, 0.116),
-        (1.060, 0.141, 0.155, 0.116),
-        (1.115, 0.150, 0.168, 0.120),
-        (1.205, 0.159, 0.175, 0.125),
-        (1.300, 0.169, 0.182, 0.128),
-        (1.375, 0.179, 0.176, 0.126),
-        (1.415, 0.160, 0.140, 0.110),
-        (1.455, 0.082, 0.105, 0.085),
+        (1.045, 0.137, 0.123, 0.116),
+        (1.060, 0.140, 0.125, 0.118),
+        (1.085, 0.143, 0.127, 0.120),
+        (1.105, 0.141, 0.125, 0.118),
+        (1.125, 0.151, 0.134, 0.124),
+        (1.205, 0.190, 0.160, 0.145),
+        (1.295, 0.215, 0.174, 0.155),
+        (1.365, 0.225, 0.176, 0.155),
+        (1.405, 0.194, 0.154, 0.137),
+        (1.438, 0.102, 0.105, 0.096),
     ]
 
     def weights_at(z):
-        if z < 1.14:
-            blend = smoothstep(1.06, 1.14, z)
+        if z < 1.16:
+            blend = smoothstep(1.08, 1.16, z)
             return [("pelvis", 1.0 - blend), ("spine_01", blend)]
-        if z < 1.28:
-            blend = smoothstep(1.14, 1.28, z)
+        if z < 1.31:
+            blend = smoothstep(1.16, 1.31, z)
             return [("spine_01", 1.0 - blend), ("spine_02", blend)]
-        blend = smoothstep(1.28, 1.40, z)
+        blend = smoothstep(1.31, 1.41, z)
         return [("spine_02", 1.0 - blend), ("spine_03", blend)]
 
     for z, radius_x, front_depth, back_depth in rings:
@@ -143,9 +151,9 @@ def make_male_shirt_torso():
             angle = 2.0 * math.pi * step / segments
             sine = math.sin(angle)
             depth = front_depth if sine < 0.0 else back_depth
-            hem_weight = 1.0 - smoothstep(0.92, 1.16, z)
-            fold = 1.0 + 0.014 * hem_weight * math.cos(angle * 8.0 + z * 2.5)
-            hem_wave = 0.010 * hem_weight * math.cos(angle * 6.0)
+            hem_weight = 1.0 - smoothstep(1.06, 1.14, z)
+            fold = 1.0 + 0.008 * hem_weight * math.cos(angle * 8.0 + z * 2.5)
+            hem_wave = 0.004 * hem_weight * math.cos(angle * 6.0)
             vertices.append((radius_x * math.cos(angle) * fold,
                              center_y + sine * depth * fold, z + hem_wave))
             weights.append(weights_at(z))
@@ -156,7 +164,7 @@ def make_male_shirt_torso():
             nxt = (step + 1) % segments
             faces.append((low + step, low + nxt, high + nxt, high + step))
 
-    mesh = bpy.data.meshes.new("HumanMaleShirtTorsoMesh")
+    mesh = bpy.data.meshes.new("HumanMaleWorkShirtMesh")
     mesh.from_pydata(vertices, [], faces)
     mesh.update()
     bm = bmesh.new()
@@ -166,20 +174,164 @@ def make_male_shirt_torso():
     bm.free()
     for polygon in mesh.polygons:
         polygon.use_smooth = True
-    mesh.materials.append(source.data.materials[0])
+    mesh.materials.append(cloth_material)
 
-    torso = bpy.data.objects.new("HumanMaleShirtTorso", mesh)
+    torso = bpy.data.objects.new("HumanMaleWorkShirt", mesh)
     bpy.context.collection.objects.link(torso)
     torso.parent = armature
-    torso.matrix_world = transform
+    torso.matrix_world = armature.matrix_world.copy()
     group_names = sorted({name for ring in weights for name, _ in ring})
     groups = {name: torso.vertex_groups.new(name=name) for name in group_names}
     for index, ring_weights in enumerate(weights):
         for name, weight in ring_weights:
             if weight > 0.001:
                 groups[name].add([index], weight, "REPLACE")
-    modifier = torso.modifiers.new("MaleTorsoArmature", "ARMATURE")
+    modifier = torso.modifiers.new("MaleWorkShirtArmature", "ARMATURE")
     modifier.object = armature
+
+    cloth_material.name = "Human_Male_Workwear"
+    cloth_material.diffuse_color = (0.24, 0.29, 0.16, 1.0)
+    if cloth_material.node_tree:
+        bsdf = next((node for node in cloth_material.node_tree.nodes if node.type == "BSDF_PRINCIPLED"), None)
+        if bsdf:
+            bsdf.inputs["Base Color"].default_value = (0.24, 0.29, 0.16, 1.0)
+            bsdf.inputs["Roughness"].default_value = 0.9
+
+
+def make_shirt_buttons():
+    armature = next(obj for obj in bpy.context.scene.objects if obj.type == "ARMATURE")
+    center_y = -0.015
+    shirt_profile = [
+        (1.125, 0.134), (1.205, 0.160), (1.295, 0.174),
+        (1.365, 0.176), (1.405, 0.154), (1.438, 0.105),
+    ]
+
+    def front_y(z):
+        for (z0, d0), (z1, d1) in zip(shirt_profile, shirt_profile[1:]):
+            if z0 <= z <= z1:
+                t = (z - z0) / (z1 - z0)
+                return center_y - (d0 + (d1 - d0) * t)
+        raise ValueError(f"Button height {z} is outside the shirt profile.")
+
+    vertices = []
+    faces = []
+    button_heights = (1.18, 1.225, 1.27, 1.315, 1.36)
+    sides = 12
+    for z in button_heights:
+        outer_front_y = front_y(z) - 0.006
+        back_y = outer_front_y + 0.004
+        front_y_value = outer_front_y
+        start = len(vertices)
+        for y in (back_y, front_y_value):
+            for step in range(sides):
+                angle = 2.0 * math.pi * step / sides
+                vertices.append((math.cos(angle) * 0.008, y, z + math.sin(angle) * 0.008))
+        for step in range(sides):
+            nxt = (step + 1) % sides
+            faces.append((start + step, start + nxt, start + sides + nxt, start + sides + step))
+        faces.append(tuple(start + sides + step for step in range(sides)))
+        faces.append(tuple(start + step for step in reversed(range(sides))))
+
+    mesh = bpy.data.meshes.new("HumanMaleShirtButtonsMesh")
+    mesh.from_pydata(vertices, [], faces)
+    mesh.update()
+    bm = bmesh.new()
+    bm.from_mesh(mesh)
+    bmesh.ops.recalc_face_normals(bm, faces=list(bm.faces))
+    bm.to_mesh(mesh)
+    bm.free()
+    buttons = bpy.data.objects.new("HumanMaleShirtButtons", mesh)
+    bpy.context.collection.objects.link(buttons)
+    buttons.parent = armature
+    buttons.matrix_world = armature.matrix_world.copy()
+    spine_02 = buttons.vertex_groups.new(name="spine_02")
+    spine_03 = buttons.vertex_groups.new(name="spine_03")
+    for index, vertex in enumerate(vertices):
+        blend = smoothstep(1.28, 1.36, vertex[2])
+        if blend < 1.0:
+            spine_02.add([index], 1.0 - blend, "REPLACE")
+        if blend > 0.0:
+            spine_03.add([index], blend, "REPLACE")
+    modifier = buttons.modifiers.new("ShirtButtonsArmature", "ARMATURE")
+    modifier.object = armature
+    material = bpy.data.materials.new("Human_Male_Button_Brass")
+    material.diffuse_color = (0.32, 0.22, 0.08, 1.0)
+    material.use_nodes = True
+    bsdf = next(node for node in material.node_tree.nodes if node.type == "BSDF_PRINCIPLED")
+    bsdf.inputs["Base Color"].default_value = (0.32, 0.22, 0.08, 1.0)
+    bsdf.inputs["Metallic"].default_value = 0.35
+    bsdf.inputs["Roughness"].default_value = 0.58
+    mesh.materials.append(material)
+
+
+def make_leather_belt():
+    armature = next(obj for obj in bpy.context.scene.objects if obj.type == "ARMATURE")
+    center_y = -0.015
+    segments = 48
+    vertices = []
+    faces = []
+    for z in (1.055, 1.105):
+        for step in range(segments):
+            angle = 2.0 * math.pi * step / segments
+            sine = math.sin(angle)
+            depth = 0.138 if sine < 0.0 else 0.126
+            vertices.append((0.154 * math.cos(angle), center_y + sine * depth, z))
+    for step in range(segments):
+        nxt = (step + 1) % segments
+        faces.append((step, nxt, segments + nxt, segments + step))
+    mesh = bpy.data.meshes.new("HumanMaleBeltMesh")
+    mesh.from_pydata(vertices, [], faces)
+    mesh.update()
+    bm = bmesh.new()
+    bm.from_mesh(mesh)
+    bmesh.ops.recalc_face_normals(bm, faces=list(bm.faces))
+    bm.to_mesh(mesh)
+    bm.free()
+    belt = bpy.data.objects.new("HumanMaleLeatherBelt", mesh)
+    bpy.context.collection.objects.link(belt)
+    belt.parent = armature
+    belt_groups = [belt.vertex_groups.new(name="pelvis"), belt.vertex_groups.new(name="spine_01")]
+    for index in range(len(vertices)):
+        belt_groups[0].add([index], 0.8, "REPLACE")
+        belt_groups[1].add([index], 0.2, "REPLACE")
+    modifier = belt.modifiers.new("BeltArmature", "ARMATURE")
+    modifier.object = armature
+    material = bpy.data.materials.new("Human_Male_Leather")
+    material.diffuse_color = (0.19, 0.075, 0.027, 1.0)
+    material.use_nodes = True
+    bsdf = next(node for node in material.node_tree.nodes if node.type == "BSDF_PRINCIPLED")
+    bsdf.inputs["Base Color"].default_value = (0.19, 0.075, 0.027, 1.0)
+    bsdf.inputs["Roughness"].default_value = 0.9
+    mesh.materials.append(material)
+
+    buckle_vertices = [
+        (-0.030, -0.158, 1.065), (0.030, -0.158, 1.065),
+        (0.030, -0.158, 1.095), (-0.030, -0.158, 1.095),
+        (-0.030, -0.166, 1.065), (0.030, -0.166, 1.065),
+        (0.030, -0.166, 1.095), (-0.030, -0.166, 1.095),
+    ]
+    buckle_faces = [
+        (0, 1, 2, 3), (4, 7, 6, 5), (0, 4, 5, 1),
+        (1, 5, 6, 2), (2, 6, 7, 3), (3, 7, 4, 0),
+    ]
+    buckle_mesh = bpy.data.meshes.new("HumanMaleBuckleMesh")
+    buckle_mesh.from_pydata(buckle_vertices, [], buckle_faces)
+    buckle_mesh.update()
+    buckle = bpy.data.objects.new("HumanMaleBeltBuckle", buckle_mesh)
+    bpy.context.collection.objects.link(buckle)
+    buckle.parent = armature
+    buckle_group = buckle.vertex_groups.new(name="pelvis")
+    buckle_group.add(list(range(len(buckle_vertices))), 1.0, "REPLACE")
+    buckle_modifier = buckle.modifiers.new("BuckleArmature", "ARMATURE")
+    buckle_modifier.object = armature
+    metal = bpy.data.materials.new("Human_Male_Buckle")
+    metal.diffuse_color = (0.56, 0.38, 0.12, 1.0)
+    metal.use_nodes = True
+    metal_bsdf = next(node for node in metal.node_tree.nodes if node.type == "BSDF_PRINCIPLED")
+    metal_bsdf.inputs["Base Color"].default_value = (0.56, 0.38, 0.12, 1.0)
+    metal_bsdf.inputs["Metallic"].default_value = 0.55
+    metal_bsdf.inputs["Roughness"].default_value = 0.48
+    buckle_mesh.materials.append(metal)
 
 
 def make_short_hair():
@@ -215,6 +367,13 @@ def make_short_hair():
             remove_faces.update(face for face in bm.faces if face.verts[0] in component_set)
     if remove_faces:
         bmesh.ops.delete(bm, geom=list(remove_faces), context="FACES")
+    crop_faces = [
+        face for face in bm.faces
+        if face.calc_center_median().y > -0.02
+        and face.calc_center_median().z < 1.67
+    ]
+    if crop_faces:
+        bmesh.ops.delete(bm, geom=crop_faces, context="FACES")
     loose = [vertex for vertex in bm.verts if not vertex.link_faces]
     if loose:
         bmesh.ops.delete(bm, geom=loose, context="VERTS")
@@ -222,6 +381,14 @@ def make_short_hair():
     bm.to_mesh(hair.data)
     bm.free()
     hair.data.update()
+    # Trim the back into a short crop instead of preserving the source model's
+    # small tied-back silhouette. Keep the crown and face-framing fringe.
+    for vertex in hair.data.vertices:
+        x, y, z = vertex.co
+        if y > 0.02 and z < 1.70:
+            back_mask = smoothstep(0.02, 0.10, y) * (1.0 - smoothstep(1.54, 1.70, z))
+            vertex.co.y -= 0.045 * back_mask
+            vertex.co.z += 0.035 * back_mask
     for polygon in hair.data.polygons:
         polygon.use_smooth = True
     hair.name = "HumanMaleShortHair"
@@ -229,85 +396,66 @@ def make_short_hair():
 
 
 def make_trousers():
-    old = bpy.data.objects["HumanLowerClothing"]
-    transform = old.matrix_world.copy()
-    armature = old.parent
-    armature_modifier = next(mod for mod in old.modifiers if mod.type == "ARMATURE")
-    armature_modifier_name = armature_modifier.name
-    old_material = old.data.materials[0]
-    bpy.data.objects.remove(old, do_unlink=True)
+    source_clothing = bpy.data.objects["HumanLowerClothing"]
+    body = bpy.data.objects["HumanBody"]
+    bpy.data.objects.remove(source_clothing, do_unlink=True)
 
-    vertices = []
-    faces = []
-    groups = []
-    sides = 24
-
-    def add_loft(rings, group_for):
-        first = len(vertices)
-        for ring in rings:
-            cx, cy, z, rx, ry = ring
-            for step in range(sides):
-                angle = (2.0 * math.pi * step) / sides
-                vertices.append((cx + math.cos(angle) * rx, cy + math.sin(angle) * ry, z))
-                groups.append(group_for(cx, z))
-        for r in range(len(rings) - 1):
-            lo = first + r * sides
-            hi = lo + sides
-            for step in range(sides):
-                nxt = (step + 1) % sides
-                faces.append((lo + step, lo + nxt, hi + nxt, hi + step))
-
-    for center_x, thigh, calf in ((0.086, "thigh_l", "calf_l"), (-0.086, "thigh_r", "calf_r")):
-        leg_rings = [
-            (center_x, -0.050, 1.105, 0.112, 0.145),
-            (center_x * 0.98, -0.050, 0.950, 0.108, 0.142),
-            (center_x * 0.96, -0.050, 0.880, 0.095, 0.138),
-            (center_x * 0.94, -0.050, 0.740, 0.086, 0.128),
-            (center_x * 0.90, -0.045, 0.600, 0.078, 0.112),
-            (center_x * 0.90, -0.040, 0.535, 0.073, 0.102),
-            (center_x * 0.80, -0.035, 0.475, 0.067, 0.094),
-            (center_x * 0.76, -0.030, 0.422, 0.060, 0.088),
-        ]
-
-        def leg_weights(cx, z):
-            calf_blend = 1.0 - smoothstep(0.49, 0.57, z)
-            pelvis_blend = 0.75 * smoothstep(0.55, 1.10, z)
-            return [("pelvis", pelvis_blend), (thigh, (1.0 - calf_blend) - pelvis_blend), (calf, calf_blend)]
-
-        add_loft(leg_rings, leg_weights)
-
-    mesh = bpy.data.meshes.new("HumanTrousersMesh")
-    mesh.from_pydata(vertices, [], faces)
-    mesh.update()
-    bm = bmesh.new()
-    bm.from_mesh(mesh)
-    bmesh.ops.recalc_face_normals(bm, faces=list(bm.faces))
-    bm.to_mesh(mesh)
-    bm.free()
-    trousers = bpy.data.objects.new("HumanTrousers", mesh)
+    # Build trousers from the actual skinned body surface. Independent leg
+    # tubes drift away from the thighs in the idle pose and during animation.
+    trousers = body.copy()
+    trousers.data = body.data.copy()
+    trousers.name = "HumanTrousers"
+    trousers.data.name = "HumanTrousersMesh"
     bpy.context.collection.objects.link(trousers)
-    trousers.parent = armature
-    trousers.matrix_world = transform
-    for polygon in mesh.polygons:
+
+    bm = bmesh.new()
+    bm.from_mesh(trousers.data)
+    bm.verts.index_update()
+    garment_faces = [
+        face for face in bm.faces
+        if 0.30 <= face.calc_center_median().z <= 1.15
+        and abs(face.calc_center_median().x) <= 0.22
+    ]
+    if len(garment_faces) < 250:
+        bm.free()
+        raise RuntimeError(f"Trousers body-surface selection is unexpectedly small: {len(garment_faces)} faces.")
+    garment_face_set = set(garment_faces)
+    bmesh.ops.delete(bm, geom=[face for face in bm.faces if face not in garment_face_set], context="FACES")
+    loose_vertices = [vertex for vertex in bm.verts if not vertex.link_faces]
+    if loose_vertices:
+        bmesh.ops.delete(bm, geom=loose_vertices, context="VERTS")
+    # Expand the garment radially from each leg/pelvis centerline. The source
+    # mesh has a few inconsistent normals, so using them directly can push cloth
+    # into the skin and make the body show through.
+    for vertex in bm.verts:
+        axis_x = (0.085 if vertex.co.x >= 0.0 else -0.085) if vertex.co.z < 0.90 else 0.0
+        outward_hint = Vector((vertex.co.x - axis_x, vertex.co.y + 0.02, 0.0))
+        if outward_hint.length_squared > 0.0001:
+            vertex.co += outward_hint.normalized() * 0.018
+    bm.to_mesh(trousers.data)
+    bm.free()
+    trousers.data.update()
+
+    for polygon in trousers.data.polygons:
         polygon.use_smooth = True
 
-    group_names = sorted({name for vertex_groups in groups for name, _ in vertex_groups})
-    vertex_groups = {name: trousers.vertex_groups.new(name=name) for name in group_names}
-    for index, vertex_groups_with_weights in enumerate(groups):
-        for name, weight in vertex_groups_with_weights:
-            if weight > 0.001:
-                vertex_groups[name].add([index], weight, "REPLACE")
+    material = bpy.data.materials.new("Human_Male_Trousers")
+    material.diffuse_color = (0.075, 0.095, 0.09, 1.0)
+    material.use_nodes = True
+    bsdf = next((node for node in material.node_tree.nodes if node.type == "BSDF_PRINCIPLED"), None)
+    if bsdf:
+        bsdf.inputs["Base Color"].default_value = (0.075, 0.095, 0.09, 1.0)
+        bsdf.inputs["Roughness"].default_value = 0.82
+    trousers.data.materials.clear()
+    trousers.data.materials.append(material)
 
-    modifier = trousers.modifiers.new(armature_modifier_name, "ARMATURE")
-    modifier.object = armature
-    trousers.data.materials.append(old_material)
-    material = old_material
-    material.diffuse_color = (0.105, 0.145, 0.19, 1.0)
-    if material.use_nodes:
-        bsdf = next((node for node in material.node_tree.nodes if node.type == "BSDF_PRINCIPLED"), None)
-        if bsdf:
-            bsdf.inputs["Base Color"].default_value = (0.105, 0.145, 0.19, 1.0)
-            bsdf.inputs["Roughness"].default_value = 0.82
+    # The copied body object keeps its armature modifier and vertex groups.
+    if not any(mod.type == "ARMATURE" and mod.object == trousers.parent for mod in trousers.modifiers):
+        raise RuntimeError("Generated trousers must retain the body's armature skinning.")
+    required_groups = {"pelvis", "thigh_l", "calf_l", "thigh_r", "calf_r"}
+    missing_groups = required_groups.difference(group.name for group in trousers.vertex_groups)
+    if missing_groups:
+        raise RuntimeError(f"Generated trousers are missing body skin weights: {sorted(missing_groups)}")
 
 
 def add_semantic_anchors():
@@ -504,6 +652,8 @@ def main():
     deform_upper_body()
     make_short_hair()
     make_male_shirt_torso()
+    make_shirt_buttons()
+    make_leather_belt()
     make_trousers()
     add_semantic_anchors()
     validate_asset()

@@ -42,5 +42,7 @@ The prototype keeps the shared elf-adapted skeleton, blouse sleeves, and source
 palette. It gently broadens the upper torso, reduces the pronounced waist
 shaping, and tapers sleeve volume a little toward the wrist. A fitted outer
 shirt layer hides the source chest contour and overlaps tailored trousers that
-replace the source skirt. This remains prototype art and should be evaluated in
-Godot during idle and locomotion before it is used for population spawning.
+replace the source skirt. The trousers follow a shell of the source lower-body
+surface and reuse its leg weights, keeping their fit aligned with the thighs and
+calves through the idle pose. This remains prototype art and should be evaluated
+in Godot during idle and locomotion before it is used for population spawning.
