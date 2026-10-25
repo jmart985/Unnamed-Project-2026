@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Text;
 using Simulation;
 
 namespace Simulation.Tests;
@@ -187,6 +188,40 @@ public sealed class WanderingServiceTests
     }
 
     [Fact]
+    public void HumanSpeciesCanOptIntoTerritoryBehaviorThroughData()
+    {
+        var species = LoadHumanSpecies(usesWildTerritory: true);
+        var world = new World();
+        var human = world.SpawnEntity(species.Id, new Vector3(10, 0, 0));
+        world.SetWildTerritory(human.Id, Vector3.Zero, radius: 8);
+        var navigator = new FakeNavigationAdapter();
+        var service = new WanderingService(world, _ => navigator, [new Vector3(100, 0, 100)]);
+
+        var result = service.Advance(human, species, simulationTick: 1);
+
+        Assert.Equal(WanderingStatus.ReturningToTerritory, result.Status);
+        Assert.Equal(Vector3.Zero, result.Target);
+        Assert.Single(navigator.RequestTargets.Values, target => target == Vector3.Zero);
+    }
+
+    [Fact]
+    public void HumanSpeciesCanOptOutOfTerritoryBehaviorThroughData()
+    {
+        var species = LoadHumanSpecies(usesWildTerritory: false);
+        var world = new World();
+        var human = world.SpawnEntity(species.Id, new Vector3(10, 0, 0));
+        world.SetWildTerritory(human.Id, Vector3.Zero, radius: 8);
+        var navigator = new FakeNavigationAdapter();
+        var service = new WanderingService(world, _ => navigator, [new Vector3(2, 0, 0)]);
+
+        var result = service.Advance(human, species, simulationTick: 1);
+
+        Assert.Equal(WanderingStatus.Traveling, result.Status);
+        Assert.Equal(new Vector3(2, 0, 0), result.Target);
+        Assert.DoesNotContain(navigator.RequestTargets.Values, target => target == Vector3.Zero);
+    }
+
+    [Fact]
     public void WildRoamingStaysInsideAssignedTerritoryAndReturnsWhenDisplaced()
     {
         var world = new World();
@@ -303,6 +338,16 @@ public sealed class WanderingServiceTests
     private static SpeciesDefinition GetCreatureSpecies()
     {
         return SpeciesCatalog.LoadFromFile(GetSpeciesDataPath()).GetRequired("creature");
+    }
+
+    private static SpeciesDefinition LoadHumanSpecies(bool usesWildTerritory)
+    {
+        var flag = usesWildTerritory ? "true" : "false";
+        var json = $$$"""
+            [{"id":"human","bodyCategory":"humanoid","movementSpeed":3,"hungerRate":0.2,"diet":["food"],"canHaul":false,"usesWildTerritory":{{{flag}}},"temperament":{"boldness":0.5,"aggression":0.5,"fear":0.5,"curiosity":0.5,"sociability":0.5,"territoriality":0.5}}]
+            """;
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
+        return SpeciesCatalog.Load(stream).GetRequired("human");
     }
 
     private static string GetSpeciesDataPath()
