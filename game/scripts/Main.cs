@@ -479,7 +479,7 @@ public partial class Main : Node3D
 		_map.MaterialOverride = CreateMaterial(new Color(0.32f, 0.5f, 0.24f));
 		BuildScenery();
 		RebuildWorkbenchViews();
-		_navigationRegion.NavigationMesh = CreateNavigationMesh(CurrentWorkbenchPositions());
+		_navigationRegion.NavigationMesh = CreateNavigationMesh(CurrentWorkbenchPositions(), _world.Structures);
 		UpdateFarmPresentation();
 
 		_foodConsumption = new FoodConsumptionService(_world, _speciesCatalog, GetNavigationAdapter);
@@ -1259,7 +1259,7 @@ public partial class Main : Node3D
 	private void RebuildPresentationFromWorld()
 	{
 		RebuildWorkbenchViews();
-		_navigationRegion.NavigationMesh = CreateNavigationMesh(CurrentWorkbenchPositions());
+		_navigationRegion.NavigationMesh = CreateNavigationMesh(CurrentWorkbenchPositions(), _world.Structures);
 		ClearEntityViews();
 		ClearResourceMarkers();
 		RebuildResourceMarkersFromWorld();
@@ -1304,7 +1304,8 @@ public partial class Main : Node3D
 
 
 	private static bool IsBlockedCell(float minX, float maxX, float minZ, float maxZ,
-		IEnumerable<System.Numerics.Vector3>? workbenchPositions = null)
+		IEnumerable<System.Numerics.Vector3>? workbenchPositions = null, IEnumerable<Structure>? structures = null,
+		IReadOnlyList<NavigationBlocker>? structureBlockers = null)
 	{
 		if (minX < 1f && maxX > -1f && minZ < 1f && maxZ > -1f)
 		{
@@ -1320,11 +1321,34 @@ public partial class Main : Node3D
 			return true;
 		}
 
-		return IsBuildingBand(minX, maxX) && IsBuildingBand(minZ, maxZ);
+		if (IsBuildingBand(minX, maxX) && IsBuildingBand(minZ, maxZ)) return true;
+
+		return (structureBlockers ?? StructureNavigationBlockers(structures).ToArray()).Any(blocker =>
+			minX < blocker.MaxX && maxX > blocker.MinX && minZ < blocker.MaxZ && maxZ > blocker.MinZ);
 	}
 
 	private static bool IsBuildingBand(float min, float max) =>
-		BuildingBands.Any(band => band.Min == min && band.Max == max);
+		BuildingBands.Any(band => min >= band.Min && max <= band.Max);
+
+	private readonly record struct NavigationBlocker(float MinX, float MaxX, float MinZ, float MaxZ);
+
+	private static IEnumerable<NavigationBlocker> StructureNavigationBlockers(IEnumerable<Structure>? structures)
+	{
+		foreach (var structure in structures ?? [])
+		{
+			if (structure.Type != StructureType.Hut) continue;
+			var x = structure.Position.X;
+			var z = structure.Position.Z;
+			// Match the completed hut's wall segments while leaving its open doorway traversable.
+			yield return new(x - 2f, x - 1.8f, z - 2f, z + 2f);
+			yield return new(x + 1.8f, x + 2f, z - 2f, z + 2f);
+			yield return new(x - 2f, x + 2f, z - 2f, z - 1.8f);
+			yield return new(x - 2f, x - 0.5f, z + 1.8f, z + 2f);
+			yield return new(x + 0.5f, x + 2f, z + 1.8f, z + 2f);
+			if (structure.IsClosed)
+				yield return new(x - 0.5f, x + 0.5f, z + 1.8f, z + 2f);
+		}
+	}
 
 	private static StandardMaterial3D CreateMaterial(Color color) => new() { AlbedoColor = color };
 
@@ -1417,6 +1441,20 @@ public partial class Main : Node3D
 		});
 	}
 
+	private void AddSolidScenery(string name, Vector3 size, Vector3 position, Color color)
+	{
+		AddScenery(name, size, position, color);
+		var body = new StaticBody3D
+		{
+			Name = $"{name}Collision", Position = position, CollisionLayer = 2, CollisionMask = 1
+		};
+		body.AddChild(new CollisionShape3D
+		{
+			Name = "CollisionShape3D", Shape = new BoxShape3D { Size = size }
+		});
+		_scenery!.AddChild(body);
+	}
+
 	// Town: paved ground, crossing roads, and building blocks matching the navigation grid holes.
 	// Countryside: field patches and tree clumps scattered beyond the town edge.
 	private void BuildScenery()
@@ -1447,7 +1485,7 @@ public partial class Main : Node3D
 			foreach (var (minZ, maxZ) in BuildingBands)
 			{
 				var height = 6f + ((index * 7) % 5) * 3f;
-				AddScenery($"Building_{index}", new Vector3(maxX - minX, height, maxZ - minZ),
+				AddSolidScenery($"Building_{index}", new Vector3(maxX - minX, height, maxZ - minZ),
 					new Vector3((minX + maxX) / 2, height / 2, (minZ + maxZ) / 2),
 					new Color(0.55f + (index % 3) * 0.08f, 0.5f, 0.45f));
 				index++;
@@ -1489,25 +1527,32 @@ public partial class Main : Node3D
 		}
 	}
 
-	private static NavigationMesh CreateNavigationMesh(IEnumerable<System.Numerics.Vector3>? workbenchPositions = null)
+	private static NavigationMesh CreateNavigationMesh(IEnumerable<System.Numerics.Vector3>? workbenchPositions = null,
+		IEnumerable<Structure>? structures = null)
 	{
 		var workbenches = (workbenchPositions ?? [NewGameSession.TownWorkbenchPosition]).ToArray();
+		var structureBlockers = StructureNavigationBlockers(structures).ToArray();
 		// Fixture placement snaps to whole metres, so add exact clearance edges to
-		// the integer-vertex grid instead of dropping an entire large town cell.
+		// the grid instead of dropping an entire large town cell. Structure wall edges
+		// are also boundaries, so wall cells can be omitted while doorway cells remain.
 		var navigationGridLines = NavigationGridLines
 			.Concat(workbenches.SelectMany(workbench => new[]
 			{
 				workbench.X - 2f, workbench.X + 2f, workbench.Z - 2f, workbench.Z + 2f
 			}).Select(value => (float)Mathf.RoundToInt(value)))
+			.Concat(structureBlockers.SelectMany(blocker => new[]
+			{
+				blocker.MinX, blocker.MaxX, blocker.MinZ, blocker.MaxZ
+			}))
 			.Distinct()
 			.OrderBy(value => value)
 			.ToArray();
 		var mesh = new NavigationMesh();
 		var vertices = new List<Vector3>();
-		var vertexIndices = new Dictionary<(int X, int Z), int>();
+		var vertexIndices = new Dictionary<(float X, float Z), int>();
 		var polygons = new List<int[]>();
 
-		int GetVertex(int x, int z)
+		int GetVertex(float x, float z)
 		{
 			var coordinate = (x, z);
 			if (vertexIndices.TryGetValue(coordinate, out var existingIndex))
@@ -1521,7 +1566,7 @@ public partial class Main : Node3D
 			return index;
 		}
 
-		void AddRectangle(int minX, int maxX, int minZ, int maxZ)
+		void AddRectangle(float minX, float maxX, float minZ, float maxZ)
 		{
 			polygons.Add(
 			[
@@ -1536,11 +1581,11 @@ public partial class Main : Node3D
 		{
 			for (var zi = 0; zi < navigationGridLines.Length - 1; zi++)
 			{
-				var minX = (int)navigationGridLines[xi];
-				var maxX = (int)navigationGridLines[xi + 1];
-				var minZ = (int)navigationGridLines[zi];
-				var maxZ = (int)navigationGridLines[zi + 1];
-				if (IsBlockedCell(minX, maxX, minZ, maxZ, workbenches))
+				var minX = navigationGridLines[xi];
+				var maxX = navigationGridLines[xi + 1];
+				var minZ = navigationGridLines[zi];
+				var maxZ = navigationGridLines[zi + 1];
+				if (IsBlockedCell(minX, maxX, minZ, maxZ, workbenches, structures, structureBlockers))
 				{
 					continue;
 				}

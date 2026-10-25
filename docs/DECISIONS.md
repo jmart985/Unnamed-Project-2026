@@ -623,3 +623,12 @@ User reported only an obstacle at the expected workbench. Replace that legacy ce
 - Reason: The existing production interactions should be placeable from Build mode without removing or relocating the starter fixtures or coupling visual nodes to durable state.
 - Consequence: Multiple workbenches can be selected and used independently, and multiple farms expose independent plots through the existing target and farm actions. Reset and load rebuild their views from the World. This does not add duplicate storage sharing, new recipes, construction costs, structural progress, rotation, or Sims-style camera placement.
 - Revisit: When material requirements and structural layers for workbenches/farms are defined, or playtesting shows a placement, navigation, or presentation limit with multiple fixtures.
+
+## D058 — Placed structures use matching physical and navigation blockers
+
+- Date: 2026-10-25
+- Status: Accepted for the current prototype; implemented for PR #506 follow-up.
+- Decision: Give scenery building blocks and completed player huts static collision. A completed hut has separate solid floor, ceiling, wall-segment, and closed-door shapes. Its open doorway remains a passable gap. Generate NPC navigation from the same hut wall and door state so direct-movement NPCs cannot path through those colliders, while the open doorway and interior remain reachable. When extra fixtures subdivide navigation cells, preserve scenery-building exclusions in every resulting subcell.
+- Reason: Visual building meshes without collision allowed players through structures, and direct-position NPC movement relies on navigation rather than physics collision. The previous exact-cell building exclusion could be lost when fixture clearances subdivided the navigation grid.
+- Consequence: Collision and NPC routes agree for town scenery and completed huts. Opening or closing a hut door updates its physical collider and navigation opening together. Construction-site framing remains non-solid until completion; farms remain open plots.
+- Revisit: When the project adds other buildable structure types, doors with different footprints, or a shared data-driven collision/navigation footprint definition.
