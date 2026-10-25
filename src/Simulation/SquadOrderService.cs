@@ -89,6 +89,7 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
         {
             if (!world.TryGetEntity(id, out var entity) || entity is null) continue;
             if (entity.Health.IsDead) { CancelTrip(id); continue; }
+            if (entity.OrderIntent is not null) { CancelTrip(id); continue; }
             if (Order == SquadOrderKind.Stop)
             {
                 if (entity.Actions.Current is null) entity.Activity = "Squad stopped";

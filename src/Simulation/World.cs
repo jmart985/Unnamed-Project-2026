@@ -951,6 +951,25 @@ public sealed class World
             if (entity.IsDead && !restored.Health.IsDead)
                 restored.Health.RestoreDeadState();
         }
+
+        // Durable individual order intent is restored only after all entities and death states
+        // exist, so stale Follow issuers can be dropped without rejecting the rest of the save.
+        foreach (var entity in snapshot.Entities)
+        {
+            if (entity.OrderIntent is not { } order
+                || entity.Id == snapshot.PlayerEntityId
+                || !TryGetEntity(entity.Id, out var restored)
+                || restored is null)
+                continue;
+            if (order.Kind == EntityOrderKind.Follow
+                && (order.IssuerId == entity.Id
+                    || !TryGetEntity(order.IssuerId, out var issuer)
+                    || issuer is null
+                    || issuer.Health.IsDead))
+                continue;
+            restored.OrderIntent = order;
+        }
+
         foreach (var timer in snapshot.TreeRegrowthTimers ?? Array.Empty<TreeRegrowthSnapshot>())
             _treeRegrowthTimers[timer.TreeId] = timer.ElapsedSeconds;
         foreach (var fire in snapshot.Fireplaces ?? Array.Empty<FireplaceSnapshot>())

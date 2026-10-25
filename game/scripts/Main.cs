@@ -28,6 +28,7 @@ public partial class Main : Node3D
 	private WanderingService? _wandering;
 	private WoodHaulingService? _woodHauling;
 	private SquadOrderService? _squad;
+	private OrderService? _orders;
 	private SpinBox _squadX = null!;
 	private SpinBox _squadZ = null!;
 	private long _simulationTick;
@@ -48,6 +49,10 @@ public partial class Main : Node3D
 	private VBoxContainer _entityList = null!;
 	private Label _inspectorLabel = null!;
 	private Button _removeSelectedButton = null!;
+	private Button _followSelectedOrderButton = null!;
+	private Button _staySelectedOrderButton = null!;
+	private PopupMenu _entityContextMenu = null!;
+	private string? _contextEntityId;
 	private string _saveLoadStatus = "No save loaded.";
 	private string _saveSlotPath = null!;
 	private WorldTarget? _selectedTarget;
@@ -137,6 +142,7 @@ public partial class Main : Node3D
 		ConfigureSquadControls();
 		ConfigureScheduleControls();
 		ConfigurePlayerMenus();
+		ConfigureIndividualOrderControls();
 		ConfigureWorkstationGameplay();
 		ConfigureFarmGameplay();
 		ConfigureConstructionGameplay();
@@ -176,6 +182,8 @@ public partial class Main : Node3D
 			Callable.From(RunFollowSpacingValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-squad"))
 			Callable.From(RunSquadValidation).CallDeferred();
+		else if (OS.GetCmdlineUserArgs().Contains("--validate-individual-orders"))
+			Callable.From(RunIndividualOrderValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-first-game"))
 			Callable.From(RunFirstGameValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-session-profiles"))
@@ -488,6 +496,10 @@ public partial class Main : Node3D
 			_sessionSeed);
 		_woodHauling = new WoodHaulingService(_world, GetNavigationAdapter);
 		_squad = new SquadOrderService(_world, GetNavigationAdapter);
+		_orders = new OrderService(
+			_world,
+			GetNavigationAdapter,
+			entityId => _wildPreyThreat!.SuppressesOtherBehavior(entityId));
 
 		RebuildResourceMarkersFromWorld();
 		RebuildFireplaceViews();
@@ -532,6 +544,7 @@ public partial class Main : Node3D
 		_wandering?.Reset();
 		_woodHauling?.Reset();
 		_squad?.Reset();
+		_orders?.Reset();
 	}
 
 	private void AddEntityView(EntityRecord entity)
@@ -546,6 +559,17 @@ public partial class Main : Node3D
 
 		var button = new Button { Name = $"Entity_{entity.Id}", Text = entity.Id };
 		button.Pressed += () => SelectEntity(entity.Id);
+		button.TooltipText = "Select this entity; right-click for individual orders.";
+		button.GuiInput += input =>
+		{
+			if (input is InputEventMouseButton { ButtonIndex: MouseButton.Right, Pressed: true }
+				&& _entityContextMenu is not null
+				&& _menuState.ActiveMenu == PlayerMenu.Settlement)
+			{
+				OpenEntityContextMenu(entity.Id);
+				GetViewport().SetInputAsHandled();
+			}
+		};
 		_entityList.AddChild(button);
 		_entityButtons.Add(entity.Id, button);
 		view.Sync(_world);
@@ -608,6 +632,51 @@ public partial class Main : Node3D
 		UpdateStatus();
 	}
 
+	private void ConfigureIndividualOrderControls()
+	{
+		var row = new HBoxContainer { Name = "IndividualOrders" };
+		row.AddChild(new Label { Text = "Order selected:" });
+		_followSelectedOrderButton = new Button { Text = "Follow", TooltipText = "Follow the player's character." };
+		_followSelectedOrderButton.Pressed += () => IssueIndividualOrder(_selectedEntityId, "follow");
+		row.AddChild(_followSelectedOrderButton);
+		_staySelectedOrderButton = new Button { Text = "Stay", TooltipText = "Hold the position where this order is issued." };
+		_staySelectedOrderButton.Pressed += () => IssueIndividualOrder(_selectedEntityId, "stay");
+		row.AddChild(_staySelectedOrderButton);
+		_settlementDetails.AddChild(row);
+		_settlementDetails.MoveChild(row, Math.Min(2, _settlementDetails.GetChildCount() - 1));
+
+		_entityContextMenu = new PopupMenu { Name = "EntityContextMenu" };
+		_entityContextMenu.AddItem("Follow player", 1);
+		_entityContextMenu.AddItem("Stay here", 2);
+		_entityContextMenu.IdPressed += id => IssueIndividualOrder(_contextEntityId, id == 1 ? "follow" : "stay");
+		_menuHud.AddChild(_entityContextMenu);
+	}
+
+	private void OpenEntityContextMenu(string entityId)
+	{
+		_contextEntityId = entityId;
+		SelectEntity(entityId);
+		_entityContextMenu.Position = (Vector2I)GetViewport().GetMousePosition();
+		_entityContextMenu.Popup();
+	}
+
+	private void IssueIndividualOrder(string? targetId, string command)
+	{
+		if (targetId is null || _world.PlayerEntityId is not { } playerId)
+		{
+			_lastActionMessage = "Select a mobile entity and a player character first.";
+			UpdateStatus();
+			return;
+		}
+
+		var result = _interactionResolver.Resolve(new InteractionRequest(
+			playerId, targetId, InteractionType.Command, command));
+		_lastActionMessage = result.Reason;
+		_contextEntityId = null;
+		_entityContextMenu.Hide();
+		UpdateStatus();
+	}
+
 	private void AdvanceWoodHauling()
 	{
 		foreach (var entity in _world.Entities)
@@ -617,6 +686,7 @@ public partial class Main : Node3D
 			{
 				continue;
 			}
+			if (_orders?.ShouldSuppressAutonomousBehavior(entity) ?? false) continue;
 
 			_woodHauling!.Advance(
 				entity,
@@ -724,6 +794,7 @@ public partial class Main : Node3D
 			RemoveResourceMarker(new(TargetKind.Food, expiredId));
 		AdvanceFoodConsumption();
 		_squad!.Advance();
+		_orders!.Advance();
 		AdvanceWoodHauling();
 		AdvanceWandering();
 	}
@@ -761,7 +832,7 @@ public partial class Main : Node3D
 		SyncPlayerState();
 		foreach (var view in _entityViews.Values)
 		{
-			view.AdvanceNavigation(tickSeconds, _world, _squad, ConstrainActorSpacing);
+			view.AdvanceNavigation(tickSeconds, _world, _squad, _orders, ConstrainActorSpacing);
 		}
 	}
 
@@ -810,6 +881,8 @@ public partial class Main : Node3D
 			var threatResult = _wildPreyThreat!.Advance(entity, _simulationTick);
 			if (threatResult.Status is WildPreyThreatStatus.Fleeing or WildPreyThreatStatus.Waiting)
 				continue;
+			if (_orders?.ShouldSuppressAutonomousBehavior(entity) ?? false)
+				continue;
 
 			if (_creatureHunting!.IsHunting(entity.Id))
 			{
@@ -852,6 +925,7 @@ public partial class Main : Node3D
 			{
 				continue;
 			}
+			if (_orders?.ShouldSuppressAutonomousBehavior(entity) ?? false) continue;
 
 			_wandering!.Advance(
 				entity,
@@ -1044,6 +1118,8 @@ public partial class Main : Node3D
 			_inspectorLabel.Text = "Select an entity to inspect.";
 			_removeSelectedButton.Disabled = true;
 			_applySchedule.Disabled = true;
+			if (_followSelectedOrderButton is not null) _followSelectedOrderButton.Disabled = true;
+			if (_staySelectedOrderButton is not null) _staySelectedOrderButton.Disabled = true;
 			return;
 		}
 
@@ -1061,6 +1137,16 @@ public partial class Main : Node3D
 				? "Hungry (food requested)"
 				: "Satisfied";
 		var species = _speciesCatalog.GetRequired(entity.SpeciesId);
+		var canOrder = entity.Id != _world.PlayerEntityId && !entity.Health.IsDead
+			&& !entity.Health.IsIncapacitated && species.MovementSpeed > 0;
+		_followSelectedOrderButton.Disabled = !canOrder;
+		_staySelectedOrderButton.Disabled = !canOrder;
+		var orderSummary = entity.OrderIntent switch
+		{
+			{ Kind: EntityOrderKind.Follow } order => $"Follow {order.IssuerId}",
+			{ Kind: EntityOrderKind.Stay, Position: { } position } => $"Stay at ({position.X:0.0}, {position.Y:0.0}, {position.Z:0.0})",
+			_ => "None"
+		};
 		var temperament = IndividualTemperament.ForEntity(entity.Id, species.Temperament);
 		var capabilities = string.Join(", ", new[]
 		{
@@ -1095,6 +1181,7 @@ public partial class Main : Node3D
 			$"Captivity: {entity.CaptivityState}\n" +
 			$"Strength/Endurance/Dexterity: {species.Strength:0.0}/{species.Endurance:0.0}/{species.Dexterity:0.0}\n" +
 			$"Position: {entity.Position}\n" +
+			$"Individual order: {orderSummary}\n" +
 			$"Satiety: {entity.Satiety:0.0}\n" +
 			$"Needs: {needState}\n" +
 			$"Activity: {entity.Activity}\n" +
@@ -1146,7 +1233,8 @@ public partial class Main : Node3D
 				_wandering!,
 				_woodHauling!,
 				_squad!,
-				_wildPreyThreat!);
+				_wildPreyThreat!,
+				_orders!);
 			_clock.Restore(restoredTime);
 			_wildlifeProximity = new WildlifeProximityCoordinator(_world, _speciesCatalog, _wildlifeRegionCatalog);
 			_simulationTick = checked((long)Math.Round(
@@ -1154,7 +1242,7 @@ public partial class Main : Node3D
 				MidpointRounding.AwayFromZero));
 			RebuildPresentationFromWorld();
 			_saveLoadStatus = $"Loaded {_clock.SimulationTime:0.0}s; paused for inspection.";
-			_lastActionMessage = "Loaded squad membership; movement orders reset.";
+			_lastActionMessage = "Loaded saved orders; navigation routes are rebuilding.";
 		}
 		catch (Exception exception) when (exception is IOException or InvalidDataException or UnauthorizedAccessException)
 		{

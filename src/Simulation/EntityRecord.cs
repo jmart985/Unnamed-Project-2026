@@ -50,6 +50,7 @@ public sealed class EntityRecord
     public string? EquippedTool { get; internal set; }
     public string? Parent1Id { get; internal set; }
     public string? Parent2Id { get; internal set; }
+    public EntityOrder? OrderIntent { get; internal set; }
 
     public void AdvanceNeeds(double simulationSeconds, bool isSleeping = false) =>
         Needs.AdvanceWithLoad(simulationSeconds, CarriedWeightKg, BaseStats, isSleeping);

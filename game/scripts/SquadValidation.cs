@@ -87,7 +87,7 @@ public partial class Main
                 invalid["SquadMemberIds"] = new System.Text.Json.Nodes.JsonArray("missing");
                 try
                 {
-                    WorldSnapshotSerializer.Load(_world, invalid.ToJsonString(), _speciesCatalog, _squad!);
+                    WorldSnapshotSerializer.Load(_world, invalid.ToJsonString(), _speciesCatalog, _squad!, _orders!);
                     throw new InvalidOperationException("invalid snapshot accepted");
                 }
                 catch (InvalidDataException) { }
@@ -97,7 +97,7 @@ public partial class Main
                 _clock.SetPaused(true);
                 _playerCharacter.SetPhysicsProcess(false);
             }
-            var time = WorldSnapshotSerializer.Load(_world, json, _speciesCatalog, _foodConsumption!, _wandering!, _woodHauling!, _squad!);
+            var time = WorldSnapshotSerializer.Load(_world, json, _speciesCatalog, _foodConsumption!, _wandering!, _woodHauling!, _squad!, _orders!);
             _clock.Restore(time);
             RebuildPresentationFromWorld();
             SelectEntity(ids[0]);

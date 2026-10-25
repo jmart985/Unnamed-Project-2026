@@ -13,9 +13,11 @@ position, navigation, and waiting reason. Follow retargets after the player move
 more than one world unit, stops at 2 m and resumes beyond 3 m. Move-to arrival tolerance is 0.5 units. Failed navigation waits
 without request churn; stop and issue a new movement order to retry.
 
-Orders suspend autonomous hauling/roaming for members. Hunger retains priority;
-movement resumes after eating. Stop holds movement except for hunger response.
-Carried resources stay with the entity. With no order, normal autonomy resumes.
+Squad orders suspend autonomous hauling/roaming for squad members. Hunger retains
+priority; movement resumes after eating. Stop holds movement except for hunger
+response. Carried resources stay with the entity. With no squad order, normal
+autonomy resumes. Per-entity Follow/Stay commands are a separate feature; see
+[individual order controls and validation](INDIVIDUAL_ORDERS.md).
 
 Schema **9** persists membership only. Orders/actions/navigation clear after a
 successfully validated load. Invalid membership rejects before cancelling actions.
