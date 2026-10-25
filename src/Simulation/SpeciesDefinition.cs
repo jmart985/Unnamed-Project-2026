@@ -26,6 +26,7 @@ public sealed class SpeciesDefinition
         bool canUseTools = false,
         bool canOpenDoors = false,
         bool canTrack = false,
+        bool usesWildTerritory = false,
         bool canAcceptFriendlyInteraction = false,
         bool isDomestic = false,
         bool isPredator = false,
@@ -52,6 +53,7 @@ public sealed class SpeciesDefinition
         CanUseTools = canUseTools;
         CanOpenDoors = canOpenDoors;
         CanTrack = canTrack;
+        UsesWildTerritory = usesWildTerritory;
         CanAcceptFriendlyInteraction = canAcceptFriendlyInteraction;
         IsDomestic = isDomestic;
         IsPredator = isPredator;
@@ -81,6 +83,7 @@ public sealed class SpeciesDefinition
     public bool CanUseTools { get; }
     public bool CanOpenDoors { get; }
     public bool CanTrack { get; }
+    public bool UsesWildTerritory { get; }
     public bool CanAcceptFriendlyInteraction { get; }
     public bool IsDomestic { get; }
     public bool IsPredator { get; }

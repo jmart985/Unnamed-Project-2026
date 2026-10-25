@@ -3,7 +3,7 @@ namespace Simulation;
 /// <summary>
 /// Monitors simulation events to derive behavioral shifts based on Temperament and Relationships.
 /// </summary>
-public sealed class BehavioralTrigger
+public sealed class BehavioralTrigger : IMeleeDamageResponder
 {
     private readonly World _world;
 
@@ -42,6 +42,9 @@ public sealed class BehavioralTrigger
             OverrideBehavior(defender, attackerId, "AggressivePursuit");
         }
     }
+
+    public void OnDamageApplied(string attackerId, string defenderId, double appliedDamage)
+        => OnDamageTaken(attackerId, defenderId, appliedDamage);
 
     private void OverrideBehavior(EntityRecord entity, string targetId, string behaviorId)
     {
