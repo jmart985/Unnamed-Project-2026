@@ -326,11 +326,19 @@ public static class WorldSnapshotSerializer
         if (snapshot.SchemaVersion < BiologicalSexSchemaVersion)
         {
             var playerSex = snapshot.PlayerProfile?.EntitySex;
-            var migratedEntities = snapshot.Entities?.Select(entity => entity is null ? null! : entity with
+            var migratedEntities = snapshot.Entities?.Select(entity =>
             {
-                Sex = entity.Sex ?? (string.Equals(entity.Id, snapshot.PlayerEntityId, StringComparison.Ordinal)
-                    ? playerSex ?? BiologicalSexAssignment.ForEntity(entity.Id, entity.SpeciesId)
-                    : BiologicalSexAssignment.ForEntity(entity.Id, entity.SpeciesId))
+                if (entity is null || string.IsNullOrWhiteSpace(entity.Id))
+                    throw new InvalidDataException("Snapshot entities must have IDs.");
+                if (string.IsNullOrWhiteSpace(entity.SpeciesId))
+                    throw new InvalidDataException($"Snapshot entity '{entity.Id}' must have a species ID.");
+
+                return entity with
+                {
+                    Sex = entity.Sex ?? (string.Equals(entity.Id, snapshot.PlayerEntityId, StringComparison.Ordinal)
+                        ? playerSex ?? BiologicalSexAssignment.ForEntity(entity.Id, entity.SpeciesId)
+                        : BiologicalSexAssignment.ForEntity(entity.Id, entity.SpeciesId))
+                };
             }).ToArray();
             if (migratedEntities is null)
                 throw new InvalidDataException("Snapshot entities are required for biological-sex migration.");

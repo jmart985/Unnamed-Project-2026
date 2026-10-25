@@ -117,6 +117,35 @@ public sealed class WorldSnapshotTests
             roundTrip.Entities.OrderBy(entity => entity.Id).Select(entity => entity.Sex));
     }
 
+    [Theory]
+    [InlineData("Id", null)]
+    [InlineData("Id", "")]
+    [InlineData("Id", " ")]
+    [InlineData("SpeciesId", null)]
+    [InlineData("SpeciesId", "")]
+    [InlineData("SpeciesId", " ")]
+    public void LegacyMigrationRejectsInvalidIdentifiersWithoutReplacingWorld(string field, string? value)
+    {
+        var source = new World();
+        source.SpawnEntity("human", Vector3.Zero);
+        var legacy = JsonNode.Parse(WorldSnapshotSerializer.Serialize(source, 9))!;
+        legacy["SchemaVersion"] = 22;
+        var entity = legacy["Entities"]![0]!.AsObject();
+        entity.Remove("Sex");
+        if (value is null)
+            entity.Remove(field);
+        else
+            entity[field] = value;
+
+        var target = NewGameSession.Create(GetSpeciesCatalog(), PlayerCharacterProfile.Create("Existing"));
+        var before = WorldSnapshotSerializer.Serialize(target.World, 3);
+
+        Assert.Throws<InvalidDataException>(() =>
+            WorldSnapshotSerializer.Load(target.World, legacy.ToJsonString(), GetSpeciesCatalog()));
+        Assert.Equal(before, WorldSnapshotSerializer.Serialize(target.World, 3));
+        Assert.Same(target.Player, target.World.Entities.Single(item => item.Id == target.PlayerEntityId));
+    }
+
     [Fact]
     public void SnapshotRoundTripPreservesPlayerPendingDeathAndDeadState()
     {

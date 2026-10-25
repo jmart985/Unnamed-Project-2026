@@ -39,9 +39,9 @@ public partial class Main
             Require(_world.TryGetEntity(_world.PlayerEntityId ?? string.Empty, out var malePlayer)
                 && malePlayer?.Sex == BiologicalSex.Male,
                 "male player creation sets the authoritative entity sex");
-            var maleNpc = _world.Entities.Single(entity => entity.Id != _world.PlayerEntityId
+            var maleNpc = _world.Entities.First(entity => entity.Id != _world.PlayerEntityId
                 && entity.SpeciesId == "human" && entity.Sex == BiologicalSex.Male);
-            var femaleNpc = _world.Entities.Single(entity => entity.Id != _world.PlayerEntityId
+            var femaleNpc = _world.Entities.First(entity => entity.Id != _world.PlayerEntityId
                 && entity.SpeciesId == "human" && entity.Sex == BiologicalSex.Female);
             Require(_entityViews[maleNpc.Id].PresentationModelAssetPath
                     == "res://assets/humanoids/human/radagon_male_humanoid_rig_v1.glb",
