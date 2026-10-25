@@ -11,6 +11,7 @@ public sealed class SpeciesCatalogTests
         var catalog = SpeciesCatalog.LoadFromFile(GetSpeciesDataPath());
 
         Assert.Equal(new[] { "human", "creature", "ape", "cow", "wolf" }, catalog.Species.Select(species => species.Id));
+        Assert.All(catalog.Species.Where(species => species.Id != "human"), species => Assert.True(species.UsesWildTerritory));
         var human = catalog.GetRequired("human");
         Assert.Equal(3.0, human.MovementSpeed);
         Assert.Equal(0.2, human.HungerRate);
@@ -27,6 +28,7 @@ public sealed class SpeciesCatalogTests
         Assert.True(human.CanUseTools);
         Assert.True(human.CanOpenDoors);
         Assert.False(human.CanTrack);
+        Assert.False(human.UsesWildTerritory);
 
         var ape = catalog.GetRequired("ape");
         Assert.Equal(2.4, ape.MovementSpeed);
@@ -43,6 +45,7 @@ public sealed class SpeciesCatalogTests
         Assert.True(ape.CanUseTools);
         Assert.True(ape.CanOpenDoors);
         Assert.True(ape.CanTrack);
+        Assert.True(ape.UsesWildTerritory);
 
         var cow = catalog.GetRequired("cow");
         Assert.Equal(1.8, cow.MovementSpeed);
@@ -61,6 +64,7 @@ public sealed class SpeciesCatalogTests
         Assert.False(cow.CanUseTools);
         Assert.False(cow.CanOpenDoors);
         Assert.False(cow.CanTrack);
+        Assert.True(cow.UsesWildTerritory);
 
         var wolf = catalog.GetRequired("wolf");
         Assert.Equal(3.4, wolf.MovementSpeed);
@@ -77,6 +81,7 @@ public sealed class SpeciesCatalogTests
         Assert.False(wolf.CanUseTools);
         Assert.False(wolf.CanOpenDoors);
         Assert.True(wolf.CanTrack);
+        Assert.True(wolf.UsesWildTerritory);
 
         Assert.Equal(new[] { "human", "creature" },
             catalog.GetCompatibleWithDiet(ItemIds.Food).Select(species => species.Id));
@@ -193,6 +198,7 @@ public sealed class SpeciesCatalogTests
         Assert.False(species.CanUseTools);
         Assert.False(species.CanOpenDoors);
         Assert.False(species.CanTrack);
+        Assert.False(species.UsesWildTerritory);
         Assert.Equal(300, species.CarcassFreshnessSeconds);
     }
 
