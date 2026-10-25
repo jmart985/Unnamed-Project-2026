@@ -9,6 +9,8 @@ public partial class Main
     private MeshInstance3D _farmSoil = null!;
     private Node3D _farmCrop = null!;
     private Label3D _farmLabel = null!;
+    private sealed record FarmPresentation(Node3D Root, MeshInstance3D Soil, Node3D Crop, Label3D Label);
+    private readonly Dictionary<string, FarmPresentation> _farmViews = new(StringComparer.Ordinal);
     private Control _farmPanel = null!;
     private Label _farmSummary = null!;
     private Label _farmMessage = null!;
@@ -19,44 +21,12 @@ public partial class Main
 
     private void ConfigureFarmGameplay()
     {
-        _farmView = new Node3D { Name = "Farm" };
-        AddChild(_farmView);
-        _farmSoil = new MeshInstance3D
-        {
-            Name = "Soil",
-            Mesh = new BoxMesh { Size = new Vector3(2.6f, 0.18f, 2.6f) },
-            Position = new Vector3(0, 0.09f, 0),
-            MaterialOverride = new StandardMaterial3D { AlbedoColor = new Color(0.25f, 0.12f, 0.055f), Roughness = 1 }
-        };
-        _farmView.AddChild(_farmSoil);
-        var borderMaterial = new StandardMaterial3D { AlbedoColor = new Color(0.36f, 0.2f, 0.08f), Roughness = 0.9f };
-        foreach (var (position, size) in new[]
-        {
-            (new Vector3(0, 0.22f, -1.38f), new Vector3(3, 0.28f, 0.18f)),
-            (new Vector3(0, 0.22f, 1.38f), new Vector3(3, 0.28f, 0.18f)),
-            (new Vector3(-1.38f, 0.22f, 0), new Vector3(0.18f, 0.28f, 3)),
-            (new Vector3(1.38f, 0.22f, 0), new Vector3(0.18f, 0.28f, 3))
-        })
-        {
-            var border = new MeshInstance3D { Mesh = new BoxMesh { Size = size }, Position = position, MaterialOverride = borderMaterial };
-            _farmView.AddChild(border);
-        }
-        _farmCrop = new Node3D { Name = "Crop" };
-        _farmView.AddChild(_farmCrop);
-        var cropMaterial = new StandardMaterial3D { AlbedoColor = new Color(0.18f, 0.62f, 0.18f), Roughness = 0.85f };
-        foreach (var x in new[] { -0.72f, 0f, 0.72f })
-        foreach (var z in new[] { -0.72f, 0f, 0.72f })
-            _farmCrop.AddChild(new MeshInstance3D
-            {
-                Mesh = new CylinderMesh { TopRadius = 0.05f, BottomRadius = 0.09f, Height = 0.9f },
-                Position = new Vector3(x, 0.57f, z), MaterialOverride = cropMaterial
-            });
-        _farmLabel = new Label3D
-        {
-            Text = "FARM · EMPTY", Position = new Vector3(0, 2.1f, 0), Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
-            FontSize = 36, OutlineSize = 8, Modulate = new Color(1, 0.93f, 0.62f), NoDepthTest = true
-        };
-        _farmView.AddChild(_farmLabel);
+        var starterView = CreateFarmPresentation("Farm");
+        _farmView = starterView.Root;
+        _farmSoil = starterView.Soil;
+        _farmCrop = starterView.Crop;
+        _farmLabel = starterView.Label;
+        _farmViews.Add("farm-1", starterView);
 
         var content = CreateMenuPanel("Farm Plot", out _farmPanel);
         _farmPanel.AnchorLeft = 0.56f;
@@ -128,15 +98,71 @@ public partial class Main
     private void UpdateFarmPresentation()
     {
         if (_farmView is null) return;
-        var farm = _world.Farms.FirstOrDefault();
-        var plot = farm?.Plots.FirstOrDefault();
-        _farmView.Visible = farm is not null && plot is not null;
-        if (farm is null || plot is null) return;
-        _farmView.Position = new Vector3(farm.Position.X, farm.Position.Y, farm.Position.Z);
-        _farmCrop.Visible = plot.IsPlanted;
-        var ratio = plot.IsPlanted ? Math.Max(0.18f, (float)plot.Growth / plot.Crop!.GrowthRequired) : 0.18f;
-        _farmCrop.Scale = new Vector3(1, ratio, 1);
-        _farmLabel.Text = !plot.IsPlanted ? "FARM · EMPTY" : plot.IsMature ? "FARM · HARVEST READY" : $"FARM · GROWING {plot.Growth}/{plot.Crop!.GrowthRequired}";
-        _farmLabel.Modulate = plot.IsMature ? new Color(0.55f, 1, 0.38f) : new Color(1, 0.93f, 0.62f);
+        var liveFarmIds = _world.Farms.Select(farm => farm.Id).ToHashSet(StringComparer.Ordinal);
+        foreach (var (id, view) in _farmViews.ToArray())
+        {
+            if (liveFarmIds.Contains(id)) continue;
+            view.Root.Visible = false;
+            if (id == "farm-1") continue;
+            RemoveChild(view.Root);
+            view.Root.QueueFree();
+            _farmViews.Remove(id);
+        }
+
+        foreach (var farm in _world.Farms)
+        {
+            if (!_farmViews.TryGetValue(farm.Id, out var view))
+            {
+                view = CreateFarmPresentation(farm.Id);
+                _farmViews.Add(farm.Id, view);
+            }
+            var plot = farm.Plots.FirstOrDefault();
+            view.Root.Visible = plot is not null;
+            if (plot is null) continue;
+            view.Root.Position = new Vector3(farm.Position.X, farm.Position.Y, farm.Position.Z);
+            view.Crop.Visible = plot.IsPlanted;
+            var ratio = plot.IsPlanted ? Math.Max(0.18f, (float)plot.Growth / plot.Crop!.GrowthRequired) : 0.18f;
+            view.Crop.Scale = new Vector3(1, ratio, 1);
+            view.Label.Text = !plot.IsPlanted ? "FARM · EMPTY" : plot.IsMature ? "FARM · HARVEST READY" : $"FARM · GROWING {plot.Growth}/{plot.Crop!.GrowthRequired}";
+            view.Label.Modulate = plot.IsMature ? new Color(0.55f, 1, 0.38f) : new Color(1, 0.93f, 0.62f);
+        }
+    }
+
+    private FarmPresentation CreateFarmPresentation(string name)
+    {
+        var root = new Node3D { Name = name };
+        AddChild(root);
+        var soil = new MeshInstance3D
+        {
+            Name = "Soil", Mesh = new BoxMesh { Size = new Vector3(2.6f, 0.18f, 2.6f) }, Position = new Vector3(0, 0.09f, 0),
+            MaterialOverride = new StandardMaterial3D { AlbedoColor = new Color(0.25f, 0.12f, 0.055f), Roughness = 1 }
+        };
+        root.AddChild(soil);
+        var borderMaterial = new StandardMaterial3D { AlbedoColor = new Color(0.36f, 0.2f, 0.08f), Roughness = 0.9f };
+        foreach (var (position, size) in new[]
+        {
+            (new Vector3(0, 0.22f, -1.38f), new Vector3(3, 0.28f, 0.18f)),
+            (new Vector3(0, 0.22f, 1.38f), new Vector3(3, 0.28f, 0.18f)),
+            (new Vector3(-1.38f, 0.22f, 0), new Vector3(0.18f, 0.28f, 3)),
+            (new Vector3(1.38f, 0.22f, 0), new Vector3(0.18f, 0.28f, 3))
+        })
+            root.AddChild(new MeshInstance3D { Mesh = new BoxMesh { Size = size }, Position = position, MaterialOverride = borderMaterial });
+        var crop = new Node3D { Name = "Crop" };
+        root.AddChild(crop);
+        var cropMaterial = new StandardMaterial3D { AlbedoColor = new Color(0.18f, 0.62f, 0.18f), Roughness = 0.85f };
+        foreach (var x in new[] { -0.72f, 0f, 0.72f })
+        foreach (var z in new[] { -0.72f, 0f, 0.72f })
+            crop.AddChild(new MeshInstance3D
+            {
+                Mesh = new CylinderMesh { TopRadius = 0.05f, BottomRadius = 0.09f, Height = 0.9f },
+                Position = new Vector3(x, 0.57f, z), MaterialOverride = cropMaterial
+            });
+        var label = new Label3D
+        {
+            Text = "FARM · EMPTY", Position = new Vector3(0, 2.1f, 0), Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+            FontSize = 36, OutlineSize = 8, Modulate = new Color(1, 0.93f, 0.62f), NoDepthTest = true
+        };
+        root.AddChild(label);
+        return new(root, soil, crop, label);
     }
 }

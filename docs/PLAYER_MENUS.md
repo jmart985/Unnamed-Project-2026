@@ -9,12 +9,12 @@ Use the permanent top-left navigation buttons, or the default bindings below. On
 | Screen | Default | Tabs and content |
 | --- | --- | --- |
 | Inventory | I / controller Y | Status: live satiety, body health and base attributes. Equipment: current left/right hand shield configuration and planned wearable slots. Items: actual player-carried counts, empty state and All/Food/Materials/Currency filtering. Other: existing skills, position and faction. |
-| Settlement | Tab / controller Start | Overview: simulation totals, pause/resume and speed. People: scrollable entity list beside inspection and daily schedule controls. Squad: selection, membership and move/follow/stop controls. |
+| Settlement | Tab / controller Start | Overview: simulation totals, pause/resume, speed and Build mode. People: scrollable entity list beside inspection and daily schedule controls. Squad: selection, membership and move/follow/stop controls. |
 | Save / Settings | F10 / Escape when closed | Game: existing save/load slot and scenario reset. Controls: keyboard/mouse and controller button mapping, capture feedback and restore defaults. |
 
 Panels use centered anchors, an opaque background and scrolling for overflow. Status uses two columns; settlement keeps the list beside the selected entity's detail instead of putting every control in one long debug column. Tabs retain their selection when switching screens. New/reset games start with screens closed and navigation visible.
 
-An open menu blocks walking, jumping, aim, attacks and world action hotkeys. It does not silently pause the simulation. Settlement pause/speed controls remain effective; save and load pause as before. Closing respects that pause state. Opening a screen cancels an unfinished player swing and horizontal movement so an attack cannot land behind the UI.
+An open Inventory, Settlement, or Save / Settings screen blocks walking, jumping, aim, attacks and world action hotkeys. Build mode is a separate non-modal placement context: it keeps movement, jumping, camera look, mouse capture and the centered reticle active while suppressing normal world actions. Its ten-slot keyboard bank uses 1–9 and 0 only while Build mode is open; these keys remain free for future inventory hotkeys elsewhere. Settlement pause/speed controls remain effective; save and load pause as before. Closing respects that pause state. Opening a regular screen cancels an unfinished player swing and horizontal movement so an attack cannot land behind the UI.
 
 ## Live state and future space
 
@@ -31,6 +31,8 @@ Select a Keyboard / Mouse or Controller mapping button, then press the new input
 Duplicate bindings are rejected with feedback. Escape, controller B and debug F5–F8 remain reserved. Escape cancels capture without closing Settings. Restore defaults resets and saves the mapping. The legacy combat alias follows left attack rather than keeping an obsolete binding.
 
 Stable action IDs live in `Simulation.ControllerActions`; the Godot-facing `ControllerActions` type forwards them as compatibility constants. Keep these IDs unchanged unless a settings migration is included, because saved preferences store the action names.
+
+Build mode is a contextual control exception: its configurable open/toggle action defaults to B / controller left-stick click. The slot bank (1–9, 0) is read only while that mode is active and is deliberately not added to global InputMap action bindings. This leaves those keys available outside build mode for later inventory shortcuts. Controller D-pad left/right cycles through the four current build options only in Build mode; left attack confirms placement in that context.
 
 Preferences are stored separately at `user://player-settings.json`, through the existing atomic `SaveSlotStore`. Issue #388 adds Cycle target (default T) and uses version 2 for new writes. Version 1 loads preserve every existing binding and add an unused target key (T, or F9 then other free keys if T is already assigned); migration does not overwrite the file until a settings change is saved. New/restored defaults use F for greeting; existing G/custom mappings remain intact. The complete file is validated before changing InputMap; a failed write retains both the previous file and active mapping. Invalid settings report a load error and retain the active mapping. A settings change never changes World snapshots or their schema 10. Navigation hints and mapping buttons refresh from the actual bindings.
 

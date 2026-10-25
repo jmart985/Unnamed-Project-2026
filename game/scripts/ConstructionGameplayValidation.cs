@@ -13,18 +13,82 @@ public partial class Main
             SetProcess(false); _playerCharacter.SetPhysicsProcess(false);
             _playerCharacter.GlobalPosition = new Vector3(-6, 0, -1); _playerCharacter.Rotation = Vector3.Zero; SyncPlayerPosition();
             var player = _world.Entities.Single(entity => entity.Id == _world.PlayerEntityId);
+            Require(!ControllerActions.All.Any(action => new[] { Key.Key1, Key.Key2, Key.Key0 }.Any(key =>
+                    InputMap.ActionHasEvent(action, new InputEventKey { PhysicalKeycode = key }))),
+                "number-row build slots are not globally bound to actions outside Build mode");
             var wood = _world.ResourcePiles.Single().Contents;
             Require(ResourceTransferService.TryPickUp(wood, player, ItemIds.Wood, SettlementConstruction.HutWood)
                 == ResourceMutationResult.Success, "construction wood transferred atomically");
 
             ToggleMenu(PlayerMenu.Settlement);
-            PressMenuButton(_controlsPanel, "Place starter hut");
+            PressMenuButton(_controlsPanel, "Build mode");
+            Require(PlacementPanelOpen && !_hutPreview.Visible && _playerCharacter.GameplayInputEnabled
+                && _placementPanel.MouseFilter == Control.MouseFilterEnum.Ignore && _buildHotbarSlots.Count == 10,
+                "Settlement opens a ten-slot non-modal hotbar while player input remains enabled");
+            _Input(new InputEventKey { PhysicalKeycode = Key.Key2, Keycode = Key.Key2, Pressed = true });
+            Require(_fireplacePreview.Visible && !_hutPreview.Visible, "hotbar slot 2 selects the existing fireplace option");
+            _Input(new InputEventJoypadButton { ButtonIndex = JoyButton.DpadRight, Pressed = true });
+            Require(_workbenchPreview.Visible, "controller D-pad right cycles to the additional workbench option");
+            _Input(new InputEventJoypadButton { ButtonIndex = JoyButton.DpadLeft, Pressed = true });
+            Require(_fireplacePreview.Visible, "controller D-pad left cycles back to the fireplace option");
+            _Input(new InputEventKey { PhysicalKeycode = Key.Key0, Keycode = Key.Key0, Pressed = true });
+            Require(!_fireplacePreview.Visible && !_hutPreview.Visible && _placementMessage.Text.Contains("slot 0 is empty", StringComparison.OrdinalIgnoreCase),
+                "hotbar slot 0 is empty and cannot show a build preview");
+            var woodBeforeCancel = player.Inventory.GetValueOrDefault(ItemIds.Wood);
+            _Input(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true });
+            Require(_world.Fireplaces.Count == 0 && _world.ConstructionSites.Count == 0,
+                "left click on an empty hotbar slot creates no object");
+            _Input(new InputEventKey { PhysicalKeycode = Key.Escape, Keycode = Key.Escape, Pressed = true });
+            Require(!PlacementPanelOpen && player.Inventory.GetValueOrDefault(ItemIds.Wood) == woodBeforeCancel,
+                "Escape cancels build mode without consuming materials");
+
+            _Input(new InputEventKey { PhysicalKeycode = Key.B, Keycode = Key.B, Pressed = true });
+            _Input(new InputEventKey { PhysicalKeycode = Key.Key1, Keycode = Key.Key1, Pressed = true });
             Require(PlacementPanelOpen && _hutPreview.Visible && _placementValid,
-                "settlement control opens a valid in-world placement preview");
-            PressMenuButton(_placementPanel, "Confirm site");
+                "B opens Build mode and hotbar key 1 selects a valid starter hut preview");
+            Require(_targetReticle.Visible, "build mode keeps the centered reticle visible");
+            Require(_targetReticle.Text == "+", "build mode retains the centered placement reticle");
+            Require(GameplayCameraCaptureAllowed, "build mode keeps camera look and cursor capture enabled");
+
+            var initialPlayerPosition = _playerCharacter.GlobalPosition;
+            var initialPreviewPosition = _hutPreview.GlobalPosition;
+            SetProcess(true); _playerCharacter.SetPhysicsProcess(true);
+            try
+            {
+                Input.ActionPress(ControllerActions.MoveForward);
+                // The preview snaps to whole-metre placement cells; move far enough
+                // that this short integration check crosses at least one cell.
+                await PhysicsFrames(24);
+            }
+            finally
+            {
+                Input.ActionRelease(ControllerActions.MoveForward);
+            }
+            UpdateHutPreview();
+            Require(_playerCharacter.GameplayInputEnabled
+                && new Vector2(initialPlayerPosition.X, initialPlayerPosition.Z).DistanceTo(
+                    new Vector2(_playerCharacter.GlobalPosition.X, _playerCharacter.GlobalPosition.Z)) > 0.1f,
+                "player movement continues with the build hotbar open");
+            Require(_hutPreview.GlobalPosition.DistanceTo(initialPreviewPosition) > 0.1f,
+                $"selected preview follows player movement ({initialPreviewPosition} -> {_hutPreview.GlobalPosition})");
+            var beforeLook = _hutPreview.GlobalPosition;
+            _playerCharacter._UnhandledInput(new InputEventMouseMotion { Relative = new Vector2(35, 0) });
+            UpdateHutPreview();
+            Require(_hutPreview.GlobalPosition.DistanceTo(beforeLook) > 0.1f,
+                "center camera ray moves the preview when the player looks around");
+
+            SetProcess(false); _playerCharacter.SetPhysicsProcess(false);
+            _playerCharacter.GlobalPosition = new Vector3(-6, 0, -1);
+            _playerCharacter.Rotation = Vector3.Zero;
+            var playerCamera = _playerCharacter.GetNode<Camera3D>("Camera3D");
+            playerCamera.Position = new Vector3(0, 2.6f, 5.5f);
+            playerCamera.Rotation = new Vector3(_playerCharacter.CameraPitchOffset, 0, 0);
+            SyncPlayerPosition(); UpdateHutPreview();
+            Require(_placementValid, "camera-center ground ray returns to a valid starter hut footprint");
+            _Input(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true });
             var site = _world.ConstructionSites.Single();
             Require(!PlacementPanelOpen && _constructionViews.ContainsKey(new(TargetKind.ConstructionSite, site.Id)),
-                "confirm creates one authoritative targetable site");
+                "left click creates one authoritative targetable construction site");
 
             _playerCharacter.GlobalPosition = new Vector3(site.Position.X, 0, site.Position.Z + 1.5f); SyncPlayerPosition();
             _selectedTarget = new(TargetKind.ConstructionSite, site.Id);
@@ -70,14 +134,119 @@ public partial class Main
                     "actual rendered completed hut evidence");
             }
 
+            SetProcess(false); _playerCharacter.SetPhysicsProcess(false);
+            _playerCharacter.GlobalPosition = new Vector3(10, 0, 12); SyncPlayerPosition();
+            BeginBuildMode();
+            _Input(new InputEventKey { PhysicalKeycode = Key.Key3, Keycode = Key.Key3, Pressed = true });
+            var overlappingWorkbenchPosition = new Vector3(10, 0, 10);
+            Require(!CanPlaceWorkbench(overlappingWorkbenchPosition, out var overlapReason)
+                && overlapReason.Contains("workbench clearance", StringComparison.OrdinalIgnoreCase),
+                "workbench validation rejects overlap with the original fixture");
+            _placementPosition = overlappingWorkbenchPosition;
+            _Input(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true });
+            Require(_world.Workstations.Count == 1, "invalid workbench placement does not mutate the World");
+            _Input(new InputEventKey { PhysicalKeycode = Key.Escape, Keycode = Key.Escape, Pressed = true });
+            _playerCharacter.GlobalPosition = new Vector3(42, 0, 42); SyncPlayerPosition();
+            var starterWorkbenchPosition = _world.Workstations.Single(item => item.Id == "workbench-1").Position;
+            BeginBuildMode();
+            _Input(new InputEventKey { PhysicalKeycode = Key.Key3, Keycode = Key.Key3, Pressed = true });
+            Require(_workbenchPreview.Visible && _buildHotbarSlots[2].Label.Text.Contains("Workbench", StringComparison.Ordinal),
+                "hotbar slot 3 previews an additional workbench while the original fixture remains in place");
+            _placementPosition = new Vector3(42, 0, 42);
+            _Input(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true });
+            var addedWorkbench = _world.Workstations.Single(item => item.Id == "workbench-2");
+            Require(addedWorkbench.Position == new System.Numerics.Vector3(42, 0, 42)
+                && _world.Workstations.Single(item => item.Id == "workbench-1").Position == starterWorkbenchPosition
+                && _workbenchViews.Count == 2,
+                "placing slot 3 adds a separately presented World workstation without moving the starter workbench");
+            var navigation = CreateNavigationMesh(CurrentWorkbenchPositions());
+            var navigationVertices = navigation.GetVertices();
+            bool HasNavigationAt(Vector3 point)
+            {
+                for (var polygonIndex = 0; polygonIndex < navigation.GetPolygonCount(); polygonIndex++)
+                {
+                    var polygon = navigation.GetPolygon(polygonIndex).Select(index => navigationVertices[index]).ToArray();
+                    if (point.X > polygon.Min(vertex => vertex.X) && point.X < polygon.Max(vertex => vertex.X)
+                        && point.Z > polygon.Min(vertex => vertex.Z) && point.Z < polygon.Max(vertex => vertex.Z))
+                        return true;
+                }
+                return false;
+            }
+            Require(!HasNavigationAt(new Vector3(42, 0, 42)) && HasNavigationAt(new Vector3(45, 0, 42)),
+                "generated navigation excludes the added workbench clearance while keeping the adjacent route open");
+            Require(WorldTargets().Any(view => view.Target == new WorldTarget(TargetKind.Workstation, addedWorkbench.Id)),
+                "the added workbench has an independent target-selection view");
+
+            BeginBuildMode();
+            _Input(new InputEventKey { PhysicalKeycode = Key.Key3, Keycode = Key.Key3, Pressed = true });
+            _placementPosition = new Vector3(48, 0, 42);
+            _Input(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true });
+            var secondAddedWorkbench = _world.Workstations.Single(item => item.Id == "workbench-3");
+            Require(secondAddedWorkbench.Id != addedWorkbench.Id && _workbenchViews.Count == 3,
+                "slot 3 can place multiple workbenches with distinct identities");
+            Require(addedWorkbench.InputStorage.TryAdd(ItemIds.Wood, 1) == ResourceMutationResult.Success,
+                "additional workbench keeps its own independent input storage");
+            _playerCharacter.GlobalPosition = new Vector3(42, 0, 44); SyncPlayerPosition();
+            _selectedTarget = new(TargetKind.Workstation, addedWorkbench.Id);
+            PerformFriendlyInteraction();
+            Require(WorkstationPanelOpen && _openWorkstationId == addedWorkbench.Id,
+                "the additional workbench opens through the existing target interaction");
+            PressMenuButton(_workstationPanel, "Start basic meal");
+            Require(addedWorkbench.InputStorage.TryAdd(ItemIds.Plant, 1) == ResourceMutationResult.Success,
+                "the added workbench stores a separate recipe input");
+            PressMenuButton(_workstationPanel, "Apply 1 work");
+            Require(addedWorkbench.CurrentRecipe?.WorkProgress == 1
+                && _world.Workstations.Single(item => item.Id == "workbench-1").CurrentRecipe?.WorkProgress == 0,
+                $"the added workbench recipe progresses independently of the starter workbench (added {addedWorkbench.CurrentRecipe?.WorkProgress}, starter {_world.Workstations.Single(item => item.Id == "workbench-1").CurrentRecipe?.WorkProgress})");
+            CloseWorkstation();
+
+            BeginBuildMode();
+            _Input(new InputEventKey { PhysicalKeycode = Key.Key4, Keycode = Key.Key4, Pressed = true });
+            Require(_farmPreview.Visible && _buildHotbarSlots[3].Label.Text.Contains("Farm", StringComparison.Ordinal),
+                "hotbar slot 4 previews an additional farm");
+            _placementPosition = new Vector3(42, 0, 50);
+            _Input(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true });
+            var addedFarm = _world.Farms.Single(item => item.Id == "farm-2");
+            Require(addedFarm.Plots.Count == 1 && _farmViews.ContainsKey(addedFarm.Id) && _world.Farms.Single(item => item.Id == "farm-1").Position == new System.Numerics.Vector3(5, 0, 5),
+                "placing slot 4 adds a targetable farm with one empty plot and retains the starter farm");
+            _playerCharacter.GlobalPosition = new Vector3(42, 0, 48); SyncPlayerPosition();
+            _selectedTarget = new(TargetKind.Farm, addedFarm.Id);
+            PerformFriendlyInteraction();
+            Require(FarmPanelOpen && _openFarmId == addedFarm.Id,
+                "the additional farm opens through the existing target interaction");
+            CloseFarm();
+            Require(addedFarm.Plots[0].TryPlant(SettlementCrops.CreateFieldCrop(), 1)
+                && addedFarm.Plots[0].AdvanceGrowth(2), "additional farm crop state advances independently");
+
+            _playerCharacter.GlobalPosition = new Vector3(50, 0, 50); SyncPlayerPosition();
+            BeginBuildMode();
+            _Input(new InputEventKey { PhysicalKeycode = Key.Key4, Keycode = Key.Key4, Pressed = true });
+            _placementPosition = new Vector3(50, 0, 50);
+            _Input(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true });
+            var secondAddedFarm = _world.Farms.Single(item => item.Id == "farm-3");
+            Require(secondAddedFarm.Id != addedFarm.Id && _farmViews.Count == 3
+                && !secondAddedFarm.Plots[0].IsPlanted,
+                "slot 4 can place multiple farms with distinct empty plot state");
+
             _saveSlotPath = ProjectSettings.GlobalizePath("res://../.construction-validation-save.json");
             SaveScenario(); LoadScenario();
             Require(_world.Structures.Single().Id == hut.Id && !_world.Structures.Single().IsClosed
                 && _constructionViews.Count == 1, "save/load restores one open hut without stale site geometry");
+            Require(_world.Workstations.Count == 3 && _world.Workstations.Single(item => item.Id == addedWorkbench.Id).Position == addedWorkbench.Position
+                && _world.Workstations.Single(item => item.Id == addedWorkbench.Id).InputStorage.Counts.GetValueOrDefault(ItemIds.Wood) == 1
+                && _world.Workstations.Single(item => item.Id == addedWorkbench.Id).InputStorage.Counts.GetValueOrDefault(ItemIds.Plant) == 1
+                && _world.Workstations.Single(item => item.Id == addedWorkbench.Id).CurrentRecipe?.WorkProgress == 1
+                && _world.Workstations.Single(item => item.Id == "workbench-1").CurrentRecipe?.WorkProgress == 0
+                && _workbenchViews.Count == 3,
+                "save/load restores multiple workbench positions, independent storage and recipe state, and presentation");
+            Require(_world.Farms.Count == 3 && _world.Farms.Single(item => item.Id == addedFarm.Id).Plots[0].Growth == 2
+                && !_world.Farms.Single(item => item.Id == secondAddedFarm.Id).Plots[0].IsPlanted
+                && _farmViews.Count == 3 && WorldTargets().Any(view => view.Target == new WorldTarget(TargetKind.Farm, addedFarm.Id)),
+                "save/load restores independent farm plots, multiple farm views, and target selection");
             ResetScenario(); SetProcess(false); _playerCharacter.SetPhysicsProcess(false);
             Require(_world.Structures.Count == 0 && _world.ConstructionSites.Count == 0 && _constructionViews.Count == 0,
                 "reset clears constructed state and presentation");
-            GD.Print("CONSTRUCTION VALIDATION PASSED: preview, atomic supply/work, completion, doorway, door, reset/load and rendered evidence.");
+            GD.Print("CONSTRUCTION VALIDATION PASSED: hotbar placement, preview, navigation clearance, fixture interactions, construction, reset/load and rendered evidence.");
             GetTree().Quit();
         }
         catch (Exception exception) { GD.PushError($"CONSTRUCTION VALIDATION FAILED: {exception}"); GetTree().Quit(1); }

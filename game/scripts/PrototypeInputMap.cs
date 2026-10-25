@@ -32,6 +32,8 @@ public static class PrototypeInputMap
         AddKeyboardAction(ControllerActions.CycleTarget, Key.T);
         AddKeyboardAction(ControllerActions.Inventory, Key.I);
         AddKeyboardAction(ControllerActions.Settlement, Key.Tab);
+        AddKeyboardAction(ControllerActions.BuildMode, Key.B);
+        AddJoypadButtonAction(ControllerActions.BuildMode, JoyButton.LeftStick);
         AddKeyboardAction(ControllerActions.Settings, Key.F10);
         AddKeyboardAction(ControllerActions.CloseMenu, Key.Escape);
         AddKeyboardAction(ControllerActions.DebugRoute, Key.F5);

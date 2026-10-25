@@ -18,8 +18,17 @@ public sealed class PlayerButtonBindings
         (ControllerActions.Jump, "Jump"), (ControllerActions.AttackLeft, "Left attack"),
         (ControllerActions.AttackRight, "Right attack"), (ControllerActions.Collect, "Collect / hold to use"),
         (ControllerActions.Interact, "Interact"), (ControllerActions.Greet, "Greet selected"), (ControllerActions.CycleTarget, "Target lock / switch"), (ControllerActions.Inventory, "Inventory"),
-        (ControllerActions.Settlement, "Settlement"), (ControllerActions.Settings, "Save / Settings")
+        (ControllerActions.Settlement, "Settlement"), (ControllerActions.BuildMode, "Build mode"),
+        (ControllerActions.Settings, "Save / Settings")
     ];
+
+    private static readonly string[] PreBuildActions = Actions
+        .Select(entry => entry.Action)
+        .Where(action => action != ControllerActions.BuildMode)
+        .ToArray();
+    private static readonly string[] LegacyBaseActions = PreBuildActions
+        .Where(action => action is not ControllerActions.CycleTarget and not ControllerActions.Greet)
+        .ToArray();
 
     private readonly SaveSlotStore _store;
     private readonly Dictionary<string, ActionBinding> _defaults;
@@ -52,36 +61,44 @@ public sealed class PlayerButtonBindings
         try
         {
             var file = JsonSerializer.Deserialize<SettingsFile>(_store.Load(Path));
-            if (file?.Version is not (1 or 2 or 3) || file.Actions is null)
+            if (file?.Version is not (1 or 2 or 3 or 4) || file.Actions is null)
                 throw new InvalidDataException("Unsupported or incomplete button mapping.");
-            var migrated = file.Version < 3;
+            var migrated = file.Version < 4;
+            var actions = new Dictionary<string, ActionBinding>(file.Actions);
             if (file.Version == 1)
             {
-                if (file.Actions.Count != Actions.Length - 2 || file.Actions.ContainsKey(ControllerActions.CycleTarget)
-                    || file.Actions.ContainsKey(ControllerActions.Greet)
-                    || Actions.Any(entry => entry.Action != ControllerActions.CycleTarget && entry.Action != ControllerActions.Greet && !file.Actions.ContainsKey(entry.Action)))
+                if (actions.Count != LegacyBaseActions.Length || LegacyBaseActions.Any(action => !actions.ContainsKey(action)))
                     throw new InvalidDataException("Incomplete legacy button mapping.");
-                // Preserve every old binding. Choose an unused default for the new action.
-                var used = file.Actions.Values.Where(value => value is not null).Select(value => value.Desktop).ToHashSet();
-                var key = new[] { Key.T, Key.F9, Key.F11, Key.F12, Key.P, Key.O, Key.L, Key.K, Key.J, Key.H, Key.B, Key.N, Key.M }
-                    .Select(key => new ButtonBinding("key", (long)key)).First(binding => !used.Contains(binding));
-                file.Actions.Add(ControllerActions.CycleTarget, new(key, null));
+                AddMissingAction(actions, ControllerActions.CycleTarget,
+                    [Key.T, Key.F9, Key.F11, Key.F12, Key.P, Key.O, Key.L, Key.K, Key.J, Key.H, Key.B, Key.N, Key.M]);
+                AddMissingAction(actions, ControllerActions.Greet,
+                    [Key.G, Key.F9, Key.F11, Key.F12, Key.P, Key.O, Key.L, Key.K, Key.J, Key.H, Key.B, Key.N, Key.M]);
             }
-            if (file.Version < 3 && !file.Actions.ContainsKey(ControllerActions.Greet))
+            else if (file.Version == 2)
             {
-                if (file.Actions.Count != Actions.Length - 1
-                    || Actions.Any(entry => entry.Action != ControllerActions.Greet && !file.Actions.ContainsKey(entry.Action)))
+                if (actions.Count != PreBuildActions.Length - 1
+                    || PreBuildActions.Where(action => action != ControllerActions.Greet).Any(action => !actions.ContainsKey(action)))
                     throw new InvalidDataException("Incomplete legacy button mapping.");
-                var used = file.Actions.Values.Where(value => value is not null).Select(value => value.Desktop).ToHashSet();
-                var key = new[] { Key.G, Key.F9, Key.F11, Key.F12, Key.P, Key.O, Key.L, Key.K, Key.J, Key.H, Key.B, Key.N, Key.M }
-                    .Select(key => new ButtonBinding("key", (long)key)).First(binding => !used.Contains(binding));
-                file.Actions.Add(ControllerActions.Greet, new(key, null));
+                AddMissingAction(actions, ControllerActions.Greet,
+                    [Key.G, Key.F9, Key.F11, Key.F12, Key.P, Key.O, Key.L, Key.K, Key.J, Key.H, Key.B, Key.N, Key.M]);
             }
-            if (file.Actions.Count != Actions.Length || Actions.Any(entry => !file.Actions.ContainsKey(entry.Action)))
+            else if (file.Version == 3
+                && (actions.Count != PreBuildActions.Length || PreBuildActions.Any(action => !actions.ContainsKey(action))))
+            {
+                throw new InvalidDataException("Incomplete version three button mapping.");
+            }
+
+            if (file.Version < 4)
+            {
+                AddMissingAction(actions, ControllerActions.BuildMode,
+                    [Key.B, Key.F9, Key.F11, Key.F12, Key.P, Key.O, Key.L, Key.K, Key.J, Key.H, Key.N, Key.M]);
+            }
+
+            if (actions.Count != Actions.Length || Actions.Any(entry => !actions.ContainsKey(entry.Action)))
                 throw new InvalidDataException("Unsupported or incomplete button mapping.");
-            if (!Validate(file.Actions, out var reason)) throw new InvalidDataException(reason);
-            Apply(file.Actions);
-            Status = migrated ? "Saved mapping upgraded; existing bindings preserved. Greet: " + Label(Get(ControllerActions.Greet).Desktop)
+            if (!Validate(actions, out var reason)) throw new InvalidDataException(reason);
+            Apply(actions);
+            Status = migrated ? "Saved mapping upgraded; existing bindings preserved. Build mode: " + Label(Get(ControllerActions.BuildMode).Desktop)
                 : "Saved button mapping loaded.";
         }
         catch (Exception error) when (error is IOException or InvalidDataException or UnauthorizedAccessException or JsonException)
@@ -111,7 +128,7 @@ public sealed class PlayerButtonBindings
     private bool SaveAndApply(Dictionary<string, ActionBinding> proposed, out string reason)
     {
         if (!Validate(proposed, out reason)) return false;
-        try { _store.Save(Path, () => JsonSerializer.Serialize(new SettingsFile(3, proposed))); }
+        try { _store.Save(Path, () => JsonSerializer.Serialize(new SettingsFile(4, proposed))); }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {
             reason = $"Mapping not saved; current bindings retained. {error.Message}";
@@ -171,6 +188,32 @@ public sealed class PlayerButtonBindings
         foreach (var input in InputMap.ActionGetEvents(ControllerActions.AttackLeft))
             InputMap.ActionAddEvent(ControllerActions.Attack, input);
         _bindings = new(proposed);
+    }
+
+    private void AddMissingAction(Dictionary<string, ActionBinding> actions, string action, Key[] desktopCandidates)
+    {
+        if (actions.ContainsKey(action)) return;
+        var defaults = _defaults[action];
+        foreach (var key in desktopCandidates)
+        {
+            var desktop = key == desktopCandidates[0] ? defaults.Desktop : new ButtonBinding("key", (long)key);
+            var candidate = new ActionBinding(desktop, defaults.Controller);
+            var proposed = new Dictionary<string, ActionBinding>(actions) { [action] = candidate };
+            if (Validate(proposed, out _))
+            {
+                actions.Add(action, candidate);
+                return;
+            }
+            // Keep a usable keyboard mapping if a legacy custom controller binding now conflicts.
+            candidate = candidate with { Controller = null };
+            proposed[action] = candidate;
+            if (Validate(proposed, out _))
+            {
+                actions.Add(action, candidate);
+                return;
+            }
+        }
+        throw new InvalidDataException($"No conflict-free binding is available for {action}.");
     }
 
     public static ButtonBinding? FromEvent(InputEvent input) => input switch

@@ -569,10 +569,10 @@ User reported only an obstacle at the expected workbench. Replace that legacy ce
 ## D051 — Starter workbench is placed off the central roads (2026-10-23)
 
 - Status: Accepted for the starter town layout.
-- Decision: Place the fixed starter workbench at `(10, 0, 10)` in the paved town work area, outside both central road strips. Keep its World-owned position as the source for the rendered landmark and collision, and leave a two-metre navigation clearance around the bench. Migrate schemas 11–20 only when the fixed `workbench-1` still has its original crossroads position `(0, 0, 0)`; preserve all other workstation positions and the migrated bench's inputs, outputs, recipe, and progress. New snapshots use schema 21.
+- Decision: Place the starter workbench at `(10, 0, 10)` in the paved town work area, outside both central road strips. Keep its World-owned position as the source for rendering and collision, with a two-metre navigation clearance. Migrate schemas 11–20 only when `workbench-1` still has its original crossroads position `(0, 0, 0)`; preserve all other workstation positions and the migrated bench's inputs, outputs, recipe, and progress. New snapshots use schema 21.
 - Reason: The workbench obstructed the central road crossing and its collision could trap NPCs even after new-game spawn positions changed. A nearby paved work area keeps it accessible without blocking the road or adding a new town-building system.
-- Consequence: Old saves keep their production state and load the starter bench at its new location. The Godot presentation and the static navigation cutout are rebuilt from the authoritative World workstation position; NPC paths route around its clearance instead of relying on the presentation collider. This does not change collision dimensions, roads, recipes, interaction rules, or free placement of structures.
-- Revisit: When the town layout or build mode changes the fixed starter-workbench placement contract, or playtesting shows the current work area conflicts with another settlement activity.
+- Consequence: Old saves keep their production state and load the starter bench at its new location. Godot presentation and navigation cutouts are rebuilt from World-owned workstation positions; NPC paths route around every workstation clearance instead of relying on presentation colliders. This does not change collision dimensions, roads, recipes, interaction rules, or the starter location.
+- Revisit: When playtesting shows that the current work area or additional workstation clearances conflict with settlement activity, or measured navigation needs a different obstacle representation.
 
 ## D052 — Blender male body uses the existing Humanoid Rig v1 (2026-10-24)
 
@@ -614,3 +614,12 @@ User reported only an obstacle at the expected workbench. Replace that legacy ce
 - Reason: Inventory quantity should not act as a substitute for physical burden; per-item limits prevent unbounded stacks while weight governs exertion.
 - Consequence: Inventory snapshots validate each item stack independently and do not reject a large total count. Item weights are derived from stable item definitions and are not duplicated in saves.
 - Revisit: After playtesting item weights and fatigue pacing, or before adding equipment and resources with new physical weights.
+
+## D057 — Build hotbar can add independent workbenches and farms
+
+- Date: 2026-10-25
+- Status: Accepted for the Milestone 0.4 placement prototype; implemented for issue #505.
+- Decision: Keep the original starter workbench and farm in the World. Build hotbar slots 3 and 4 create additional World-owned workstation and farm records with unique IDs; an added farm begins with one empty plot. Each workstation and farm retains its own storage, recipe, crop, and growth state. Existing snapshot collections serialize these objects without a schema change. Godot creates one presentation view per record, and every workstation's current position contributes a two-metre navigation clearance. Navigation grid edges split at those clearances so a newly placed fixture blocks its footprint without removing an oversized town cell. The new workstation/farm options place immediately without material costs or staged construction layers until their build definitions are agreed.
+- Reason: The existing production interactions should be placeable from Build mode without removing or relocating the starter fixtures or coupling visual nodes to durable state.
+- Consequence: Multiple workbenches can be selected and used independently, and multiple farms expose independent plots through the existing target and farm actions. Reset and load rebuild their views from the World. This does not add duplicate storage sharing, new recipes, construction costs, structural progress, rotation, or Sims-style camera placement.
+- Revisit: When material requirements and structural layers for workbenches/farms are defined, or playtesting shows a placement, navigation, or presentation limit with multiple fixtures.

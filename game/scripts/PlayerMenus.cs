@@ -295,6 +295,36 @@ public partial class Main
 		if (!_sessionActive) return;
 		if (input is InputEventKey { Pressed: false } or InputEventKey { Echo: true }
 			or InputEventMouseButton { Pressed: false } or InputEventJoypadButton { Pressed: false }) return;
+		if (PlacementPanelOpen)
+		{
+			if (input.IsActionPressed(ControllerActions.BuildMode) || input.IsActionPressed(ControllerActions.CloseMenu))
+			{
+				CancelHutPlacement();
+				UpdateWorldSelection();
+			}
+			else if (TryGetBuildHotbarSlot(input, out var slot))
+				SelectBuildHotbarSlot(slot);
+			else if (input.IsActionPressed(ControllerActions.AttackLeft))
+			{
+                if (_placingHut || _placingFireplace || _placingWorkbench || _placingFarm) ConfirmPlacement();
+				else _placementMessage.Text = "Choose a build option before placing.";
+			}
+			else if (input.IsActionPressed(ControllerActions.AttackRight))
+			{
+				// Right attack is reserved in this input context so a placement click never
+				// leaks through to the combat handler.
+			}
+			else return;
+			GetViewport().SetInputAsHandled();
+			return;
+		}
+		if (input.IsActionPressed(ControllerActions.BuildMode)
+			&& (_menuState.ActiveMenu is null or PlayerMenu.Settlement))
+		{
+			BeginBuildMode();
+			GetViewport().SetInputAsHandled();
+			return;
+		}
 		if (WorkstationPanelOpen || FarmPanelOpen || ConstructionPanelOpen || PlacementPanelOpen)
 		{
 			if (input.IsActionPressed(ControllerActions.CloseMenu))
@@ -355,7 +385,7 @@ public partial class Main
 	{
 		if (_menuHint is null) return;
 		string Binding(string action) => PlayerButtonBindings.Label(_buttonBindings.Get(action).Desktop);
-		_menuHint.Text = $"{Binding(ControllerActions.Inventory)} Inventory  |  {Binding(ControllerActions.Settlement)} Settlement  |  {Binding(ControllerActions.Settings)} Save / Settings  |  {Binding(ControllerActions.CycleTarget)} Target lock  |  Esc close / menu";
+		_menuHint.Text = $"{Binding(ControllerActions.Inventory)} Inventory  |  {Binding(ControllerActions.Settlement)} Settlement  |  {Binding(ControllerActions.BuildMode)} Build mode  |  {Binding(ControllerActions.Settings)} Save / Settings  |  {Binding(ControllerActions.CycleTarget)} Target lock  |  Esc close / menu";
 		_settingsStatus.Text = $"{(_clock.IsPaused ? "Paused" : "Running")} · {_clock.SimulationTime:0.0}s · {(int)_clock.Speed}x\n{_saveLoadStatus}";
 		if (_world.PlayerEntityId is not { } id || !_world.TryGetEntity(id, out var player) || player is null)
 		{

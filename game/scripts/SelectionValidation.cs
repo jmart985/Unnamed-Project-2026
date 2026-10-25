@@ -122,7 +122,8 @@ public partial class Main
             Require(_selectedTarget is null && _lastActionMessage.Contains("No visible targets"), "no-target case clears safely");
 
             _buttonBindings.Path = ProjectSettings.GlobalizePath("user://selection-validation-settings.json");
-            var legacy = PlayerButtonBindings.Actions.Where(entry => entry.Action != ControllerActions.CycleTarget && entry.Action != ControllerActions.Greet)
+            var legacy = PlayerButtonBindings.Actions.Where(entry => entry.Action != ControllerActions.CycleTarget
+                    && entry.Action != ControllerActions.Greet && entry.Action != ControllerActions.BuildMode)
                 .ToDictionary(entry => entry.Action, entry => _buttonBindings.Get(entry.Action));
             legacy[ControllerActions.Interact] = new(new("key", (long)Key.G), null);
             legacy[ControllerActions.Inventory] = new(new("key", (long)Key.T), new("joypad", (long)JoyButton.Y));
@@ -134,7 +135,8 @@ public partial class Main
                 && File.ReadAllText(_buttonBindings.Path) == legacyJson, "legacy preferences preserved, target key avoids conflict, migration does not overwrite file");
             Require(_buttonBindings.Get(ControllerActions.Greet).Desktop.Code == (long)Key.F11,
                 "legacy greeting migration avoids existing G and F9 bindings");
-            var versionTwo = PlayerButtonBindings.Actions.Where(entry => entry.Action != ControllerActions.Greet)
+            var versionTwo = PlayerButtonBindings.Actions.Where(entry => entry.Action != ControllerActions.Greet
+                    && entry.Action != ControllerActions.BuildMode)
                 .ToDictionary(entry => entry.Action, entry => _buttonBindings.Get(entry.Action));
             var versionTwoJson = JsonSerializer.Serialize(new PlayerButtonBindings.SettingsFile(2, versionTwo));
             File.WriteAllText(_buttonBindings.Path, versionTwoJson);
@@ -149,6 +151,17 @@ public partial class Main
             Require(invalidPreferences.Status.StartsWith("Button mapping not loaded", StringComparison.Ordinal)
                 && invalidPreferences.Get(ControllerActions.Greet).Desktop.Code == (long)Key.G,
                 "incomplete current settings retain defaults without throwing");
+            var versionThree = PlayerButtonBindings.Actions.Where(entry => entry.Action != ControllerActions.BuildMode)
+                .ToDictionary(entry => entry.Action, entry => _buttonBindings.Get(entry.Action));
+            var versionThreeJson = JsonSerializer.Serialize(new PlayerButtonBindings.SettingsFile(3, versionThree));
+            File.WriteAllText(_buttonBindings.Path, versionThreeJson);
+            var upgradedPreferences = new PlayerButtonBindings(_buttonBindings.Path);
+            upgradedPreferences.Load();
+            Require(!upgradedPreferences.Status.StartsWith("Button mapping not loaded", StringComparison.Ordinal)
+                && upgradedPreferences.Get(ControllerActions.BuildMode).Desktop.Code == (long)Key.B
+                && upgradedPreferences.Get(ControllerActions.BuildMode).Controller?.Code == (long)JoyButton.LeftStick
+                && File.ReadAllText(_buttonBindings.Path) == versionThreeJson,
+                "version three preferences preserve actions while adding build-mode bindings without rewriting the legacy file");
             Require(_buttonBindings.TryBind(ControllerActions.CycleTarget, false, new InputEventKey { PhysicalKeycode = Key.K, Pressed = true }, out _), "target key rebind persists");
             var preferences = new PlayerButtonBindings(_buttonBindings.Path); preferences.Load();
             Require(preferences.Get(ControllerActions.CycleTarget).Desktop.Code == (long)Key.K, "version 2 target binding reload");

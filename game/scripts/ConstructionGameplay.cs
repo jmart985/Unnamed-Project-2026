@@ -10,7 +10,13 @@ public partial class Main
     private Label3D _hutPreviewLabel = null!;
     private MeshInstance3D _fireplacePreview = null!;
     private Label3D _fireplacePreviewLabel = null!;
+    private MeshInstance3D _workbenchPreview = null!;
+    private Label3D _workbenchPreviewLabel = null!;
+    private MeshInstance3D _farmPreview = null!;
+    private Label3D _farmPreviewLabel = null!;
     private Control _placementPanel = null!;
+    private Label _placementHotbar = null!;
+    private readonly List<(PanelContainer Cell, Label Label)> _buildHotbarSlots = [];
     private Label _placementMessage = null!;
     private Control _constructionPanel = null!;
     private Label _constructionSummary = null!;
@@ -18,6 +24,9 @@ public partial class Main
     private string? _openConstructionSiteId;
     private bool _placingHut;
     private bool _placingFireplace;
+    private bool _placingWorkbench;
+    private bool _placingFarm;
+    private int _selectedBuildSlot;
     private bool _placementValid;
     private Vector3 _placementPosition;
     private readonly Dictionary<WorldTarget, Node3D> _constructionViews = [];
@@ -62,13 +71,78 @@ public partial class Main
         };
         _fireplacePreview.AddChild(_fireplacePreviewLabel);
 
-        var placement = CreateMenuPanel("Place Starter Hut", out _placementPanel);
-        _placementPanel.AnchorLeft = 0.56f; _placementPanel.AnchorRight = 0.98f; _placementPanel.AnchorBottom = 0.4f;
-        _placementPanel.OffsetLeft = 0; _placementPanel.OffsetRight = -12;
-        _placementMessage = MenuLabel(); placement.AddChild(_placementMessage);
-        var placementActions = new HBoxContainer(); placement.AddChild(placementActions);
-        AddMenuButton(placementActions, "Confirm site", ConfirmPlacement);
-        AddMenuButton(placementActions, "Cancel placement", CancelPlacement);
+        _workbenchPreview = new MeshInstance3D
+        {
+            Name = "WorkbenchPreview", Mesh = new BoxMesh { Size = new Vector3(2, 1.05f, 1.4f) }, Visible = false,
+            MaterialOverride = new StandardMaterial3D
+            {
+                Transparency = BaseMaterial3D.TransparencyEnum.Alpha, AlbedoColor = new Color(0.2f, 0.9f, 0.35f, 0.42f),
+                ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded
+            }
+        };
+        AddChild(_workbenchPreview);
+        _workbenchPreviewLabel = new Label3D
+        {
+            Text = "WORKBENCH", Position = new Vector3(0, 1.3f, 0), Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+            FontSize = 30, OutlineSize = 7, NoDepthTest = true
+        };
+        _workbenchPreview.AddChild(_workbenchPreviewLabel);
+
+        _farmPreview = new MeshInstance3D
+        {
+            Name = "FarmPreview", Mesh = new BoxMesh { Size = new Vector3(3, 0.12f, 3) }, Visible = false,
+            Position = new Vector3(0, 0.06f, 0),
+            MaterialOverride = new StandardMaterial3D
+            {
+                Transparency = BaseMaterial3D.TransparencyEnum.Alpha, AlbedoColor = new Color(0.2f, 0.9f, 0.35f, 0.48f),
+                ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded
+            }
+        };
+        AddChild(_farmPreview);
+        _farmPreviewLabel = new Label3D
+        {
+            Text = "FARM", Position = new Vector3(0, 0.9f, 0), Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+            FontSize = 30, OutlineSize = 7, NoDepthTest = true
+        };
+        _farmPreview.AddChild(_farmPreviewLabel);
+
+        _placementPanel = new PanelContainer
+        {
+            Name = "BuildHotbar", AnchorLeft = 0.12f, AnchorRight = 0.88f,
+            AnchorTop = 1, AnchorBottom = 1, OffsetTop = -178, OffsetBottom = -18,
+            MouseFilter = Control.MouseFilterEnum.Ignore, FocusMode = Control.FocusModeEnum.None
+        };
+        _menuHud.AddChild(_placementPanel);
+        ApplyMenuTheme(_placementPanel);
+        var hotbarMargin = new MarginContainer();
+        foreach (var side in new[] { "left", "right", "top", "bottom" }) hotbarMargin.AddThemeConstantOverride($"margin_{side}", 12);
+        _placementPanel.AddChild(hotbarMargin);
+        var hotbarContent = new VBoxContainer(); hotbarMargin.AddChild(hotbarContent);
+        var slotRow = new HBoxContainer { Name = "BuildHotbarSlots", MouseFilter = Control.MouseFilterEnum.Ignore };
+        slotRow.AddThemeConstantOverride("separation", 4);
+        hotbarContent.AddChild(slotRow);
+        for (var slot = 1; slot <= 10; slot++)
+        {
+            var cell = new PanelContainer
+            {
+                Name = $"BuildHotbarSlot{slot}", CustomMinimumSize = new Vector2(70, 48),
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, MouseFilter = Control.MouseFilterEnum.Ignore
+            };
+            var label = new Label
+            {
+                HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
+                MouseFilter = Control.MouseFilterEnum.Ignore
+            };
+            label.AddThemeFontSizeOverride("font_size", 11);
+            cell.AddChild(label); slotRow.AddChild(cell);
+            _buildHotbarSlots.Add((cell, label));
+        }
+        _placementHotbar = MenuLabel();
+        _placementHotbar.AddThemeFontSizeOverride("font_size", 15);
+        hotbarContent.AddChild(_placementHotbar);
+        _placementMessage = MenuLabel("Select a build option.");
+        _placementMessage.AddThemeColorOverride("font_color", new Color(1, 0.9f, 0.55f));
+        hotbarContent.AddChild(_placementMessage);
         _placementPanel.Visible = false;
 
         var construction = CreateMenuPanel("Construction Site", out _constructionPanel);
@@ -84,35 +158,172 @@ public partial class Main
         _constructionPanel.Visible = false;
 
         var root = GetNode<VBoxContainer>("Controls/Panel/Scroll/Margin/VBox");
-        var button = AddMenuButton(root, "Place starter hut", BeginHutPlacement);
+        var button = AddMenuButton(root, "Build mode", BeginBuildMode);
         button.Name = "Construction";
         root.MoveChild(button, 5);
-        var fireButton = AddMenuButton(root, "Place fireplace", BeginFireplacePlacement);
-        fireButton.Name = "FireplaceConstruction";
-        root.MoveChild(fireButton, 6);
         SyncConstructionPresentation();
     }
 
     private string PlayerId() => _world.PlayerEntityId ?? string.Empty;
 
+    private void BeginBuildMode()
+    {
+        if (!_sessionActive || _clock.IsPaused) return;
+        ClosePlayerMenus();
+        _placingHut = false;
+        _placingFireplace = false;
+        _placingWorkbench = false;
+        _placingFarm = false;
+        _placementPanel.Visible = true;
+        _hutPreview.Visible = false;
+        _fireplacePreview.Visible = false;
+        _workbenchPreview.Visible = false;
+        _farmPreview.Visible = false;
+        _playerCharacter.SetGameplayInputEnabled(true);
+        Input.MouseMode = Input.MouseModeEnum.Captured;
+        UpdateBuildHotbar();
+        UpdateWorldSelection();
+    }
+
     private void BeginHutPlacement()
     {
-        ClosePlayerMenus();
-        _placingHut = true;
-        _placementPanel.Visible = true;
-        _hutPreview.Visible = true;
-        _playerCharacter.SetGameplayInputEnabled(false);
-        UpdateHutPreview();
+        if (!PlacementPanelOpen) BeginBuildMode();
+        SelectHutBuildSlot();
     }
 
     private void BeginFireplacePlacement()
     {
-        ClosePlayerMenus();
+        if (!PlacementPanelOpen) BeginBuildMode();
+        SelectFireplaceBuildSlot();
+    }
+
+    private void SelectHutBuildSlot()
+    {
+        if (!PlacementPanelOpen) return;
+        _selectedBuildSlot = 1;
+        _placingHut = true;
+        _placingFireplace = false;
+        _placingWorkbench = false;
+        _placingFarm = false;
+        _hutPreview.Visible = true;
+        _fireplacePreview.Visible = false;
+        _workbenchPreview.Visible = false;
+        _farmPreview.Visible = false;
+        UpdateBuildHotbar();
+        UpdateHutPreview();
+    }
+
+    private void SelectFireplaceBuildSlot()
+    {
+        if (!PlacementPanelOpen) return;
+        _selectedBuildSlot = 2;
+        _placingHut = false;
         _placingFireplace = true;
-        _placementPanel.Visible = true;
+        _placingWorkbench = false;
+        _placingFarm = false;
+        _hutPreview.Visible = false;
         _fireplacePreview.Visible = true;
-        _playerCharacter.SetGameplayInputEnabled(false);
+        _workbenchPreview.Visible = false;
+        _farmPreview.Visible = false;
+        UpdateBuildHotbar();
         UpdateFireplacePreview();
+    }
+
+    private void SelectWorkbenchBuildSlot()
+    {
+        if (!PlacementPanelOpen) return;
+        _selectedBuildSlot = 3;
+        _placingHut = false;
+        _placingFireplace = false;
+        _placingWorkbench = true;
+        _placingFarm = false;
+        _hutPreview.Visible = false;
+        _fireplacePreview.Visible = false;
+        _workbenchPreview.Visible = true;
+        _farmPreview.Visible = false;
+        UpdateBuildHotbar();
+        UpdateWorkbenchPreview();
+    }
+
+    private void SelectFarmBuildSlot()
+    {
+        if (!PlacementPanelOpen) return;
+        _selectedBuildSlot = 4;
+        _placingHut = false;
+        _placingFireplace = false;
+        _placingWorkbench = false;
+        _placingFarm = true;
+        _hutPreview.Visible = false;
+        _fireplacePreview.Visible = false;
+        _workbenchPreview.Visible = false;
+        _farmPreview.Visible = true;
+        UpdateBuildHotbar();
+        UpdateFarmPlacementPreview();
+    }
+
+    private void SelectBuildHotbarSlot(int slot)
+    {
+        if (slot == 1) { SelectHutBuildSlot(); return; }
+        if (slot == 2) { SelectFireplaceBuildSlot(); return; }
+        if (slot == 3) { SelectWorkbenchBuildSlot(); return; }
+        if (slot == 4) { SelectFarmBuildSlot(); return; }
+        if (!PlacementPanelOpen || slot is < 1 or > 10) return;
+        _selectedBuildSlot = slot;
+        _placingHut = false;
+        _placingFireplace = false;
+        _placingWorkbench = false;
+        _placingFarm = false;
+        _hutPreview.Visible = false;
+        _fireplacePreview.Visible = false;
+        _workbenchPreview.Visible = false;
+        _farmPreview.Visible = false;
+        UpdateBuildHotbar();
+        _placementMessage.Text = $"Hotbar slot {HotbarKey(slot)} is empty.";
+    }
+
+    private void UpdateBuildHotbar()
+    {
+        if (_placementHotbar is null || _buttonBindings is null) return;
+        var place = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.AttackLeft).Desktop);
+        var toggle = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.BuildMode).Desktop);
+        var padPlace = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.AttackLeft).Controller);
+        var padToggle = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.BuildMode).Controller);
+        for (var index = 0; index < _buildHotbarSlots.Count; index++)
+        {
+            var slot = index + 1;
+            var title = slot switch { 1 => "Starter hut", 2 => "Fireplace", 3 => "Workbench", 4 => "Farm", _ => "Empty" };
+            var label = _buildHotbarSlots[index].Label;
+            label.Text = $"{HotbarKey(slot)}\n{title}";
+            label.AddThemeColorOverride("font_color", slot == _selectedBuildSlot
+                ? new Color(0.72f, 1, 0.72f) : new Color(0.9f, 0.93f, 0.98f));
+            _buildHotbarSlots[index].Cell.Modulate = slot == _selectedBuildSlot
+                ? new Color(0.9f, 1, 0.82f) : Colors.White;
+        }
+        _placementHotbar.Text = $"1–9, 0 select a slot · {place} place · Esc exit · {toggle} toggle build mode\n" +
+            $"Pad: {padToggle} toggle · D-pad left/right cycles 4 items · {padPlace} place · Pad B exit";
+    }
+
+    private static string HotbarKey(int slot) => slot == 10 ? "0" : slot.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+    private bool TryGetBuildHotbarSlot(InputEvent input, out int slot)
+    {
+        if (input is InputEventKey key)
+        {
+            var keycode = key.PhysicalKeycode != Key.None ? key.PhysicalKeycode : key.Keycode;
+            slot = keycode switch
+            {
+                Key.Key1 => 1, Key.Key2 => 2, Key.Key3 => 3, Key.Key4 => 4, Key.Key5 => 5,
+                Key.Key6 => 6, Key.Key7 => 7, Key.Key8 => 8, Key.Key9 => 9, Key.Key0 => 10, _ => 0
+            };
+        }
+        else
+        {
+            slot = input is InputEventJoypadButton { ButtonIndex: JoyButton.DpadLeft }
+                ? (_selectedBuildSlot <= 1 ? 4 : _selectedBuildSlot - 1)
+                : input is InputEventJoypadButton { ButtonIndex: JoyButton.DpadRight }
+                    ? (_selectedBuildSlot is < 1 or >= 4 ? 1 : _selectedBuildSlot + 1) : 0;
+        }
+        return slot != 0;
     }
 
     private void CancelHutPlacement()
@@ -121,7 +332,13 @@ public partial class Main
         _placementPanel.Visible = false;
         _hutPreview.Visible = false;
         _placingFireplace = false;
+        _placingWorkbench = false;
+        _placingFarm = false;
+        _selectedBuildSlot = 0;
         _fireplacePreview.Visible = false;
+        _workbenchPreview.Visible = false;
+        _farmPreview.Visible = false;
+        if (_placementMessage is not null) _placementMessage.Text = "Select a build option.";
         _playerCharacter.SetGameplayInputEnabled(_sessionActive && _menuState.ActiveMenu is null && !_clock.IsPaused);
     }
 
@@ -132,17 +349,137 @@ public partial class Main
     private void ConfirmPlacement()
     {
         if (_placingFireplace) ConfirmFireplacePlacement();
+        else if (_placingWorkbench) ConfirmWorkbenchPlacement();
+        else if (_placingFarm) ConfirmFarmPlacement();
         else ConfirmHutPlacement();
+    }
+
+    private void UpdateWorkbenchPreview()
+    {
+        if (!_placingWorkbench) return;
+        var hasGroundPoint = TryGetLookedAtGroundPoint(out _placementPosition);
+        if (!hasGroundPoint) _placementPosition = new Vector3(_playerCharacter.GlobalPosition.X, 0, _playerCharacter.GlobalPosition.Z);
+        var reason = "Aim the reticle at the ground.";
+        var valid = hasGroundPoint && CanPlaceWorkbench(_placementPosition, out reason);
+        _placementValid = valid;
+        _workbenchPreview.GlobalPosition = _placementPosition + new Vector3(0, 0.525f, 0);
+        ((StandardMaterial3D)_workbenchPreview.MaterialOverride).AlbedoColor = valid
+            ? new Color(0.2f, 0.9f, 0.35f, 0.42f) : new Color(1, 0.2f, 0.16f, 0.42f);
+        _workbenchPreviewLabel.Text = valid ? "WORKBENCH · VALID" : "WORKBENCH · BLOCKED";
+        _placementMessage.Text = $"Preview: {_placementPosition.X:0}, {_placementPosition.Z:0}\n" +
+            (valid ? "Valid · creates an additional workbench." : hasGroundPoint ? reason : "Aim the reticle at the ground.");
+    }
+
+    private void UpdateFarmPlacementPreview()
+    {
+        if (!_placingFarm) return;
+        var hasGroundPoint = TryGetLookedAtGroundPoint(out _placementPosition);
+        if (!hasGroundPoint) _placementPosition = new Vector3(_playerCharacter.GlobalPosition.X, 0, _playerCharacter.GlobalPosition.Z);
+        var reason = "Aim the reticle at the ground.";
+        var valid = hasGroundPoint && CanPlaceFarm(_placementPosition, out reason);
+        _placementValid = valid;
+        _farmPreview.GlobalPosition = _placementPosition + new Vector3(0, 0.06f, 0);
+        ((StandardMaterial3D)_farmPreview.MaterialOverride).AlbedoColor = valid
+            ? new Color(0.2f, 0.9f, 0.35f, 0.48f) : new Color(1, 0.2f, 0.16f, 0.48f);
+        _farmPreviewLabel.Text = valid ? "FARM · VALID" : "FARM · BLOCKED";
+        _placementMessage.Text = $"Preview: {_placementPosition.X:0}, {_placementPosition.Z:0}\n" +
+            (valid ? "Valid · creates an additional farm with one empty plot." : hasGroundPoint ? reason : "Aim the reticle at the ground.");
+    }
+
+    private bool CanPlaceWorkbench(Vector3 position, out string reason)
+        => CanPlaceFixture(position, 1.5f, out reason);
+
+    private bool CanPlaceFarm(Vector3 position, out string reason)
+        => CanPlaceFixture(position, 2f, out reason);
+
+    private bool CanPlaceFixture(Vector3 position, float footprintRadius, out string reason)
+    {
+        var player = _world.Entities.FirstOrDefault(entity => entity.Id == PlayerId());
+        if (player is null) { reason = "The player is unavailable."; return false; }
+        if (!float.IsFinite(position.X) || !float.IsFinite(position.Z) || position.Y != 0
+            || Math.Abs(position.X) > 58 || Math.Abs(position.Z) > 58)
+        { reason = "Move the preview inside valid town terrain."; return false; }
+        if (System.Numerics.Vector3.Distance(player.Position, new System.Numerics.Vector3(position.X, 0, position.Z)) > SettlementConstruction.PlacementRange)
+        { reason = "Move closer; placement range is 8 m."; return false; }
+
+        if (IsBlockedCell(position.X - footprintRadius, position.X + footprintRadius,
+                position.Z - footprintRadius, position.Z + footprintRadius, CurrentWorkbenchPositions()))
+        { reason = "The placement overlaps a road, building area or workbench clearance."; return false; }
+
+        var candidate = new System.Numerics.Vector3(position.X, 0, position.Z);
+        bool TooClose(System.Numerics.Vector3 other, float requiredDistance)
+            => System.Numerics.Vector3.Distance(candidate, other) < requiredDistance;
+        if (_world.Structures.Any(item => TooClose(item.Position, footprintRadius + 2.5f))
+            || _world.ConstructionSites.Any(item => TooClose(item.Position, footprintRadius + 2.5f))
+            || _world.Stockpiles.Any(item => TooClose(item.Position, footprintRadius + 1.5f))
+            || _world.Fireplaces.Any(item => TooClose(item.Position, footprintRadius + 1.5f))
+            || _world.Farms.Any(item => TooClose(item.Position, footprintRadius + 1.5f))
+            || _world.Workstations.Any(item => TooClose(item.Position, footprintRadius + 1.5f)))
+        { reason = "The placement overlaps another settlement object."; return false; }
+        reason = "";
+        return true;
+    }
+
+    private void ConfirmWorkbenchPlacement()
+    {
+        SyncPlayerPosition();
+        if (!CanPlaceWorkbench(_placementPosition, out var reason))
+        { _placementMessage.Text = reason; UpdateWorkbenchPreview(); return; }
+        var workstationId = NextWorkstationId();
+        Workstation workstation;
+        try { workstation = _world.AddWorkstation(workstationId, new System.Numerics.Vector3(_placementPosition.X, 0, _placementPosition.Z)); }
+        catch (ArgumentException) { _placementMessage.Text = "That workbench identity is already in use."; return; }
+        AddWorkbenchView(workstation);
+        _navigationRegion.NavigationMesh = CreateNavigationMesh(CurrentWorkbenchPositions());
+        CancelPlacement();
+        _selectedTarget = new(TargetKind.Workstation, workstation.Id);
+        _lastActionMessage = "Placed an additional workbench.";
+        UpdateWorldSelection();
+    }
+
+    private void ConfirmFarmPlacement()
+    {
+        SyncPlayerPosition();
+        if (!CanPlaceFarm(_placementPosition, out var reason))
+        { _placementMessage.Text = reason; UpdateFarmPlacementPreview(); return; }
+        var farmId = NextFarmId();
+        Farm farm;
+        try
+        {
+            farm = _world.AddFarm(farmId, new System.Numerics.Vector3(_placementPosition.X, 0, _placementPosition.Z));
+            farm.AddPlot(new FarmPlot($"{farmId}-plot-1", capacity: 1));
+        }
+        catch (ArgumentException) { _placementMessage.Text = "That farm identity is already in use."; return; }
+        UpdateFarmPresentation();
+        CancelPlacement();
+        _selectedTarget = new(TargetKind.Farm, farm.Id);
+        _lastActionMessage = "Placed an additional farm with one empty plot.";
+        UpdateWorldSelection();
+    }
+
+    private string NextWorkstationId()
+    {
+        var suffix = 1;
+        while (_world.Workstations.Any(item => item.Id == $"workbench-{suffix}")) suffix++;
+        return $"workbench-{suffix}";
+    }
+
+    private string NextFarmId()
+    {
+        var suffix = 1;
+        while (_world.Farms.Any(item => item.Id == $"farm-{suffix}")) suffix++;
+        return $"farm-{suffix}";
     }
 
     private void UpdateHutPreview()
     {
         if (!_placingHut) return;
-        var forward = -_playerCharacter.GlobalBasis.Z;
-        _placementPosition = new Vector3(Mathf.Round(_playerCharacter.GlobalPosition.X + forward.X * 5), 0,
-            Mathf.Round(_playerCharacter.GlobalPosition.Z + forward.Z * 5));
-        var service = new ActorConstructionService(_world, _speciesCatalog, IsHutTerrainBlocked);
-        var result = service.ValidateHutPlacement(PlayerId(), new System.Numerics.Vector3(_placementPosition.X, 0, _placementPosition.Z));
+        var hasGroundPoint = TryGetLookedAtGroundPoint(out _placementPosition);
+        if (!hasGroundPoint) _placementPosition = new Vector3(_playerCharacter.GlobalPosition.X, 0, _playerCharacter.GlobalPosition.Z);
+        var result = hasGroundPoint
+            ? new ActorConstructionService(_world, _speciesCatalog, IsHutTerrainBlocked)
+                .ValidateHutPlacement(PlayerId(), new System.Numerics.Vector3(_placementPosition.X, 0, _placementPosition.Z))
+            : new ConstructionAction(ConstructionActionResult.InvalidTerrain, "Aim the reticle at the ground to place the hut.");
         _placementValid = result.Succeeded;
         _hutPreview.GlobalPosition = _placementPosition;
         ((StandardMaterial3D)_hutPreview.MaterialOverride).AlbedoColor = _placementValid
@@ -155,27 +492,51 @@ public partial class Main
     private void UpdateFireplacePreview()
     {
         if (!_placingFireplace) return;
-        var forward = -_playerCharacter.GlobalBasis.Z;
-        _placementPosition = new Vector3(Mathf.Round(_playerCharacter.GlobalPosition.X + forward.X * 3), 0,
-            Mathf.Round(_playerCharacter.GlobalPosition.Z + forward.Z * 3));
+        var hasGroundPoint = TryGetLookedAtGroundPoint(out _placementPosition);
+        if (!hasGroundPoint) _placementPosition = new Vector3(_playerCharacter.GlobalPosition.X, 0, _playerCharacter.GlobalPosition.Z);
         var player = _world.Entities.FirstOrDefault(entity => entity.Id == PlayerId());
         var hasWood = player?.Inventory.GetValueOrDefault(ItemIds.Wood) >= 2;
         var inRange = player is not null && System.Numerics.Vector3.Distance(player.Position,
             new System.Numerics.Vector3(_placementPosition.X, 0, _placementPosition.Z)) <= SettlementConstruction.PlacementRange;
-        var blocked = IsBlockedCell(_placementPosition.X - 1, _placementPosition.X + 1, _placementPosition.Z - 1, _placementPosition.Z + 1)
+        var blocked = IsBlockedCell(_placementPosition.X - 1, _placementPosition.X + 1, _placementPosition.Z - 1, _placementPosition.Z + 1, CurrentWorkbenchPositions())
             || _world.Fireplaces.Any(fire => System.Numerics.Vector3.Distance(fire.Position,
                 new System.Numerics.Vector3(_placementPosition.X, 0, _placementPosition.Z)) < 1.5f);
-        _placementValid = hasWood && inRange && !blocked;
+        _placementValid = hasGroundPoint && hasWood && inRange && !blocked;
         _fireplacePreview.GlobalPosition = _placementPosition;
         ((StandardMaterial3D)_fireplacePreview.MaterialOverride).AlbedoColor = _placementValid
             ? new Color(0.2f, 0.9f, 0.35f, 0.55f) : new Color(1, 0.2f, 0.16f, 0.55f);
         _fireplacePreviewLabel.Text = _placementValid ? "FIREPLACE · VALID" : "FIREPLACE · BLOCKED";
         _placementMessage.Text = $"Preview: {_placementPosition.X:0}, {_placementPosition.Z:0}\n" +
-            (_placementValid ? "Valid · requires 2 wood." : hasWood ? "Move to open ground." : "Requires 2 wood.");
+            (_placementValid ? "Valid · requires 2 wood." : !hasGroundPoint ? "Aim the reticle at the ground."
+                : !hasWood ? "Requires 2 wood." : !inRange ? "Move closer; placement range is 8 m." : "Move to open ground.");
+    }
+
+    private bool TryGetLookedAtGroundPoint(out Vector3 snappedPosition)
+    {
+        snappedPosition = Vector3.Zero;
+        var camera = GetViewport().GetCamera3D();
+        if (camera is null) return false;
+        var center = GetViewport().GetVisibleRect().Size * 0.5f;
+        var origin = camera.ProjectRayOrigin(center);
+        var direction = camera.ProjectRayNormal(center);
+        if (!TryIntersectGroundPlane(origin, direction, 0, out var point)) return false;
+        snappedPosition = new Vector3(Mathf.Round(point.X), 0, Mathf.Round(point.Z));
+        return true;
+    }
+
+    internal static bool TryIntersectGroundPlane(Vector3 origin, Vector3 direction, float groundHeight, out Vector3 point)
+    {
+        point = Vector3.Zero;
+        if (Mathf.Abs(direction.Y) < 0.001f || direction.Y >= 0) return false;
+        var distance = (groundHeight - origin.Y) / direction.Y;
+        if (!float.IsFinite(distance) || distance < 0) return false;
+        point = origin + direction * distance;
+        return float.IsFinite(point.X) && float.IsFinite(point.Z);
     }
 
     private bool IsHutTerrainBlocked(System.Numerics.Vector3 position)
-        => IsBlockedCell((int)position.X - 2, (int)position.X + 2, (int)position.Z - 2, (int)position.Z + 2);
+        => IsBlockedCell((int)position.X - 2, (int)position.X + 2, (int)position.Z - 2, (int)position.Z + 2,
+            CurrentWorkbenchPositions());
 
     private void ConfirmHutPlacement()
     {
@@ -195,7 +556,7 @@ public partial class Main
         SyncPlayerPosition();
         var fireplaceId = $"fireplace-{_world.Fireplaces.Count + 1}";
         var result = new ActorConstructionService(_world, _speciesCatalog, position =>
-            IsBlockedCell(position.X - 1, position.X + 1, position.Z - 1, position.Z + 1))
+            IsBlockedCell(position.X - 1, position.X + 1, position.Z - 1, position.Z + 1, CurrentWorkbenchPositions()))
             .PlaceFireplace(PlayerId(), fireplaceId, new System.Numerics.Vector3(_placementPosition.X, 0, _placementPosition.Z));
         if (!result.Succeeded) { _placementMessage.Text = result.Message; UpdateFireplacePreview(); return; }
         CancelFireplacePlacement();
