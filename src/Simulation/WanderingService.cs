@@ -98,7 +98,7 @@ public sealed class WanderingService : ITransientSimulationState
             return new WanderingResult(WanderingStatus.NotWanderer);
         }
 
-        var territory = entity.SpeciesId != "human"
+        var territory = species.UsesWildTerritory
             && entity.CaptivityState == CreatureCaptivityState.Wild
             && _world.TryGetWildTerritory(entity.Id, out var assignedTerritory)
                 ? assignedTerritory

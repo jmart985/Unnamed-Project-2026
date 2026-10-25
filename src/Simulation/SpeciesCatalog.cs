@@ -130,6 +130,7 @@ public sealed class SpeciesCatalog
                 entry.CanUseTools ?? false,
                 entry.CanOpenDoors ?? false,
                 entry.CanTrack ?? false,
+                entry.UsesWildTerritory ?? false,
                 entry.CanAcceptFriendlyInteraction ?? false,
                 entry.IsDomestic ?? false,
                 entry.IsPredator ?? dietaryProfile == DietaryProfile.Carnivore,
@@ -363,6 +364,7 @@ public sealed class SpeciesCatalog
         public bool? CanUseTools { get; init; }
         public bool? CanOpenDoors { get; init; }
         public bool? CanTrack { get; init; }
+        public bool? UsesWildTerritory { get; init; }
         public bool? CanAcceptFriendlyInteraction { get; init; }
         public bool? IsDomestic { get; init; }
         public bool? IsPredator { get; init; }

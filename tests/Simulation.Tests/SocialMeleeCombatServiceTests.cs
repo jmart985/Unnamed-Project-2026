@@ -119,6 +119,39 @@ public sealed class SocialMeleeCombatServiceTests
         Assert.Throws<ArgumentException>(() => new SocialMeleeCombatService(world, catalog));
     }
 
+    [Fact]
+    public void SuccessfulHitTriggersTheConfiguredAggressiveDefenderResponse()
+    {
+        var species = SpeciesCatalog.LoadFromFile(Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
+        var world = new World { SpeciesCatalog = species };
+        var attacker = world.SpawnEntity("human", Vector3.Zero);
+        var defender = world.SpawnEntity("wolf", Vector3.UnitX);
+        var service = new SocialMeleeCombatService(world, GetCatalog());
+
+        var result = service.Resolve(new(attacker.Id, defender.Id, "Torso", 10), maximumReach: 2);
+
+        Assert.Equal(MeleeAttackResult.Success, result.Combat.Result);
+        Assert.Equal("AggressivePursuit", defender.Activity);
+        Assert.Equal(attacker.Id, defender.TargetId);
+    }
+
+    [Fact]
+    public void RejectedHitDoesNotTriggerDefenderBehavior()
+    {
+        var species = SpeciesCatalog.LoadFromFile(Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
+        var world = new World { SpeciesCatalog = species };
+        var attacker = world.SpawnEntity("human", Vector3.Zero);
+        var defender = world.SpawnEntity("wolf", Vector3.UnitX);
+        var service = new SocialMeleeCombatService(world, GetCatalog());
+
+        var result = service.Resolve(new(attacker.Id, defender.Id, "Tail", 10), maximumReach: 2);
+
+        Assert.Equal(MeleeAttackResult.UnknownBodyPart, result.Combat.Result);
+        Assert.NotEqual("AggressivePursuit", defender.Activity);
+        Assert.Null(defender.TargetId);
+        Assert.Null(result.RelationshipEvent);
+    }
+
     private static RelationshipEventCatalog GetCatalog() =>
         RelationshipEventCatalog.LoadFromFile(
             Path.Combine(AppContext.BaseDirectory, "data", "relationship_events.json"));
