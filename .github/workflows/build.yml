@@ -34,5 +34,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: godot-validation-logs-${{ github.run_id }}
-          path: ${{ runner.temp }}/*validation.log
-          if-no-files-found: ignore
+          path: ${{ runner.temp }}/validate-*.log
+          if-no-files-found: warn
