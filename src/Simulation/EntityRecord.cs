@@ -16,10 +16,14 @@ public sealed class EntityRecord
         double satiety,
         NeedsTuning needsTuning,
         ReservationService reservations,
+        BiologicalSex sex,
         CharacterStats? baseStats = null)
     {
+        if (!Enum.IsDefined(sex) || sex == BiologicalSex.Unspecified)
+            throw new ArgumentOutOfRangeException(nameof(sex), "An entity must have a defined biological sex.");
         Id = id;
         SpeciesId = speciesId;
+        Sex = sex;
         Position = position;
         Needs = new NeedsState(needsTuning, satiety);
         BaseStats = baseStats ?? CharacterStats.Default;
@@ -31,6 +35,7 @@ public sealed class EntityRecord
 
     public string Id { get; }
     public string SpeciesId { get; }
+    public BiologicalSex Sex { get; }
     public Vector3 Position { get; internal set; }
     public NeedsState Needs { get; }
     public CharacterStats BaseStats { get; }

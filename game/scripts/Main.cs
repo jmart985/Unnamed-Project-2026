@@ -560,7 +560,7 @@ public partial class Main : Node3D
 		var movementSpeed = (float)species.MovementSpeed;
 		var view = new EntityView { Name = $"View_{entity.Id}" };
 		view.Bind(entity.Id, movementSpeed, isCreature: !string.Equals(entity.SpeciesId, "human", StringComparison.Ordinal),
-			entity.SpeciesId, species.BodyCategory, species.Anchors);
+			entity.SpeciesId, species.BodyCategory, species.Anchors, entity.Sex);
 		AddChild(view);
 		_entityViews.Add(entity.Id, view);
 

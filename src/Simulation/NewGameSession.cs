@@ -151,7 +151,8 @@ public sealed class NewGameSession
             }
         }
 
-        var player = world.SpawnEntity(catalog.GetRequired("human"), GetPlayerSpawnPosition(seed));
+        var player = world.SpawnEntity(catalog.GetRequired("human"), GetPlayerSpawnPosition(seed),
+            sex: playerProfile.EntitySex);
         world.SetSessionPlayer(seed, player.Id, playerProfile);
         AssignStarterNpcSchedulesAndHomes(world, humanNpcs);
         return new NewGameSession(world, seed, player.Id);

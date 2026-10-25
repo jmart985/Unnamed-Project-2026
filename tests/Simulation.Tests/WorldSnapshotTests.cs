@@ -26,6 +26,7 @@ public sealed class WorldSnapshotTests
         Assert.Equal(new Vector3(1, 0, -2), snapshot.Entities.Single().Position);
         Assert.Equal(47.5, snapshot.Entities.Single().Satiety);
         Assert.Equal(2, snapshot.Entities.Single().Inventory[ItemIds.Wood]);
+        Assert.Equal(entity.Sex, snapshot.Entities.Single().Sex);
         Assert.Equal(7, snapshot.FoodSources.Single().Contents.Counts[ItemIds.Food]);
     }
 
@@ -66,6 +67,8 @@ public sealed class WorldSnapshotTests
         Assert.Equal(42, target.SessionSeed);
         Assert.Equal(source.PlayerEntityId, target.PlayerEntityId);
         Assert.Equal(profile, target.PlayerProfile);
+        Assert.Equal(profile.EntitySex, target.Entities.Single(entity => entity.Id == target.PlayerEntityId).Sex);
+        Assert.All(target.Entities, entity => Assert.NotEqual(BiologicalSex.Unspecified, entity.Sex));
         Assert.Equal(
             source.Player.Position,
             Assert.Single(target.Entities, entity => entity.Id == target.PlayerEntityId).Position);
@@ -88,6 +91,30 @@ public sealed class WorldSnapshotTests
         Assert.Equal(head.CurrentHealth, restored.Health.Parts.Single(part => part.Name == "Head").CurrentHealth);
         Assert.Equal(Vector3.UnitX, target.PlayerFacing);
         Assert.False(restored.Health.IsDead);
+    }
+
+    [Fact]
+    public void Schema22MigrationAssignsPlayerSexFromCreationProfileAndStableSexToOtherEntities()
+    {
+        var profile = PlayerCharacterProfile.Create("Mara", sex: PlayerSex.Male);
+        var source = NewGameSession.Create(GetSpeciesCatalog(), profile, seed: 42);
+        var legacy = JsonNode.Parse(WorldSnapshotSerializer.Serialize(source.World, 9))!;
+        legacy["SchemaVersion"] = 22;
+        foreach (var entity in legacy["Entities"]!.AsArray())
+            entity!.AsObject().Remove("Sex");
+
+        var target = new World();
+        WorldSnapshotSerializer.Load(target, legacy.ToJsonString(), GetSpeciesCatalog());
+
+        var restoredPlayer = target.Entities.Single(entity => entity.Id == target.PlayerEntityId);
+        Assert.Equal(BiologicalSex.Male, restoredPlayer.Sex);
+        Assert.All(target.Entities, entity => Assert.NotEqual(BiologicalSex.Unspecified, entity.Sex));
+
+        var roundTrip = new World();
+        WorldSnapshotSerializer.Load(roundTrip,
+            WorldSnapshotSerializer.Serialize(target, 9), GetSpeciesCatalog());
+        Assert.Equal(target.Entities.OrderBy(entity => entity.Id).Select(entity => entity.Sex),
+            roundTrip.Entities.OrderBy(entity => entity.Id).Select(entity => entity.Sex));
     }
 
     [Fact]
