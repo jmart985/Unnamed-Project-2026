@@ -2,20 +2,33 @@ namespace Simulation;
 
 public static class ResourceTransferService
 {
-    /// <summary>Transfers carried items atomically, respecting the recipient's configured capacity.</summary>
+    /// <summary>Transfers carried items, accepting only the quantity that fits in the recipient's item stack.</summary>
     public static ResourceMutationResult TryTransfer(EntityRecord source, EntityRecord destination, string? itemId, int amount)
+        => TryTransfer(source, destination, itemId, amount, out _);
+
+    public static ResourceMutationResult TryTransfer(
+        EntityRecord source,
+        EntityRecord destination,
+        string? itemId,
+        int amount,
+        out int transferred)
     {
+        transferred = 0;
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(destination);
         if (ReferenceEquals(source, destination)) return ResourceMutationResult.InvalidDestination;
         if (!ItemIds.IsKnown(itemId)) return ResourceMutationResult.UnknownItem;
         if (amount <= 0) return ResourceMutationResult.InvalidAmount;
         if (source.Inventory.GetValueOrDefault(itemId!) < amount) return ResourceMutationResult.InsufficientQuantity;
-        if (destination.Inventory.Values.Sum(count => (long)count) + amount > destination.InventoryCapacity)
-            return ResourceMutationResult.CapacityExceeded;
-        var added = destination.TryAddCarried(itemId, amount);
-        if (added != ResourceMutationResult.Success) return added;
-        source.TryRemoveCarried(itemId, amount);
+        transferred = Math.Min(amount, destination.RemainingCarriedCapacity(itemId!));
+        if (transferred == 0) return ResourceMutationResult.CapacityExceeded;
+        var added = destination.TryAddCarried(itemId, transferred);
+        if (added != ResourceMutationResult.Success)
+        {
+            transferred = 0;
+            return added;
+        }
+        source.TryRemoveCarried(itemId, transferred);
         return ResourceMutationResult.Success;
     }
 
@@ -60,16 +73,25 @@ public static class ResourceTransferService
     }
 
     /// <summary>
-    /// Atomically moves units from a resource container into an entity's carried inventory
-    /// (e.g. picking up wood from a ground pile). Either the full amount moves or neither
-    /// container changes.
+    /// Moves units from a resource container into carried inventory (e.g. picking up wood).
+    /// The entity accepts only the amount that fits in its per-item stack; the remainder stays
+    /// in the source container. Invalid requests do not change either inventory.
     /// </summary>
     public static ResourceMutationResult TryPickUp(
         ResourceContainer source,
         EntityRecord entity,
         string? itemId,
         int amount)
+        => TryPickUp(source, entity, itemId, amount, out _);
+
+    public static ResourceMutationResult TryPickUp(
+        ResourceContainer source,
+        EntityRecord entity,
+        string? itemId,
+        int amount,
+        out int transferred)
     {
+        transferred = 0;
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(entity);
 
@@ -89,13 +111,15 @@ public static class ResourceTransferService
             return ResourceMutationResult.InsufficientQuantity;
         }
 
-        source.RemoveKnown(knownItemId, amount);
-        var addResult = entity.TryAddCarried(knownItemId, amount);
+        transferred = Math.Min(amount, entity.RemainingCarriedCapacity(knownItemId));
+        if (transferred == 0) return ResourceMutationResult.CapacityExceeded;
+
+        source.RemoveKnown(knownItemId, transferred);
+        var addResult = entity.TryAddCarried(knownItemId, transferred);
         if (addResult != ResourceMutationResult.Success)
         {
-            // Restore the source so the transfer stays atomic (e.g. the entity's carried
-            // count would otherwise overflow int.MaxValue).
-            source.AddKnown(knownItemId, amount);
+            source.AddKnown(knownItemId, transferred);
+            transferred = 0;
             return addResult;
         }
 

@@ -134,24 +134,35 @@ public sealed class EntityResourceTransferTests
     }
 
     [Fact]
-    public void PickUpRejectsAnAdditionThatWouldOverflowCarriedInventoryWithoutMutatingEitherSide()
+    public void PickUpAcceptsOnlyTheRemainingStackSpaceAndLeavesTheRestAtTheSource()
     {
         var entity = CreateEntity();
-        var filledSource = new ResourceContainer("ground-pile-full", int.MaxValue);
-        filledSource.TryAdd(ItemIds.Wood, int.MaxValue);
+        var filledSource = new ResourceContainer("ground-pile-full", 1000);
+        filledSource.TryAdd(ItemIds.Wood, 1000);
+        entity.TryAddCarried(ItemIds.Wood, 997);
         Assert.Equal(
             ResourceMutationResult.Success,
-            ResourceTransferService.TryPickUp(filledSource, entity, ItemIds.Wood, int.MaxValue));
-        Assert.Equal(int.MaxValue, entity.Inventory[ItemIds.Wood]);
+            ResourceTransferService.TryPickUp(filledSource, entity, ItemIds.Wood, 5, out var transferred));
+        Assert.Equal(2, transferred);
+        Assert.Equal(999, entity.Inventory[ItemIds.Wood]);
+        Assert.Equal(998, filledSource.Counts[ItemIds.Wood]);
+        Assert.Equal(999, entity.Inventory.Values.Sum());
+    }
 
-        var overflowSource = new ResourceContainer("ground-pile-extra", 5);
-        overflowSource.TryAdd(ItemIds.Wood, 1);
+    [Fact]
+    public void EntityTransferPartiallyFillsTheDestinationStack()
+    {
+        var source = CreateEntity();
+        var destination = CreateEntity();
+        source.TryAddCarried(ItemIds.Food, 5);
+        destination.TryAddCarried(ItemIds.Food, 998);
 
-        var result = ResourceTransferService.TryPickUp(overflowSource, entity, ItemIds.Wood, 1);
+        var result = ResourceTransferService.TryTransfer(source, destination, ItemIds.Food, 4, out var transferred);
 
-        Assert.Equal(ResourceMutationResult.CapacityExceeded, result);
-        Assert.Equal(1, overflowSource.Counts[ItemIds.Wood]);
-        Assert.Equal(int.MaxValue, entity.Inventory[ItemIds.Wood]);
+        Assert.Equal(ResourceMutationResult.Success, result);
+        Assert.Equal(1, transferred);
+        Assert.Equal(4, source.Inventory[ItemIds.Food]);
+        Assert.Equal(999, destination.Inventory[ItemIds.Food]);
     }
 
     private static EntityRecord CreateEntity()

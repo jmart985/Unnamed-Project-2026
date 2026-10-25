@@ -126,6 +126,47 @@ public sealed class IndividualOrderTests
     }
 
     [Fact]
+    public void FailedWildEscapeKeepsIndividualOrderPausedUntilThreatClears()
+    {
+        var catalog = Catalog();
+        var world = new World();
+        var cow = world.SpawnEntity(catalog.GetRequired("cow"), Vector3.Zero);
+        var wolf = world.SpawnEntity(catalog.GetRequired("wolf"), new Vector3(-4, 0, 0));
+        var issuer = world.SpawnEntity("human", new Vector3(0, 0, 2));
+        cow.OrderIntent = new EntityOrder(EntityOrderKind.Stay, issuer.Id, new Vector3(0, 0, 8));
+
+        var navigator = new FakeNavigationAdapter();
+        var threat = new WildPreyThreatService(world, catalog, _ => navigator);
+        var orders = new OrderService(world, _ => navigator, threat.SuppressesOtherBehavior);
+
+        orders.Advance();
+        Assert.Single(navigator.RequestTargets);
+        Assert.Equal(WildPreyThreatStatus.Fleeing, threat.Advance(cow, simulationTick: 1).Status);
+        var fleeRequest = navigator.RequestTargets.Last().Key;
+        Assert.True(navigator.MarkUnreachable(fleeRequest));
+
+        orders.Advance();
+        Assert.Equal(WildPreyThreatStatus.Waiting, threat.Advance(cow, simulationTick: 2).Status);
+        Assert.True(threat.SuppressesOtherBehavior(cow.Id));
+        var orderRequestCount = navigator.RequestTargets.Count;
+        var waitingReason = cow.WaitingReason;
+
+        orders.Advance();
+
+        Assert.Equal(orderRequestCount, navigator.RequestTargets.Count);
+        Assert.Equal("Waiting", cow.Activity);
+        Assert.Equal(waitingReason, cow.WaitingReason);
+        Assert.Equal(new EntityOrder(EntityOrderKind.Stay, issuer.Id, new Vector3(0, 0, 8)), cow.OrderIntent);
+
+        world.TrySetEntityPosition(wolf.Id, new Vector3(-40, 0, 0));
+        Assert.Equal(WildPreyThreatStatus.NoThreat, threat.Advance(cow, simulationTick: 3).Status);
+        orders.Advance();
+
+        Assert.Equal(orderRequestCount + 1, navigator.RequestTargets.Count);
+        Assert.Equal(ActionKind.CommandMove, cow.Actions.Current?.Kind);
+    }
+
+    [Fact]
     public void CommandsRequireAuthorityAndOnlyExposeFollowAndStayForMobileSpecies()
     {
         var (world, catalog, player, target, resolver) = Harness();

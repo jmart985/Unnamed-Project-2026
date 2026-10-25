@@ -36,15 +36,20 @@ public sealed class OrderService : ITransientSimulationState
 
     private readonly World _world;
     private readonly Func<EntityRecord, INavigationAdapter> _navigationForEntity;
+    private readonly Func<string, bool>? _isBehaviorSuppressed;
     private readonly Dictionary<string, ActiveOrder> _activeOrders = new(StringComparer.Ordinal);
     private long _nextActionId;
 
-    public OrderService(World world, Func<EntityRecord, INavigationAdapter> navigationForEntity)
+    public OrderService(
+        World world,
+        Func<EntityRecord, INavigationAdapter> navigationForEntity,
+        Func<string, bool>? isBehaviorSuppressed = null)
     {
         ArgumentNullException.ThrowIfNull(world);
         ArgumentNullException.ThrowIfNull(navigationForEntity);
         _world = world;
         _navigationForEntity = navigationForEntity;
+        _isBehaviorSuppressed = isBehaviorSuppressed;
     }
 
     /// <summary>Autonomous work pauses for explicit orders, but survival behavior may still run.</summary>
@@ -91,6 +96,12 @@ public sealed class OrderService : ITransientSimulationState
             }
 
             if (entity.Health.IsDead || entity.Health.IsIncapacitated)
+            {
+                CancelActive(entity);
+                continue;
+            }
+
+            if (_isBehaviorSuppressed?.Invoke(entity.Id) == true)
             {
                 CancelActive(entity);
                 continue;

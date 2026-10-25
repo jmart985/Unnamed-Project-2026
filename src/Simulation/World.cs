@@ -6,8 +6,6 @@ namespace Simulation;
 
 public sealed class World
 {
-    public const int DefaultInventoryCapacity = 10;
-
     public event Action<string, string, RelationshipAdjustment>? RelationshipChanged;
     public event Action<string, string, double>? FactionStandingChanged;
 
@@ -197,16 +195,9 @@ public sealed class World
 
     public World(
         NeedsTuning? needsTuning = null,
-        int inventoryCapacity = DefaultInventoryCapacity,
         CharacterStats? defaultCharacterStats = null)
     {
-        if (inventoryCapacity < 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(inventoryCapacity), "Inventory capacity cannot be negative.");
-        }
-
         NeedsTuning = needsTuning ?? new NeedsTuning();
-        InventoryCapacity = inventoryCapacity;
         DefaultCharacterStats = defaultCharacterStats ?? CharacterStats.Default;
         Reservations = new ReservationService(IsActionActive);
         _foodSourceView = _foodSources.AsReadOnly();
@@ -248,7 +239,6 @@ public sealed class World
     public IReadOnlyList<SettlementConstructionSite> ConstructionSites => _constructionSiteView;
     public NeedsTuning NeedsTuning { get; }
     public ReservationService Reservations { get; }
-    public int InventoryCapacity { get; }
     public CharacterStats DefaultCharacterStats { get; }
     public SpeciesCatalog? SpeciesCatalog { get; set; }
     public int? SessionSeed { get; private set; }
@@ -516,7 +506,6 @@ public sealed class World
             speciesId,
             position,
             satiety,
-            InventoryCapacity,
             NeedsTuning,
             Reservations,
             baseStats);
@@ -1178,7 +1167,6 @@ public sealed class World
             speciesId,
             position,
             satiety,
-            InventoryCapacity,
             NeedsTuning,
             Reservations,
             baseStats);

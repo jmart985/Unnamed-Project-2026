@@ -38,15 +38,16 @@ public sealed class PlayerResourceServiceTests
         Assert.Equal(PlayerResourceResultCode.OutOfRange, service.Collect(PlayerResourceKind.Food, "fixture").Code);
         Assert.Equal(20, source.Counts[ItemIds.Food]); Assert.Empty(session.Player.Inventory);
         session.World.TrySetEntityPosition(session.Player.Id, session.World.FoodSources.Single(x => x.Id == "fixture").Position);
-        for (var index = 0; index < session.Player.InventoryCapacity; index++)
-            Assert.Equal(PlayerResourceResultCode.Collected, service.Collect(PlayerResourceKind.Food, "fixture").Code);
+        session.Player.TryAddCarried(ItemIds.Food, 999);
+        session.Player.TryAddCarried(ItemIds.Wood, 999);
         var before = source.Counts[ItemIds.Food];
         Assert.Equal(PlayerResourceResultCode.Full, service.Collect(PlayerResourceKind.Food, "fixture").Code);
         Assert.Equal(before, source.Counts[ItemIds.Food]);
         session.Player.Health.TryDamage("Torso", 1000);
         Assert.Equal(PlayerResourceResultCode.Unavailable, service.UseCarriedFood().Code);
         Assert.Equal(PlayerResourceResultCode.Unavailable, service.Collect(PlayerResourceKind.Food, "fixture").Code);
-        Assert.Equal(session.Player.InventoryCapacity, session.Player.Inventory[ItemIds.Food]);
+        Assert.Equal(999, session.Player.Inventory[ItemIds.Food]);
+        Assert.Equal(999, session.Player.Inventory[ItemIds.Wood]);
         var (emptySession, emptyService, empty) = Setup();
         empty.TryRemove(ItemIds.Food, 20); empty.TryRemove(ItemIds.Wood, 20);
         Assert.Equal(PlayerResourceResultCode.Empty, emptyService.Collect(PlayerResourceKind.Food, "fixture").Code);

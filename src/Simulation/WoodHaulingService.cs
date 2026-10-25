@@ -206,7 +206,7 @@ public sealed class WoodHaulingService : ITransientSimulationState
         var remainingCapacity = Math.Min(RemainingCargoCapacity(entity), preferredLoad);
         if (remainingCapacity <= 0)
         {
-            return Wait(entity, "No inventory capacity available for wood.", simulationTick, waitingForDelivery: false);
+            return Wait(entity, "The carried wood stack is full.", simulationTick, waitingForDelivery: false);
         }
 
         if (_world.Stockpiles.Count == 0)
@@ -602,8 +602,7 @@ public sealed class WoodHaulingService : ITransientSimulationState
 
     private static int RemainingCargoCapacity(EntityRecord entity)
     {
-        var carriedUnits = entity.Inventory.Values.Sum();
-        return Math.Max(0, entity.InventoryCapacity - carriedUnits);
+        return entity.RemainingCarriedCapacity(ItemIds.Wood);
     }
 
     private enum TripStage

@@ -183,10 +183,10 @@ public sealed class InteractionResolver
         if (!TryGetProvidedItem(itemContainer, out var item, out var amount))
             return new(false, "Provide exactly one item type with a positive quantity to give.");
         if (!_socialService.HasEvent("helped")) return new(false, "The helped relationship profile is unavailable.");
-        var transfer = ResourceTransferService.TryTransfer(actor, target, item, amount);
+        var transfer = ResourceTransferService.TryTransfer(actor, target, item, amount, out var transferred);
         if (transfer != ResourceMutationResult.Success) return new(false, $"Give failed: {transfer}.");
         _socialService.Apply(target.Id, actor.Id, "helped");
-        return new(true, $"Gave {amount}x {item} to target.");
+        return new(true, $"Gave {transferred}x {item} to target.");
     }
 
     private InteractionResult ResolveToggleDoor(EntityRecord actor, Structure structure)

@@ -30,6 +30,25 @@ public sealed class WorldSnapshotTests
     }
 
     [Fact]
+    public void SnapshotAllowsMoreThan999TotalItemsButRejectsAnOversizedItemStack()
+    {
+        var source = new World();
+        var entity = source.SpawnEntity("human", Vector3.Zero);
+        entity.TryAddCarried(ItemIds.Wood, 999);
+        entity.TryAddCarried(ItemIds.Food, 999);
+        var json = WorldSnapshotSerializer.Serialize(source, 1);
+
+        var restored = new World();
+        WorldSnapshotSerializer.Load(restored, json, GetSpeciesCatalog());
+        Assert.Equal(1998, restored.Entities.Single().Inventory.Values.Sum());
+
+        var invalid = JsonNode.Parse(json)!;
+        invalid["Entities"]![0]!["Inventory"]![ItemIds.Wood] = 1000;
+        Assert.Throws<InvalidDataException>(() => WorldSnapshotSerializer.Load(
+            new World(), invalid.ToJsonString(), GetSpeciesCatalog()));
+    }
+
+    [Fact]
     public void SnapshotRoundTripPreservesSessionSeedAndPlayerCreationChoices()
     {
         var profile = PlayerCharacterProfile.Create(

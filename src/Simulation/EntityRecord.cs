@@ -5,6 +5,7 @@ namespace Simulation;
 
 public sealed class EntityRecord
 {
+    public const int MaxCarriedCountPerItem = 999;
     private readonly Dictionary<string, int> _inventory = new(StringComparer.Ordinal);
     private readonly ReadOnlyDictionary<string, int> _inventoryView;
 
@@ -13,7 +14,6 @@ public sealed class EntityRecord
         string speciesId,
         Vector3 position,
         double satiety,
-        int inventoryCapacity,
         NeedsTuning needsTuning,
         ReservationService reservations,
         CharacterStats? baseStats = null)
@@ -25,7 +25,6 @@ public sealed class EntityRecord
         BaseStats = baseStats ?? CharacterStats.Default;
         Health = CharacterHealth.CreateHumanoid(BaseStats.MaxHealth);
         Skills = new SkillSet();
-        InventoryCapacity = inventoryCapacity;
         _inventoryView = new ReadOnlyDictionary<string, int>(_inventory);
         Actions = new ActionLifecycle(id, reservations, () => _inventory.Count > 0);
     }
@@ -42,7 +41,7 @@ public sealed class EntityRecord
     public string? AllegianceFactionId { get; internal set; }
     public double Satiety => Needs.Satiety;
     public IReadOnlyDictionary<string, int> Inventory => _inventoryView;
-    public int InventoryCapacity { get; }
+    public double CarriedWeightKg => _inventory.Sum(item => item.Value * ItemCatalog.GetWeightKg(item.Key));
     public string Activity { get; internal set; } = "Idle";
     public SleepState SleepState { get; internal set; }
     public string? BedId { get; internal set; }
@@ -53,6 +52,9 @@ public sealed class EntityRecord
     public string? Parent2Id { get; internal set; }
     public EntityOrder? OrderIntent { get; internal set; }
 
+    public void AdvanceNeeds(double simulationSeconds, bool isSleeping = false) =>
+        Needs.AdvanceWithLoad(simulationSeconds, CarriedWeightKg, BaseStats, isSleeping);
+
     internal void SetSleepState(SleepState state, string? bedId)
     {
         SleepState = state;
@@ -60,11 +62,7 @@ public sealed class EntityRecord
     }
 
     /// <summary>
-    /// Atomically adds carried units of a known item to this entity's inventory. Carried
-    /// inventory has no bounded capacity limit yet (bounded haul capacity is deferred to the
-    /// hauling job that defines it per species; see docs/DECISIONS.md), but an addition that
-    /// would overflow the representable <see cref="int"/> count is rejected as
-    /// <see cref="ResourceMutationResult.CapacityExceeded"/> rather than wrapping.
+    /// Atomically adds carried units of a known item, up to the per-item stack limit.
     /// </summary>
     internal ResourceMutationResult TryAddCarried(string? itemId, int amount)
     {
@@ -80,7 +78,7 @@ public sealed class EntityRecord
 
         var knownItemId = itemId!;
         _inventory.TryGetValue(knownItemId, out var current);
-        if (amount > int.MaxValue - current)
+        if (amount > MaxCarriedCountPerItem - current)
         {
             return ResourceMutationResult.CapacityExceeded;
         }
@@ -88,6 +86,15 @@ public sealed class EntityRecord
         _inventory[knownItemId] = current + amount;
         return ResourceMutationResult.Success;
     }
+
+    internal int RemainingCarriedCapacity(string itemId)
+    {
+        _inventory.TryGetValue(itemId, out var current);
+        return MaxCarriedCountPerItem - current;
+    }
+
+    internal bool CanAddCarried(string itemId, int amount) =>
+        amount > 0 && amount <= RemainingCarriedCapacity(itemId);
 
     /// <summary>
     /// Atomically removes carried units of a known item from this entity's inventory. Never

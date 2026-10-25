@@ -496,7 +496,10 @@ public partial class Main : Node3D
 			_sessionSeed);
 		_woodHauling = new WoodHaulingService(_world, GetNavigationAdapter);
 		_squad = new SquadOrderService(_world, GetNavigationAdapter);
-		_orders = new OrderService(_world, GetNavigationAdapter);
+		_orders = new OrderService(
+			_world,
+			GetNavigationAdapter,
+			entityId => _wildPreyThreat!.SuppressesOtherBehavior(entityId));
 
 		RebuildResourceMarkersFromWorld();
 		RebuildFireplaceViews();
@@ -857,7 +860,7 @@ public partial class Main : Node3D
 		foreach (var entity in _world.Entities)
 		{
 			entity.Health.AdvanceTime(simulationSeconds);
-			entity.Needs.Advance(simulationSeconds, isSleeping: entity.SleepState == SleepState.Sleeping);
+			entity.AdvanceNeeds(simulationSeconds, isSleeping: entity.SleepState == SleepState.Sleeping);
 		}
 	}
 
