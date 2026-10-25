@@ -25,6 +25,7 @@ scenarios=(
   "--validate-menus|MENU VALIDATION PASSED"
   "--validate-selection|SELECTION VALIDATION PASSED"
   "--validate-gameplay-actions|GAMEPLAY ACTIONS VALIDATION PASSED"
+  "--validate-individual-orders|INDIVIDUAL ORDER VALIDATION PASSED"
   "--validate-interaction-anchors|INTERACTION ANCHOR VALIDATION PASSED"
   "--validate-wild-territories|WILD TERRITORY VALIDATION PASSED"
   "--validate-wild-prey-threat|WILD PREY THREAT VALIDATION PASSED"
