@@ -1,0 +1,324 @@
+{
+  "asset_id": "radagon_male_humanoid_rig_v1",
+  "display_name": "Radagon Male Human NPC",
+  "source_asset": "Radagon FullClothes FBX",
+  "source_creator": "Ryan Reos",
+  "source_url": "https://ryanreos.artstation.com/store/1W91v/blender-model-radagon-of-the-golden-order",
+  "source_sha256": "8ed6db73cd8d02637a8f06414a39be587c8339bcc259be402c0a4ea6e98f77ec",
+  "source_blend_sha256": "597f7e7e1b5dbcf88d352ec9318b7b86377cd5f6df68265cc0a2894ce21372c1",
+  "owner_use_confirmation": "User confirmed this acquired asset is valid for use in the public game and this project.",
+  "format": "GLB",
+  "godot_units": "1 unit = 1 meter",
+  "target_height_m": 1.75,
+  "measured_height_m": 1.74997,
+  "floor_z_m": 2e-05,
+  "source_rig": "Original Radagon FBX deform rig preserved",
+  "project_bone_map": {
+    "root": "root (source armature object)",
+    "toe_l": "ball_l",
+    "toe_r": "ball_r",
+    "anchor_genital": "pelvis (mesh-derived base position)",
+    "anchor_penile": "spline_06.x (mesh-derived tip position)",
+    "anchor_urethral": "spline_06.x (mesh-derived tip position)"
+  },
+  "canonical_pose": "Original Radagon FBX rest pose; whole-asset scale is normalized and the retained genital surface is angled down and slightly tucked behind the clothing silhouette",
+  "bone_count": 354,
+  "required_bones_verified": [
+    "ball_l",
+    "ball_r",
+    "calf_l",
+    "calf_r",
+    "clavicle_l",
+    "clavicle_r",
+    "foot_l",
+    "foot_r",
+    "hand_l",
+    "hand_r",
+    "head",
+    "index_01_l",
+    "index_01_r",
+    "index_02_l",
+    "index_02_r",
+    "index_03_l",
+    "index_03_r",
+    "lowerarm_l",
+    "lowerarm_r",
+    "middle_01_l",
+    "middle_01_r",
+    "middle_02_l",
+    "middle_02_r",
+    "middle_03_l",
+    "middle_03_r",
+    "neck_01",
+    "pelvis",
+    "pinky_01_l",
+    "pinky_01_r",
+    "pinky_02_l",
+    "pinky_02_r",
+    "pinky_03_l",
+    "pinky_03_r",
+    "ring_01_l",
+    "ring_01_r",
+    "ring_02_l",
+    "ring_02_r",
+    "ring_03_l",
+    "ring_03_r",
+    "spine_01",
+    "spine_02",
+    "spine_03",
+    "spline_01.x",
+    "spline_02.x",
+    "spline_03.x",
+    "spline_04.x",
+    "spline_05.x",
+    "spline_06.x",
+    "thigh_l",
+    "thigh_r",
+    "thumb_01_l",
+    "thumb_01_r",
+    "thumb_02_l",
+    "thumb_02_r",
+    "thumb_03_l",
+    "thumb_03_r",
+    "upperarm_l",
+    "upperarm_r"
+  ],
+  "mesh_count": 4,
+  "vertex_count": 62438,
+  "triangle_count": 96816,
+  "source_topology": {
+    "Radagon Default - Pants": {
+      "vertices": 2754,
+      "faces": 2760
+    },
+    "Radagon Hair - Default": {
+      "vertices": 34959,
+      "faces": 21396
+    },
+    "Radagon Default - Dress": {
+      "vertices": 4678,
+      "faces": 4479
+    },
+    "Radagon Body": {
+      "vertices": 20047,
+      "faces": 20068
+    }
+  },
+  "genital_pose": {
+    "angle_degrees": 70.0,
+    "posterior_clothing_clearance_m": 0.04,
+    "seam_vertex_count": 22,
+    "face_count": 722,
+    "shape_key_count": 53,
+    "tip_before_local": [
+      0.0,
+      -22.28333,
+      89.86781
+    ],
+    "tip_after_local": [
+      0.0,
+      2.2393,
+      76.94567
+    ],
+    "tip_world_m": [
+      0.0,
+      0.02239,
+      0.76946
+    ],
+    "seam_world_m": [
+      0.0,
+      -0.03062,
+      0.97679
+    ],
+    "tip_drop_m": -0.12922
+  },
+  "skin_weight_limit": {
+    "maximum_influences": 4,
+    "vertices_modified": 32664,
+    "influences_removed": 209043
+  },
+  "exported_genital_geometry": {
+    "material": "Radagon_Penis",
+    "face_count": 1444,
+    "genital_base_world_blender_m": [
+      0.02784,
+      -0.02714,
+      0.85852
+    ],
+    "penile_tip_world_blender_m": [
+      0.0,
+      -0.08039,
+      0.81709
+    ],
+    "anchor_base_error_m": 2.5e-05,
+    "anchor_tip_error_m": 0.000812
+  },
+  "texture_max_dimensions": {
+    "body": 1024,
+    "head": 1024,
+    "clothes": 1024,
+    "eyes": 512,
+    "hair": 1024,
+    "eyelashes": 512
+  },
+  "texture_dimensions": {
+    "Radagon_Body_BaseColor_Cracked.tga": [
+      1024,
+      1024
+    ],
+    "Radagon_Body_Emissive_Cracked.tga": [
+      1024,
+      1024
+    ],
+    "Radagon_Body_Normal": [
+      1024,
+      1024
+    ],
+    "Radagon_Body_Roughness": [
+      1024,
+      1024
+    ],
+    "Radagon_Clothes_BaseColor": [
+      1024,
+      1024
+    ],
+    "Radagon_Clothes_Metallic": [
+      1024,
+      1024
+    ],
+    "Radagon_Clothes_Normal": [
+      1024,
+      1024
+    ],
+    "Radagon_Clothes_Roughness": [
+      1024,
+      1024
+    ],
+    "Radagon_Eyelashes": [
+      512,
+      512
+    ],
+    "Radagon_Eyelashes_Opacity": [
+      512,
+      512
+    ],
+    "Radagon_Eyes_BaseColor": [
+      512,
+      512
+    ],
+    "Radagon_Eyes_Normal": [
+      512,
+      512
+    ],
+    "Radagon_Eyes_Roughness": [
+      512,
+      512
+    ],
+    "Radagon_Hair_BaseColor": [
+      1024,
+      1024
+    ],
+    "Radagon_Hair_normal": [
+      1024,
+      1024
+    ],
+    "Radagon_Hair_opacity": [
+      1024,
+      1024
+    ],
+    "Radagon_Head_Cracked_BaseColor.tga": [
+      1024,
+      1024
+    ],
+    "Radagon_Head_Cracked_Emissive.tga": [
+      1024,
+      1024
+    ],
+    "Radagon_Head_Normal": [
+      1024,
+      1024
+    ],
+    "Radagon_Head_Roughness": [
+      1024,
+      1024
+    ],
+    "Radagon_Penis_BaseColor.tga": [
+      1024,
+      1024
+    ],
+    "Radagon_Penis_Normal.tga": [
+      1024,
+      1024
+    ],
+    "Radagon_Penis_Roughness.tga": [
+      1024,
+      1024
+    ]
+  },
+  "runtime_glb_bytes": 27790088,
+  "animation_clips": [],
+  "interaction_anchors": {
+    "locomotion": [
+      "anchor_root",
+      "anchor_foot_l",
+      "anchor_foot_r"
+    ],
+    "equipment": [
+      "anchor_hand_l",
+      "anchor_hand_r",
+      "anchor_carry"
+    ],
+    "interaction": [
+      "anchor_mouth",
+      "anchor_anus",
+      "anchor_genital",
+      "anchor_urethral",
+      "anchor_navel",
+      "anchor_penile",
+      "anchor_testicular",
+      "anchor_breast_l",
+      "anchor_breast_r",
+      "anchor_hand_l",
+      "anchor_hand_r"
+    ],
+    "breeding": [
+      "anchor_genital",
+      "anchor_urethral",
+      "anchor_penile",
+      "anchor_testicular",
+      "anchor_breast_l",
+      "anchor_breast_r"
+    ]
+  },
+  "anchor_nodes": [
+    "anchor_anus",
+    "anchor_breast_l",
+    "anchor_breast_r",
+    "anchor_carry",
+    "anchor_foot_l",
+    "anchor_foot_r",
+    "anchor_genital",
+    "anchor_hand_l",
+    "anchor_hand_r",
+    "anchor_mouth",
+    "anchor_navel",
+    "anchor_penile",
+    "anchor_root",
+    "anchor_testicular",
+    "anchor_urethral"
+  ],
+  "runtime_path": "game/assets/humanoids/human/radagon_male_humanoid_rig_v1.glb",
+  "output_blend": "art_source/reference/generated_humanoids/radagon_male_humanoid_rig_v1.blend",
+  "notes": [
+    "Uses the FullClothes source; the separate nude FBX and hammer are excluded.",
+    "Source mesh topology, clothing, and skeleton hierarchy are preserved; only the FBX Cube importer artifact is excluded. Vertex positions in the genital material region are adjusted for the requested down-and-tucked pose. Skin weights are reduced to the four strongest influences per vertex to match the glTF skin limit.",
+    "The genital mesh and its source-specific skin material are retained. The same down-and-tuck adjustment is applied to the Basis and all 52 facial/body shape keys.",
+    "Genital anchors are positioned from the adapted skinned mesh and verified against the reimported exported GLB geometry.",
+    "Source materials are translated to glTF PBR using the included color, normal, roughness, opacity, cracked-skin, and genital maps.",
+    "Runtime texture maps are resampled to the declared per-material limits and repacked before export; original source maps remain unchanged.",
+    "Godot semantic anchors are non-deforming child nodes; source bone names remain unchanged.",
+    "The purchased package contains no animation clips; this asset uses its original rest pose until a rig-compatible animation is added.",
+    "Simulation anatomy stays separate from the render skeleton; NPC sex comes from saved EntityRecord.Sex.",
+    "The source asset is approved by the owner for use in this public game project."
+  ]
+}

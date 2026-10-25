@@ -122,7 +122,8 @@ public sealed record EntitySnapshot(
     string? BedId = null,
     string? EquippedTool = null,
     bool IsDead = false,
-    EntityOrder? OrderIntent = null);
+    EntityOrder? OrderIntent = null,
+    BiologicalSex? Sex = null);
 
 public sealed record FoodSourceSnapshot(
     string Id,
@@ -166,7 +167,8 @@ public static class WorldSnapshotSerializer
     private const int NearPopulationSchemaVersion = 20;
     private const int StarterWorkbenchRelocationSchemaVersion = 21;
     private const int IndividualOrdersSchemaVersion = 22;
-    public const int CurrentSchemaVersion = IndividualOrdersSchemaVersion;
+    private const int BiologicalSexSchemaVersion = 23;
+    public const int CurrentSchemaVersion = BiologicalSexSchemaVersion;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -199,7 +201,8 @@ public static class WorldSnapshotSerializer
                 entity.BedId,
                 entity.EquippedTool,
                 entity.Health.IsDead,
-                entity.OrderIntent))
+                entity.OrderIntent,
+                entity.Sex))
             .ToArray();
         var foodSources = world.FoodSources
             .Select(source => new FoodSourceSnapshot(
@@ -318,6 +321,25 @@ public static class WorldSnapshotSerializer
             throw new InvalidDataException("Snapshot JSON is malformed.", exception);
         }
 
+        // Entity sex was added after individual orders. Older saves assign a stable value
+        // from the persisted entity identity; the player follows the saved creation profile.
+        if (snapshot.SchemaVersion < BiologicalSexSchemaVersion)
+        {
+            var playerSex = snapshot.PlayerProfile?.EntitySex;
+            var migratedEntities = snapshot.Entities?.Select(entity => entity is null ? null! : entity with
+            {
+                Sex = entity.Sex ?? (string.Equals(entity.Id, snapshot.PlayerEntityId, StringComparison.Ordinal)
+                    ? playerSex ?? BiologicalSexAssignment.ForEntity(entity.Id, entity.SpeciesId)
+                    : BiologicalSexAssignment.ForEntity(entity.Id, entity.SpeciesId))
+            }).ToArray();
+            if (migratedEntities is null)
+                throw new InvalidDataException("Snapshot entities are required for biological-sex migration.");
+            snapshot = snapshot with
+            {
+                Entities = migratedEntities
+            };
+        }
+
         // The starter workbench moved off the central crossroads. Preserve its
         // inventory/recipe state while relocating only the original fixed instance.
         if (snapshot.SchemaVersion >= WorkstationSchemaVersion
@@ -409,6 +431,9 @@ public static class WorldSnapshotSerializer
             return snapshot with { SchemaVersion = CurrentSchemaVersion };
 
         if (snapshot.SchemaVersion == StarterWorkbenchRelocationSchemaVersion)
+            return snapshot with { SchemaVersion = CurrentSchemaVersion };
+
+        if (snapshot.SchemaVersion == IndividualOrdersSchemaVersion)
             return snapshot with { SchemaVersion = CurrentSchemaVersion };
 
         if (snapshot.SchemaVersion != CurrentSchemaVersion)
@@ -552,6 +577,8 @@ public static class WorldSnapshotSerializer
             }
 
             ValidatePosition(entity.Position, $"entity '{entity.Id}' position");
+            if (entity.Sex is not { } sex || !Enum.IsDefined(sex) || sex == BiologicalSex.Unspecified)
+                throw new InvalidDataException($"Snapshot entity '{entity.Id}' must have a defined biological sex.");
             if (!double.IsFinite(entity.Satiety) || entity.Satiety is < 0 or > 100)
             {
                 throw new InvalidDataException(
@@ -937,6 +964,8 @@ public static class WorldSnapshotSerializer
         {
             throw new InvalidDataException("Snapshot session player must reference a human entity.");
         }
+        if (player.Sex != snapshot.PlayerProfile.EntitySex)
+            throw new InvalidDataException("Snapshot player entity sex must match the character creation profile.");
     }
 
     private static void ValidateRelationships(

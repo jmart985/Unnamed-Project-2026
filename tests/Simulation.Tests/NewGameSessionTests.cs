@@ -35,6 +35,8 @@ public sealed class NewGameSessionTests
         Assert.Same(profile, session.World.PlayerProfile);
         Assert.Equal("Ada", createdProfile.Name);
         Assert.Equal("human", player.SpeciesId);
+        Assert.Equal(BiologicalSex.Female, player.Sex);
+        Assert.All(session.World.Entities, entity => Assert.NotEqual(BiologicalSex.Unspecified, entity.Sex));
         Assert.Equal(NewGameSession.GetPlayerSpawnPosition(session.Seed), player.Position);
         Assert.Empty(player.Inventory);
         Assert.Equal(60, player.Satiety);
@@ -111,6 +113,8 @@ public sealed class NewGameSessionTests
             WorldSnapshotSerializer.Serialize(first.World, simulationTime: 0),
             WorldSnapshotSerializer.Serialize(second.World, simulationTime: 0));
         Assert.NotEqual(first.Player.Position, otherSeed.Player.Position);
+        Assert.Equal(BiologicalSex.Male, first.Player.Sex);
+        Assert.Equal(BiologicalSex.Male, second.Player.Sex);
     }
 
     [Fact]

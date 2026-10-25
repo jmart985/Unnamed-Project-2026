@@ -30,6 +30,10 @@ public sealed record PlayerCharacterProfile(
     double Weight = 0.5,
     double Muscle = 0.5)
 {
+    public BiologicalSex EntitySex => Sex == PlayerSex.Male
+        ? BiologicalSex.Male
+        : BiologicalSex.Female;
+
     public static PlayerCharacterProfile Create(
         string? name,
         PlayerHeight height = PlayerHeight.Medium,

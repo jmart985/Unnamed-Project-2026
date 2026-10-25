@@ -37,10 +37,11 @@ The player creation form exposes the validated Character Core parameters through
 - weight;
 - height;
 - muscle/build;
-- sex and existing profile choices;
+- Female/Male sex and existing profile choices; the selected value is copied into the new player's required `EntityRecord.Sex` and is validated against the saved profile on load;
+- Male human NPCs use the Radagon presentation asset selected by their saved `EntityRecord.Sex`; female NPC presentation and the separately controlled player rig remain independent;
 - optional advanced body-part X/Y/Z controls after the base sliders are stable.
 
-The form previews the same player rig used in the simulation. Confirming creates one authoritative player profile; cancel/reset leaves no partial World mutation. The profile persists through save/load.
+The form previews the same player rig used in the simulation. Confirming creates one authoritative player profile and a player entity with matching durable biological sex; cancel/reset leaves no partial World mutation. The profile and entity value persist through save/load. The currently separate procedural player rig remains distinct from the humanoid NPC presentation catalog.
 
 ## Body-part editing rules
 

@@ -11,6 +11,7 @@ public partial class EntityView : CharacterBody3D
     private float _movementSpeed;
     private bool _isCreature;
     private string _speciesId = string.Empty;
+    private BiologicalSex _sex = BiologicalSex.Unspecified;
     private string _bodyCategory = string.Empty;
     private InteractionAnchorDefinition _anchorDefinition = InteractionAnchorDefinition.Empty;
     private CreatureBodyPlan _bodyPlan;
@@ -51,6 +52,7 @@ public partial class EntityView : CharacterBody3D
     }
 
     public string EntityId { get; private set; } = string.Empty;
+    public string? PresentationModelAssetPath { get; private set; }
     public NavigationOutcome? NavigationOutcome => _navigationAdapter?.LastOutcome;
     public NumericsVector3? NavigationTarget => _navigationAdapter?.LastTarget;
     public INavigationAdapter NavigationAdapter
@@ -181,15 +183,25 @@ public partial class EntityView : CharacterBody3D
             return false;
         }
 
-        const string assetPath = "res://assets/humanoids/human/human_humanoid_rig_v1.glb";
+        var malePresentation = _sex == BiologicalSex.Male;
+        var assetPath = malePresentation
+            ? "res://assets/humanoids/human/radagon_male_humanoid_rig_v1.glb"
+            : "res://assets/humanoids/human/human_humanoid_rig_v1.glb";
         var packed = GD.Load<PackedScene>(assetPath);
+        if (packed is null && malePresentation)
+        {
+            GD.PushWarning("Radagon male humanoid is unavailable; using the default human presentation.");
+            assetPath = "res://assets/humanoids/human/human_humanoid_rig_v1.glb";
+            packed = GD.Load<PackedScene>(assetPath);
+        }
         if (packed is null)
         {
             GD.PushWarning("Human Humanoid Rig v1 is unavailable; using the procedural human fallback.");
             return false;
         }
 
-        var model = AddImportedModel(packed, "HumanProductionModel");
+        var model = AddImportedModel(packed, malePresentation ? "RadagonMaleProductionModel" : "HumanProductionModel");
+        PresentationModelAssetPath = assetPath;
         AddCollision(totalHeight: 1.75f, radius: 0.32f);
 
         var animationPlayer = model.FindChild("AnimationPlayer", recursive: true, owned: false) as AnimationPlayer;
@@ -468,13 +480,15 @@ public partial class EntityView : CharacterBody3D
     public override void _PhysicsProcess(double delta) => _navigationAdapter?.RefreshPath();
 
     public void Bind(string entityId, float movementSpeed, bool isCreature = false, string? speciesId = null,
-        string? bodyCategory = null, InteractionAnchorDefinition? anchorDefinition = null)
+        string? bodyCategory = null, InteractionAnchorDefinition? anchorDefinition = null,
+        BiologicalSex sex = BiologicalSex.Unspecified)
     {
         if (!float.IsFinite(movementSpeed) || movementSpeed <= 0) throw new ArgumentOutOfRangeException(nameof(movementSpeed));
         EntityId = entityId;
         _movementSpeed = movementSpeed;
         _isCreature = isCreature;
         _speciesId = speciesId ?? (isCreature ? "creature" : "human");
+        _sex = sex;
         _bodyCategory = bodyCategory ?? (isCreature ? "quadruped" : "humanoid");
         _anchorDefinition = anchorDefinition ?? InteractionAnchorDefinition.Empty;
         _bodyPlan = CreatureBodyPlanResolver.Resolve(_bodyCategory, _isCreature);

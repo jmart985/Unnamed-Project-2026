@@ -456,29 +456,33 @@ public sealed class World
     public EntityRecord SpawnEntity(
         string speciesId,
         Vector3 position,
-        double satiety = 60)
+        double satiety = 60,
+        BiologicalSex? sex = null)
     {
-        return SpawnEntityCore(speciesId, position, satiety, DefaultCharacterStats);
+        return SpawnEntityCore(speciesId, position, satiety, DefaultCharacterStats, sex);
     }
 
     public EntityRecord SpawnEntity(
         SpeciesDefinition species,
         Vector3 position,
-        double satiety = 60)
+        double satiety = 60,
+        BiologicalSex? sex = null)
     {
         ArgumentNullException.ThrowIfNull(species);
         return SpawnEntityCore(
             species.Id,
             position,
             satiety,
-            species.CreateCharacterStats(DefaultCharacterStats));
+            species.CreateCharacterStats(DefaultCharacterStats),
+            sex);
     }
 
     private EntityRecord SpawnEntityCore(
         string speciesId,
         Vector3 position,
         double satiety,
-        CharacterStats baseStats)
+        CharacterStats baseStats,
+        BiologicalSex? sex)
     {
         if (string.IsNullOrWhiteSpace(speciesId))
         {
@@ -508,6 +512,7 @@ public sealed class World
             satiety,
             NeedsTuning,
             Reservations,
+            sex ?? BiologicalSexAssignment.ForEntity(id, speciesId),
             baseStats);
         _entities.Add(id, entity);
         return entity;
@@ -936,7 +941,8 @@ public sealed class World
                 entity.SpeciesId,
                 entity.Position,
                 entity.Satiety,
-                species.CreateCharacterStats(DefaultCharacterStats));
+                species.CreateCharacterStats(DefaultCharacterStats),
+                entity.Sex ?? throw new InvalidDataException($"Snapshot entity '{entity.Id}' has no biological sex."));
             restored.CaptivityState = entity.CaptivityState;
             restored.Parent1Id = entity.Parent1Id;
             restored.Parent2Id = entity.Parent2Id;
@@ -1160,7 +1166,8 @@ public sealed class World
         string speciesId,
         Vector3 position,
         double satiety,
-        CharacterStats baseStats)
+        CharacterStats baseStats,
+        BiologicalSex sex)
     {
         var entity = new EntityRecord(
             id,
@@ -1169,6 +1176,7 @@ public sealed class World
             satiety,
             NeedsTuning,
             Reservations,
+            sex,
             baseStats);
         _entities.Add(id, entity);
         return entity;
