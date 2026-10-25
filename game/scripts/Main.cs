@@ -22,6 +22,7 @@ public partial class Main : Node3D
 	private readonly Dictionary<string, Button> _entityButtons = new(StringComparer.Ordinal);
 	private readonly Dictionary<WorldTarget, MeshInstance3D> _resourceMarkers = [];
 	private readonly Dictionary<string, MeshInstance3D> _fireplaceViews = [];
+	private readonly Dictionary<string, MeshInstance3D> _workbenchViews = new(StringComparer.Ordinal);
 	private FoodConsumptionService? _foodConsumption;
 	private CreatureHuntingService? _creatureHunting;
 	private WildPreyThreatService? _wildPreyThreat;
@@ -239,6 +240,8 @@ public partial class Main : Node3D
 		UpdateFarmPresentation();
 		if (_placingHut) UpdateHutPreview();
 		else if (_placingFireplace) UpdateFireplacePreview();
+		else if (_placingWorkbench) UpdateWorkbenchPreview();
+		else if (_placingFarm) UpdateFarmPlacementPreview();
 		UpdateConstructionPanel();
 	}
 
@@ -475,8 +478,9 @@ public partial class Main : Node3D
 		_map.Mesh = new PlaneMesh { Size = new Vector2(WorldHalfExtent * 2, WorldHalfExtent * 2) };
 		_map.MaterialOverride = CreateMaterial(new Color(0.32f, 0.5f, 0.24f));
 		BuildScenery();
-		BuildTownWorkbench(_world.Workstations.Single(workstation => workstation.Id == "workbench-1").Position);
-		_navigationRegion.NavigationMesh = CreateNavigationMesh();
+		RebuildWorkbenchViews();
+		_navigationRegion.NavigationMesh = CreateNavigationMesh(CurrentWorkbenchPositions());
+		UpdateFarmPresentation();
 
 		_foodConsumption = new FoodConsumptionService(_world, _speciesCatalog, GetNavigationAdapter);
 		_carcassDecay = new CarcassDecayService(_world);
@@ -1254,8 +1258,8 @@ public partial class Main : Node3D
 
 	private void RebuildPresentationFromWorld()
 	{
-		BuildTownWorkbench(_world.Workstations.FirstOrDefault(workstation => workstation.Id == "workbench-1")?.Position
-			?? NewGameSession.TownWorkbenchPosition);
+		RebuildWorkbenchViews();
+		_navigationRegion.NavigationMesh = CreateNavigationMesh(CurrentWorkbenchPositions());
 		ClearEntityViews();
 		ClearResourceMarkers();
 		RebuildResourceMarkersFromWorld();
@@ -1299,19 +1303,19 @@ public partial class Main : Node3D
 
 
 
-	private static bool IsBlockedCell(float minX, float maxX, float minZ, float maxZ)
+	private static bool IsBlockedCell(float minX, float maxX, float minZ, float maxZ,
+		IEnumerable<System.Numerics.Vector3>? workbenchPositions = null)
 	{
-		if (minX == -1f && maxX == 1f && minZ == -1f && maxZ == 1f)
+		if (minX < 1f && maxX > -1f && minZ < 1f && maxZ > -1f)
 		{
 			return true;
 		}
 
 		const float workbenchNavigationClearance = 2f;
-		var workbench = NewGameSession.TownWorkbenchPosition;
-		if (minX == workbench.X - workbenchNavigationClearance
-			&& maxX == workbench.X + workbenchNavigationClearance
-			&& minZ == workbench.Z - workbenchNavigationClearance
-			&& maxZ == workbench.Z + workbenchNavigationClearance)
+		var workbenches = workbenchPositions ?? [NewGameSession.TownWorkbenchPosition];
+		if (workbenches.Any(workbench =>
+			minX < workbench.X + workbenchNavigationClearance && maxX > workbench.X - workbenchNavigationClearance
+			&& minZ < workbench.Z + workbenchNavigationClearance && maxZ > workbench.Z - workbenchNavigationClearance))
 		{
 			return true;
 		}
@@ -1324,16 +1328,50 @@ public partial class Main : Node3D
 
 	private static StandardMaterial3D CreateMaterial(Color color) => new() { AlbedoColor = color };
 
-	private void BuildTownWorkbench(System.Numerics.Vector3 placement)
+	private void RebuildWorkbenchViews()
 	{
-		foreach (var child in _workbench.GetChildren())
+		foreach (var view in _workbenchViews.Values.Where(view => view != _workbench).ToArray())
 		{
-			_workbench.RemoveChild(child);
+			RemoveChild(view);
+			view.QueueFree();
+		}
+		_workbenchViews.Clear();
+
+		var starter = _world.Workstations.FirstOrDefault(workstation => workstation.Id == "workbench-1");
+		_workbench.Visible = starter is not null;
+		if (starter is not null)
+		{
+			BuildWorkbenchView(_workbench, starter.Position);
+			_workbenchViews.Add(starter.Id, _workbench);
+		}
+
+		foreach (var workstation in _world.Workstations.Where(workstation => workstation.Id != "workbench-1"))
+			AddWorkbenchView(workstation);
+	}
+
+	private void AddWorkbenchView(Workstation workstation)
+	{
+		if (_workbenchViews.ContainsKey(workstation.Id)) return;
+		var view = new MeshInstance3D { Name = workstation.Id };
+		AddChild(view);
+		BuildWorkbenchView(view, workstation.Position);
+		_workbenchViews.Add(workstation.Id, view);
+	}
+
+	private IEnumerable<System.Numerics.Vector3> CurrentWorkbenchPositions()
+		=> _world.Workstations.Select(workstation => workstation.Position).ToArray();
+
+	private void BuildWorkbenchView(MeshInstance3D view, System.Numerics.Vector3 placement)
+	{
+		foreach (var child in view.GetChildren())
+		{
+			view.RemoveChild(child);
 			child.QueueFree();
 		}
-		_workbench.Position = new Vector3(placement.X, placement.Y + 1.05f, placement.Z);
-		_workbench.Mesh = new BoxMesh { Size = new Vector3(2, 0.18f, 1.4f) };
-		_workbench.MaterialOverride = CreateMaterial(new Color(0.52f, 0.31f, 0.15f));
+		view.Position = new Vector3(placement.X, placement.Y + 1.05f, placement.Z);
+		view.Mesh = new BoxMesh { Size = new Vector3(2, 0.18f, 1.4f) };
+		view.MaterialOverride = CreateMaterial(new Color(0.52f, 0.31f, 0.15f));
+		view.Visible = true;
 		// The visual workbench is also a real obstacle. Keep the collision footprint
 		// broad enough to cover the legs and shelf while leaving walkable space around it.
 		var workbenchBody = new StaticBody3D { Name = "WorkbenchCollision" };
@@ -1347,25 +1385,25 @@ public partial class Main : Node3D
 			Shape = new BoxShape3D { Size = new Vector3(2f, 1.05f, 1.4f) },
 			Position = new Vector3(0, -0.48f, 0)
 		});
-		_workbench.AddChild(workbenchBody);
+		view.AddChild(workbenchBody);
 		var wood = new Color(0.32f, 0.19f, 0.09f);
 		var steel = new Color(0.35f, 0.38f, 0.42f);
 		foreach (var x in new[] { -0.8f, 0.8f })
 			foreach (var z in new[] { -0.5f, 0.5f })
-				AddBenchPart($"Leg_{x}_{z}", new(0.18f, 0.83f, 0.18f), new(x, -0.53f, z), wood);
-		AddBenchPart("Shelf", new(1.7f, 0.08f, 1.05f), new(0, -0.63f, 0), wood);
-		AddBenchPart("Vise", new(0.32f, 0.24f, 0.3f), new(0.65f, 0.21f, 0.35f), steel);
-		AddBenchPart("ViseHandle", new(0.48f, 0.05f, 0.05f), new(0.65f, 0.15f, 0.55f), steel);
-		AddBenchPart("Workpiece", new(1.1f, 0.05f, 0.22f), new(-0.1f, 0.115f, -0.3f), new(0.73f, 0.53f, 0.3f));
-		AddBenchPart("HammerHandle", new(0.06f, 0.05f, 0.42f), new(-0.55f, 0.115f, 0.22f), wood);
-		AddBenchPart("HammerHead", new(0.26f, 0.1f, 0.1f), new(-0.55f, 0.14f, 0.04f), steel);
-		_workbench.AddChild(new Label3D { Name = "WorkbenchLabel", Text = "Workbench",
+				AddBenchPart(view, $"Leg_{x}_{z}", new(0.18f, 0.83f, 0.18f), new(x, -0.53f, z), wood);
+		AddBenchPart(view, "Shelf", new(1.7f, 0.08f, 1.05f), new(0, -0.63f, 0), wood);
+		AddBenchPart(view, "Vise", new(0.32f, 0.24f, 0.3f), new(0.65f, 0.21f, 0.35f), steel);
+		AddBenchPart(view, "ViseHandle", new(0.48f, 0.05f, 0.05f), new(0.65f, 0.15f, 0.55f), steel);
+		AddBenchPart(view, "Workpiece", new(1.1f, 0.05f, 0.22f), new(-0.1f, 0.115f, -0.3f), new(0.73f, 0.53f, 0.3f));
+		AddBenchPart(view, "HammerHandle", new(0.06f, 0.05f, 0.42f), new(-0.55f, 0.115f, 0.22f), wood);
+		AddBenchPart(view, "HammerHead", new(0.26f, 0.1f, 0.1f), new(-0.55f, 0.14f, 0.04f), steel);
+		view.AddChild(new Label3D { Name = "WorkbenchLabel", Text = "Workbench",
 			Position = new Vector3(0, 0.9f, 0), Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
 			FontSize = 28, PixelSize = 0.006f });
 	}
 
-	private void AddBenchPart(string name, Vector3 size, Vector3 position, Color color)
-		=> _workbench.AddChild(new MeshInstance3D { Name = name, Mesh = new BoxMesh { Size = size },
+	private static void AddBenchPart(MeshInstance3D view, string name, Vector3 size, Vector3 position, Color color)
+		=> view.AddChild(new MeshInstance3D { Name = name, Mesh = new BoxMesh { Size = size },
 			Position = position, MaterialOverride = CreateMaterial(color) });
 
 	private void AddScenery(string name, Vector3 size, Vector3 position, Color color)
@@ -1451,8 +1489,19 @@ public partial class Main : Node3D
 		}
 	}
 
-	private static NavigationMesh CreateNavigationMesh()
+	private static NavigationMesh CreateNavigationMesh(IEnumerable<System.Numerics.Vector3>? workbenchPositions = null)
 	{
+		var workbenches = (workbenchPositions ?? [NewGameSession.TownWorkbenchPosition]).ToArray();
+		// Fixture placement snaps to whole metres, so add exact clearance edges to
+		// the integer-vertex grid instead of dropping an entire large town cell.
+		var navigationGridLines = NavigationGridLines
+			.Concat(workbenches.SelectMany(workbench => new[]
+			{
+				workbench.X - 2f, workbench.X + 2f, workbench.Z - 2f, workbench.Z + 2f
+			}).Select(value => (float)Mathf.RoundToInt(value)))
+			.Distinct()
+			.OrderBy(value => value)
+			.ToArray();
 		var mesh = new NavigationMesh();
 		var vertices = new List<Vector3>();
 		var vertexIndices = new Dictionary<(int X, int Z), int>();
@@ -1483,15 +1532,15 @@ public partial class Main : Node3D
 			]);
 		}
 
-		for (var xi = 0; xi < NavigationGridLines.Length - 1; xi++)
+		for (var xi = 0; xi < navigationGridLines.Length - 1; xi++)
 		{
-			for (var zi = 0; zi < NavigationGridLines.Length - 1; zi++)
+			for (var zi = 0; zi < navigationGridLines.Length - 1; zi++)
 			{
-				var minX = (int)NavigationGridLines[xi];
-				var maxX = (int)NavigationGridLines[xi + 1];
-				var minZ = (int)NavigationGridLines[zi];
-				var maxZ = (int)NavigationGridLines[zi + 1];
-				if (IsBlockedCell(minX, maxX, minZ, maxZ))
+				var minX = (int)navigationGridLines[xi];
+				var maxX = (int)navigationGridLines[xi + 1];
+				var minZ = (int)navigationGridLines[zi];
+				var maxZ = (int)navigationGridLines[zi + 1];
+				if (IsBlockedCell(minX, maxX, minZ, maxZ, workbenches))
 				{
 					continue;
 				}

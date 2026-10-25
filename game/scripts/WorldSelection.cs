@@ -99,23 +99,23 @@ public partial class Main
         foreach (var workstation in _world.Workstations)
         {
             var target = new WorldTarget(TargetKind.Workstation, workstation.Id);
-            if (!TargetExists(target) || !_workbench.IsVisibleInTree() || _workbench.IsQueuedForDeletion()) continue;
-            var meshes = _workbench.FindChildren("*", "MeshInstance3D", true, false).OfType<MeshInstance3D>()
-                .Append(_workbench).Where(mesh => mesh.Mesh is not null && mesh.IsVisibleInTree()).ToArray();
+            if (!TargetExists(target) || !_workbenchViews.TryGetValue(workstation.Id, out var workbenchView)
+                || !workbenchView.IsVisibleInTree() || workbenchView.IsQueuedForDeletion()) continue;
+            var meshes = WorkbenchMeshes(workbenchView).ToArray();
             if (meshes.Length == 0) continue;
             var parts = meshes.Select(mesh => mesh.GlobalTransform * mesh.GetAabb()).ToArray();
             var bounds = parts.Aggregate((left, right) => left.Merge(right));
-            targets.Add(new(target, _workbench, bounds, parts, meshes.SelectMany(SampleMesh).ToArray()));
+            targets.Add(new(target, workbenchView, bounds, parts, meshes.SelectMany(SampleMesh).ToArray()));
         }
         foreach (var farm in _world.Farms)
         {
             var target = new WorldTarget(TargetKind.Farm, farm.Id);
-            if (!TargetExists(target) || !_farmView.IsVisibleInTree() || _farmView.IsQueuedForDeletion()) continue;
-            var meshes = _farmView.FindChildren("*", "MeshInstance3D", true, false).OfType<MeshInstance3D>()
-                .Where(mesh => mesh.Mesh is not null && mesh.IsVisibleInTree()).ToArray();
+            if (!TargetExists(target) || !_farmViews.TryGetValue(farm.Id, out var farmView)
+                || !farmView.Root.IsVisibleInTree() || farmView.Root.IsQueuedForDeletion()) continue;
+            var meshes = FarmMeshes(farmView.Root).ToArray();
             if (meshes.Length == 0) continue;
             var parts = meshes.Select(mesh => mesh.GlobalTransform * mesh.GetAabb()).ToArray();
-            targets.Add(new(target, _farmView, parts.Aggregate((left, right) => left.Merge(right)), parts,
+            targets.Add(new(target, farmView.Root, parts.Aggregate((left, right) => left.Merge(right)), parts,
                 meshes.SelectMany(SampleMesh).ToArray()));
         }
         foreach (var (target, node) in _constructionViews)
@@ -130,6 +130,14 @@ public partial class Main
         }
         return targets;
     }
+
+    private static IEnumerable<MeshInstance3D> WorkbenchMeshes(MeshInstance3D view)
+        => view.FindChildren("*", "MeshInstance3D", true, false).OfType<MeshInstance3D>().Append(view)
+            .Where(mesh => mesh.Mesh is not null && mesh.IsVisibleInTree());
+
+    private static IEnumerable<MeshInstance3D> FarmMeshes(Node3D view)
+        => view.FindChildren("*", "MeshInstance3D", true, false).OfType<MeshInstance3D>()
+            .Where(mesh => mesh.Mesh is not null && mesh.IsVisibleInTree());
 
     private bool TargetVisible(TargetView target, Camera3D camera, IReadOnlyList<TargetView> targets)
     {
@@ -150,12 +158,12 @@ public partial class Main
     {
         // Existing scenery is visual-only, so inspect its actual mesh bounds instead of adding physics bodies.
         var scenery = _scenery?.GetChildren().OfType<MeshInstance3D>() ?? [];
-        var benchParts = target.Kind == TargetKind.Workstation
-            ? Enumerable.Empty<MeshInstance3D>()
-            : _workbench.FindChildren("*", "MeshInstance3D", true, false).OfType<MeshInstance3D>().Append(_workbench);
-        var farmParts = target.Kind == TargetKind.Farm
-            ? Enumerable.Empty<MeshInstance3D>()
-            : _farmView.FindChildren("*", "MeshInstance3D", true, false).OfType<MeshInstance3D>();
+        var benchParts = _workbenchViews
+            .Where(pair => target.Kind != TargetKind.Workstation || pair.Key != target.Id)
+            .SelectMany(pair => WorkbenchMeshes(pair.Value));
+        var farmParts = _farmViews
+            .Where(pair => target.Kind != TargetKind.Farm || pair.Key != target.Id)
+            .SelectMany(pair => FarmMeshes(pair.Value.Root));
         var constructionParts = target.Kind is TargetKind.ConstructionSite or TargetKind.Structure
             ? Enumerable.Empty<MeshInstance3D>()
             : _constructionViews.Values.SelectMany(node => node.FindChildren("*", "MeshInstance3D", true, false).OfType<MeshInstance3D>());
@@ -236,13 +244,13 @@ public partial class Main
             _targetLocked = false;
             _targetLockLostSeconds = 0;
         }
-        var gameplay = _sessionActive && _menuState.ActiveMenu is null;
+        var gameplay = _sessionActive && _menuState.ActiveMenu is null && !PlacementPanelOpen;
         _targetHud.Visible = gameplay;
         UpdateGameplayFeedback(0);
         if (_targetReticle is not null)
         {
-            _targetReticle.Text = _targetLocked ? "◆" : "+";
-            _targetReticle.AddThemeColorOverride("font_color", _targetLocked
+            _targetReticle.Text = PlacementPanelOpen ? "+" : _targetLocked ? "◆" : "+";
+            _targetReticle.AddThemeColorOverride("font_color", !PlacementPanelOpen && _targetLocked
                 ? new Color(1, 0.78f, 0.18f, 0.95f) : new Color(1, 1, 1, 0.9f));
         }
         _targetOutline.Visible = false;

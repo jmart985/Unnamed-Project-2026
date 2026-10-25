@@ -18,6 +18,7 @@ public static class ControllerActions
     public const string CycleTarget = Simulation.ControllerActions.CycleTarget;
     public const string Inventory = Simulation.ControllerActions.Inventory;
     public const string Settlement = Simulation.ControllerActions.Settlement;
+    public const string BuildMode = Simulation.ControllerActions.BuildMode;
     public const string Settings = Simulation.ControllerActions.Settings;
     public static IReadOnlyList<string> All => Simulation.ControllerActions.All;
     public const string CloseMenu = Simulation.ControllerActions.CloseMenu;

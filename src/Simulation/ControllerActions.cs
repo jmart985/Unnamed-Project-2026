@@ -19,6 +19,7 @@ public static class ControllerActions
     public const string CycleTarget = "cycle_target";
     public const string Inventory = "open_inventory";
     public const string Settlement = "open_settlement";
+    public const string BuildMode = "open_build_mode";
     public const string Settings = "open_settings";
     public const string CloseMenu = "close_menu";
     public const string DebugRoute = "debug_route";
@@ -29,8 +30,9 @@ public static class ControllerActions
     public static IReadOnlyList<string> All { get; } =
     [
         MoveLeft, MoveRight, MoveForward, MoveBackward, Jump,
-        Attack, AttackLeft, AttackRight, Collect, Interact, Greet, Rest, CycleTarget, Inventory, Settlement, Settings, CloseMenu,
-        DebugRoute, DebugUnreachable, DebugCancel, DebugRemoveGoal
+        Attack, AttackLeft, AttackRight, Collect, Interact, Greet, Rest, CycleTarget, Inventory, Settlement,
+        Settings, CloseMenu,
+        DebugRoute, DebugUnreachable, DebugCancel, DebugRemoveGoal, BuildMode
     ];
 }
 

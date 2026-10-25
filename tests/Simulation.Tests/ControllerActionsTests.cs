@@ -14,6 +14,7 @@ public sealed class ControllerActionsTests
         Assert.Contains(ControllerActions.CycleTarget, ControllerActions.All);
         Assert.Contains(ControllerActions.Inventory, ControllerActions.All);
         Assert.Contains(ControllerActions.Settlement, ControllerActions.All);
+        Assert.Contains(ControllerActions.BuildMode, ControllerActions.All);
         Assert.Contains(ControllerActions.CloseMenu, ControllerActions.All);
         Assert.Contains(ControllerActions.DebugRoute, ControllerActions.All);
         Assert.Contains(ControllerActions.DebugRemoveGoal, ControllerActions.All);
@@ -27,7 +28,8 @@ public sealed class ControllerActionsTests
             "move_left", "move_right", "move_forward", "move_backward", "jump",
             "combat_attack", "combat_attack_left", "combat_attack_right", "collect", "interact",
             "greet", "rest", "cycle_target", "open_inventory", "open_settlement", "open_settings",
-            "close_menu", "debug_route", "debug_unreachable", "debug_cancel", "debug_remove_goal"
+            "close_menu", "debug_route", "debug_unreachable", "debug_cancel", "debug_remove_goal",
+            "open_build_mode"
         ],
         ControllerActions.All);
     }

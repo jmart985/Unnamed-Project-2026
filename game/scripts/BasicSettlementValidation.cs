@@ -111,10 +111,11 @@ public partial class Main
         _playerCharacter.Rotation = Vector3.Zero;
         SyncPlayerPosition();
         ToggleMenu(PlayerMenu.Settlement);
-        PressMenuButton(_controlsPanel, "Place starter hut");
+        PressMenuButton(_controlsPanel, "Build mode");
+        SelectHutBuildSlot();
         Require(PlacementPanelOpen && _hutPreview.Visible && _placementValid,
-            "settlement controls show a valid starter hut preview");
-        PressMenuButton(_placementPanel, "Confirm site");
+            "settlement build hotbar shows a valid starter hut preview");
+        _Input(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true });
         var site = _world.ConstructionSites.Single();
         _playerCharacter.GlobalPosition = new Vector3(site.Position.X, 0, site.Position.Z + 1.5f);
         SyncPlayerPosition();
