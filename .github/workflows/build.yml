@@ -6,7 +6,23 @@ on:
 
 jobs:
   dotnet:
-    name: Build and validate
+    name: .NET Build and Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.401
+
+      - name: Restore .NET solution
+        run: dotnet restore UnnamedProject2026.slnx
+      - name: Build .NET solution
+        run: dotnet build UnnamedProject2026.slnx --configuration Release --no-restore
+      - name: Run .NET tests
+        run: dotnet test UnnamedProject2026.slnx --configuration Release --no-build
+
+  godot-validation:
+    name: Godot Scenario Validation
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,12 +33,9 @@ jobs:
         with:
           version: 4.7.2
           use-dotnet: true
-      - name: Restore
+
+      - name: Restore .NET solution for Godot C# import
         run: dotnet restore UnnamedProject2026.slnx
-      - name: Build
-        run: dotnet build UnnamedProject2026.slnx --configuration Release --no-restore
-      - name: Test
-        run: dotnet test UnnamedProject2026.slnx --configuration Release --no-build
       - name: Import Godot project resources
         run: godot --headless --editor --build-solutions --path game --quit
       - name: Run all registered Godot scenarios
@@ -36,3 +49,21 @@ jobs:
           name: godot-validation-logs-${{ github.run_id }}
           path: ${{ runner.temp }}/validate-*.log
           if-no-files-found: warn
+
+  validate:
+    name: Build and validate
+    if: always()
+    needs: [dotnet, godot-validation]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require .NET and Godot checks to pass
+        env:
+          DOTNET_RESULT: ${{ needs.dotnet.result }}
+          GODOT_RESULT: ${{ needs.godot-validation.result }}
+        run: |
+          if [[ "$DOTNET_RESULT" != "success" || "$GODOT_RESULT" != "success" ]]; then
+            echo ".NET result: $DOTNET_RESULT"
+            echo "Godot validation result: $GODOT_RESULT"
+            exit 1
+          fi
+          echo ".NET build/tests and Godot scenario validation passed."
