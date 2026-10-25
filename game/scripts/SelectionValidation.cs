@@ -16,8 +16,8 @@ public partial class Main
             _playerCharacter.SetPhysicsProcess(false);
             var camera = GetNode<Camera3D>("Camera3D");
             camera.Current = true;
-            camera.GlobalPosition = new Vector3(0, 8, 6);
-            camera.LookAt(new Vector3(0, 0, -10));
+            camera.GlobalPosition = new Vector3(-3, 10, 22);
+            camera.LookAt(new Vector3(0, 0, -8));
             var human = _world.Entities.First(entity => entity.Id != _world.PlayerEntityId && entity.SpeciesId == "human");
             var creature = _world.Entities.First(entity => entity.SpeciesId == "wolf");
             foreach (var (id, view) in _entityViews) view.Visible = id == human.Id || id == creature.Id;
@@ -35,12 +35,24 @@ public partial class Main
             _world.AddStockpile("selection-stock", new(5, 0, -12), stock);
             ClearResourceMarkers(); RebuildResourceMarkersFromWorld();
             await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
-            Require(VisibleWorldTargets().Count == 6, "six visible gameplay targets, including farm, with player and hidden entities excluded");
+            var expectedTargets = new HashSet<WorldTarget>
+            {
+                new(TargetKind.Entity, human.Id),
+                new(TargetKind.Entity, creature.Id),
+                new(TargetKind.Food, "selection-food"),
+                new(TargetKind.ResourcePile, "selection-wood"),
+                new(TargetKind.Stockpile, "selection-stock"),
+                new(TargetKind.Farm, _world.Farms.Single().Id)
+            };
+            var visibleTargets = VisibleWorldTargets().Select(view => view.Target).ToHashSet();
+            var missingTargets = expectedTargets.Except(visibleTargets).ToArray();
+            Require(missingTargets.Length == 0,
+                $"all expected entities, resources and farm are visible; missing: {string.Join(", ", missingTargets.Select(target => $"{target.Kind}:{target.Id}"))}; visible: {string.Join(", ", visibleTargets.Select(target => $"{target.Kind}:{target.Id}"))}");
             var snapshot = WorldSnapshotSerializer.Serialize(_world, _clock.SimulationTime);
             var strikes = 0; _playerCharacter.StrikeReleased += (_, _) => strikes++;
             var seen = new HashSet<WorldTarget>();
             WorldTarget? first = null;
-            for (var index = 0; index < 6; index++)
+            for (var index = 0; index < visibleTargets.Count; index++)
             {
                 SendMenuKey(Key.T);
                 Require(_selectedTarget is not null && seen.Add(_selectedTarget), "cycle selects each visible target once");

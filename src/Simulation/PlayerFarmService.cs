@@ -16,7 +16,7 @@ public enum FarmActionResult
     PlotEmpty,
     CropMature,
     CropImmature,
-    CarryCapacityExceeded
+    ItemStackLimitExceeded
 }
 
 public sealed record FarmAction(FarmActionResult Result, string Message)
@@ -56,10 +56,8 @@ public sealed class ActorFarmService(World world, SpeciesCatalog speciesCatalog)
         if (!plot!.IsPlanted) return Fail(FarmActionResult.PlotEmpty, "The plot is empty.");
         if (!plot.IsMature) return Fail(FarmActionResult.CropImmature, "The crop is not mature yet.");
         var yield = plot.Crop!.HarvestYield;
-        var carried = actor!.Inventory.Values.Sum(value => (long)value);
-        if (carried + yield > actor.InventoryCapacity
-            || actor.Inventory.GetValueOrDefault(ItemIds.Food) > int.MaxValue - yield)
-            return Fail(FarmActionResult.CarryCapacityExceeded, "You do not have enough carrying capacity for the harvest.");
+        if (!actor!.CanAddCarried(ItemIds.Food, yield))
+            return Fail(FarmActionResult.ItemStackLimitExceeded, "The carried food stack is full; make room before harvesting.");
 
         if (plot.Harvest() != yield) throw new InvalidOperationException("Validated farm harvest failed.");
         actor.TryAddCarried(ItemIds.Food, yield);

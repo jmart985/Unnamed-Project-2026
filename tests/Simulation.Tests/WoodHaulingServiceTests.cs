@@ -8,7 +8,7 @@ public sealed class WoodHaulingServiceTests
     [Fact]
     public void IndividualBoldnessProducesDifferentDeterministicWoodLoads()
     {
-        var world = new World(inventoryCapacity: 10);
+        var world = new World();
         var first = world.SpawnEntity("human", Vector3.Zero);
         var second = world.SpawnEntity("human", Vector3.One);
         var source = AddLocation(world.AddResourcePile, "wood-pile", Vector3.UnitX, capacity: 100, wood: 100);
@@ -35,7 +35,7 @@ public sealed class WoodHaulingServiceTests
     [Fact]
     public void HaulerPicksUpAndDepositsOnlyReservedWoodWithinCapacity()
     {
-        var world = new World(inventoryCapacity: 3);
+        var world = new World();
         var entity = world.SpawnEntity("human", Vector3.Zero);
         var source = AddLocation(world.AddResourcePile, "wood-pile", Vector3.UnitX, capacity: 10, wood: 5);
         var stockpile = AddLocation(world.AddStockpile, "stockpile", new Vector3(2, 0, 0), capacity: 2);
@@ -78,7 +78,7 @@ public sealed class WoodHaulingServiceTests
     [Fact]
     public void CompetingHaulersCannotReserveTheSameFinalWoodOrStorageCapacity()
     {
-        var world = new World(inventoryCapacity: 2);
+        var world = new World();
         var first = world.SpawnEntity("human", Vector3.Zero);
         var second = world.SpawnEntity("human", Vector3.One);
         var source = AddLocation(world.AddResourcePile, "wood-pile", Vector3.UnitX, capacity: 1, wood: 1);
@@ -104,7 +104,7 @@ public sealed class WoodHaulingServiceTests
     [Fact]
     public void CompetingHaulersCannotOverreserveStockpileCapacity()
     {
-        var world = new World(inventoryCapacity: 2);
+        var world = new World();
         var first = world.SpawnEntity("human", Vector3.Zero);
         var second = world.SpawnEntity("human", Vector3.One);
         var source = AddLocation(world.AddResourcePile, "wood-pile", Vector3.UnitX, capacity: 5, wood: 5);
@@ -131,7 +131,7 @@ public sealed class WoodHaulingServiceTests
     [Fact]
     public void PickupReleasesTheSourceClaimWhileRetainingTheStockpileReservation()
     {
-        var world = new World(inventoryCapacity: 2);
+        var world = new World();
         var first = world.SpawnEntity("human", Vector3.Zero);
         var second = world.SpawnEntity("human", Vector3.One);
         var source = AddLocation(world.AddResourcePile, "wood-pile", Vector3.UnitX, capacity: 10, wood: 6);
@@ -214,7 +214,7 @@ public sealed class WoodHaulingServiceTests
     [Fact]
     public void FailedPickupLeavesBothContainersUnchangedAndReleasesClaims()
     {
-        var world = new World(inventoryCapacity: 2);
+        var world = new World();
         var entity = world.SpawnEntity("human", Vector3.Zero);
         var source = AddLocation(world.AddResourcePile, "wood-pile", Vector3.UnitX, capacity: 2, wood: 2);
         var stockpile = AddLocation(world.AddStockpile, "stockpile", new Vector3(2, 0, 0), capacity: 2);
@@ -254,7 +254,7 @@ public sealed class WoodHaulingServiceTests
     [Fact]
     public void FullStockpileRetainsCargoReleasesReservationAndRecoversAfterSpaceIsFreed()
     {
-        var world = new World(inventoryCapacity: 2);
+        var world = new World();
         var entity = world.SpawnEntity("human", Vector3.Zero);
         var source = AddLocation(world.AddResourcePile, "wood-pile", Vector3.UnitX, capacity: 2, wood: 2);
         var stockpile = AddLocation(world.AddStockpile, "stockpile", new Vector3(2, 0, 0), capacity: 2);
@@ -327,7 +327,7 @@ public sealed class WoodHaulingServiceTests
     [Fact]
     public void RemovedWoodSourceReleasesReservationsAndSelectsAnAlternateSource()
     {
-        var world = new World(inventoryCapacity: 2);
+        var world = new World();
         var entity = world.SpawnEntity("human", Vector3.Zero);
         var removedSource = AddLocation(world.AddResourcePile, "wood-near", Vector3.UnitX, capacity: 2, wood: 2);
         var alternateSource = AddLocation(
@@ -405,7 +405,7 @@ public sealed class WoodHaulingServiceTests
     [Fact]
     public void RemovedStockpilesReleaseReservationsRetainCargoAndSelectAReplacement()
     {
-        var world = new World(inventoryCapacity: 2);
+        var world = new World();
         var entity = world.SpawnEntity("human", Vector3.Zero);
         var source = AddLocation(world.AddResourcePile, "wood-pile", Vector3.UnitX, capacity: 2, wood: 2);
         var removedBeforePickup = AddLocation(
@@ -500,7 +500,7 @@ public sealed class WoodHaulingServiceTests
     [Fact]
     public void NoWoodWaitsUntilBoundedRetryAndDiscoversNewWork()
     {
-        var world = new World(inventoryCapacity: 2);
+        var world = new World();
         var entity = world.SpawnEntity("human", Vector3.Zero);
         var source = AddLocation(world.AddResourcePile, "wood-pile", Vector3.UnitX, capacity: 5);
         AddLocation(world.AddStockpile, "stockpile-1", new Vector3(2, 0, 0), capacity: 2);
@@ -538,7 +538,7 @@ public sealed class WoodHaulingServiceTests
     [Fact]
     public void WaitingDefersRetryUntilConfiguredDelayElapses()
     {
-        var world = new World(inventoryCapacity: 2);
+        var world = new World();
         var entity = world.SpawnEntity("human", Vector3.Zero);
         AddLocation(world.AddResourcePile, "wood-pile", Vector3.UnitX, capacity: 5, wood: 2);
         var service = new WoodHaulingService(world, _ => new FakeNavigationAdapter(), retryDelayTicks: 10);
@@ -566,7 +566,7 @@ public sealed class WoodHaulingServiceTests
     [Fact]
     public void PendingPickupRetryDoesNotBlockDeliveryWhenCargoExists()
     {
-        var world = new World(inventoryCapacity: 2);
+        var world = new World();
         var entity = world.SpawnEntity("human", Vector3.Zero);
         AddLocation(world.AddResourcePile, "wood-pile", Vector3.UnitX, capacity: 5, wood: 2);
         var carriedSource = new ResourceContainer("carried-source", 2);

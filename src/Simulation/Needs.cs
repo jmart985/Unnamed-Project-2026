@@ -127,6 +127,34 @@ public sealed class NeedsState
 
     public double NutritionPerUnit => _tuning.NutritionPerUnit;
     public double HydrationPerUnit => _tuning.HydrationPerUnit;
+    internal double PassiveFatigueAccumulationPerSecond => _tuning.FatigueAccumulationPerSecond;
+
+    public void AdvanceWithLoad(
+        double simulationSeconds,
+        double carriedWeightKg,
+        CharacterStats stats,
+        bool isSleeping = false,
+        double? satietyOverride = null,
+        double? hydrationOverride = null)
+    {
+        ArgumentNullException.ThrowIfNull(stats);
+        var loadFatigue = LoadFatigue.PerSecond(carriedWeightKg, stats);
+        if (isSleeping)
+        {
+            Advance(
+                simulationSeconds,
+                isSleeping: true,
+                satietyOverride: satietyOverride,
+                hydrationOverride: hydrationOverride);
+            return;
+        }
+
+        Advance(
+            simulationSeconds,
+            satietyOverride: satietyOverride,
+            hydrationOverride: hydrationOverride,
+            fatigueOverride: PassiveFatigueAccumulationPerSecond + loadFatigue);
+    }
 
     public void Advance(double simulationSeconds, bool isSleeping = false, double? satietyOverride = null, double? hydrationOverride = null, double? fatigueOverride = null)
     {

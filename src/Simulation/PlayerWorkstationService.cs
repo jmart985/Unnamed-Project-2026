@@ -17,6 +17,7 @@ public enum WorkstationActionResult
     RecipeNotActive,
     MissingInput,
     OutputCapacityExceeded,
+    CarriedItemStackFull,
     NothingToCollect
 }
 
@@ -81,18 +82,25 @@ public sealed class PlayerWorkstationService(World world)
         if (!TryResolve(workstationId, out var player, out var workstation, out var failure)) return failure;
         var output = workstation!.OutputStorage.Counts.Where(item => item.Value > 0).ToArray();
         if (output.Length == 0) return Fail(WorkstationActionResult.NothingToCollect, "There is no finished output to collect.");
-        var carried = player!.Inventory.Values.Sum(value => (long)value);
-        var produced = output.Sum(item => (long)item.Value);
-        if (carried + produced > player.InventoryCapacity)
-            return Fail(WorkstationActionResult.OutputCapacityExceeded, "You do not have enough carrying capacity for the finished output.");
-        if (output.Any(item => player!.Inventory.GetValueOrDefault(item.Key) > int.MaxValue - item.Value))
-            return Fail(WorkstationActionResult.OutputCapacityExceeded, "You cannot carry the finished output.");
+        var collected = new Dictionary<string, int>(StringComparer.Ordinal);
         foreach (var item in output)
         {
-            workstation.OutputStorage.RemoveKnown(item.Key, item.Value);
-            player!.TryAddCarried(item.Key, item.Value);
+            var result = ResourceTransferService.TryPickUp(
+                workstation.OutputStorage,
+                player!,
+                item.Key,
+                item.Value,
+                out var transferred);
+            if (result == ResourceMutationResult.Success)
+                collected[item.Key] = transferred;
         }
-        return Ok($"Collected {string.Join(", ", output.Select(item => $"{item.Value} {item.Key}"))}.");
+        if (collected.Count == 0)
+            return Fail(WorkstationActionResult.CarriedItemStackFull, "The carried stack for each finished item is full.");
+        var message = string.Join(", ", collected.Select(item => $"{item.Value} {item.Key}"));
+        var remaining = workstation.OutputStorage.Counts.Values.Sum();
+        return Ok(remaining > 0
+            ? $"Collected {message}. Some finished output remains at the workstation."
+            : $"Collected {message}.");
     }
 
     private bool TryResolve(string workstationId, out EntityRecord? player, out Workstation? workstation, out WorkstationAction failure)

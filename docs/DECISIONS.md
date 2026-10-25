@@ -104,19 +104,28 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 ## D013 — Bounded entity inventory
 
 - Date: 2026-09-27
-- Status: Provisional; implemented for J02a
-- Decision: Store entity inventory in a World-created `ResourceContainer` with a configurable World capacity and a default of 10 item units.
-- Reason: Hauling needs the same atomic quantity and capacity checks as ground sources and stockpiles.
-- Consequence: All entities use the same initial capacity; inventory counts remain read-only to callers and transfers use the domain resource-transfer service.
-- Revisit: If species-specific carrying capacity is required by a later milestone.
+- Status: Superseded by D054
+- Decision: Entity carried inventory previously used a configurable aggregate limit of 10 units. D054 replaces this rule with a per-item stack limit and weight-based fatigue.
+- Reason: A total item-count cap did not represent physical load and prevented resource hoarding without improving simulation behavior.
+- Consequence: Save validation and inventory transfers follow the current D054 rule; finite storage containers remain capacity-limited.
+- Revisit: If testing shows the per-item cap or fatigue model needs adjustment.
 ## D013 — Generic cargo retention and bounded action retries
 
 - Date: 2026-09-27
 - Status: Provisional; implemented for J01c
-- Decision: Extract the bounded-retry delay used by food selection into a reusable `RetryScheduler` (10-tick default, matching D011) that any waiting job keys per entity. Give `EntityRecord` atomic, uncapped carried-inventory mutation, and extend the single inventory-transfer domain service (`ResourceTransferService`) with `TryPickUp`/`TryDeliver` overloads that atomically move items between a `ResourceContainer` and an entity's carried inventory. Give `ActionCandidate` an opt-in `RequiresEmptyCargo` flag so `ActionLifecycle.TryStart` returns `ActionStartResult.CargoPending` instead of starting new pickup-style work while the owning entity still carries items.
+- Decision: Extract the bounded-retry delay used by food selection into a reusable `RetryScheduler` (10-tick default, matching D011) that any waiting job keys per entity. Give `EntityRecord` atomic carried-inventory mutation with a 999-unit per-item limit (D054), and extend the single inventory-transfer domain service (`ResourceTransferService`) with `TryPickUp`/`TryDeliver` overloads that move items between a `ResourceContainer` and an entity's carried inventory. Give `ActionCandidate` an opt-in `RequiresEmptyCargo` flag so `ActionLifecycle.TryStart` returns `ActionStartResult.CargoPending` instead of starting new pickup-style work while the owning entity still carries items.
 - Reason: Action completion, cancellation, and preemption already never touch `EntityRecord.Inventory`, but nothing previously exercised that guarantee with real carried items, and no job had a documented, reusable way to require delivery before a new pickup or to retry without reselecting every tick. These primitives let J02 (hauling) implement "resume delivery before a new pickup" and bounded waiting without inventing job-specific mechanisms.
-- Consequence: Carried inventory has no capacity limit yet; bounded haul capacity per species is deferred to the hauling job that defines it. Only whole-entity removal discards carried inventory; cancellation, preemption, and reservation release never do.
-- Revisit: When the hauling job (J02) defines per-species haul capacity, or if other job kinds need a different cargo-completion signal than "any carried item."
+- Consequence: Carried inventory is capped at 999 units per item under D054, with no aggregate item-count cap. Only whole-entity removal discards carried inventory; cancellation, preemption, and reservation release never do.
+- Revisit: If job kinds need a different cargo-completion signal than "any carried item."
+
+## D054 — Per-item carried stack limit and weight-based fatigue
+
+- Date: 2026-10-24
+- Status: Accepted; implemented for issue #485
+- Decision: Each entity may carry up to 999 units of each known item ID, with no aggregate carried-item count limit. Pickups and transfers into carried inventories accept the amount that fits and leave remaining units at the source. `ResourceContainer` capacity remains finite. Resource materials, food, and coin have zero carried weight for the prototype; equipment has an approximate weight in kilograms (the current axe is 1.5 kg). Carried weight adds to passive fatigue through a strength/endurance load curve, scaled so the fatigue rate at baseline load matches bed recovery. The stats carry-capacity value is a soft fatigue threshold measured in kilograms, not an inventory restriction.
+- Reason: Inventory quantity should not act as a substitute for physical burden; per-item limits prevent unbounded stacks while weight governs exertion.
+- Consequence: Inventory snapshots validate each item stack independently and do not reject a large total count. Item weights are derived from stable item definitions and are not duplicated in saves.
+- Revisit: After playtesting item weights and fatigue pacing, or before adding equipment and resources with new physical weights.
 ## D014 - Versioned durable world snapshots
 
 - Date: 2026-09-27

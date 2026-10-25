@@ -9,7 +9,6 @@ public sealed class WoodHaulingHungerResumeTests
     public void HungerInterruptsLoadedTripAndDeliversCarriedWoodBeforeNewPickup()
     {
         var world = new World(
-            inventoryCapacity: 2,
             needsTuning: new NeedsTuning(initialSatiety: 100, satietyDrainPerSecond: 1, hungryThreshold: 30, nutritionPerUnit: 50));
         var entity = world.SpawnEntity("human", Vector3.Zero, satiety: 100);
         var woodSource = AddWoodSource(world, "wood-pile", Vector3.UnitX, 2);

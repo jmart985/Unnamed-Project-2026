@@ -59,7 +59,7 @@ public sealed class AntFarmScenario
         {
             foreach (var entity in World.Entities)
             {
-                entity.Needs.Advance(0.1);
+                entity.AdvanceNeeds(0.1);
             }
 
             SimulationTicks++;

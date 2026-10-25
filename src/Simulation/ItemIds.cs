@@ -11,10 +11,7 @@ public static class ItemIds
     public const string Axe = "axe";
     public const string Coin = "coin";
 
-    public static bool IsKnown(string? itemId)
-    {
-        return itemId is ItemIds.Food or ItemIds.Plant or ItemIds.Meat or ItemIds.Fruit or ItemIds.Wood or ItemIds.Rock or ItemIds.Axe or ItemIds.Coin;
-    }
+    public static bool IsKnown(string? itemId) => ItemCatalog.Contains(itemId);
 
     public static bool IsPlantFood(string? itemId) => itemId is Food or Plant or Fruit;
     public static bool IsMeat(string? itemId) => itemId is Meat;

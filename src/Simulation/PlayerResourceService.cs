@@ -26,12 +26,13 @@ public sealed class PlayerResourceService(World world, SpeciesCatalog species)
         if (target is null) return new(PlayerResourceResultCode.Missing, "The resource no longer exists.");
         if (MeleeReachValidator.Validate(player!.Position, target.Position, Reach) != MeleeReachResult.InRange)
             return new(PlayerResourceResultCode.OutOfRange, "Move within 2 m to collect.");
-        if (player.Inventory.Sum(entry => (long)entry.Value) >= player.InventoryCapacity)
-            return new(PlayerResourceResultCode.Full, $"Inventory full ({player.InventoryCapacity} units).");
         var stocked = target.Contents.Counts.Where(entry => entry.Value > 0).OrderBy(entry => entry.Key, StringComparer.Ordinal).ToArray();
         if (stocked.Length == 0) return new(PlayerResourceResultCode.Empty, "This resource is empty.");
-        var item = stocked.FirstOrDefault(entry => world.Reservations.GetAvailableResourceQuantity(target.Contents, entry.Key) > 0).Key;
-        if (item is null) return new(PlayerResourceResultCode.Reserved, "These items are reserved by another worker.");
+        var available = stocked.Where(entry =>
+            world.Reservations.GetAvailableResourceQuantity(target.Contents, entry.Key) > 0).ToArray();
+        if (available.Length == 0) return new(PlayerResourceResultCode.Reserved, "These items are reserved by another worker.");
+        var item = available.FirstOrDefault(entry => player.RemainingCarriedCapacity(entry.Key) > 0).Key;
+        if (item is null) return new(PlayerResourceResultCode.Full, "The carried stack for each available item is full.");
         var result = ResourceTransferService.TryPickUp(target.Contents, player, item, 1);
         return result == ResourceMutationResult.Success
             ? new(PlayerResourceResultCode.Collected, $"Collected 1 {item}. Carried {player.Inventory.GetValueOrDefault(item)}.")

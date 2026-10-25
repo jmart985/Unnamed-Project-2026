@@ -5,11 +5,11 @@ namespace Simulation.Tests;
 
 public sealed class InteractionRepairTests
 {
-    private static (World World, InteractionResolver Resolver, EntityRecord Actor, EntityRecord Target) Harness(bool missingHelp = false, int capacity = 10)
+    private static (World World, InteractionResolver Resolver, EntityRecord Actor, EntityRecord Target) Harness(bool missingHelp = false)
     {
         var root = Path.Combine(AppContext.BaseDirectory, "data");
         var species = SpeciesCatalog.LoadFromFile(Path.Combine(root, "species.json"));
-        var world = new World(inventoryCapacity: capacity) { SpeciesCatalog = species };
+        var world = new World() { SpeciesCatalog = species };
         var events = missingHelp ? RelationshipEventCatalog.Load(new MemoryStream(Encoding.UTF8.GetBytes(
             "[{\"id\":\"greeted\",\"familiarityDelta\":5,\"trustDelta\":0,\"fearDelta\":0,\"loyaltyDelta\":0}]")))
             : RelationshipEventCatalog.LoadFromFile(Path.Combine(root, "relationship_events.json"));
@@ -117,15 +117,16 @@ public sealed class InteractionRepairTests
     }
 
     [Fact]
-    public void GiveHonorsCapacityAndConservesAllItems()
+    public void GivePartiallyFillsAnItemStackAndConservesTheRemainder()
     {
-        var (world, resolver, actor, target) = Harness(capacity: 3);
-        actor.TryAddCarried(ItemIds.Wood, 3); target.TryAddCarried(ItemIds.Food, 2);
+        var (world, resolver, actor, target) = Harness();
+        actor.TryAddCarried(ItemIds.Wood, 3);
+        target.TryAddCarried(ItemIds.Food, 2);
+        target.TryAddCarried(ItemIds.Wood, 998);
         var before = WorldSnapshotSerializer.Serialize(world, 0);
-        Assert.False(resolver.Resolve(new(actor.Id, target.Id, InteractionType.Physical, "give", Item(ItemIds.Wood, 2))).Succeeded);
-        Assert.Equal(before, WorldSnapshotSerializer.Serialize(world, 0));
-        Assert.True(resolver.Resolve(new(actor.Id, target.Id, InteractionType.Physical, "give", Item(ItemIds.Wood, 1))).Succeeded);
-        Assert.Equal(2, actor.Inventory[ItemIds.Wood]); Assert.Equal(1, target.Inventory[ItemIds.Wood]);
+        Assert.True(resolver.Resolve(new(actor.Id, target.Id, InteractionType.Physical, "give", Item(ItemIds.Wood, 2))).Succeeded);
+        Assert.NotEqual(before, WorldSnapshotSerializer.Serialize(world, 0));
+        Assert.Equal(2, actor.Inventory[ItemIds.Wood]); Assert.Equal(999, target.Inventory[ItemIds.Wood]);
         Assert.Equal(2, target.Inventory[ItemIds.Food]);
         Assert.True(world.TryGetRelationship(target.Id, actor.Id, out var bond)); Assert.Equal(51, bond!.Trust);
         Assert.Equal(ResourceMutationResult.InvalidAmount, ResourceTransferService.TryTransfer(actor, target, ItemIds.Wood, 0));
