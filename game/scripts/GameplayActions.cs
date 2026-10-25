@@ -335,6 +335,7 @@ public partial class Main
                 "toggle_door"));
             ShowActionFeedback(result.Reason);
             SyncConstructionPresentation();
+            _navigationRegion.NavigationMesh = CreateNavigationMesh(CurrentWorkbenchPositions(), _world.Structures);
             UpdateWorldSelection();
             return;
         }

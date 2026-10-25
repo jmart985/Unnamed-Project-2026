@@ -13,6 +13,27 @@ public partial class Main
             SetProcess(false); _playerCharacter.SetPhysicsProcess(false);
             _playerCharacter.GlobalPosition = new Vector3(-6, 0, -1); _playerCharacter.Rotation = Vector3.Zero; SyncPlayerPosition();
             var player = _world.Entities.Single(entity => entity.Id == _world.PlayerEntityId);
+            var playerCamera = _playerCharacter.GetNode<Camera3D>("Camera3D");
+            void AimPlayerCameraAt(Vector3 target)
+            {
+                playerCamera.GlobalPosition = _playerCharacter.GlobalPosition + new Vector3(0, 2.6f, 5.5f);
+                playerCamera.LookAt(new Vector3(target.X, 0, target.Z), Vector3.Up);
+            }
+            bool HasNavigationAt(NavigationMesh navigation, Vector3 point)
+            {
+                var vertices = navigation.GetVertices();
+                for (var polygonIndex = 0; polygonIndex < navigation.GetPolygonCount(); polygonIndex++)
+                {
+                    var polygon = navigation.GetPolygon(polygonIndex).Select(index => vertices[index]).ToArray();
+                    if (point.X > polygon.Min(vertex => vertex.X) && point.X < polygon.Max(vertex => vertex.X)
+                        && point.Z > polygon.Min(vertex => vertex.Z) && point.Z < polygon.Max(vertex => vertex.Z))
+                        return true;
+                }
+                return false;
+            }
+            var sceneryCollider = _scenery!.GetNode<StaticBody3D>("Building_0Collision");
+            Require(sceneryCollider.GetChildren().OfType<CollisionShape3D>().Single().Shape is BoxShape3D,
+                "solid scenery buildings have matching static collision volumes");
             Require(!ControllerActions.All.Any(action => new[] { Key.Key1, Key.Key2, Key.Key0 }.Any(key =>
                     InputMap.ActionHasEvent(action, new InputEventKey { PhysicalKeycode = key }))),
                 "number-row build slots are not globally bound to actions outside Build mode");
@@ -80,7 +101,6 @@ public partial class Main
             SetProcess(false); _playerCharacter.SetPhysicsProcess(false);
             _playerCharacter.GlobalPosition = new Vector3(-6, 0, -1);
             _playerCharacter.Rotation = Vector3.Zero;
-            var playerCamera = _playerCharacter.GetNode<Camera3D>("Camera3D");
             playerCamera.Position = new Vector3(0, 2.6f, 5.5f);
             playerCamera.Rotation = new Vector3(_playerCharacter.CameraPitchOffset, 0, 0);
             SyncPlayerPosition(); UpdateHutPreview();
@@ -106,6 +126,13 @@ public partial class Main
                 "completion replaces the site target with one hut");
 
             var hutView = _constructionViews[new(TargetKind.Structure, hut.Id)];
+            var hutCollision = hutView.GetNode<StaticBody3D>("BuildingCollision");
+            var hutCollisionParts = hutCollision.GetChildren().OfType<CollisionShape3D>()
+                .Select(shape => shape.Name.ToString()).ToHashSet(StringComparer.Ordinal);
+            Require(hutCollision.CollisionLayer == 2 && hutCollision.CollisionMask == 1
+                && new[] { "Floor", "Ceiling", "WallLeft", "WallRight", "WallBack", "WallFrontLeft", "WallFrontRight" }
+                    .All(hutCollisionParts.Contains),
+                "completed hut has solid floor, ceiling and walls while preserving its doorway opening");
             var targets = WorldTargets();
             var hutPosition = new Vector3(hut.Position.X, hut.Position.Y, hut.Position.Z);
             Require(TargetLineClear(hutPosition + new Vector3(0, 1.2f, 3),
@@ -113,12 +140,36 @@ public partial class Main
                 "open doorway has a navigable clear center path");
             PerformFriendlyInteraction();
             Require(hut.IsClosed, "F toggles the completed hut door closed");
+            hutView = _constructionViews[new(TargetKind.Structure, hut.Id)];
+            Require(hutView.GetNode<StaticBody3D>("BuildingCollision").GetNodeOrNull<CollisionShape3D>("Door") is not null,
+                "closed hut door receives a solid collision shape");
+            var closedDoorNavigation = CreateNavigationMesh(CurrentWorkbenchPositions(), _world.Structures);
+            Require(!HasNavigationAt(closedDoorNavigation, hutPosition + new Vector3(0, 0, 1.9f)),
+                "closed hut door closes its navigation opening");
             targets = WorldTargets();
             Require(!TargetLineClear(hutPosition + new Vector3(0, 1.2f, 3),
                 hutPosition + new Vector3(0, 1.2f, 0), new(TargetKind.Entity, "door-ray"), targets),
                 "closed door blocks the doorway ray");
             PerformFriendlyInteraction();
             Require(!hut.IsClosed, "F reopens the completed hut door");
+            var openDoorNavigation = CreateNavigationMesh(CurrentWorkbenchPositions(), _world.Structures);
+            Require(HasNavigationAt(openDoorNavigation, hutPosition + new Vector3(0, 0, 1.9f))
+                && HasNavigationAt(openDoorNavigation, hutPosition),
+                "open doorway connects the exterior and usable interior in navigation");
+
+            _playerCharacter.GlobalPosition = new Vector3(42, 0, 42); SyncPlayerPosition();
+            playerCamera.Current = true;
+            AimPlayerCameraAt(_playerCharacter.GlobalPosition);
+            BeginBuildMode();
+            _Input(new InputEventKey { PhysicalKeycode = Key.Key3, Keycode = Key.Key3, Pressed = true });
+            UpdateWorkbenchPreview();
+            Require(_placementGroundHit && _placementValid, "workbench preview is valid before checking a missed ground ray");
+            var workbenchCountBeforeMissedRay = _world.Workstations.Count;
+            playerCamera.Rotation = new Vector3(0.4f, 0, 0);
+            _Input(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true });
+            Require(_world.Workstations.Count == workbenchCountBeforeMissedRay && PlacementPanelOpen && !_placementGroundHit,
+                "a missed ground ray cannot place a fixture even when the previous preview was valid");
+            _Input(new InputEventKey { PhysicalKeycode = Key.Escape, Keycode = Key.Escape, Pressed = true });
 
             foreach (var view in _entityViews.Values) view.Visible = false;
             var camera = GetNode<Camera3D>("Camera3D"); camera.Current = true;
@@ -136,50 +187,43 @@ public partial class Main
 
             SetProcess(false); _playerCharacter.SetPhysicsProcess(false);
             _playerCharacter.GlobalPosition = new Vector3(10, 0, 12); SyncPlayerPosition();
+            playerCamera.Current = true;
+            AimPlayerCameraAt(new Vector3(10, 0, 10));
             BeginBuildMode();
             _Input(new InputEventKey { PhysicalKeycode = Key.Key3, Keycode = Key.Key3, Pressed = true });
             var overlappingWorkbenchPosition = new Vector3(10, 0, 10);
             Require(!CanPlaceWorkbench(overlappingWorkbenchPosition, out var overlapReason)
                 && overlapReason.Contains("workbench clearance", StringComparison.OrdinalIgnoreCase),
                 "workbench validation rejects overlap with the original fixture");
-            _placementPosition = overlappingWorkbenchPosition;
             _Input(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true });
             Require(_world.Workstations.Count == 1, "invalid workbench placement does not mutate the World");
             _Input(new InputEventKey { PhysicalKeycode = Key.Escape, Keycode = Key.Escape, Pressed = true });
             _playerCharacter.GlobalPosition = new Vector3(42, 0, 42); SyncPlayerPosition();
+            AimPlayerCameraAt(_playerCharacter.GlobalPosition);
             var starterWorkbenchPosition = _world.Workstations.Single(item => item.Id == "workbench-1").Position;
             BeginBuildMode();
             _Input(new InputEventKey { PhysicalKeycode = Key.Key3, Keycode = Key.Key3, Pressed = true });
             Require(_workbenchPreview.Visible && _buildHotbarSlots[2].Label.Text.Contains("Workbench", StringComparison.Ordinal),
                 "hotbar slot 3 previews an additional workbench while the original fixture remains in place");
-            _placementPosition = new Vector3(42, 0, 42);
             _Input(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true });
             var addedWorkbench = _world.Workstations.Single(item => item.Id == "workbench-2");
             Require(addedWorkbench.Position == new System.Numerics.Vector3(42, 0, 42)
                 && _world.Workstations.Single(item => item.Id == "workbench-1").Position == starterWorkbenchPosition
                 && _workbenchViews.Count == 2,
                 "placing slot 3 adds a separately presented World workstation without moving the starter workbench");
-            var navigation = CreateNavigationMesh(CurrentWorkbenchPositions());
-            var navigationVertices = navigation.GetVertices();
-            bool HasNavigationAt(Vector3 point)
-            {
-                for (var polygonIndex = 0; polygonIndex < navigation.GetPolygonCount(); polygonIndex++)
-                {
-                    var polygon = navigation.GetPolygon(polygonIndex).Select(index => navigationVertices[index]).ToArray();
-                    if (point.X > polygon.Min(vertex => vertex.X) && point.X < polygon.Max(vertex => vertex.X)
-                        && point.Z > polygon.Min(vertex => vertex.Z) && point.Z < polygon.Max(vertex => vertex.Z))
-                        return true;
-                }
-                return false;
-            }
-            Require(!HasNavigationAt(new Vector3(42, 0, 42)) && HasNavigationAt(new Vector3(45, 0, 42)),
+            var navigation = CreateNavigationMesh(CurrentWorkbenchPositions(), _world.Structures);
+            Require(!HasNavigationAt(navigation, new Vector3(42, 0, 42)) && HasNavigationAt(navigation, new Vector3(45, 0, 42)),
                 "generated navigation excludes the added workbench clearance while keeping the adjacent route open");
+            var subdividedBuildingNavigation = CreateNavigationMesh([new System.Numerics.Vector3(18, 0, 42)]);
+            Require(!HasNavigationAt(subdividedBuildingNavigation, new Vector3(15, 0, 15))
+                && HasNavigationAt(subdividedBuildingNavigation, new Vector3(13, 0, 15)),
+                "workbench grid subdivisions do not reopen scenery building interiors to navigation");
             Require(WorldTargets().Any(view => view.Target == new WorldTarget(TargetKind.Workstation, addedWorkbench.Id)),
                 "the added workbench has an independent target-selection view");
 
             BeginBuildMode();
             _Input(new InputEventKey { PhysicalKeycode = Key.Key3, Keycode = Key.Key3, Pressed = true });
-            _placementPosition = new Vector3(48, 0, 42);
+            AimPlayerCameraAt(new Vector3(48, 0, 42));
             _Input(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true });
             var secondAddedWorkbench = _world.Workstations.Single(item => item.Id == "workbench-3");
             Require(secondAddedWorkbench.Id != addedWorkbench.Id && _workbenchViews.Count == 3,
@@ -204,7 +248,7 @@ public partial class Main
             _Input(new InputEventKey { PhysicalKeycode = Key.Key4, Keycode = Key.Key4, Pressed = true });
             Require(_farmPreview.Visible && _buildHotbarSlots[3].Label.Text.Contains("Farm", StringComparison.Ordinal),
                 "hotbar slot 4 previews an additional farm");
-            _placementPosition = new Vector3(42, 0, 50);
+            AimPlayerCameraAt(new Vector3(42, 0, 50));
             _Input(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true });
             var addedFarm = _world.Farms.Single(item => item.Id == "farm-2");
             Require(addedFarm.Plots.Count == 1 && _farmViews.ContainsKey(addedFarm.Id) && _world.Farms.Single(item => item.Id == "farm-1").Position == new System.Numerics.Vector3(5, 0, 5),
@@ -221,7 +265,7 @@ public partial class Main
             _playerCharacter.GlobalPosition = new Vector3(50, 0, 50); SyncPlayerPosition();
             BeginBuildMode();
             _Input(new InputEventKey { PhysicalKeycode = Key.Key4, Keycode = Key.Key4, Pressed = true });
-            _placementPosition = new Vector3(50, 0, 50);
+            AimPlayerCameraAt(new Vector3(50, 0, 50));
             _Input(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true });
             var secondAddedFarm = _world.Farms.Single(item => item.Id == "farm-3");
             Require(secondAddedFarm.Id != addedFarm.Id && _farmViews.Count == 3

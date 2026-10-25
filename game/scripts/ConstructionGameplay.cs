@@ -28,6 +28,7 @@ public partial class Main
     private bool _placingFarm;
     private int _selectedBuildSlot;
     private bool _placementValid;
+    private bool _placementGroundHit;
     private Vector3 _placementPosition;
     private readonly Dictionary<WorldTarget, Node3D> _constructionViews = [];
 
@@ -335,6 +336,7 @@ public partial class Main
         _placingWorkbench = false;
         _placingFarm = false;
         _selectedBuildSlot = 0;
+        _placementGroundHit = false;
         _fireplacePreview.Visible = false;
         _workbenchPreview.Visible = false;
         _farmPreview.Visible = false;
@@ -358,6 +360,7 @@ public partial class Main
     {
         if (!_placingWorkbench) return;
         var hasGroundPoint = TryGetLookedAtGroundPoint(out _placementPosition);
+        _placementGroundHit = hasGroundPoint;
         if (!hasGroundPoint) _placementPosition = new Vector3(_playerCharacter.GlobalPosition.X, 0, _playerCharacter.GlobalPosition.Z);
         var reason = "Aim the reticle at the ground.";
         var valid = hasGroundPoint && CanPlaceWorkbench(_placementPosition, out reason);
@@ -374,6 +377,7 @@ public partial class Main
     {
         if (!_placingFarm) return;
         var hasGroundPoint = TryGetLookedAtGroundPoint(out _placementPosition);
+        _placementGroundHit = hasGroundPoint;
         if (!hasGroundPoint) _placementPosition = new Vector3(_playerCharacter.GlobalPosition.X, 0, _playerCharacter.GlobalPosition.Z);
         var reason = "Aim the reticle at the ground.";
         var valid = hasGroundPoint && CanPlaceFarm(_placementPosition, out reason);
@@ -420,9 +424,19 @@ public partial class Main
         return true;
     }
 
-    private void ConfirmWorkbenchPlacement()
+    private bool RefreshSelectedPlacementPreview()
     {
         SyncPlayerPosition();
+        if (_placingHut) UpdateHutPreview();
+        else if (_placingFireplace) UpdateFireplacePreview();
+        else if (_placingWorkbench) UpdateWorkbenchPreview();
+        else if (_placingFarm) UpdateFarmPlacementPreview();
+        return _placementGroundHit && _placementValid;
+    }
+
+    private void ConfirmWorkbenchPlacement()
+    {
+        if (!RefreshSelectedPlacementPreview()) return;
         if (!CanPlaceWorkbench(_placementPosition, out var reason))
         { _placementMessage.Text = reason; UpdateWorkbenchPreview(); return; }
         var workstationId = NextWorkstationId();
@@ -430,7 +444,7 @@ public partial class Main
         try { workstation = _world.AddWorkstation(workstationId, new System.Numerics.Vector3(_placementPosition.X, 0, _placementPosition.Z)); }
         catch (ArgumentException) { _placementMessage.Text = "That workbench identity is already in use."; return; }
         AddWorkbenchView(workstation);
-        _navigationRegion.NavigationMesh = CreateNavigationMesh(CurrentWorkbenchPositions());
+        _navigationRegion.NavigationMesh = CreateNavigationMesh(CurrentWorkbenchPositions(), _world.Structures);
         CancelPlacement();
         _selectedTarget = new(TargetKind.Workstation, workstation.Id);
         _lastActionMessage = "Placed an additional workbench.";
@@ -439,7 +453,7 @@ public partial class Main
 
     private void ConfirmFarmPlacement()
     {
-        SyncPlayerPosition();
+        if (!RefreshSelectedPlacementPreview()) return;
         if (!CanPlaceFarm(_placementPosition, out var reason))
         { _placementMessage.Text = reason; UpdateFarmPlacementPreview(); return; }
         var farmId = NextFarmId();
@@ -475,6 +489,7 @@ public partial class Main
     {
         if (!_placingHut) return;
         var hasGroundPoint = TryGetLookedAtGroundPoint(out _placementPosition);
+        _placementGroundHit = hasGroundPoint;
         if (!hasGroundPoint) _placementPosition = new Vector3(_playerCharacter.GlobalPosition.X, 0, _playerCharacter.GlobalPosition.Z);
         var result = hasGroundPoint
             ? new ActorConstructionService(_world, _speciesCatalog, IsHutTerrainBlocked)
@@ -493,6 +508,7 @@ public partial class Main
     {
         if (!_placingFireplace) return;
         var hasGroundPoint = TryGetLookedAtGroundPoint(out _placementPosition);
+        _placementGroundHit = hasGroundPoint;
         if (!hasGroundPoint) _placementPosition = new Vector3(_playerCharacter.GlobalPosition.X, 0, _playerCharacter.GlobalPosition.Z);
         var player = _world.Entities.FirstOrDefault(entity => entity.Id == PlayerId());
         var hasWood = player?.Inventory.GetValueOrDefault(ItemIds.Wood) >= 2;
@@ -540,7 +556,7 @@ public partial class Main
 
     private void ConfirmHutPlacement()
     {
-        SyncPlayerPosition();
+        if (!RefreshSelectedPlacementPreview()) return;
         var result = new ActorConstructionService(_world, _speciesCatalog, IsHutTerrainBlocked)
             .PlaceHut(PlayerId(), "hut-site-1", new System.Numerics.Vector3(_placementPosition.X, 0, _placementPosition.Z));
         if (!result.Succeeded) { _placementMessage.Text = result.Message; UpdateHutPreview(); return; }
@@ -553,7 +569,7 @@ public partial class Main
 
     private void ConfirmFireplacePlacement()
     {
-        SyncPlayerPosition();
+        if (!RefreshSelectedPlacementPreview()) return;
         var fireplaceId = $"fireplace-{_world.Fireplaces.Count + 1}";
         var result = new ActorConstructionService(_world, _speciesCatalog, position =>
             IsBlockedCell(position.X - 1, position.X + 1, position.Z - 1, position.Z + 1, CurrentWorkbenchPositions()))
@@ -595,7 +611,12 @@ public partial class Main
         SyncPlayerPosition();
         var result = action(new ActorConstructionService(_world, _speciesCatalog, IsHutTerrainBlocked));
         _constructionMessage.Text = result.Message; _lastActionMessage = result.Message;
-        if (result.CreatedId is not null) { CloseConstruction(); _selectedTarget = new(TargetKind.Structure, result.CreatedId); }
+        if (result.CreatedId is not null)
+        {
+            CloseConstruction();
+            _selectedTarget = new(TargetKind.Structure, result.CreatedId);
+            _navigationRegion.NavigationMesh = CreateNavigationMesh(CurrentWorkbenchPositions(), _world.Structures);
+        }
         SyncConstructionPresentation(); UpdateConstructionPanel(); UpdatePlayerMenuContents(); UpdateWorldSelection();
     }
 
@@ -647,18 +668,35 @@ public partial class Main
         var roof = new StandardMaterial3D { AlbedoColor = new Color(0.24f, 0.12f, 0.08f) };
         void Part(Vector3 position, Vector3 size, Material material) => root.AddChild(new MeshInstance3D
             { Mesh = new BoxMesh { Size = size }, Position = position, MaterialOverride = material });
+        var collision = new StaticBody3D { Name = "BuildingCollision", CollisionLayer = 2, CollisionMask = 1 };
+        root.AddChild(collision);
+        void SolidPart(string name, Vector3 position, Vector3 size) => collision.AddChild(new CollisionShape3D
+        {
+            Name = name, Position = position, Shape = new BoxShape3D { Size = size }
+        });
         Part(new(0, 0.1f, 0), new(4, 0.2f, 4), wall);
         Part(new(-1.9f, 1.5f, 0), new(0.2f, 3, 4), wall); Part(new(1.9f, 1.5f, 0), new(0.2f, 3, 4), wall);
         Part(new(0, 1.5f, -1.9f), new(4, 3, 0.2f), wall);
         Part(new(-1.25f, 1.5f, 1.9f), new(1.5f, 3, 0.2f), wall); Part(new(1.25f, 1.5f, 1.9f), new(1.5f, 3, 0.2f), wall);
         Part(new(0, 3.15f, 0), new(4.5f, 0.3f, 4.5f), roof);
+        SolidPart("Floor", new(0, 0.1f, 0), new(4, 0.2f, 4));
+        SolidPart("WallLeft", new(-1.9f, 1.5f, 0), new(0.2f, 3, 4));
+        SolidPart("WallRight", new(1.9f, 1.5f, 0), new(0.2f, 3, 4));
+        SolidPart("WallBack", new(0, 1.5f, -1.9f), new(4, 3, 0.2f));
+        SolidPart("WallFrontLeft", new(-1.25f, 1.5f, 1.9f), new(1.5f, 3, 0.2f));
+        SolidPart("WallFrontRight", new(1.25f, 1.5f, 1.9f), new(1.5f, 3, 0.2f));
+        SolidPart("Ceiling", new(0, 3.15f, 0), new(4.5f, 0.3f, 4.5f));
         // Keep the bed inside the open footprint so the shelter communicates its usable rest point.
         var bedFrame = new StandardMaterial3D { AlbedoColor = new Color(0.3f, 0.16f, 0.08f) };
         var bedding = new StandardMaterial3D { AlbedoColor = new Color(0.72f, 0.78f, 0.86f) };
         Part(new(-0.9f, 0.42f, -0.75f), new(1.45f, 0.25f, 2.25f), bedFrame);
         Part(new(-0.9f, 0.62f, -0.75f), new(1.3f, 0.18f, 2.1f), bedding);
         Part(new(-0.9f, 0.78f, -1.55f), new(1.3f, 0.22f, 0.28f), bedding);
-        if (structure.IsClosed) Part(new(0, 1.2f, 1.88f), new(1, 2.4f, 0.12f), roof);
+        if (structure.IsClosed)
+        {
+            Part(new(0, 1.2f, 1.88f), new(1, 2.4f, 0.12f), roof);
+            SolidPart("Door", new(0, 1.2f, 1.88f), new(1, 2.4f, 0.12f));
+        }
         root.AddChild(new Label3D { Text = structure.IsClosed ? "STARTER HUT · DOOR CLOSED" : "STARTER HUT · DOOR OPEN",
             Position = new Vector3(0, 3.8f, 0), Billboard = BaseMaterial3D.BillboardModeEnum.Enabled, FontSize = 34, OutlineSize = 7, NoDepthTest = true });
         return root;
