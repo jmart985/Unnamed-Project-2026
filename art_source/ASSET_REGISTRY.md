@@ -1,5 +1,7 @@
 # Asset registry
 
+Project approval is an owner decision. The owner has final authority, and receipts or separately documented permission evidence are not prerequisites for an approved status. Availability (files present), technical suitability (checks passed), and project approval are distinct; file presence, “game ready” marketing, or technical fit do not themselves approve an asset. Record known provenance and license details as context and keep unknowns explicit. Owner approval records project direction; it is separate from technical readiness and is not an independent determination of third-party rights. Runtime admission remains subject to the technical checks for the intended use.
+
 | Asset ID | Source archive | Contents observed | Status | owner | runtime addmition |
 | --- | --- | --- | --- | --- | --- |
 | `generated-humanoid-male-rig-v1` | `art_source/blender/generate_humanoid_rig_v1.py` | Project-generated male prototype with BLEND, GLB, and metadata under `art_source/reference/generated_humanoids/` | Prototype Approved | Project-owned | Humanoid Rig v1, A-pose, 1.80 m target; no external license dependency. No runtime admission yet. |
@@ -33,7 +35,7 @@
 
 ## Review checklist
 
-For each asset, add the creator, source URL, acquisition date, use, modification, and attribution, before changing the status. Then record format, source units, normalized height, vertex/triangle/material counts, skeleton details, canonical mapping, retarget test, Godot import result, deformation review, equipment socket alignment, and performance notes if known.
+Use this checklist to track technical readiness: record format, source units, normalized height, vertex/triangle/material counts, skeleton details, canonical mapping, retarget test, Godot import result, deformation review, equipment socket alignment, and performance notes when available. Track owner approval separately. Provenance notes may be kept when useful, but no receipt, permission-evidence file, or acquisition/use/modification/attribution review is required before an owner-approved status.
 
 ## Current technical decision
 
