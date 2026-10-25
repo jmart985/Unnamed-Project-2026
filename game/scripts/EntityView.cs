@@ -500,13 +500,15 @@ public partial class EntityView : CharacterBody3D
     public bool RemoveNavigationTarget() => _navigationAdapter?.ActiveRequestId is { } requestId && _navigationAdapter.RemoveTarget(requestId);
 
     public void AdvanceNavigation(double simulationSeconds, World world, SquadOrderService? squad = null,
+        OrderService? orders = null,
         Func<string, NumericsVector3, NumericsVector3, NumericsVector3>? constrainStep = null)
     {
         if (_navigationAdapter is not { HasActiveRequest: true } adapter) return;
         adapter.AdvanceMovement(simulationSeconds, _movementSpeed, (current, proposed) =>
         {
             var afterSquad = squad is null ? proposed : squad.ConstrainFollowStep(EntityId, current, proposed);
-            return constrainStep is null ? afterSquad : constrainStep(EntityId, current, afterSquad);
+            var afterIndividualOrder = orders is null ? afterSquad : orders.ConstrainFollowStep(EntityId, current, afterSquad);
+            return constrainStep is null ? afterIndividualOrder : constrainStep(EntityId, current, afterIndividualOrder);
         });
         var position = GlobalPosition;
         if (!world.TrySetEntityPosition(EntityId, new NumericsVector3(position.X, position.Y, position.Z)) && adapter.ActiveRequestId is { } requestId)

@@ -32,7 +32,7 @@ public partial class Main
 
 			var activeSave = WorldSnapshotSerializer.Serialize(_world, _clock.SimulationTime);
 			WorldSnapshotSerializer.Load(_world, activeSave, _speciesCatalog,
-				_foodConsumption!, _creatureHunting!, _wildPreyThreat!, _wandering!, _woodHauling!, _squad!);
+				_foodConsumption!, _creatureHunting!, _wildPreyThreat!, _wandering!, _woodHauling!, _squad!, _orders!);
 			_wildlifeProximity = new WildlifeProximityCoordinator(_world, _speciesCatalog, _wildlifeRegionCatalog);
 			RebuildPresentationFromWorld();
 			Require(_world.NearPopulations.Count == 3 && _world.Entities.Count(entity => entity.SpeciesId is "ape" or "wolf" or "cow") == 3,

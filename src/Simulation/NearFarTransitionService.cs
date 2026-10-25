@@ -105,6 +105,7 @@ public sealed class NearFarTransitionService
             || entity.EquippedTool is not null
             || entity.Parent1Id is not null
             || entity.Parent2Id is not null
+            || entity.OrderIntent is not null
             || entity.SleepState != SleepState.Awake
             || entity.BedId is not null
             || _world.SquadMemberIds.Contains(entity.Id, StringComparer.Ordinal))

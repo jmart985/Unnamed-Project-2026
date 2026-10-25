@@ -115,17 +115,34 @@ public sealed class InteractionResolver
             return new(false, "Target not found.");
         }
 
-        if (actor.Id == target.Id || target.Health.IsIncapacitated)
+        if (actor.Health.IsDead || actor.Health.IsIncapacitated)
+            return new(false, "Only a conscious actor can issue these orders.");
+        if (actor.Id == target.Id || target.Id == _world.PlayerEntityId || target.Health.IsDead || target.Health.IsIncapacitated)
             return new(false, "Target cannot receive this command.");
 
+        var command = request.ActionId.ToLowerInvariant();
+        if (command is not ("follow" or "stay"))
+            return new(false, $"Unknown command: {request.ActionId}. Choose follow or stay.");
+
+        if (_world.SpeciesCatalog is not { } catalog
+            || !catalog.TryGet(target.SpeciesId, out var species)
+            || species is null
+            || species.MovementSpeed <= 0)
+            return new(false, "Target species cannot receive movement orders.");
+
         var authority = AuthorityMatrix.GetAuthority(actor, target, _world);
-        
-        if (!AuthorityMatrix.CanObey(authority, request.ActionId))
+
+        if (!AuthorityMatrix.CanObey(authority, command))
         {
             return new(false, $"Target does not obey your commands. (Authority: {authority})");
         }
 
-        return new(true, $"Command '{request.ActionId}' issued successfully to target.");
+        target.OrderIntent = command == "follow"
+            ? new EntityOrder(EntityOrderKind.Follow, actor.Id)
+            : new EntityOrder(EntityOrderKind.Stay, actor.Id, target.Position);
+        return new(true, command == "follow"
+            ? $"Follow order issued to {target.Id}."
+            : $"Stay order issued to {target.Id} at its current position.");
     }
 
     private InteractionResult ResolveCapture(EntityRecord actor, EntityRecord target)

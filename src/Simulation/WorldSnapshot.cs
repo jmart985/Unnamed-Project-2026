@@ -121,7 +121,8 @@ public sealed record EntitySnapshot(
     SleepState SleepState = SleepState.Awake,
     string? BedId = null,
     string? EquippedTool = null,
-    bool IsDead = false);
+    bool IsDead = false,
+    EntityOrder? OrderIntent = null);
 
 public sealed record FoodSourceSnapshot(
     string Id,
@@ -164,7 +165,8 @@ public static class WorldSnapshotSerializer
     private const int FarPopulationSchemaVersion = 19;
     private const int NearPopulationSchemaVersion = 20;
     private const int StarterWorkbenchRelocationSchemaVersion = 21;
-    public const int CurrentSchemaVersion = StarterWorkbenchRelocationSchemaVersion;
+    private const int IndividualOrdersSchemaVersion = 22;
+    public const int CurrentSchemaVersion = IndividualOrdersSchemaVersion;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -196,7 +198,8 @@ public static class WorldSnapshotSerializer
                 entity.SleepState,
                 entity.BedId,
                 entity.EquippedTool,
-                entity.Health.IsDead))
+                entity.Health.IsDead,
+                entity.OrderIntent))
             .ToArray();
         var foodSources = world.FoodSources
             .Select(source => new FoodSourceSnapshot(
@@ -405,6 +408,9 @@ public static class WorldSnapshotSerializer
         if (snapshot.SchemaVersion is FarPopulationSchemaVersion or NearPopulationSchemaVersion)
             return snapshot with { SchemaVersion = CurrentSchemaVersion };
 
+        if (snapshot.SchemaVersion == StarterWorkbenchRelocationSchemaVersion)
+            return snapshot with { SchemaVersion = CurrentSchemaVersion };
+
         if (snapshot.SchemaVersion != CurrentSchemaVersion)
         {
             throw new InvalidDataException(
@@ -567,6 +573,7 @@ public static class WorldSnapshotSerializer
             }
 
             ValidateInventory(entity.Inventory, entity.Id);
+            ValidateOrder(entity.OrderIntent, entity.Id);
             highestEntityId = Math.Max(highestEntityId, ParseEntityId(entity.Id));
         }
         if (snapshot.LastAllocatedEntityId < highestEntityId)
@@ -1063,6 +1070,23 @@ public static class WorldSnapshotSerializer
         {
             throw new InvalidDataException($"Snapshot {owner} contains a negative count for '{itemId}'.");
         }
+    }
+
+    private static void ValidateOrder(EntityOrder? order, string entityId)
+    {
+        if (order is null) return;
+        if (!Enum.IsDefined(order.Kind) || string.IsNullOrWhiteSpace(order.IssuerId))
+            throw new InvalidDataException($"Snapshot entity '{entityId}' has an invalid order.");
+
+        var validOrder = order.Kind switch
+        {
+            EntityOrderKind.Follow => order.Position is null,
+            EntityOrderKind.Stay => order.Position is { } position
+                && float.IsFinite(position.X) && float.IsFinite(position.Y) && float.IsFinite(position.Z),
+            _ => false
+        };
+        if (!validOrder)
+            throw new InvalidDataException($"Snapshot entity '{entityId}' has an invalid {order.Kind} order target.");
     }
 
     private static void ValidatePosition(Vector3 position, string owner)

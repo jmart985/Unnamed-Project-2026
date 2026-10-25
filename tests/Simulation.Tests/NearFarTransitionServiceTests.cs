@@ -76,6 +76,24 @@ public sealed class NearFarTransitionServiceTests
     }
 
     [Fact]
+    public void IndividualOrderPreventsItsEntityFromBeingCollapsedIntoFarStatistics()
+    {
+        var world = new World();
+        var catalog = SpeciesCatalog.LoadFromFile(Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
+        var transitions = new NearFarTransitionService(world, catalog);
+        var cow = world.SpawnEntity("cow", Vector3.Zero);
+        var issuer = world.SpawnEntity("human", Vector3.One);
+        cow.OrderIntent = new EntityOrder(EntityOrderKind.Follow, issuer.Id);
+        world.SetNearPopulation(new NearPopulationRecord("pasture", "cow", [cow.Id], []));
+
+        Assert.True(transitions.Demote("pasture", "cow"));
+
+        Assert.Same(cow, Assert.Single(world.Entities, entity => entity.Id == cow.Id));
+        Assert.Equal(0, world.FarPopulations.Single(record => record.SpeciesId == "cow").Count);
+        Assert.Equal(new EntityOrder(EntityOrderKind.Follow, issuer.Id), cow.OrderIntent);
+    }
+
+    [Fact]
     public void UnknownSpeciesCannotReplaceAnExistingFarPopulation()
     {
         var world = new World();
