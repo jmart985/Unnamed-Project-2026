@@ -7,3 +7,4 @@
 *.suo
 TestResults/
 *.tmp
+*.blend[0-9]

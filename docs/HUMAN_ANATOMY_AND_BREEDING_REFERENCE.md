@@ -7,7 +7,7 @@
 
 Humans are one animal species in the world simulation, while also using the project's canonical upright-biped humanoid rig. Human anatomy must therefore be researched and represented with the same discipline used for quadrupeds and reptiles.
 
-The project also needs a future population model that can describe inherited appearance, capabilities, health conditions, fertility, pregnancy or incubation, and offspring outcomes across humans and other animals. That model must remain separate from the visual rig and must not assume that visual similarity or shared locomotion means two species can interbreed.
+The project also needs a future population model that can describe inherited appearance, capabilities, health conditions, fertility, pregnancy or incubation, and offspring outcomes across humans and other animals. That model must remain separate from the visual rig and must not assume that visual similarity or shared locomotion means two species can or cannot interbreed.
 
 ## Human anatomical reference
 
@@ -59,6 +59,7 @@ Human variation may include:
 - height and overall proportions;
 - body mass and muscle/build;
 - shoulder width, torso length, and leg length;
+- penis length and girth, vaginal entrance size and shape;
 - age-related proportions;
 - skin, hair, and eye appearance;
 - scars, injuries, prosthetics, and clothing;
@@ -68,7 +69,7 @@ Variation must stay inside validated rig, collision, camera, and animation range
 
 ## Breeding and population reference model
 
-The future system should treat breeding as a population and lineage process, not as a mesh button.
+The future system should treat breeding as a population and lineage process, as well as a mesh button. humans engage in breeding acts for pleasure.
 
 A breeding record may eventually contain:
 
@@ -91,7 +92,7 @@ developmental modifiers
 birth or hatch health
 ```
 
-These fields are separate concerns. A creature may have a valid visual rig while being infertile, pregnant, injured, diseased, too young, too old, or otherwise unable to produce offspring.
+These fields are separate concerns. A creature may have a valid visual rig while being infertile, pregnant, injured, diseased, too young, too old, or otherwise unable to produce offspring. A creature may still engage in breeding acts when unable to produce offpring.
 
 Record each parent's species independently of the parent entity reference. This preserves lineage and the exact compatibility pairing if either parent entity is later removed or cannot be loaded.
 
@@ -110,7 +111,7 @@ The future population model should distinguish:
 
 **Congenital conditions**
 
-Conditions present at birth or caused during development. Examples include structural limb differences, organ defects, abnormal growth, and inherited metabolic disorders.
+Conditions present at birth or caused during development. Examples include structural limb differences, abnormal growth, and inherited metabolic disorders.
 
 **Acquired conditions**
 
@@ -136,7 +137,7 @@ scars/injuries -> acquired condition overlays
 pregnancy/body condition -> time-varying proportion modifiers
 ```
 
-A species profile can restrict which traits are valid. A cow should not receive a wolf paw or a human hand merely because a generic appearance generator has that option. A hybrid, if ever supported, needs an explicit body plan and rig policy.
+A species profile can restrict which traits are valid. A cow should not receive a wolf paw or a human hand merely because a generic appearance generator has that option. A hybrid, when supported, needs an explicit body plan and rig policy.
 
 ## Inter-breedability policy
 
@@ -147,8 +148,8 @@ The future compatibility record should support:
 ```text
 speciesA
 speciesB
-compatibility: viable | sterile | incompatible | unknown
-requires conditions
+compatibility: viable % | sterile % | unknown
+required conditions
 offspring species or hybrid profile
 fertility of offspring
 gestation/incubation policy
@@ -159,13 +160,13 @@ notes and evidence
 
 Initial default policy (design guidance only; no runtime compatibility rules are implemented by this document):
 
-- same species: potentially viable when age, fertility, health, and social rules permit;
-- different species in the same family: unknown until explicitly defined;
-- different rig families: incompatible by default;
+- same species: potentially viable when fertility, and health permit;
+- different species in the same family: potentially viable when fertility, and health permit but at a lower %;
+- different rig families: potentially viable when fertility, and health permit at extremely low %;
 - hybrids: never generated implicitly from visual resemblance;
-- unsupported or unknown pairings: reject safely without partial state changes.
+- unsupported or unknown pairings: potentially viable when fertility, and health permit with no visual changes only congenital.
 
-A compatible pair still needs a valid reproductive state, suitable anatomy, age, fertility, health, and environmental conditions. A family-level rig is not a biological compatibility claim.
+A compatible pair still needs a valid reproductive state, suitable anatomy, fertility, health, and environmental conditions. A family-level rig is not a biological compatibility claim.
 
 ## Conditions and health outcomes
 
@@ -196,10 +197,9 @@ These are simulation outcomes and should be recorded as durable state when the b
 
 ## Scope boundary
 
-This document is not a breeding design and does not authorize runtime implementation. Before implementation, a later milestone issue must define:
+Before implementation, a later milestone issue must define:
 
 - the first playable breeding loop;
-- valid species pairs;
 - pregnancy or incubation state transitions;
 - inheritance and appearance rules;
 - condition and risk rules;
