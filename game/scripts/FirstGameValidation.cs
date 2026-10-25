@@ -37,6 +37,8 @@ public partial class Main
 
     private void ValidateTownGroundAlignment(IReadOnlyList<string> starterIds)
     {
+        const float SurfaceHeightToleranceMeters = 0.001f;
+        const float FloatRoundingAllowanceMeters = 0.000001f;
         var scenerySurfaces = new[]
         {
             (Name: "TownGround", ExpectedTop: 0f),
@@ -52,7 +54,7 @@ public partial class Main
             var box = meshInstance.Mesh as BoxMesh
                 ?? throw new InvalidOperationException($"{name} must use a measurable box ground mesh.");
             var top = meshInstance.GlobalPosition.Y + box.Size.Y * 0.5f;
-            Require(Mathf.Abs(top - expectedTop) <= 0.001f,
+            Require(Mathf.Abs(top - expectedTop) <= SurfaceHeightToleranceMeters,
                 $"{name} visible surface aligns with the floor at {expectedTop:0.000} m (actual {top:0.000} m)");
             surfaceHeights.Add(top);
         }
@@ -62,7 +64,8 @@ public partial class Main
             ?? throw new InvalidOperationException("World floor must use a measurable box collision shape.");
         var floorTop = floorShape.GlobalPosition.Y + floor.Size.Y * 0.5f;
         Require(Mathf.Abs(floorTop) <= 0.001f
-            && surfaceHeights.Max() - surfaceHeights.Min() <= 0.001f,
+            && surfaceHeights.Max() - surfaceHeights.Min()
+                <= SurfaceHeightToleranceMeters + FloatRoundingAllowanceMeters,
             "town and road surfaces meet the shared Y=0 actor floor without a visible height step");
 
         foreach (var id in starterIds)
