@@ -233,6 +233,7 @@ public partial class Main
     {
         try
         {
+            Require(ControllerActionAliasesMatch(), "Godot compatibility action constants match the canonical simulation contract");
             StartSession(PlayerCharacterProfile.Create("Gameplay refinement"), 42, "Gameplay refinement validation.");
             SetProcess(false);
             _playerCharacter.GlobalPosition = new Vector3(0, 0, -6);
@@ -436,6 +437,20 @@ public partial class Main
             GetTree().Quit();
         }
         catch (Exception exception) { GD.PushError($"GAMEPLAY ACTIONS VALIDATION FAILED: {exception}"); GetTree().Quit(1); }
+    }
+
+    private static bool ControllerActionAliasesMatch()
+    {
+        const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Public
+            | System.Reflection.BindingFlags.Static;
+        var canonical = typeof(Simulation.ControllerActions).GetFields(flags)
+            .Where(field => field.IsLiteral)
+            .ToDictionary(field => field.Name, field => field.GetRawConstantValue(), StringComparer.Ordinal);
+        var compatibility = typeof(ControllerActions).GetFields(flags)
+            .Where(field => field.IsLiteral)
+            .ToDictionary(field => field.Name, field => field.GetRawConstantValue(), StringComparer.Ordinal);
+        return canonical.Count == compatibility.Count
+            && canonical.All(pair => compatibility.TryGetValue(pair.Key, out var value) && object.Equals(pair.Value, value));
     }
 
     private async Task PhysicsFrames(int count)

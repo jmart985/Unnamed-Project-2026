@@ -24,6 +24,8 @@ public partial class Main
     private readonly CollectUseGesture _collectUse = new();
     private WorldTarget? _collectTarget;
     private string? _swingTargetId;
+    private World? _playerCombatWorld;
+    private SocialMeleeCombatService? _playerCombatService;
     private Label _actionHud = null!;
     private Label _targetReticle = null!;
     private Label3D _targetResponse = null!;
@@ -34,6 +36,20 @@ public partial class Main
         public double Age { get; set; }
     }
     private readonly List<SocialPopup> _socialPopups = [];
+
+    private SocialMeleeCombatService PlayerCombatService
+    {
+        get
+        {
+            if (!ReferenceEquals(_playerCombatWorld, _world) || _playerCombatService is null)
+            {
+                _playerCombatWorld = _world;
+                _playerCombatService = new SocialMeleeCombatService(_world, _relationshipEventCatalog);
+            }
+
+            return _playerCombatService;
+        }
+    }
 
     private void AttachSocialFeedback()
     {
@@ -244,7 +260,7 @@ public partial class Main
         if (view is null || !view.Samples.Any(point => TargetLineClear(_playerCharacter.GlobalPosition + Vector3.Up, point, view.Target, targets)))
         { ShowActionFeedback("Miss: the target is blocked."); return; }
         var player = _world.Entities.Single(entity => entity.Id == _world.PlayerEntityId);
-        var combat = new SocialMeleeCombatService(_world, _relationshipEventCatalog)
+        var combat = PlayerCombatService
             .Resolve(new(player.Id, id, bodyPart, 10 * player.BaseStats.Strength), PlayerMeleeReach).Combat;
         ShowActionFeedback(combat.Result == MeleeAttackResult.Success
             ? $"Hit {defender.SpeciesId} {bodyPart} for {combat.AppliedDamage:0.#} damage."

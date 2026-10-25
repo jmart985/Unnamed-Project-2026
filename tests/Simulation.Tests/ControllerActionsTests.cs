@@ -20,6 +20,19 @@ public sealed class ControllerActionsTests
     }
 
     [Fact]
+    public void ActionIdsRemainStableForSavedInputBindings()
+    {
+        Assert.Equal(
+        [
+            "move_left", "move_right", "move_forward", "move_backward", "jump",
+            "combat_attack", "combat_attack_left", "combat_attack_right", "collect", "interact",
+            "greet", "rest", "cycle_target", "open_inventory", "open_settlement", "open_settings",
+            "close_menu", "debug_route", "debug_unreachable", "debug_cancel", "debug_remove_goal"
+        ],
+        ControllerActions.All);
+    }
+
+    [Fact]
     public void InventorySettlementAndSettingsAreDistinctMenusAndCollectionIsNotAMenu()
     {
         var menuState = new PlayerMenuState();

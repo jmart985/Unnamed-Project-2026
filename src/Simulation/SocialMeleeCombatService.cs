@@ -10,8 +10,12 @@ public sealed class SocialMeleeCombatService
 
     private readonly World _world;
     private readonly RelationshipEventService _relationshipEvents;
+    private readonly IMeleeDamageResponder _damageResponder;
 
-    public SocialMeleeCombatService(World world, RelationshipEventCatalog eventCatalog)
+    public SocialMeleeCombatService(
+        World world,
+        RelationshipEventCatalog eventCatalog,
+        IMeleeDamageResponder? damageResponder = null)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         ArgumentNullException.ThrowIfNull(eventCatalog);
@@ -23,13 +27,14 @@ public sealed class SocialMeleeCombatService
         }
 
         _relationshipEvents = new RelationshipEventService(world, eventCatalog);
+        _damageResponder = damageResponder ?? new BehavioralTrigger(world);
     }
 
     public SocialMeleeAttackResolution Resolve(
         MeleeAttackRequest? request,
         double maximumReach = double.MaxValue)
     {
-        var combat = MeleeCombatService.Resolve(_world, request, maximumReach);
+        var combat = MeleeCombatService.Resolve(_world, request, maximumReach, _damageResponder);
         if (combat.Result != MeleeAttackResult.Success || request is null)
         {
             return new SocialMeleeAttackResolution(combat, null);
