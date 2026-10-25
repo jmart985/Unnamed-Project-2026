@@ -1,6 +1,6 @@
 # Asset registry
 
-| Asset ID | Source archive | Contents observed | Status |
+| Asset ID | Source archive | Contents observed | Status | owner | runtime addmition |
 | --- | --- | --- | --- | --- | --- |
 | `generated-humanoid-male-rig-v1` | `art_source/blender/generate_humanoid_rig_v1.py` | Project-generated male prototype with BLEND, GLB, and metadata under `art_source/reference/generated_humanoids/` | Prototype Approved | Project-owned | Humanoid Rig v1, A-pose, 1.80 m target; no external license dependency. No runtime admission yet. |
 | `generated-humanoid-female-pregnancy-rig-v1` | `art_source/blender/augment_female_pregnancy.py` | Derived female prototype with pregnancy and body-weight morph targets in `art_source/reference/generated_humanoids/` | Prototype Approved | Project-owned | `BodyWeight` and `PregnancyProgress` morphs on torso and pelvis; simulation timing and health systems remain separate. |
