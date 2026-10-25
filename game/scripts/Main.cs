@@ -713,7 +713,12 @@ public partial class Main : Node3D
 			RebuildResourceMarkersFromWorld();
 		}
 		foreach (var entity in _world.Entities)
+		{
+			// An explicit squad order takes precedence over schedule-driven travel.
+			if (_squad?.Order != SquadOrderKind.None && _world.SquadMemberIds.Contains(entity.Id))
+				continue;
 			_woodHauling!.ReconcileSchedule(entity, _clock.SimulationTime);
+		}
 		AdvanceNavigationTick(tickSeconds);
 		foreach (var expiredId in _carcassDecay!.Advance(tickSeconds))
 			RemoveResourceMarker(new(TargetKind.Food, expiredId));

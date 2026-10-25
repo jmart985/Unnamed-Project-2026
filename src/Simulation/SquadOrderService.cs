@@ -72,6 +72,19 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
             Status = "Follow stopped: player unavailable.";
             return;
         }
+        if (Order == SquadOrderKind.FollowPlayer && _followOffsets.Count != world.SquadMemberIds.Count)
+        {
+            // Membership may change while Follow remains active. Rebuild the formation
+            // atomically so new members do not all target the player's exact position.
+            foreach (var id in _trips.Keys.ToArray()) CancelTrip(id);
+            foreach (var id in world.SquadMemberIds)
+                if (world.TryGetEntity(id, out var member) && member is not null
+                    && member.Actions.Current?.Kind != ActionKind.Eat)
+                    member.Actions.Cancel();
+            _finishedTargets.Clear();
+            _failedMembers.Clear();
+            AssignFollowOffsets(GetPlayerPosition());
+        }
         foreach (var id in world.SquadMemberIds)
         {
             if (!world.TryGetEntity(id, out var entity) || entity is null) continue;
@@ -244,13 +257,23 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
         if (outward.LengthSquared() <= 1e-8f) outward = new Vector2(0, -1);
         else outward = Vector2.Normalize(outward);
         var tangent = new Vector2(-outward.Y, outward.X);
+        var radius = FollowStandOffDistance;
+        var useFullCircle = members.Length > 6;
         var orderedMembers = members
-            .Select(entity => new { Entity = entity, Projection = entity.Position.X * tangent.X + entity.Position.Z * tangent.Y })
-            .OrderBy(entry => entry.Projection)
+            .Select(entity =>
+            {
+                var relative = new Vector2(entity.Position.X - playerPosition.X, entity.Position.Z - playerPosition.Z);
+                var angle = MathF.Atan2(Vector2.Dot(relative, tangent), Vector2.Dot(relative, outward));
+                return new
+                {
+                    Entity = entity,
+                    Projection = entity.Position.X * tangent.X + entity.Position.Z * tangent.Y,
+                    Angle = angle
+                };
+            })
+            .OrderBy(entry => useFullCircle ? entry.Angle : entry.Projection)
             .ThenBy(entry => entry.Entity.Id, StringComparer.Ordinal)
             .ToArray();
-        var radius = FollowStandOffDistance;
-        var useFullCircle = orderedMembers.Length > 6;
         if (useFullCircle)
         {
             radius = MathF.Max(radius, MoveToFormationSpacing / (2 * MathF.Sin(MathF.PI / orderedMembers.Length)));
@@ -259,10 +282,11 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
         var angleStep = orderedMembers.Length > 1 && !useFullCircle
             ? 2 * MathF.Asin(MathF.Min(1, MoveToFormationSpacing / (2 * radius)))
             : 0;
+        var circleStartAngle = useFullCircle ? orderedMembers[0].Angle : 0;
         for (var index = 0; index < orderedMembers.Length; index++)
         {
             var angle = useFullCircle
-                ? MathF.Tau * index / orderedMembers.Length
+                ? circleStartAngle + MathF.Tau * index / orderedMembers.Length
                 : (index - (orderedMembers.Length - 1) * 0.5f) * angleStep;
             _followOffsets[orderedMembers[index].Entity.Id] = outward * (radius * MathF.Cos(angle))
                 + tangent * (radius * MathF.Sin(angle));
