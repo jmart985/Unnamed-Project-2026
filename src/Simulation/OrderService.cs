@@ -276,7 +276,6 @@ public sealed class OrderService : ITransientSimulationState
 
     private static bool IsInterrupted(EntityRecord entity)
         => entity.Needs.IsHungry
-            || entity.Needs.IsExhausted
             || entity.SleepState == SleepState.Sleeping
             || entity.Actions.Current?.Kind is ActionKind.Eat or ActionKind.Flee;
 

@@ -126,6 +126,28 @@ public sealed class IndividualOrderTests
     }
 
     [Fact]
+    public void ExhaustionAloneDoesNotSuspendAnOrderWithoutNpcRecovery()
+    {
+        var world = new World(needsTuning: new NeedsTuning(initialFatigue: 90));
+        var issuer = world.SpawnEntity("human", Vector3.Zero);
+        var follower = world.SpawnEntity("human", new Vector3(8, 0, 0));
+        follower.OrderIntent = new EntityOrder(EntityOrderKind.Follow, issuer.Id);
+        Assert.True(follower.Needs.IsExhausted);
+
+        var navigator = new FakeNavigationAdapter();
+        var orders = new OrderService(world, _ => navigator);
+        orders.Advance();
+        var route = Assert.Single(navigator.Requests);
+
+        orders.Advance();
+
+        Assert.Equal(NavigationOutcome.InProgress, route.Value);
+        Assert.Single(navigator.Requests);
+        Assert.Equal(ActionKind.CommandMove, follower.Actions.Current?.Kind);
+        Assert.NotNull(follower.OrderIntent);
+    }
+
+    [Fact]
     public void FailedWildEscapeKeepsIndividualOrderPausedUntilThreatClears()
     {
         var catalog = Catalog();
