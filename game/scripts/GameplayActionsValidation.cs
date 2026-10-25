@@ -400,6 +400,9 @@ public partial class Main
             _world.TrySetEntityPosition(cow.Id, new(-1.5f, 0, -6)); SyncEntityViews();
 
             // Remove low storage only for strike tests: a selection can be visible while a strike is physically blocked.
+            // Keep wildlife movement from crossing the attack lane during the independent range assertion.
+            _entityViews[wolf.Id].CancelNavigation();
+            _entityViews[wolf.Id].Visible = false;
             _world.TryRemoveStockpile("refinement-stock"); ClearResourceMarkers(); RebuildResourceMarkersFromWorld();
             _playerCharacter.SetPhysicsProcess(true);
             await PhysicsFrames(25);
@@ -413,10 +416,12 @@ public partial class Main
             hp -= 10;
             blocker.Visible = true; SendMenuMouse(MouseButton.Right); await PhysicsFrames(30);
             Require(human.Health.Parts.Sum(part => part.CurrentHealth) == hp && _actionHud.Text.Contains("blocked"), "blocked target strike does not damage");
-            blocker.Visible = false;
+            _scenery.RemoveChild(blocker);
+            blocker.QueueFree();
             _world.TrySetEntityPosition(human.Id, new(0, 0, -12)); SyncEntityViews();
             SendMenuMouse(MouseButton.Right); await PhysicsFrames(30);
-            Require(human.Health.Parts.Sum(part => part.CurrentHealth) == hp && _actionHud.Text.Contains("OutOfRange"), "distant target does not damage");
+            Require(human.Health.Parts.Sum(part => part.CurrentHealth) == hp && _actionHud.Text.Contains("OutOfRange"),
+                $"distant target does not damage (health={human.Health.Parts.Sum(part => part.CurrentHealth)}/{hp}, feedback='{_lastActionMessage}')");
             _world.TrySetEntityPosition(human.Id, new(0, 0, -7.5f)); SyncEntityViews();
             ToggleMenu(PlayerMenu.Inventory); SendMenuMouse(MouseButton.Left); ClosePlayerMenus(); await PhysicsFrames(30);
             Require(human.Health.Parts.Sum(part => part.CurrentHealth) == hp, "menu blocks strikes");
