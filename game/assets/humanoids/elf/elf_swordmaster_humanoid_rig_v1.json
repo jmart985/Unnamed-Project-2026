@@ -1,0 +1,361 @@
+{
+  "asset_id": "elf_swordmaster_humanoid_rig_v1",
+  "display_name": "Elf Swordmaster Humanoid Rig v1 Prototype",
+  "status": "Prototype Approved",
+  "source": {
+    "file": "ElfSwordmaster_Rigged.blend",
+    "sha256": "b06be1b5db116eaf7c6dbafe6a8b2e52a95fe1c719e6a8c962cd194eeafe2879",
+    "owner_attestation": "User states the purchased model is licensed for commercial use; complete receipts are not available.",
+    "status": "Prototype Approved; retain owner attestation and source correspondence in the intake record."
+  },
+  "runtime_format": "glb",
+  "godot_units": "1 unit = 1 meter",
+  "runtime_path": "game/assets/humanoids/elf/elf_swordmaster_humanoid_rig_v1.glb",
+  "editable_source_path": "art_source/reference/generated_humanoids/elf_swordmaster_humanoid_rig_v1.blend",
+  "humanoid_rig_version": 1,
+  "target_height_m": 1.78,
+  "canonical_pose": "relaxed A-pose derived from source rest pose",
+  "forward_axis_blender": "-Y",
+  "up_axis_blender": "Z",
+  "simulation_anatomy_separate": true,
+  "animations": [],
+  "interaction_anchors": {
+    "locomotion": [
+      "anchor_root",
+      "anchor_foot_l",
+      "anchor_foot_r"
+    ],
+    "equipment": [
+      "anchor_hand_l",
+      "anchor_hand_r",
+      "anchor_carry"
+    ],
+    "interaction": [
+      "anchor_mouth",
+      "anchor_anus",
+      "anchor_genital",
+      "anchor_urethral",
+      "anchor_navel",
+      "anchor_vaginal",
+      "anchor_breast_l",
+      "anchor_breast_r",
+      "anchor_hand_l",
+      "anchor_hand_r"
+    ],
+    "breeding": [
+      "anchor_genital",
+      "anchor_urethral",
+      "anchor_vaginal",
+      "anchor_breast_l",
+      "anchor_breast_r"
+    ]
+  },
+  "anchor_nodes": [
+    {
+      "id": "anchor_root",
+      "bone": "root",
+      "rest_position_blender": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "id": "anchor_foot_l",
+      "bone": "foot_l",
+      "rest_position_blender": [
+        0.166,
+        -0.06,
+        0.08
+      ]
+    },
+    {
+      "id": "anchor_foot_r",
+      "bone": "foot_r",
+      "rest_position_blender": [
+        -0.166,
+        -0.06,
+        0.08
+      ]
+    },
+    {
+      "id": "anchor_hand_l",
+      "bone": "hand_l",
+      "rest_position_blender": null
+    },
+    {
+      "id": "anchor_hand_r",
+      "bone": "hand_r",
+      "rest_position_blender": null
+    },
+    {
+      "id": "anchor_carry",
+      "bone": "pelvis",
+      "rest_position_blender": [
+        0.0,
+        -0.16,
+        0.98
+      ]
+    },
+    {
+      "id": "anchor_mouth",
+      "bone": "head",
+      "rest_position_blender": [
+        0.0,
+        -0.1,
+        1.66
+      ]
+    },
+    {
+      "id": "anchor_anus",
+      "bone": "pelvis",
+      "rest_position_blender": [
+        0.0,
+        0.075,
+        0.88
+      ]
+    },
+    {
+      "id": "anchor_genital",
+      "bone": "pelvis",
+      "rest_position_blender": [
+        0.0,
+        -0.08,
+        0.88
+      ]
+    },
+    {
+      "id": "anchor_urethral",
+      "bone": "pelvis",
+      "rest_position_blender": [
+        0.0,
+        -0.1,
+        0.89
+      ]
+    },
+    {
+      "id": "anchor_navel",
+      "bone": "spine_01",
+      "rest_position_blender": [
+        0.0,
+        -0.105,
+        1.1
+      ]
+    },
+    {
+      "id": "anchor_vaginal",
+      "bone": "pelvis",
+      "rest_position_blender": [
+        0.0,
+        -0.09,
+        0.875
+      ]
+    },
+    {
+      "id": "anchor_breast_l",
+      "bone": "breast_l",
+      "rest_position_blender": [
+        0.085,
+        -0.13,
+        1.34
+      ]
+    },
+    {
+      "id": "anchor_breast_r",
+      "bone": "breast_r",
+      "rest_position_blender": [
+        -0.085,
+        -0.13,
+        1.34
+      ]
+    }
+  ],
+  "mesh_objects": [
+    {
+      "name": "Body",
+      "vertices": 9210,
+      "faces": 9534
+    },
+    {
+      "name": "Eye_L",
+      "vertices": 554,
+      "faces": 555
+    },
+    {
+      "name": "Eye_R",
+      "vertices": 554,
+      "faces": 555
+    },
+    {
+      "name": "Lashes",
+      "vertices": 510,
+      "faces": 384
+    },
+    {
+      "name": "Hair",
+      "vertices": 9883,
+      "faces": 6907
+    },
+    {
+      "name": "Teeth_Lower",
+      "vertices": 140,
+      "faces": 242
+    },
+    {
+      "name": "Teeth_Upper",
+      "vertices": 151,
+      "faces": 262
+    },
+    {
+      "name": "Tongue",
+      "vertices": 101,
+      "faces": 182
+    },
+    {
+      "name": "Armor_Arms",
+      "vertices": 1328,
+      "faces": 1380
+    },
+    {
+      "name": "Armor_Chest",
+      "vertices": 1690,
+      "faces": 1728
+    },
+    {
+      "name": "Armor_Earrings",
+      "vertices": 164,
+      "faces": 208
+    },
+    {
+      "name": "Armor_Hips",
+      "vertices": 1018,
+      "faces": 1032
+    },
+    {
+      "name": "Armor_Cloth_Back",
+      "vertices": 70,
+      "faces": 52
+    },
+    {
+      "name": "Armor_Cloth_Front",
+      "vertices": 88,
+      "faces": 56
+    },
+    {
+      "name": "Armor_Liner",
+      "vertices": 790,
+      "faces": 744
+    },
+    {
+      "name": "Armor_Pauldron_R",
+      "vertices": 691,
+      "faces": 746
+    },
+    {
+      "name": "Armor_Knee_Top_L",
+      "vertices": 222,
+      "faces": 232
+    },
+    {
+      "name": "Armor_Knee_Top_R",
+      "vertices": 222,
+      "faces": 232
+    },
+    {
+      "name": "Armor_Knee_Bottom_L",
+      "vertices": 106,
+      "faces": 108
+    },
+    {
+      "name": "Armor_Knee_Bottom_R",
+      "vertices": 106,
+      "faces": 108
+    },
+    {
+      "name": "Armor_Pauldron_L",
+      "vertices": 691,
+      "faces": 746
+    },
+    {
+      "name": "Armor_Elbow_R",
+      "vertices": 598,
+      "faces": 612
+    },
+    {
+      "name": "Armor_Elbow_L",
+      "vertices": 598,
+      "faces": 612
+    },
+    {
+      "name": "Armor_Leg_L",
+      "vertices": 2151,
+      "faces": 2199
+    },
+    {
+      "name": "Armor_Leg_R",
+      "vertices": 2151,
+      "faces": 2199
+    }
+  ],
+  "materials": [
+    "UP_Elf_Armor_Arms",
+    "UP_Elf_Armor_Arms.002",
+    "UP_Elf_Armor_Chest",
+    "UP_Elf_Armor_Legs",
+    "UP_Elf_Armor_Legs.002",
+    "UP_Elf_Body",
+    "UP_Elf_Body.002",
+    "UP_Elf_Elfswordmaster_Hair",
+    "UP_Elf_Eyes",
+    "UP_Elf_Face",
+    "UP_Elf_Face.002",
+    "UP_Elf_Hair.002"
+  ],
+  "technical_validation": {
+    "source_bounds_m": {
+      "min": [
+        -0.5792179107666016,
+        -0.14977198839187622,
+        -0.00202826876193285
+      ],
+      "max": [
+        0.5792180299758911,
+        0.19021008908748627,
+        1.7789366245269775
+      ]
+    },
+    "normalized_height_m": 1.78096,
+    "floor_z_m": -0.00203,
+    "bone_count": 71,
+    "required_bones_verified": true,
+    "limb_deformation_verified": {
+      "upperarm_l": 0.2750400389776028,
+      "lowerarm_l": 0.16254907890476947,
+      "hand_l": 0.07041423196543659,
+      "thigh_l": 0.4252366365769759,
+      "calf_l": 0.25315020622532686,
+      "foot_l": 0.0746267407738883,
+      "toe_l": 0.03098334286921482,
+      "upperarm_r": 0.2750389101226855,
+      "lowerarm_r": 0.16251958943317713,
+      "hand_r": 0.0703853828696058,
+      "thigh_r": 0.4252323769624166,
+      "calf_r": 0.25314627358816183,
+      "foot_r": 0.07462795285912137,
+      "toe_r": 0.0309873957681379
+    },
+    "mesh_count": 25,
+    "vertex_count": 33787,
+    "triangle_count": 60353,
+    "hand_anchor_alignment_verified": true,
+    "anchor_count": 14,
+    "glb_bytes": 25278720
+  },
+  "runtime_approval": "Prototype only; no animation clip was transferred and the model is not connected to NPC spawning.",
+  "limitations": [
+    "No source animation clip was transferred; movement remains controller-driven and needs authored retargeted clips.",
+    "Hair and facial helper weights are simplified onto the head; facial expression and secondary hair motion are not supported by this prototype.",
+    "The source sword was excluded from the character scene so weapons can be attached through equipment sockets.",
+    "Source license approval relies on the user's commercial-use attestation; keep this prototype out of public builds until the purchase terms are preserved in the asset record."
+  ]
+}
