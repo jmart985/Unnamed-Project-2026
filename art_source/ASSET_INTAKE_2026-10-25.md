@@ -6,6 +6,8 @@ This review covers files dated October 25, 2026 in `C:\Users\James Home\Repo` an
 
 The goal is to identify reusable project material or rigs. A file is approved for project use when it is locally available or described as “game ready.”
 
+owner has manual approval rights.
+
 ## Disposition
 
 | Group | New files | Intake result | Project action |
