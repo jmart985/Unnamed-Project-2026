@@ -17,6 +17,7 @@ public partial class Main
             .Select(entity => entity.Id)
             .ToArray();
         Require(starterIds.Length == NewGameSession.HumanNpcCount, "all starter humans are present for clearance validation");
+        ValidateTownGroundAlignment(starterIds);
 
         var npcBounds = new List<(string Id, Aabb Bounds)>();
         foreach (var id in starterIds)
@@ -32,6 +33,48 @@ public partial class Main
         for (var second = first + 1; second < npcBounds.Count; second++)
             Require(!npcBounds[first].Bounds.Intersects(npcBounds[second].Bounds),
                 $"starter humans {npcBounds[first].Id} and {npcBounds[second].Id} do not overlap");
+    }
+
+    private void ValidateTownGroundAlignment(IReadOnlyList<string> starterIds)
+    {
+        var scenerySurfaces = new[]
+        {
+            (Name: "TownGround", ExpectedTop: 0f),
+            (Name: "RoadEastWest", ExpectedTop: 0.001f),
+            (Name: "RoadNorthSouth", ExpectedTop: 0.001f),
+            (Name: "CountryRoadEast", ExpectedTop: 0.001f),
+            (Name: "CountryRoadWest", ExpectedTop: 0.001f)
+        };
+        var surfaceHeights = new List<float>();
+        foreach (var (name, expectedTop) in scenerySurfaces)
+        {
+            var meshInstance = _scenery!.GetNode<MeshInstance3D>(name);
+            var box = meshInstance.Mesh as BoxMesh
+                ?? throw new InvalidOperationException($"{name} must use a measurable box ground mesh.");
+            var top = meshInstance.GlobalPosition.Y + box.Size.Y * 0.5f;
+            Require(Mathf.Abs(top - expectedTop) <= 0.001f,
+                $"{name} visible surface aligns with the floor at {expectedTop:0.000} m (actual {top:0.000} m)");
+            surfaceHeights.Add(top);
+        }
+
+        var floorShape = GetNode<CollisionShape3D>("Floor/CollisionShape3D");
+        var floor = floorShape.Shape as BoxShape3D
+            ?? throw new InvalidOperationException("World floor must use a measurable box collision shape.");
+        var floorTop = floorShape.GlobalPosition.Y + floor.Size.Y * 0.5f;
+        Require(Mathf.Abs(floorTop) <= 0.001f
+            && surfaceHeights.Max() - surfaceHeights.Min() <= 0.001f,
+            "town and road surfaces meet the shared Y=0 actor floor without a visible height step");
+
+        foreach (var id in starterIds)
+        {
+            var view = _entityViews[id];
+            var capsuleNode = view.GetChildren().OfType<CollisionShape3D>().Single();
+            var capsule = capsuleNode.Shape as CapsuleShape3D
+                ?? throw new InvalidOperationException($"Starter human {id} must use a grounded capsule.");
+            var capsuleBottom = capsuleNode.GlobalPosition.Y - capsule.Height * 0.5f;
+            Require(Mathf.Abs(view.GlobalPosition.Y) <= 0.001f && Mathf.Abs(capsuleBottom - floorTop) <= 0.001f,
+                $"starter human {id} visual root and collision capsule remain grounded at town-road height");
+        }
     }
 
     private static Aabb CollisionBounds(CollisionShape3D collider)

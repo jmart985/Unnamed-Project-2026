@@ -476,6 +476,9 @@ public partial class Main : Node3D
 		_starterWildlifeAsFar = startStarterWildlifeAsFar;
 
 		_map.Mesh = new PlaneMesh { Size = new Vector2(WorldHalfExtent * 2, WorldHalfExtent * 2) };
+		// Keep the large background plane below the town ground and road tops, which
+		// share the same Y=0 surface as navigation and actor positions.
+		_map.Position = new Vector3(0, -0.01f, 0);
 		_map.MaterialOverride = CreateMaterial(new Color(0.32f, 0.5f, 0.24f));
 		BuildScenery();
 		RebuildWorkbenchViews();
@@ -1469,15 +1472,15 @@ public partial class Main : Node3D
 		AddChild(_scenery);
 
 		AddScenery("TownGround", new Vector3(TownHalfExtent * 2, 0.05f, TownHalfExtent * 2),
-			new Vector3(0, 0.03f, 0), new Color(0.62f, 0.62f, 0.6f));
-		AddScenery("RoadEastWest", new Vector3(TownHalfExtent * 2, 0.05f, 8), new Vector3(0, 0.07f, 0),
+			new Vector3(0, -0.025f, 0), new Color(0.62f, 0.62f, 0.6f));
+		AddScenery("RoadEastWest", new Vector3(TownHalfExtent * 2, 0.05f, 8), new Vector3(0, -0.024f, 0),
 			new Color(0.2f, 0.2f, 0.22f));
-		AddScenery("RoadNorthSouth", new Vector3(8, 0.05f, TownHalfExtent * 2), new Vector3(0, 0.08f, 0),
+		AddScenery("RoadNorthSouth", new Vector3(8, 0.05f, TownHalfExtent * 2), new Vector3(0, -0.024f, 0),
 			new Color(0.2f, 0.2f, 0.22f));
 		AddScenery("CountryRoadEast", new Vector3(WorldHalfExtent - TownHalfExtent, 0.05f, 6),
-			new Vector3((WorldHalfExtent + TownHalfExtent) / 2, 0.04f, 0), new Color(0.5f, 0.4f, 0.28f));
+			new Vector3((WorldHalfExtent + TownHalfExtent) / 2, -0.024f, 0), new Color(0.5f, 0.4f, 0.28f));
 		AddScenery("CountryRoadWest", new Vector3(WorldHalfExtent - TownHalfExtent, 0.05f, 6),
-			new Vector3(-(WorldHalfExtent + TownHalfExtent) / 2, 0.04f, 0), new Color(0.5f, 0.4f, 0.28f));
+			new Vector3(-(WorldHalfExtent + TownHalfExtent) / 2, -0.024f, 0), new Color(0.5f, 0.4f, 0.28f));
 
 		var index = 0;
 		foreach (var (minX, maxX) in BuildingBands)
