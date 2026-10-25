@@ -8,10 +8,11 @@ can be imported by Godot. It does not replace the existing human NPC, register
 itself as a runtime species, or spawn in the current settlement scene.
 
 The asset is marked **Prototype Approved**. The owner attests that the model
-was purchased for commercial use, but complete receipts are not available.
-Keep it out of public or commercial builds until the license evidence has been
-recorded in the asset registry. The unmodified source file is preserved outside
-the repository; its SHA-256 is recorded in the runtime metadata.
+was purchased for commercial use and has given final project approval. Complete
+receipts are not required for that approval. Project approval is separate from
+technical readiness and is not an independent determination of third-party
+rights. The unmodified source file is preserved outside the repository; its
+SHA-256 is recorded in the runtime metadata.
 
 The source character has revealing fantasy armor and high-heeled boots. This
 prototype preserves that source appearance and is not a neutral base body or a
