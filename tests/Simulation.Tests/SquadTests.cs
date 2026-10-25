@@ -220,6 +220,50 @@ public sealed class SquadTests
     }
 
     [Fact]
+    public void FollowRebuildsFormationWhenMembersJoinAnActiveOrder()
+    {
+        var world = Session();
+        var members = world.Entities
+            .Where(entity => entity.SpeciesId == "human" && entity.Id != world.PlayerEntityId)
+            .OrderBy(entity => entity.Id, StringComparer.Ordinal)
+            .ToArray();
+        Assert.Equal(NewGameSession.HumanNpcCount, members.Length);
+        world.TrySetEntityPosition(world.PlayerEntityId, Vector3.Zero);
+        world.TrySetEntityPosition(members[0].Id, new(8, 0, 0));
+        world.AddSquadMember(members[0].Id);
+
+        var navigators = members.ToDictionary(member => member.Id, _ => new FakeNavigationAdapter());
+        var squad = new SquadOrderService(world, entity => navigators[entity.Id]);
+        Assert.Equal(SquadResult.Accepted, squad.Execute(SquadOrderKind.FollowPlayer).Code);
+        squad.Advance();
+        var originalRequest = navigators[members[0].Id].Requests.Single().Key;
+
+        for (var index = 1; index < members.Length; index++)
+        {
+            var angle = MathF.Tau * index / (members.Length - 1);
+            world.TrySetEntityPosition(members[index].Id, new(6 * MathF.Cos(angle), 0, 6 * MathF.Sin(angle)));
+            members[index].Actions.TryStart(new ActionCandidate($"wander-{members[index].Id}", ActionKind.Wander));
+            world.AddSquadMember(members[index].Id);
+        }
+
+        squad.Advance();
+
+        Assert.Equal(NavigationOutcome.Cancelled, navigators[members[0].Id].Requests[originalRequest]);
+        Assert.All(members, member => Assert.Equal(ActionKind.SquadMove, member.Actions.Current?.Kind));
+        var targets = members.Select(member =>
+        {
+            var navigator = navigators[member.Id];
+            var activeRequest = Assert.Single(navigator.Requests, pair => pair.Value == NavigationOutcome.InProgress);
+            return navigator.RequestTargets[activeRequest.Key];
+        }).ToArray();
+
+        Assert.All(targets, target => Assert.InRange(new Vector2(target.X, target.Z).Length(), 2.099f, 2.101f));
+        for (var first = 0; first < targets.Length; first++)
+        for (var second = first + 1; second < targets.Length; second++)
+            Assert.True(Vector2.Distance(new(targets[first].X, targets[first].Z), new(targets[second].X, targets[second].Z)) >= 1.29f);
+    }
+
+    [Fact]
     public void HungerPreemptsMovementAndRemovingMemberCancelsItsRequest()
     {
         var world = Session();
