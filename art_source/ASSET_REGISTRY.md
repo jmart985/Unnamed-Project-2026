@@ -32,6 +32,8 @@ Registry status is deliberately conservative. A source archive is **Reference On
 | `borderlands-maya-reference` | `gvv1e7u547-Borderlands 2 - Maya/Borderlands 2 - Maya/maya.obj` | Standalone OBJ | Reference Only | Unknown | Third-party game-associated reference; never ship without explicit rights. |
 | `pregnant-woman-torso-cgtrader` | [CGTrader model page](https://www.cgtrader.com/free-3d-models/character/woman/pregnant-woman-torso) | Pregnant torso in OBJ and FBX; page lists 11.1 MB OBJ files and 6.92 MB FBX files | Reference Only | Ambiguous; verify CGTrader terms and creator permission | Useful body-proportion and pregnancy silhouette reference. The page says "Free to use & do whatever" but also displays royalty-free terms restricting redistribution of the downloaded form; do not ship or redistribute until the binding license is confirmed. |
 
+The October 25, 2026 download batch is categorized in [`ASSET_INTAKE_2026-10-25.md`](ASSET_INTAKE_2026-10-25.md). It remains outside the runtime asset tree pending license and toolchain review.
+
 ## Review checklist
 
 For each asset, add the creator, source URL, acquisition date, license name, commercial-use permission, modification permission, attribution, redistribution restrictions, and saved evidence before changing the status. Then record format, source units, normalized height, vertex/triangle/material counts, skeleton details, canonical mapping, retarget test, Godot import result, deformation review, equipment socket alignment, and performance notes.
