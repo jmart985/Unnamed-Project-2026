@@ -5,7 +5,7 @@ namespace UnnamedProject2026;
 /// <summary>Chooses in-place locomotion clips for a rendered NPC from simulation movement speed.</summary>
 internal sealed class NpcLocomotionAnimator
 {
-    private readonly List<(GodotObject Target, NodePath PropertyPath, Variant Value)> _manualBlendShapeBaseline = [];
+    private readonly List<(MeshInstance3D Mesh, int BlendShapeIndex, float Value)> _manualBlendShapeBaseline = [];
     private readonly Dictionary<string, string> _animationNames = new(StringComparer.OrdinalIgnoreCase);
     private AnimationPlayer? _player;
     private string _speciesId = string.Empty;
@@ -186,30 +186,46 @@ internal sealed class NpcLocomotionAnimator
 
         for (var trackIndex = 0; trackIndex < animation.GetTrackCount(); trackIndex++)
         {
-            if (animation.TrackGetType(trackIndex) != Animation.TrackType.Value) continue;
+            var trackType = animation.TrackGetType(trackIndex);
+            if (trackType is not (Animation.TrackType.Value or Animation.TrackType.BlendShape)) continue;
 
             var trackPath = animation.TrackGetPath(trackIndex).ToString();
             var separatorIndex = trackPath.IndexOf(':');
             if (separatorIndex < 0) continue;
 
-            var propertyPath = new NodePath(trackPath[(separatorIndex + 1)..]);
-            if (!propertyPath.ToString().StartsWith("blend_shapes/", StringComparison.Ordinal)) continue;
+            var propertyName = trackPath[(separatorIndex + 1)..];
+            const string blendShapePrefix = "blend_shapes/";
+            if (trackType == Animation.TrackType.Value)
+            {
+                if (!propertyName.StartsWith(blendShapePrefix, StringComparison.Ordinal)) continue;
+                propertyName = propertyName[blendShapePrefix.Length..];
+            }
 
-            var targetPath = new NodePath(trackPath[..separatorIndex]);
-            var target = animationRoot.GetNodeOrNull(targetPath);
-            if (target is null) continue;
-            if (_manualBlendShapeBaseline.Any(entry => ReferenceEquals(entry.Target, target)
-                && entry.PropertyPath == propertyPath)) continue;
+            if (animationRoot.GetNodeOrNull(new NodePath(trackPath[..separatorIndex])) is not MeshInstance3D mesh
+                || mesh.Mesh is not ArrayMesh arrayMesh) continue;
+            var blendShapeIndex = FindBlendShapeIndex(arrayMesh, propertyName);
+            if (blendShapeIndex < 0 || _manualBlendShapeBaseline.Any(entry => ReferenceEquals(entry.Mesh, mesh)
+                && entry.BlendShapeIndex == blendShapeIndex)) continue;
 
-            _manualBlendShapeBaseline.Add((target, propertyPath, target.GetIndexed(propertyPath)));
+            _manualBlendShapeBaseline.Add((mesh, blendShapeIndex, mesh.GetBlendShapeValue(blendShapeIndex)));
         }
     }
 
     private void RestoreManualBlendShapeBaseline()
     {
-        foreach (var (target, propertyPath, value) in _manualBlendShapeBaseline)
-            target.SetIndexed(propertyPath, value);
+        foreach (var (mesh, blendShapeIndex, value) in _manualBlendShapeBaseline)
+            mesh.SetBlendShapeValue(blendShapeIndex, value);
         _manualBlendShapeBaseline.Clear();
+    }
+
+    private static int FindBlendShapeIndex(ArrayMesh mesh, string blendShapeName)
+    {
+        for (var index = 0; index < mesh.GetBlendShapeCount(); index++)
+        {
+            if (mesh.GetBlendShapeName(index).ToString() == blendShapeName) return index;
+        }
+
+        return -1;
     }
 
     private string? Find(params string[] candidates)

@@ -139,28 +139,28 @@ internal static class NpcLocomotionValidation
             var animatedProperties = new List<(MeshInstance3D Mesh, int BlendShapeIndex, int TrackIndex)>();
             for (var trackIndex = 0; trackIndex < animation.GetTrackCount(); trackIndex++)
             {
-                if (animation.TrackGetType(trackIndex) != Animation.TrackType.Value) continue;
+                var trackType = animation.TrackGetType(trackIndex);
+                if (trackType is not (Animation.TrackType.Value or Animation.TrackType.BlendShape)) continue;
                 var trackPath = animation.TrackGetPath(trackIndex).ToString();
                 var separatorIndex = trackPath.IndexOf(':');
                 if (separatorIndex < 0) continue;
 
-                var propertyPath = trackPath[(separatorIndex + 1)..];
+                var shapeName = trackPath[(separatorIndex + 1)..];
                 const string blendShapePrefix = "blend_shapes/";
-                if (!propertyPath.StartsWith(blendShapePrefix, StringComparison.Ordinal)) continue;
+                if (trackType == Animation.TrackType.Value)
+                {
+                    if (!shapeName.StartsWith(blendShapePrefix, StringComparison.Ordinal)) continue;
+                    shapeName = shapeName[blendShapePrefix.Length..];
+                }
+                else if (shapeName.StartsWith(blendShapePrefix, StringComparison.Ordinal))
+                {
+                    shapeName = shapeName[blendShapePrefix.Length..];
+                }
 
                 var targetPath = new NodePath(trackPath[..separatorIndex]);
                 if (root.GetNodeOrNull(targetPath) is not MeshInstance3D mesh || mesh.Mesh is not ArrayMesh arrayMesh)
                     continue;
-                var shapeName = new StringName(propertyPath[blendShapePrefix.Length..]);
-                var blendShapeIndex = -1;
-                for (var index = 0; index < arrayMesh.GetBlendShapeCount(); index++)
-                {
-                    if (arrayMesh.GetBlendShapeName(index) == shapeName)
-                    {
-                        blendShapeIndex = index;
-                        break;
-                    }
-                }
+                var blendShapeIndex = FindBlendShapeIndex(arrayMesh, shapeName);
                 if (blendShapeIndex < 0) continue;
 
                 if (baselines.All(entry => !ReferenceEquals(entry.Mesh, mesh) || entry.BlendShapeIndex != blendShapeIndex))
@@ -212,9 +212,9 @@ internal static class NpcLocomotionValidation
             var tracks = new List<string>();
             for (var trackIndex = 0; trackIndex < animation.GetTrackCount(); trackIndex++)
             {
-                if (animation.TrackGetType(trackIndex) != Animation.TrackType.Value) continue;
+                var trackType = animation.TrackGetType(trackIndex);
+                if (trackType is not (Animation.TrackType.Value or Animation.TrackType.BlendShape)) continue;
                 var path = animation.TrackGetPath(trackIndex).ToString();
-                if (!path.Contains("blend_shapes/", StringComparison.OrdinalIgnoreCase)) continue;
                 var separatorIndex = path.IndexOf(':');
                 var target = separatorIndex >= 0 && root is not null
                     ? root.GetNodeOrNull(new NodePath(path[..separatorIndex]))
@@ -222,13 +222,23 @@ internal static class NpcLocomotionValidation
                 var meshDescription = target is MeshInstance3D mesh
                     ? $"{mesh.Mesh?.GetClass() ?? "no-mesh"}/{(mesh.Mesh is ArrayMesh arrayMesh ? arrayMesh.GetBlendShapeCount() : 0)}-shapes"
                     : target?.GetClass() ?? "missing-target";
-                tracks.Add($"{path}=>{meshDescription}");
+                tracks.Add($"{trackType}:{path}=>{meshDescription}");
             }
             details.Add($"{clipName}({animation.GetTrackCount()} tracks: {string.Join(",", tracks)})");
         }
 
         return $"{modelCase.Path}: animations=[{string.Join(",", animator.GetAnimationNames())}], "
             + $"facial=[{string.Join(";", details)}]";
+    }
+
+    private static int FindBlendShapeIndex(ArrayMesh mesh, string blendShapeName)
+    {
+        for (var index = 0; index < mesh.GetBlendShapeCount(); index++)
+        {
+            if (mesh.GetBlendShapeName(index).ToString() == blendShapeName) return index;
+        }
+
+        return -1;
     }
 
     private static async Task ValidateTestPanel(Node3D holder)
