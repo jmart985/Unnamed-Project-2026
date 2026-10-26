@@ -74,7 +74,9 @@ internal static class NpcLocomotionValidation
                 throw new InvalidOperationException("NPC locomotion validation found no imported facial blend-shape clip to verify reset behavior.");
 
             await ValidateTestPanel(holder);
+            main.ValidateNpcAnimationTestClosesGameplayOverlays();
             main.ValidateNpcAnimationTestRouteFailureRecovery();
+            main.ValidateNpcAnimationTestRouteResumesStayOrder();
 
             holder.QueueFree();
             await main.ToSignal(main.GetTree(), SceneTree.SignalName.ProcessFrame);
