@@ -1,0 +1,52 @@
+{
+  "npc_id": "entity-000001",
+  "slug": "dwight",
+  "sex": "male",
+  "source_file": "dwight/dwight nude.blend",
+  "rig": "Dwight rig",
+  "source_meshes": [
+    "Dwight Fairfield",
+    "Genesis 8 Male Eyelashes Mesh",
+    "Hair",
+    "Glasses",
+    "Pants",
+    "Shirt",
+    "Bracelets",
+    "Watch"
+  ],
+  "bone_map": {
+    "pelvis": "pelvis",
+    "spine_02": "spine-1",
+    "spine_03": "chest",
+    "head": "head",
+    "upperarm_l": "upper_arm.L",
+    "lowerarm_l": "forearm.L",
+    "upperarm_r": "upper_arm.R",
+    "lowerarm_r": "forearm.R",
+    "thigh_l": "thigh.L",
+    "calf_l": "shin.L",
+    "foot_l": "foot.L",
+    "thigh_r": "thigh.R",
+    "calf_r": "shin.R",
+    "foot_r": "foot.R"
+  },
+  "animation_clips": [
+    "human_idle",
+    "human_run",
+    "human_walk"
+  ],
+  "locomotion_clips": [
+    "human_idle",
+    "human_run",
+    "human_walk"
+  ],
+  "locomotion_root_motion": false,
+  "target_height_m": 1.75,
+  "source_height_m": 1.8471803412046823,
+  "normalized_scale": 0.9473899006843567,
+  "glb_bytes": 22973032,
+  "textures_max_edge": 1024,
+  "source_animations_expected": [],
+  "source_morph_targets_omitted": 237,
+  "runtime_morph_targets_included": false
+}

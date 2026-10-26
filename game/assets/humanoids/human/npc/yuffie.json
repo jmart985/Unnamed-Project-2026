@@ -1,0 +1,61 @@
+{
+  "npc_id": "entity-000010",
+  "slug": "yuffie",
+  "sex": "female",
+  "source_file": "yuffie/Yuffie_model_v1.blend",
+  "rig": "Genesis 8.1 Female",
+  "source_meshes": [
+    "Yuffie Hair Mesh",
+    "Genesis 8.1 Female Mesh",
+    "Genesis 8.1 Female Eyelashes Mesh",
+    "Yuffie Eyelashes. Mesh",
+    "Yuffie Eyebrows Mesh",
+    "Eye_L",
+    "Eye_R",
+    "Yuffie Armor Mesh",
+    "Yuffie Left Arm Mesh",
+    "Yuffie Pants Mesh",
+    "Yuffie Right Arm Mesh",
+    "Yuffie Shoes Mesh",
+    "Yuffie Tasset Mesh",
+    "Yuffie Top Mesh"
+  ],
+  "bone_map": {
+    "pelvis": "pelvis",
+    "spine_02": "spine-1",
+    "spine_03": "chest",
+    "head": "head",
+    "upperarm_l": "upper_arm.L",
+    "lowerarm_l": "forearm.L",
+    "upperarm_r": "upper_arm.R",
+    "lowerarm_r": "forearm.R",
+    "thigh_l": "thigh.L",
+    "calf_l": "shin.L",
+    "foot_l": "foot.L",
+    "thigh_r": "thigh.R",
+    "calf_r": "shin.R",
+    "foot_r": "foot.R"
+  },
+  "animation_clips": [
+    "Genesis 8.1 FemaleAction",
+    "human_idle",
+    "human_run",
+    "human_walk"
+  ],
+  "locomotion_clips": [
+    "human_idle",
+    "human_run",
+    "human_walk"
+  ],
+  "locomotion_root_motion": false,
+  "target_height_m": 1.75,
+  "source_height_m": 1.716320771471132,
+  "normalized_scale": 1.0196229219436646,
+  "glb_bytes": 24405508,
+  "textures_max_edge": 1024,
+  "source_animations_expected": [
+    "Genesis 8.1 FemaleAction"
+  ],
+  "source_morph_targets_omitted": 2089,
+  "runtime_morph_targets_included": false
+}

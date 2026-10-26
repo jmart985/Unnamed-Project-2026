@@ -7,6 +7,21 @@ public sealed class NewGameSession
     public const int DefaultSeed = AntFarmScenario.DefaultSeed;
     public const int HumanNpcCount = 10;
     public const float StarterCreatureTerritoryRadius = 35f;
+    private static readonly BiologicalSex[] StarterNpcSexAssignments =
+    [
+        BiologicalSex.Male,
+        BiologicalSex.Female,
+        BiologicalSex.Male,
+        BiologicalSex.Female,
+        BiologicalSex.Male,
+        BiologicalSex.Female,
+        BiologicalSex.Male,
+        BiologicalSex.Female,
+        BiologicalSex.Female,
+        BiologicalSex.Female
+    ];
+    public static IReadOnlyList<BiologicalSex> StarterNpcSexes { get; } =
+        Array.AsReadOnly(StarterNpcSexAssignments);
     // Keep production work off the two paved road strips and the central crossroads.
     public static Vector3 TownWorkbenchPosition => new(10, 0, 10);
     private static readonly (string SpeciesId, Vector3 Position, double Satiety)[] StarterCreatureSpawns =
@@ -128,7 +143,8 @@ public sealed class NewGameSession
         {
             humanNpcs.Add(world.SpawnEntity(
                 catalog.GetRequired("human"),
-                new Vector3(index - 4.5f, 0, 0)));
+                new Vector3(index - 4.5f, 0, 0),
+                sex: StarterNpcSexAssignments[index]));
         }
 
         if (startStarterWildlifeAsFar)

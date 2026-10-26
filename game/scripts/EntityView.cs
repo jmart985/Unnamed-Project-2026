@@ -179,14 +179,24 @@ public partial class EntityView : CharacterBody3D
         }
 
         var malePresentation = _sex == BiologicalSex.Male;
-        var assetPath = malePresentation
+        var fallbackAssetPath = malePresentation
             ? "res://assets/humanoids/human/radagon_male_humanoid_rig_v1.glb"
             : "res://assets/humanoids/human/human_humanoid_rig_v1.glb";
-        var packed = GD.Load<PackedScene>(assetPath);
-        if (packed is null && malePresentation)
+        var assetPath = fallbackAssetPath;
+        var displayName = malePresentation ? "RadagonMaleProductionModel" : "HumanProductionModel";
+        if (StarterNpcPresentationCatalog.TryGet(EntityId, _sex, out var starterPresentation)
+            && starterPresentation is not null)
         {
-            GD.PushWarning("Radagon male humanoid is unavailable; using the default human presentation.");
-            assetPath = "res://assets/humanoids/human/human_humanoid_rig_v1.glb";
+            assetPath = starterPresentation.AssetPath;
+            displayName = $"{starterPresentation.DisplayName}ProductionModel";
+        }
+
+        var packed = GD.Load<PackedScene>(assetPath);
+        if (packed is null && !string.Equals(assetPath, fallbackAssetPath, StringComparison.Ordinal))
+        {
+            GD.PushWarning($"Starter NPC model '{assetPath}' is unavailable; using the default sex-based human presentation.");
+            assetPath = fallbackAssetPath;
+            displayName = malePresentation ? "RadagonMaleProductionModel" : "HumanProductionModel";
             packed = GD.Load<PackedScene>(assetPath);
         }
         if (packed is null)
@@ -195,7 +205,7 @@ public partial class EntityView : CharacterBody3D
             return false;
         }
 
-        var model = AddImportedModel(packed, malePresentation ? "RadagonMaleProductionModel" : "HumanProductionModel");
+        var model = AddImportedModel(packed, displayName);
         PresentationModelAssetPath = assetPath;
         AddCollision(totalHeight: 1.75f, radius: 0.32f);
 
