@@ -8,12 +8,17 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
+import sys
 from pathlib import Path
 
 import bpy
 import bmesh
 from mathutils import Vector
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from humanoid_locomotion_v1 import add_humanoid_locomotion_actions
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SOURCE = PROJECT_ROOT / "art_source" / "reference" / "generated_humanoids" / "elf.blend"
@@ -198,18 +203,25 @@ def normalize_scale() -> tuple[float, float, float]:
 
 def rename_animation() -> list[str]:
     armature = next(obj for obj in bpy.context.scene.objects if obj.type == "ARMATURE")
-    names: list[str] = []
-    for action in bpy.data.actions:
-        action.name = "human_idle"
-        action.use_fake_user = True
-        action.use_cyclic = True
-        names.append(action.name)
-        break
-    if not names:
-        # Keep the asset valid for runtime while making the missing animation
-        # explicit in metadata. The procedural gait remains the fallback.
-        names = []
-    return names
+    return add_humanoid_locomotion_actions(armature)
+
+
+def compact_metadata_string_arrays(metadata_text: str) -> str:
+    """Preserve the existing compact format for short rig metadata lists."""
+    compact_keys = {"locomotion", "equipment", "interaction", "breeding", "animation_clips"}
+    pattern = re.compile(
+        r'(?m)^(\s*"(?P<key>[^"\n]+)": )\[\n'
+        r'(?P<items>(?:\s*"(?:\\.|[^"\\])*",?\n)+)'
+        r'(?P<close>\s*\])$'
+    )
+
+    def compact(match: re.Match[str]) -> str:
+        if match.group("key") not in compact_keys:
+            return match.group(0)
+        values = re.findall(r'"(?:\\.|[^"\\])*"', match.group("items"))
+        return match.group(1) + "[" + ", ".join(values) + "]"
+
+    return pattern.sub(compact, metadata_text)
 
 
 def purge_unused_source_data() -> None:
@@ -255,6 +267,9 @@ def export_runtime() -> dict:
     minimum, maximum = world_bounds(meshes)
     bone_names = [bone.name for bone in armature.data.bones]
     animation_clips = rename_animation()
+    bpy.context.scene.render.fps = 30
+    bpy.context.scene.frame_start = 1
+    bpy.context.scene.frame_end = 49
 
     blend_path = REFERENCE_ROOT / f"{ASSET_ID}.blend"
     glb_path = REFERENCE_ROOT / f"{ASSET_ID}.glb"
@@ -305,6 +320,12 @@ def export_runtime() -> dict:
         "required_bones_verified": all(name in bone_names for name in REQUIRED_BONES),
         "finger_bones_verified": all(name in bone_names for name in FINGER_BONES),
         "animation_clips": animation_clips,
+        "locomotion": {
+            "controller": "NPC simulation movement; clips are in-place",
+            "clips": {"idle": "human_idle", "walk": "human_walk", "run": "human_run"},
+            "frame_rate": 30,
+            "root_motion": False,
+        },
         "runtime_path": f"game/assets/humanoids/human/{RUNTIME_ID}.glb",
         "runtime_approval": "Prototype only; do not ship until source license is verified",
         "fallback": "EntityView procedural human body if GLB import is unavailable",
@@ -318,7 +339,7 @@ def export_runtime() -> dict:
         "output_blend": str(blend_path.relative_to(PROJECT_ROOT)).replace(os.sep, "/"),
         "output_glb": str(glb_path.relative_to(PROJECT_ROOT)).replace(os.sep, "/"),
     }
-    metadata_text = json.dumps(metadata, indent=2) + "\n"
+    metadata_text = compact_metadata_string_arrays(json.dumps(metadata, indent=2)) + "\n"
     json_path.write_text(metadata_text, encoding="utf-8")
     runtime_json.write_text(metadata_text, encoding="utf-8")
 

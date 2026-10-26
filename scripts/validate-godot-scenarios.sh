@@ -33,6 +33,7 @@ scenarios=(
   "--validate-carcass-decay|CARCASS DECAY VALIDATION PASSED"
   "--validate-far-population-transitions|FAR POPULATION TRANSITIONS VALIDATION PASSED"
   "--validate-starter-wildlife-proximity|STARTER WILDLIFE PROXIMITY VALIDATION PASSED"
+  "--validate-npc-locomotion|NPC LOCOMOTION VALIDATION PASSED"
 )
 
 mapfile -t registered_flags < <(

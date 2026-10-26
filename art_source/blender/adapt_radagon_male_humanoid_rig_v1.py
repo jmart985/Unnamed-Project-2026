@@ -17,6 +17,9 @@ from pathlib import Path
 import bpy
 from mathutils import Matrix, Quaternion, Vector
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from humanoid_locomotion_v1 import add_humanoid_locomotion_actions
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 RUNTIME_ROOT = PROJECT_ROOT / "game/assets/humanoids/human"
@@ -781,7 +784,8 @@ def main() -> None:
 
     bpy.context.scene.render.fps = 30
     bpy.context.scene.frame_start = 1
-    bpy.context.scene.frame_end = 1
+    bpy.context.scene.frame_end = 49
+    add_humanoid_locomotion_actions(armature)
     bpy.ops.wm.save_as_mainfile(filepath=str(args.output_blend.expanduser().resolve()))
 
     bpy.ops.object.select_all(action="DESELECT")
@@ -791,7 +795,7 @@ def main() -> None:
     bpy.ops.export_scene.gltf(
         filepath=str(args.output_glb.expanduser().resolve()),
         export_format="GLB",
-        export_animations=False,
+        export_animations=True,
         export_animation_mode="ACTIONS",
         export_skins=True,
         export_apply=True,
@@ -840,6 +844,12 @@ def main() -> None:
         "texture_dimensions": texture_dimensions,
         "runtime_glb_bytes": runtime_glb_bytes,
         "animation_clips": verified["animations"],
+        "locomotion": {
+            "controller": "NPC simulation movement; clips are in-place",
+            "clips": {"idle": "human_idle", "walk": "human_walk", "run": "human_run"},
+            "frame_rate": 30,
+            "root_motion": False,
+        },
         "interaction_anchors": {
             "locomotion": ["anchor_root", "anchor_foot_l", "anchor_foot_r"],
             "equipment": ["anchor_hand_l", "anchor_hand_r", "anchor_carry"],
@@ -857,7 +867,7 @@ def main() -> None:
             "Source materials are translated to glTF PBR using the included color, normal, roughness, opacity, cracked-skin, and genital maps.",
             "Runtime texture maps are resampled to the declared per-material limits and repacked before export; original source maps remain unchanged.",
             "Godot semantic anchors are non-deforming child nodes; source bone names remain unchanged.",
-            "The purchased package contains no animation clips; this asset uses its original rest pose until a rig-compatible animation is added.",
+            "Includes project-authored, in-place human idle, walk, and run actions; simulation/controller movement remains authoritative.",
             "Simulation anatomy stays separate from the render skeleton; NPC sex comes from saved EntityRecord.Sex.",
             "The source asset is approved by the owner for use in this public game project.",
         ],

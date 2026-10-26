@@ -18,6 +18,7 @@ public partial class EntityView : CharacterBody3D
     private Node3D? _rig;
     private Node3D? _visualModelRoot;
     private ProceduralGait? _gait;
+    private readonly NpcLocomotionAnimator _npcLocomotionAnimator = new();
     private Vector3 _lastPosition;
     private float _smoothedSpeed;
     private Func<Vector3?>? _greeterPosition;
@@ -163,15 +164,7 @@ public partial class EntityView : CharacterBody3D
         AddCollision(totalHeight, radius);
 
         var animationPlayer = model.FindChild("AnimationPlayer", recursive: true, owned: false) as AnimationPlayer;
-        if (animationPlayer is not null)
-        {
-            var idle = animationPlayer.GetAnimationList()
-                .FirstOrDefault(name => string.Equals(name, "idle", StringComparison.OrdinalIgnoreCase));
-            if (idle is not null)
-            {
-                animationPlayer.Play(idle);
-            }
-        }
+        _npcLocomotionAnimator.Bind(animationPlayer, _speciesId, _isCreature, _movementSpeed);
 
         return true;
     }
@@ -205,17 +198,7 @@ public partial class EntityView : CharacterBody3D
         AddCollision(totalHeight: 1.75f, radius: 0.32f);
 
         var animationPlayer = model.FindChild("AnimationPlayer", recursive: true, owned: false) as AnimationPlayer;
-        if (animationPlayer is not null)
-        {
-            var idle = animationPlayer.GetAnimationList()
-                .FirstOrDefault(name => string.Equals(name, "human_idle", StringComparison.OrdinalIgnoreCase))
-                ?? animationPlayer.GetAnimationList()
-                    .FirstOrDefault(name => string.Equals(name, "idle", StringComparison.OrdinalIgnoreCase));
-            if (idle is not null)
-            {
-                animationPlayer.Play(idle);
-            }
-        }
+        _npcLocomotionAnimator.Bind(animationPlayer, _speciesId, _isCreature, _movementSpeed);
 
         return true;
     }
@@ -462,6 +445,7 @@ public partial class EntityView : CharacterBody3D
         // Large jumps are loads, resets, or respawns, not walking.
         var speed = step.Length() > 3f ? 0f : step.Length() / (float)delta;
         _smoothedSpeed = Mathf.Lerp(_smoothedSpeed, speed, 1 - Mathf.Exp(-12 * (float)delta));
+        _npcLocomotionAnimator.Update(_smoothedSpeed);
         if (_smoothedSpeed > 0.15f && step.LengthSquared() > 1e-8f)
         {
             var targetYaw = Mathf.Atan2(-step.X, -step.Z);
