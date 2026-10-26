@@ -49,11 +49,8 @@ internal sealed class NpcLocomotionAnimator
         _lastMovementSpeed = Mathf.Max(0, movementSpeed);
         if (_manualAnimation is not null)
         {
-            if (player.IsPlaying()) return;
-            RestoreManualBlendShapeBaseline();
-            _manualAnimation = null;
-            _manualAnimationLoops = false;
-            _currentAnimation = null;
+            if (!HasManualAnimationCompleted(player)) return;
+            CompleteManualAnimation();
         }
 
         var speed = Mathf.Max(0, movementSpeed);
@@ -141,6 +138,26 @@ internal sealed class NpcLocomotionAnimator
         if (_manualAnimation is null || !string.Equals(_manualAnimation, animationName.ToString(), StringComparison.Ordinal))
             return;
 
+        CompleteManualAnimation();
+    }
+
+    private bool HasManualAnimationCompleted(AnimationPlayer player)
+    {
+        var manualAnimation = _manualAnimation;
+        if (manualAnimation is null) return true;
+        if (!player.IsPlaying() || !string.Equals(player.CurrentAnimation.ToString(), manualAnimation, StringComparison.Ordinal))
+            return true;
+        if (_manualAnimationLoops || !_animationNames.TryGetValue(manualAnimation, out var actualName)) return false;
+
+        // Some imported clips can remain marked as playing at their last sampled frame
+        // without raising AnimationFinished immediately. Do not let that hold an NPC
+        // in place forever after a finite Test Lab action has reached its end.
+        var animation = player.GetAnimation(actualName);
+        return player.CurrentAnimationPosition >= animation.Length - 0.001;
+    }
+
+    private void CompleteManualAnimation()
+    {
         RestoreManualBlendShapeBaseline();
         _manualAnimation = null;
         _manualAnimationLoops = false;
