@@ -11,19 +11,21 @@ public partial class Main
 internal static class NpcLocomotionValidation
 {
     private sealed record ModelCase(string Path, string SpeciesId, bool IsCreature, float Speed,
-        string WalkClip, string MidSpeedClip, string FastClip);
+        string WalkClip, string MidSpeedClip, string FastClip,
+        string EntityId = "locomotion-validation", BiologicalSex Sex = BiologicalSex.Unspecified,
+        string? ExpectedEntityViewPath = null);
 
     public static async void Run(Main main)
     {
         Node3D? holder = null;
         try
         {
-            var cases = new[]
+            var cases = new List<ModelCase>
             {
                 new ModelCase("res://assets/humanoids/human/human_humanoid_rig_v1.glb", "human", false, 3f,
-                    "human_walk", "human_walk", "human_run"),
+                    "human_walk", "human_walk", "human_run", Sex: BiologicalSex.Female),
                 new ModelCase("res://assets/humanoids/human/radagon_male_humanoid_rig_v1.glb", "human", false, 3f,
-                    "human_walk", "human_walk", "human_run"),
+                    "human_walk", "human_walk", "human_run", Sex: BiologicalSex.Male),
                 new ModelCase("res://assets/creatures/ape/ape_primate_rig_v1.glb", "ape", true, 2f,
                     "knuckle_walk", "knuckle_walk", "run"),
                 new ModelCase("res://assets/creatures/cat/cat_felid_rig_v1.glb", "cat", true, 2.2f,
@@ -37,6 +39,12 @@ internal static class NpcLocomotionValidation
                 new ModelCase("res://assets/creatures/wolf/wolf_canid_rig_v1.glb", "wolf", true, 3.4f,
                     "walk", "trot", "run"),
             };
+            foreach (var presentation in StarterNpcPresentationCatalog.All)
+            {
+                cases.Add(new ModelCase(presentation.AssetPath, "human", false, 3f,
+                    "human_walk", "human_walk", "human_run", presentation.EntityId,
+                    presentation.Sex, presentation.AssetPath));
+            }
 
             holder = new Node3D { Name = "NpcLocomotionValidationModels" };
             main.AddChild(holder);
@@ -77,11 +85,17 @@ internal static class NpcLocomotionValidation
     private static void ValidateTickMovement(Node3D holder, ModelCase modelCase)
     {
         var view = new EntityView();
-        view.Bind("locomotion-validation", modelCase.Speed, modelCase.IsCreature, modelCase.SpeciesId,
-            sex: modelCase.Path.Contains("radagon") ? BiologicalSex.Male : BiologicalSex.Female);
+        view.Bind(modelCase.EntityId, modelCase.Speed, modelCase.IsCreature, modelCase.SpeciesId,
+            sex: modelCase.Sex == BiologicalSex.Unspecified
+                ? (modelCase.Path.Contains("radagon") ? BiologicalSex.Male : BiologicalSex.Female)
+                : modelCase.Sex);
         holder.AddChild(view);
         view.SetProcess(false);
         view.SetPhysicsProcess(false);
+        if (modelCase.ExpectedEntityViewPath is { } expectedPath
+            && view.PresentationModelAssetPath != expectedPath)
+            throw new InvalidOperationException(
+                $"Starter NPC {modelCase.EntityId} selected '{view.PresentationModelAssetPath}', expected '{expectedPath}'.");
         var player = view.FindChild("AnimationPlayer", recursive: true, owned: false) as AnimationPlayer
             ?? throw new InvalidOperationException($"EntityView model missing for {modelCase.Path}");
         foreach (var fps in new[] { 30, 60, 144 })

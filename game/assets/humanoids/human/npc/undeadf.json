@@ -1,0 +1,47 @@
+{
+  "npc_id": "entity-000009",
+  "slug": "undeadf",
+  "sex": "female",
+  "source_file": "undeadf/UndeadF v.1.0.2.blend",
+  "rig": "UndeadF_RIG",
+  "source_meshes": [
+    "UndeadF_GEO",
+    "UndeadF_Scalp",
+    "UndeadF_Hair03_Loose"
+  ],
+  "bone_map": {
+    "pelvis": "Pelvis",
+    "spine_02": "Spine_02",
+    "spine_03": "Chest",
+    "head": "Head",
+    "upperarm_l": "DEF-Upperarm_01.L",
+    "lowerarm_l": "DEF-Forearm_01.L",
+    "upperarm_r": "DEF-Upperarm_01.R",
+    "lowerarm_r": "DEF-Forearm_01.R",
+    "thigh_l": "DEF-Thigh_01.L",
+    "calf_l": "DEF-Shin_01.L",
+    "foot_l": "DEF-Foot.L",
+    "thigh_r": "DEF-Thigh_01.R",
+    "calf_r": "DEF-Shin_01.R",
+    "foot_r": "DEF-Foot.R"
+  },
+  "animation_clips": [
+    "human_idle",
+    "human_run",
+    "human_walk"
+  ],
+  "locomotion_clips": [
+    "human_idle",
+    "human_run",
+    "human_walk"
+  ],
+  "locomotion_root_motion": false,
+  "target_height_m": 1.75,
+  "source_height_m": 1.655772490633027,
+  "normalized_scale": 1.0569084882736206,
+  "glb_bytes": 9045228,
+  "textures_max_edge": 1024,
+  "source_animations_expected": [],
+  "source_morph_targets_omitted": 90,
+  "runtime_morph_targets_included": false
+}

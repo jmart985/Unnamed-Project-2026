@@ -48,6 +48,13 @@ public sealed class NewGameSessionTests
         Assert.Equal(NewGameSession.HumanNpcCount,
             session.World.Entities.Count(entity =>
                 entity.SpeciesId == "human" && entity.Id != player.Id));
+        var starterNpcs = session.World.Entities
+            .Where(entity => entity.Id != player.Id && entity.SpeciesId == "human")
+            .OrderBy(entity => entity.Id, StringComparer.Ordinal)
+            .ToArray();
+        Assert.Equal(NewGameSession.StarterNpcSexes, starterNpcs.Select(entity => entity.Sex));
+        Assert.Equal(4, starterNpcs.Count(entity => entity.Sex == BiologicalSex.Male));
+        Assert.Equal(6, starterNpcs.Count(entity => entity.Sex == BiologicalSex.Female));
         Assert.Equal(
             ExpectedStarterCreatureSpeciesIds,
             NewGameSession.StarterCreatureSpeciesIds.OrderBy(speciesId => speciesId, StringComparer.Ordinal));

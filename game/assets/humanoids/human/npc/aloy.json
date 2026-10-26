@@ -1,0 +1,59 @@
+{
+  "npc_id": "entity-000004",
+  "slug": "aloy",
+  "sex": "female",
+  "source_file": "aloy/Aloy.blend",
+  "rig": "Aloy",
+  "source_meshes": [
+    "Aloy Mesh",
+    "Horizon Forbidden West - Aloy Hair Mesh",
+    "G9 Eyebrows Fiber Style 02 Mesh",
+    "Genesis 9 Eyes Mesh",
+    "Genesis 9 Mouth Mesh",
+    "Genesis 9 Eyelashes Mesh",
+    "Horizon Forbidden West - Aloy Hair Nora Head gear Mesh",
+    "Horizon Forbidden West - Aloy Nora Pants Mesh",
+    "Horizon Forbidden West - Aloy Nora under amour Mesh",
+    "Horizon Forbidden West - Aloy Hip BWDLeft Mesh",
+    "Horizon Forbidden West - Aloy Hip BWDRight Mesh",
+    "Horizon Forbidden West - Aloy Hip FWDLeft Mesh",
+    "Horizon Forbidden West - Aloy Nora Belt Mesh",
+    "Horizon Forbidden West - Aloy Hip FWDRight Mesh",
+    "Horizon Forbidden West - Aloy Nora sleeves Mesh"
+  ],
+  "bone_map": {
+    "pelvis": "pelvis",
+    "spine_02": "spine2",
+    "spine_03": "spine3",
+    "head": "head",
+    "upperarm_l": "l_upperarm",
+    "lowerarm_l": "l_forearm",
+    "upperarm_r": "r_upperarm",
+    "lowerarm_r": "r_forearm",
+    "thigh_l": "l_thigh",
+    "calf_l": "l_shin",
+    "foot_l": "l_foot",
+    "thigh_r": "r_thigh",
+    "calf_r": "r_shin",
+    "foot_r": "r_foot"
+  },
+  "animation_clips": [
+    "human_idle",
+    "human_run",
+    "human_walk"
+  ],
+  "locomotion_clips": [
+    "human_idle",
+    "human_run",
+    "human_walk"
+  ],
+  "locomotion_root_motion": false,
+  "target_height_m": 1.75,
+  "source_height_m": 1.7506874518950633,
+  "normalized_scale": 0.9996073246002197,
+  "glb_bytes": 76915460,
+  "textures_max_edge": 1024,
+  "source_animations_expected": [],
+  "source_morph_targets_omitted": 1114,
+  "runtime_morph_targets_included": false
+}
