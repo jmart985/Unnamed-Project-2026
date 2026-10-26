@@ -484,7 +484,7 @@ public partial class EntityView : CharacterBody3D
         var speed = _secondsSinceMovementTick <= SimulationClock.TickIntervalSeconds * 2
             ? _tickMovementSpeed : 0f;
         _smoothedSpeed = Mathf.Lerp(_smoothedSpeed, speed, 1 - Mathf.Exp(-12 * (float)delta));
-        _npcLocomotionAnimator.Update(_smoothedSpeed);
+        _npcLocomotionAnimator.Update(_smoothedSpeed, delta);
         if (_smoothedSpeed > 0.15f && step.LengthSquared() > 1e-8f)
         {
             var targetYaw = Mathf.Atan2(-step.X, -step.Z);

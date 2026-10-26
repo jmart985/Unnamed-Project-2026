@@ -12,6 +12,8 @@ internal sealed class NpcLocomotionAnimator
     private string? _currentAnimation;
     private string? _manualAnimation;
     private bool _manualAnimationLoops;
+    private double _manualAnimationElapsedSeconds;
+    private double _manualAnimationDurationSeconds;
     private float _movementSpeed;
     private float _lastMovementSpeed;
     private bool _isCreature;
@@ -28,6 +30,8 @@ internal sealed class NpcLocomotionAnimator
         _currentAnimation = null;
         _manualAnimation = null;
         _manualAnimationLoops = false;
+        _manualAnimationElapsedSeconds = 0;
+        _manualAnimationDurationSeconds = 0;
         _animationNames.Clear();
         if (player is null) return;
 
@@ -42,13 +46,15 @@ internal sealed class NpcLocomotionAnimator
         Update(0);
     }
 
-    public void Update(float movementSpeed)
+    public void Update(float movementSpeed, double deltaSeconds = 0)
     {
         var player = _player;
         if (player is null || _animationNames.Count == 0 || !float.IsFinite(movementSpeed)) return;
         _lastMovementSpeed = Mathf.Max(0, movementSpeed);
         if (_manualAnimation is not null)
         {
+            if (double.IsFinite(deltaSeconds) && deltaSeconds > 0)
+                _manualAnimationElapsedSeconds += deltaSeconds;
             if (!HasManualAnimationCompleted(player)) return;
             CompleteManualAnimation();
         }
@@ -115,9 +121,12 @@ internal sealed class NpcLocomotionAnimator
         var animation = player.GetAnimation(actualName);
         CaptureManualBlendShapeBaseline(player, animation);
         animation.LoopMode = loop ? Animation.LoopModeEnum.Linear : Animation.LoopModeEnum.None;
+        player.SpeedScale = 1f;
         player.Play(actualName, customBlend: 0.18f);
         _manualAnimation = actualName;
         _manualAnimationLoops = loop;
+        _manualAnimationElapsedSeconds = 0;
+        _manualAnimationDurationSeconds = loop ? double.PositiveInfinity : Math.Max(0, animation.Length);
         _currentAnimation = actualName;
         return true;
     }
@@ -129,6 +138,8 @@ internal sealed class NpcLocomotionAnimator
         RestoreManualBlendShapeBaseline();
         _manualAnimation = null;
         _manualAnimationLoops = false;
+        _manualAnimationElapsedSeconds = 0;
+        _manualAnimationDurationSeconds = 0;
         _currentAnimation = null;
         Update(movementSpeed);
     }
@@ -149,11 +160,11 @@ internal sealed class NpcLocomotionAnimator
             return true;
         if (_manualAnimationLoops || !_animationNames.TryGetValue(manualAnimation, out var actualName)) return false;
 
-        // Some imported clips can remain marked as playing at their last sampled frame
-        // without raising AnimationFinished immediately. Do not let that hold an NPC
-        // in place forever after a finite Test Lab action has reached its end.
+        // Imported clips can fail to raise AnimationFinished on some runtimes. Track
+        // their finite playback duration as a fallback so the NPC cannot stay held.
         var animation = player.GetAnimation(actualName);
-        return player.CurrentAnimationPosition >= animation.Length - 0.001;
+        return player.CurrentAnimationPosition >= animation.Length - 0.001
+            || _manualAnimationElapsedSeconds >= _manualAnimationDurationSeconds;
     }
 
     private void CompleteManualAnimation()
@@ -161,6 +172,8 @@ internal sealed class NpcLocomotionAnimator
         RestoreManualBlendShapeBaseline();
         _manualAnimation = null;
         _manualAnimationLoops = false;
+        _manualAnimationElapsedSeconds = 0;
+        _manualAnimationDurationSeconds = 0;
         _currentAnimation = null;
         Update(_lastMovementSpeed);
     }

@@ -109,9 +109,12 @@ internal static class NpcLocomotionValidation
             throw new InvalidOperationException($"Test panel could not start one-shot playback on {modelCase.Path}.");
         if (!animator.HoldsPositionForManualAction)
             throw new InvalidOperationException($"Finite Test Lab clip did not request a movement hold on {modelCase.Path}.");
-        player.Advance(player.GetAnimation(modelCase.WalkClip).Length + 0.05);
+        var clipDuration = player.GetAnimation(modelCase.WalkClip).Length;
+        player.Advance(clipDuration + 0.05);
         await player.ToSignal(player.GetTree(), SceneTree.SignalName.ProcessFrame);
-        animator.Update(modelCase.Speed * 0.95f);
+        // Advance the fallback clock too, so the test covers runtimes where an imported
+        // clip remains marked as playing instead of reporting completion.
+        animator.Update(modelCase.Speed * 0.95f, clipDuration + 0.05);
         if (animator.HoldsPositionForManualAction)
             throw new InvalidOperationException($"Completed Test Lab clip kept movement held on {modelCase.Path}.");
         RequireClip(player, modelCase.FastClip, modelCase.Path);
