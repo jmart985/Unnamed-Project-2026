@@ -170,6 +170,11 @@ internal static class NpcLocomotionValidation
 
             if (baselines.Count == 0 || !animator.PlayManual(clipName, loop: true)) continue;
 
+            // Let the manual clip finish blending over the current locomotion clip before
+            // sampling its keys. A zero-time Seek can otherwise observe only the blend's
+            // initial frame on fast headless runners.
+            player.Advance(0.25);
+
             var expressionApplied = false;
             foreach (var (mesh, blendShapeIndex, trackIndex) in animatedProperties)
             {
