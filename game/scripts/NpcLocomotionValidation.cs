@@ -69,6 +69,7 @@ internal static class NpcLocomotionValidation
             }
 
             await ValidateTestPanel(holder);
+            main.ValidateNpcAnimationTestRouteFailureRecovery();
 
             holder.QueueFree();
             await main.ToSignal(main.GetTree(), SceneTree.SignalName.ProcessFrame);
