@@ -9,6 +9,7 @@ public partial class EntityView : CharacterBody3D
     private const double CrowdRecoveryTimeoutSeconds = 8;
     private GodotNavigationAdapter? _navigationAdapter;
     private float _movementSpeed;
+    private float _animationTestMovementMultiplier = 1f;
     private bool _isCreature;
     private string _speciesId = string.Empty;
     private BiologicalSex _sex = BiologicalSex.Unspecified;
@@ -28,6 +29,16 @@ public partial class EntityView : CharacterBody3D
     private ActionState? _greetingTask;
 
     public bool HasGreetingAttention => _greeterPosition is not null;
+    public IReadOnlyList<string> PresentationAnimationNames => _npcLocomotionAnimator.GetAnimationNames();
+
+    public bool PlayPresentationAnimationForTesting(string animationName, bool loop)
+        => _npcLocomotionAnimator.PlayManual(animationName, loop);
+
+    public void StopPresentationAnimationForTesting()
+        => _npcLocomotionAnimator.StopManual(_smoothedSpeed);
+
+    public void SetAnimationTestMovementMultiplier(float multiplier)
+        => _animationTestMovementMultiplier = Mathf.Clamp(multiplier, 0.2f, 1.2f);
 
     // Imported Blender rigs in this prototype use +Z as their source forward;
     // normalize them at the asset boundary so every actor uses the same -Z rule.
@@ -486,6 +497,7 @@ public partial class EntityView : CharacterBody3D
         EntityId = entityId;
         _movementSpeed = movementSpeed;
         _isCreature = isCreature;
+        _animationTestMovementMultiplier = 1f;
         _speciesId = speciesId ?? (isCreature ? "creature" : "human");
         _sex = sex;
         _bodyCategory = bodyCategory ?? (isCreature ? "quadruped" : "humanoid");
@@ -522,7 +534,7 @@ public partial class EntityView : CharacterBody3D
             SampleLocomotionTick(previousPosition, simulationSeconds);
             return;
         }
-        adapter.AdvanceMovement(simulationSeconds, _movementSpeed, (current, proposed) =>
+        adapter.AdvanceMovement(simulationSeconds, _movementSpeed * _animationTestMovementMultiplier, (current, proposed) =>
         {
             var afterSquad = squad is null ? proposed : squad.ConstrainFollowStep(EntityId, current, proposed);
             var afterIndividualOrder = orders is null ? afterSquad : orders.ConstrainFollowStep(EntityId, current, afterSquad);

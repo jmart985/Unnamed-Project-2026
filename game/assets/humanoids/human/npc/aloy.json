@@ -40,7 +40,13 @@
   "animation_clips": [
     "human_idle",
     "human_run",
-    "human_walk"
+    "human_walk",
+    "npc_face_angry",
+    "npc_face_blink",
+    "npc_face_fear",
+    "npc_face_happy",
+    "npc_face_sad",
+    "npc_face_surprised"
   ],
   "locomotion_clips": [
     "human_idle",
@@ -48,12 +54,94 @@
     "human_walk"
   ],
   "locomotion_root_motion": false,
+  "facial_expression_clips": {
+    "happy": "npc_face_happy",
+    "sad": "npc_face_sad",
+    "angry": "npc_face_angry",
+    "surprised": "npc_face_surprised",
+    "fear": "npc_face_fear",
+    "blink": "npc_face_blink"
+  },
+  "facial_expression_targets": {
+    "npc_face_happy": [
+      {
+        "mesh": "Aloy Mesh",
+        "shape_key": "npc_face_happy"
+      }
+    ],
+    "npc_face_sad": [
+      {
+        "mesh": "Aloy Mesh",
+        "shape_key": "npc_face_sad"
+      }
+    ],
+    "npc_face_angry": [
+      {
+        "mesh": "Aloy Mesh",
+        "shape_key": "npc_face_angry"
+      },
+      {
+        "mesh": "G9 Eyebrows Fiber Style 02 Mesh",
+        "shape_key": "npc_face_angry"
+      },
+      {
+        "mesh": "Genesis 9 Eyelashes Mesh",
+        "shape_key": "npc_face_angry"
+      }
+    ],
+    "npc_face_surprised": [
+      {
+        "mesh": "Aloy Mesh",
+        "shape_key": "npc_face_surprised"
+      },
+      {
+        "mesh": "G9 Eyebrows Fiber Style 02 Mesh",
+        "shape_key": "npc_face_surprised"
+      },
+      {
+        "mesh": "Genesis 9 Eyelashes Mesh",
+        "shape_key": "npc_face_surprised"
+      }
+    ],
+    "npc_face_fear": [
+      {
+        "mesh": "Aloy Mesh",
+        "shape_key": "npc_face_fear"
+      },
+      {
+        "mesh": "G9 Eyebrows Fiber Style 02 Mesh",
+        "shape_key": "npc_face_fear"
+      },
+      {
+        "mesh": "Genesis 9 Eyelashes Mesh",
+        "shape_key": "npc_face_fear"
+      }
+    ],
+    "npc_face_blink": [
+      {
+        "mesh": "Aloy Mesh",
+        "shape_key": "npc_face_blink"
+      },
+      {
+        "mesh": "G9 Eyebrows Fiber Style 02 Mesh",
+        "shape_key": "npc_face_blink"
+      },
+      {
+        "mesh": "Genesis 9 Eyelashes Mesh",
+        "shape_key": "npc_face_blink"
+      }
+    ]
+  },
   "target_height_m": 1.75,
   "source_height_m": 1.7506874518950633,
   "normalized_scale": 0.9996073246002197,
-  "glb_bytes": 76915460,
+  "glb_bytes": 86798280,
   "textures_max_edge": 1024,
   "source_animations_expected": [],
+  "source_morph_target_count": 1114,
   "source_morph_targets_omitted": 1114,
-  "runtime_morph_targets_included": false
+  "runtime_expression_targets_generated": 14,
+  "runtime_morph_targets_included": true,
+  "runtime_morph_target_count": 14,
+  "base_mesh_preserved_from": "aloy.glb"
 }

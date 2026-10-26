@@ -9,7 +9,9 @@ internal sealed class NpcLocomotionAnimator
     private AnimationPlayer? _player;
     private string _speciesId = string.Empty;
     private string? _currentAnimation;
+    private string? _manualAnimation;
     private float _movementSpeed;
+    private float _lastMovementSpeed;
     private bool _isCreature;
 
     public void Bind(AnimationPlayer? player, string speciesId, bool isCreature, float movementSpeed)
@@ -19,8 +21,11 @@ internal sealed class NpcLocomotionAnimator
         _isCreature = isCreature;
         _movementSpeed = Mathf.Max(movementSpeed, 0.5f);
         _currentAnimation = null;
+        _manualAnimation = null;
         _animationNames.Clear();
         if (player is null) return;
+
+        player.AnimationFinished += OnAnimationFinished;
 
         foreach (var animationName in player.GetAnimationList())
         {
@@ -35,6 +40,13 @@ internal sealed class NpcLocomotionAnimator
     {
         var player = _player;
         if (player is null || _animationNames.Count == 0 || !float.IsFinite(movementSpeed)) return;
+        _lastMovementSpeed = Mathf.Max(0, movementSpeed);
+        if (_manualAnimation is not null)
+        {
+            if (player.IsPlaying()) return;
+            _manualAnimation = null;
+            _currentAnimation = null;
+        }
 
         var speed = Mathf.Max(0, movementSpeed);
         var idle = Find("human_idle", "idle");
@@ -78,6 +90,41 @@ internal sealed class NpcLocomotionAnimator
         player.GetAnimation(selected).LoopMode = Animation.LoopModeEnum.Linear;
         player.Play(selected, customBlend: 0.18f);
         _currentAnimation = selected;
+    }
+
+    public IReadOnlyList<string> GetAnimationNames() => _animationNames.Keys
+        .OrderBy(name => name, StringComparer.OrdinalIgnoreCase).ToArray();
+
+    public bool PlayManual(string animationName, bool loop)
+    {
+        var player = _player;
+        if (player is null || !_animationNames.TryGetValue(animationName, out var actualName))
+            return false;
+
+        var animation = player.GetAnimation(actualName);
+        animation.LoopMode = loop ? Animation.LoopModeEnum.Linear : Animation.LoopModeEnum.None;
+        player.Play(actualName, customBlend: 0.18f);
+        _manualAnimation = actualName;
+        _currentAnimation = actualName;
+        return true;
+    }
+
+    public void StopManual(float movementSpeed)
+    {
+        if (_manualAnimation is null) return;
+        _manualAnimation = null;
+        _currentAnimation = null;
+        Update(movementSpeed);
+    }
+
+    private void OnAnimationFinished(StringName animationName)
+    {
+        if (_manualAnimation is null || !string.Equals(_manualAnimation, animationName.ToString(), StringComparison.Ordinal))
+            return;
+
+        _manualAnimation = null;
+        _currentAnimation = null;
+        Update(_lastMovementSpeed);
     }
 
     private string? Find(params string[] candidates)
