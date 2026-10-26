@@ -5,6 +5,7 @@ namespace UnnamedProject2026;
 /// <summary>Chooses in-place locomotion clips for a rendered NPC from simulation movement speed.</summary>
 internal sealed class NpcLocomotionAnimator
 {
+    private readonly List<(GodotObject Target, NodePath PropertyPath, Variant Value)> _manualBlendShapeBaseline = [];
     private readonly Dictionary<string, string> _animationNames = new(StringComparer.OrdinalIgnoreCase);
     private AnimationPlayer? _player;
     private string _speciesId = string.Empty;
@@ -16,6 +17,7 @@ internal sealed class NpcLocomotionAnimator
 
     public void Bind(AnimationPlayer? player, string speciesId, bool isCreature, float movementSpeed)
     {
+        RestoreManualBlendShapeBaseline();
         _player = player;
         _speciesId = speciesId;
         _isCreature = isCreature;
@@ -44,6 +46,7 @@ internal sealed class NpcLocomotionAnimator
         if (_manualAnimation is not null)
         {
             if (player.IsPlaying()) return;
+            RestoreManualBlendShapeBaseline();
             _manualAnimation = null;
             _currentAnimation = null;
         }
@@ -101,7 +104,14 @@ internal sealed class NpcLocomotionAnimator
         if (player is null || !_animationNames.TryGetValue(animationName, out var actualName))
             return false;
 
+        if (_manualAnimation is not null)
+        {
+            player.Stop(keepState: true);
+            RestoreManualBlendShapeBaseline();
+        }
+
         var animation = player.GetAnimation(actualName);
+        CaptureManualBlendShapeBaseline(player, animation);
         animation.LoopMode = loop ? Animation.LoopModeEnum.Linear : Animation.LoopModeEnum.None;
         player.Play(actualName, customBlend: 0.18f);
         _manualAnimation = actualName;
@@ -112,6 +122,8 @@ internal sealed class NpcLocomotionAnimator
     public void StopManual(float movementSpeed)
     {
         if (_manualAnimation is null) return;
+        _player?.Stop(keepState: true);
+        RestoreManualBlendShapeBaseline();
         _manualAnimation = null;
         _currentAnimation = null;
         Update(movementSpeed);
@@ -122,9 +134,44 @@ internal sealed class NpcLocomotionAnimator
         if (_manualAnimation is null || !string.Equals(_manualAnimation, animationName.ToString(), StringComparison.Ordinal))
             return;
 
+        RestoreManualBlendShapeBaseline();
         _manualAnimation = null;
         _currentAnimation = null;
         Update(_lastMovementSpeed);
+    }
+
+    private void CaptureManualBlendShapeBaseline(AnimationPlayer player, Animation animation)
+    {
+        _manualBlendShapeBaseline.Clear();
+        var animationRoot = player.GetNodeOrNull(player.RootNode);
+        if (animationRoot is null) return;
+
+        for (var trackIndex = 0; trackIndex < animation.GetTrackCount(); trackIndex++)
+        {
+            if (animation.TrackGetType(trackIndex) != Animation.TrackType.Value) continue;
+
+            var trackPath = animation.TrackGetPath(trackIndex).ToString();
+            var separatorIndex = trackPath.IndexOf(':');
+            if (separatorIndex < 0) continue;
+
+            var propertyPath = new NodePath(trackPath[(separatorIndex + 1)..]);
+            if (!propertyPath.ToString().StartsWith("blend_shapes/", StringComparison.Ordinal)) continue;
+
+            var targetPath = new NodePath(trackPath[..separatorIndex]);
+            var target = animationRoot.GetNodeOrNull(targetPath);
+            if (target is null) continue;
+            if (_manualBlendShapeBaseline.Any(entry => ReferenceEquals(entry.Target, target)
+                && entry.PropertyPath == propertyPath)) continue;
+
+            _manualBlendShapeBaseline.Add((target, propertyPath, target.GetIndexed(propertyPath)));
+        }
+    }
+
+    private void RestoreManualBlendShapeBaseline()
+    {
+        foreach (var (target, propertyPath, value) in _manualBlendShapeBaseline)
+            target.SetIndexed(propertyPath, value);
+        _manualBlendShapeBaseline.Clear();
     }
 
     private string? Find(params string[] candidates)
