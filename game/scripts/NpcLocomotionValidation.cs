@@ -273,7 +273,8 @@ internal static class NpcLocomotionValidation
         var player = view.FindChild("AnimationPlayer", recursive: true, owned: false) as AnimationPlayer
             ?? throw new InvalidOperationException("NPC Test Lab validation view has no AnimationPlayer.");
         var firstClip = view.PresentationAnimationNames[0];
-        var loopChoice = panel.FindChild("Loop", recursive: true, owned: false) as CheckButton
+        var loopChoice = panel.FindChildren("*", "CheckButton", recursive: true, owned: false)
+            .OfType<CheckButton>().SingleOrDefault(button => button.Text == "Loop")
             ?? throw new InvalidOperationException("NPC Test Lab validation could not find its loop toggle.");
         loopChoice.ButtonPressed = false;
         buttons["Play clip"].EmitSignal(Button.SignalName.Pressed);
