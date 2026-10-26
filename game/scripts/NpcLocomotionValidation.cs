@@ -1,4 +1,5 @@
 using Godot;
+using Simulation;
 
 namespace UnnamedProject2026;
 
@@ -55,6 +56,7 @@ internal static class NpcLocomotionValidation
                 RequireClip(player, modelCase.MidSpeedClip, modelCase.Path, modelCase.Speed * 0.55f, animator);
                 RequireClip(player, modelCase.FastClip, modelCase.Path, modelCase.Speed * 0.9f, animator);
                 RequireClip(player, idleClip, modelCase.Path, 0, animator);
+                ValidateTickMovement(holder, modelCase);
             }
 
             holder.QueueFree();
@@ -70,6 +72,66 @@ internal static class NpcLocomotionValidation
             GD.PushError($"NPC LOCOMOTION VALIDATION FAILED: {exception}");
             main.GetTree().Quit(1);
         }
+    }
+
+    private static void ValidateTickMovement(Node3D holder, ModelCase modelCase)
+    {
+        var view = new EntityView();
+        view.Bind("locomotion-validation", modelCase.Speed, modelCase.IsCreature, modelCase.SpeciesId,
+            sex: modelCase.Path.Contains("radagon") ? BiologicalSex.Male : BiologicalSex.Female);
+        holder.AddChild(view);
+        view.SetProcess(false);
+        view.SetPhysicsProcess(false);
+        var player = view.FindChild("AnimationPlayer", recursive: true, owned: false) as AnimationPlayer
+            ?? throw new InvalidOperationException($"EntityView model missing for {modelCase.Path}");
+        foreach (var fps in new[] { 30, 60, 144 })
+        foreach (var simulationSpeed in new[] { SimulationSpeed.OneX, SimulationSpeed.FourX })
+        {
+            var clock = new SimulationClock();
+            clock.SetSpeed(simulationSpeed);
+            foreach (var (fraction, expected) in new[] {
+                (1f, modelCase.FastClip), (0.2f, modelCase.WalkClip),
+                (0f, modelCase.IsCreature ? "idle" : "human_idle") })
+            {
+                var starts = 0;
+                void OnStarted(StringName name) => starts++;
+                player.AnimationStarted += OnStarted;
+                try
+                {
+                    for (var frame = 0; frame < fps * 3; frame++)
+                    {
+                        clock.Advance(1d / fps, seconds =>
+                        {
+                            var previous = view.GlobalPosition;
+                            view.GlobalPosition += Vector3.Right * modelCase.Speed * fraction * (float)seconds;
+                            view.SampleLocomotionTick(previous, seconds);
+                        });
+                        view._Process(1d / fps);
+                        player.Advance(1d / fps);
+                        if (frame == fps) starts = 0;
+                        if (frame > fps) RequireClip(player, expected, modelCase.Path);
+                    }
+                    if (starts != 0)
+                        throw new InvalidOperationException($"{modelCase.Path} restarted a steady gait at {fps} FPS/{simulationSpeed}.");
+                }
+                finally { player.AnimationStarted -= OnStarted; }
+            }
+            // Resume movement, then stop delivering ticks as when the simulation is paused.
+            for (var frame = 0; frame < fps; frame++)
+            {
+                clock.Advance(1d / fps, seconds =>
+                {
+                    var before = view.GlobalPosition;
+                    view.GlobalPosition += Vector3.Right * modelCase.Speed * (float)seconds;
+                    view.SampleLocomotionTick(before, seconds);
+                });
+                view._Process(1d / fps);
+            }
+            RequireClip(player, modelCase.FastClip, modelCase.Path);
+            for (var frame = 0; frame < fps; frame++) view._Process(1d / fps);
+            RequireClip(player, modelCase.IsCreature ? "idle" : "human_idle", modelCase.Path);
+        }
+        view.QueueFree();
     }
 
     private static void RequireClip(AnimationPlayer player, string expected, string assetPath,
