@@ -105,9 +105,13 @@ internal static class NpcLocomotionValidation
 
         if (!animator.PlayManual(modelCase.WalkClip, loop: false))
             throw new InvalidOperationException($"Test panel could not start one-shot playback on {modelCase.Path}.");
+        if (!animator.HoldsPositionForManualAction)
+            throw new InvalidOperationException($"Finite Test Lab clip did not request a movement hold on {modelCase.Path}.");
         player.Advance(player.GetAnimation(modelCase.WalkClip).Length + 0.05);
         await player.ToSignal(player.GetTree(), SceneTree.SignalName.ProcessFrame);
         animator.Update(modelCase.Speed * 0.95f);
+        if (animator.HoldsPositionForManualAction)
+            throw new InvalidOperationException($"Completed Test Lab clip kept movement held on {modelCase.Path}.");
         RequireClip(player, modelCase.FastClip, modelCase.Path);
     }
 
@@ -213,9 +217,15 @@ internal static class NpcLocomotionValidation
         var player = view.FindChild("AnimationPlayer", recursive: true, owned: false) as AnimationPlayer
             ?? throw new InvalidOperationException("NPC Test Lab validation view has no AnimationPlayer.");
         var firstClip = view.PresentationAnimationNames[0];
+        var loopChoice = panel.FindChild("Loop", recursive: true, owned: false) as CheckButton
+            ?? throw new InvalidOperationException("NPC Test Lab validation could not find its loop toggle.");
+        loopChoice.ButtonPressed = false;
         buttons["Play clip"].EmitSignal(Button.SignalName.Pressed);
-        if (player.CurrentAnimation.ToString() != firstClip)
+        if (player.CurrentAnimation.ToString() != firstClip || !view.IsNavigationMovementPaused)
             throw new InvalidOperationException("NPC Test Lab play button did not start the selected clip.");
+        buttons["Stop / locomotion"].EmitSignal(Button.SignalName.Pressed);
+        if (view.IsNavigationMovementPaused)
+            throw new InvalidOperationException("NPC Test Lab stop button did not release the one-shot movement hold.");
 
         NpcAnimationTestMovement? requestedMovement = null;
         NpcAnimationTestAction? requestedAction = null;

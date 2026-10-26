@@ -414,7 +414,8 @@ public partial class Main
         if (!string.Equals(target.SpeciesId, "human", StringComparison.Ordinal))
         {
             var reason = GreetSelectedEntity();
-            ShowEntityInteractionResult(new InteractionResult(reason.StartsWith("Greeted", StringComparison.Ordinal), reason), target.Id, "Friendly greeting acknowledged");
+            ShowEntityInteractionResult(new InteractionResult(reason.StartsWith("Greeted", StringComparison.Ordinal), reason), target.Id,
+                "Friendly greeting acknowledged", pauseForGreeting: true);
             return;
         }
 
@@ -424,15 +425,22 @@ public partial class Main
             InteractionType.Social,
             "greet"));
 
-        ShowEntityInteractionResult(result, target.Id, "Friendly greeting acknowledged");
+        ShowEntityInteractionResult(result, target.Id, "Friendly greeting acknowledged", pauseForGreeting: true);
     }
 
-    private void ShowEntityInteractionResult(InteractionResult result, string targetId, string acknowledgment)
+    private void ShowEntityInteractionResult(InteractionResult result, string targetId, string acknowledgment,
+        bool pauseForGreeting = false)
     {
         if (result.Succeeded)
         {
+            if (pauseForGreeting)
+                _playerCharacter.HoldMovementForInteraction(EntityView.GreetingMovementHoldSeconds);
             if (_entityViews.TryGetValue(targetId, out var view))
+            {
+                if (pauseForGreeting)
+                    view.HoldMovementForInteraction(EntityView.GreetingMovementHoldSeconds);
                 view.AcknowledgeGreeting(() => _world.TryGetEntity(_playerCharacter.EntityId, out _) ? _playerCharacter.GlobalPosition : null);
+            }
             ShowActionFeedback(result.Reason, targetId, acknowledgment);
         }
         else ShowActionFeedback(result.Reason);

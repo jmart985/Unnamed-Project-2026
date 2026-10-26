@@ -7,6 +7,7 @@ namespace UnnamedProject2026;
 public partial class EntityView : CharacterBody3D
 {
     private const double CrowdRecoveryTimeoutSeconds = 8;
+    internal const float GreetingMovementHoldSeconds = 0.65f;
     private GodotNavigationAdapter? _navigationAdapter;
     private float _movementSpeed;
     private float _animationTestMovementMultiplier = 1f;
@@ -27,8 +28,12 @@ public partial class EntityView : CharacterBody3D
     private Func<Vector3?>? _greeterPosition;
     private ActionState? _currentTask;
     private ActionState? _greetingTask;
+    private float _interactionMovementHoldSeconds;
 
     public bool HasGreetingAttention => _greeterPosition is not null;
+    public bool IsMovementHeldForInteraction => _interactionMovementHoldSeconds > 0;
+    public bool IsMovementHeldForPresentationAction => _npcLocomotionAnimator.HoldsPositionForManualAction;
+    public bool IsNavigationMovementPaused => IsMovementHeldForInteraction || IsMovementHeldForPresentationAction;
     public IReadOnlyList<string> PresentationAnimationNames => _npcLocomotionAnimator.GetAnimationNames();
 
     public bool PlayPresentationAnimationForTesting(string animationName, bool loop)
@@ -51,6 +56,12 @@ public partial class EntityView : CharacterBody3D
         _greeterPosition = greeterPosition;
         _greetingTask = _currentTask;
         FaceGreeter();
+    }
+
+    public void HoldMovementForInteraction(float seconds)
+    {
+        if (!float.IsFinite(seconds) || seconds <= 0) return;
+        _interactionMovementHoldSeconds = Mathf.Max(_interactionMovementHoldSeconds, seconds);
     }
 
     private void FaceGreeter()
@@ -461,6 +472,8 @@ public partial class EntityView : CharacterBody3D
 
     public override void _Process(double delta)
     {
+        if (double.IsFinite(delta) && delta > 0)
+            _interactionMovementHoldSeconds = Mathf.Max(0, _interactionMovementHoldSeconds - (float)delta);
         if (_gait is null || _rig is null || delta <= 0) return;
         var position = GlobalPosition;
         var step = new Vector3(position.X - _lastPosition.X, 0, position.Z - _lastPosition.Z);
@@ -529,6 +542,11 @@ public partial class EntityView : CharacterBody3D
         Func<string, NumericsVector3, NumericsVector3, NumericsVector3>? constrainStep = null)
     {
         var previousPosition = GlobalPosition;
+        if (IsNavigationMovementPaused)
+        {
+            SampleLocomotionTick(previousPosition, simulationSeconds);
+            return;
+        }
         if (_navigationAdapter is not { HasActiveRequest: true } adapter)
         {
             SampleLocomotionTick(previousPosition, simulationSeconds);

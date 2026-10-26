@@ -7,7 +7,24 @@ namespace UnnamedProject2026;
 /// Keyboard bindings are installed here as defaults and remain configurable in project settings.
 public partial class PlayerCharacter : CharacterBody3D
 {
+    private float _interactionMovementHoldSeconds;
+
 	public bool GameplayInputEnabled { get; private set; } = true;
+    public bool IsMovementHeldForInteraction => _interactionMovementHoldSeconds > 0;
+
+    public void HoldMovementForInteraction(float seconds)
+    {
+        if (!float.IsFinite(seconds) || seconds <= 0) return;
+        _interactionMovementHoldSeconds = Mathf.Max(_interactionMovementHoldSeconds, seconds);
+        Velocity = new Vector3(0, Velocity.Y, 0);
+    }
+
+    internal void AdvanceInteractionMovementHold(float elapsedSeconds)
+    {
+        if (!float.IsFinite(elapsedSeconds) || elapsedSeconds < 0)
+            throw new ArgumentOutOfRangeException(nameof(elapsedSeconds));
+        _interactionMovementHoldSeconds = Mathf.Max(0, _interactionMovementHoldSeconds - elapsedSeconds);
+    }
 
 	public void SetGameplayInputEnabled(bool enabled)
 	{
@@ -218,6 +235,8 @@ public partial class PlayerCharacter : CharacterBody3D
 	public override void _PhysicsProcess(double delta)
 	{
 		var physicsDelta = (float)delta;
+		AdvanceInteractionMovementHold(physicsDelta);
+        var canMove = GameplayInputEnabled && !IsMovementHeldForInteraction;
 		if (GameplayInputEnabled)
 		{
 			var stickLook = new Vector2(Input.GetJoyAxis(0, JoyAxis.RightX), Input.GetJoyAxis(0, JoyAxis.RightY));
@@ -233,14 +252,14 @@ public partial class PlayerCharacter : CharacterBody3D
 			Velocity = new Vector3(Velocity.X, Velocity.Y - Gravity * physicsDelta, Velocity.Z);
 		}
 
-		if (GameplayInputEnabled && Input.IsActionJustPressed(ControllerActions.Jump) && IsOnFloor())
+        if (canMove && Input.IsActionJustPressed(ControllerActions.Jump) && IsOnFloor())
 		{
 			Velocity = new Vector3(Velocity.X, JumpVelocity, Velocity.Z);
 		}
 
 		// GetAxis takes (negative, positive); forward is the negative local -Z direction.
-		var forward = GameplayInputEnabled ? Input.GetAxis(ControllerActions.MoveForward, ControllerActions.MoveBackward) : 0;
-		var strafe = GameplayInputEnabled ? Input.GetAxis(ControllerActions.MoveLeft, ControllerActions.MoveRight) : 0;
+        var forward = canMove ? Input.GetAxis(ControllerActions.MoveForward, ControllerActions.MoveBackward) : 0;
+        var strafe = canMove ? Input.GetAxis(ControllerActions.MoveLeft, ControllerActions.MoveRight) : 0;
 		var localDirection = new Vector3(strafe, 0.0f, forward);
 		if (localDirection.LengthSquared() > 1.0f)
 		{
@@ -321,6 +340,8 @@ public partial class PlayerCharacter : CharacterBody3D
         }
 
         _swingLeft = left;
+        // A deliberate attack interrupts a social greeting pause.
+        _interactionMovementHoldSeconds = 0;
         _swing = AttackSwing.ForTotalDuration(AttackDuration);
         _swing.Begin();
         AttackStarted?.Invoke();
