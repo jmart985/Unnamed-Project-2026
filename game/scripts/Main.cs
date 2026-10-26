@@ -508,7 +508,8 @@ public partial class Main : Node3D
 		_orders = new OrderService(
 			_world,
 			GetNavigationAdapter,
-			entityId => _wildPreyThreat!.SuppressesOtherBehavior(entityId));
+			entityId => _wildPreyThreat!.SuppressesOtherBehavior(entityId)
+				|| IsNpcAnimationTestMoving(entityId));
 
 		RebuildResourceMarkersFromWorld();
 		RebuildFireplaceViews();
