@@ -48,6 +48,7 @@ internal static class NpcLocomotionValidation
 
             holder = new Node3D { Name = "NpcLocomotionValidationModels" };
             main.AddChild(holder);
+            var facialBlendShapeResetValidated = false;
             foreach (var modelCase in cases)
             {
                 var scene = GD.Load<PackedScene>(modelCase.Path)
@@ -64,9 +65,13 @@ internal static class NpcLocomotionValidation
                 RequireClip(player, modelCase.MidSpeedClip, modelCase.Path, modelCase.Speed * 0.55f, animator);
                 RequireClip(player, modelCase.FastClip, modelCase.Path, modelCase.Speed * 0.9f, animator);
                 RequireClip(player, idleClip, modelCase.Path, 0, animator);
+                facialBlendShapeResetValidated |= ValidateFacialBlendShapeReset(player, animator, modelCase);
                 await ValidateManualPlayback(player, animator, modelCase);
                 ValidateTickMovement(holder, modelCase);
             }
+
+            if (!facialBlendShapeResetValidated)
+                throw new InvalidOperationException("NPC locomotion validation found no imported facial blend-shape clip to verify reset behavior.");
 
             await ValidateTestPanel(holder);
             main.ValidateNpcAnimationTestRouteFailureRecovery();
@@ -104,6 +109,81 @@ internal static class NpcLocomotionValidation
         await player.ToSignal(player.GetTree(), SceneTree.SignalName.ProcessFrame);
         animator.Update(modelCase.Speed * 0.95f);
         RequireClip(player, modelCase.FastClip, modelCase.Path);
+    }
+
+    private static bool ValidateFacialBlendShapeReset(AnimationPlayer player, NpcLocomotionAnimator animator,
+        ModelCase modelCase)
+    {
+        var root = player.GetNodeOrNull(player.RootNode);
+        if (root is null) return false;
+
+        foreach (var clipName in animator.GetAnimationNames()
+            .Where(name => name.StartsWith("npc_face_", StringComparison.OrdinalIgnoreCase)))
+        {
+            var animation = player.GetAnimation(clipName);
+            var baselines = new List<(MeshInstance3D Mesh, int BlendShapeIndex, float Weight)>();
+            var animatedProperties = new List<(MeshInstance3D Mesh, int BlendShapeIndex, int TrackIndex)>();
+            for (var trackIndex = 0; trackIndex < animation.GetTrackCount(); trackIndex++)
+            {
+                if (animation.TrackGetType(trackIndex) != Animation.TrackType.Value) continue;
+                var trackPath = animation.TrackGetPath(trackIndex).ToString();
+                var separatorIndex = trackPath.IndexOf(':');
+                if (separatorIndex < 0) continue;
+
+                var propertyPath = trackPath[(separatorIndex + 1)..];
+                const string blendShapePrefix = "blend_shapes/";
+                if (!propertyPath.StartsWith(blendShapePrefix, StringComparison.Ordinal)) continue;
+
+                var targetPath = new NodePath(trackPath[..separatorIndex]);
+                if (root.GetNodeOrNull(targetPath) is not MeshInstance3D mesh || mesh.Mesh is not ArrayMesh arrayMesh)
+                    continue;
+                var shapeName = new StringName(propertyPath[blendShapePrefix.Length..]);
+                var blendShapeIndex = -1;
+                for (var index = 0; index < arrayMesh.GetBlendShapeCount(); index++)
+                {
+                    if (arrayMesh.GetBlendShapeName(index) == shapeName)
+                    {
+                        blendShapeIndex = index;
+                        break;
+                    }
+                }
+                if (blendShapeIndex < 0) continue;
+
+                if (baselines.All(entry => !ReferenceEquals(entry.Mesh, mesh) || entry.BlendShapeIndex != blendShapeIndex))
+                    baselines.Add((mesh, blendShapeIndex, mesh.GetBlendShapeValue(blendShapeIndex)));
+                animatedProperties.Add((mesh, blendShapeIndex, trackIndex));
+            }
+
+            if (baselines.Count == 0 || !animator.PlayManual(clipName, loop: true)) continue;
+
+            var expressionApplied = false;
+            foreach (var (mesh, blendShapeIndex, trackIndex) in animatedProperties)
+            {
+                var baseline = baselines.Single(entry => ReferenceEquals(entry.Mesh, mesh)
+                    && entry.BlendShapeIndex == blendShapeIndex).Weight;
+                for (var keyIndex = 0; keyIndex < animation.TrackGetKeyCount(trackIndex); keyIndex++)
+                {
+                    player.Seek(animation.TrackGetKeyTime(trackIndex, keyIndex), update: true);
+                    if (Mathf.Abs(mesh.GetBlendShapeValue(blendShapeIndex) - baseline) <= 0.001f) continue;
+                    expressionApplied = true;
+                    break;
+                }
+                if (expressionApplied) break;
+            }
+
+            animator.StopManual(modelCase.Speed * 0.95f);
+            if (!expressionApplied) continue;
+
+            foreach (var (mesh, blendShapeIndex, baseline) in baselines)
+            {
+                if (Mathf.Abs(mesh.GetBlendShapeValue(blendShapeIndex) - baseline) > 0.001f)
+                    throw new InvalidOperationException(
+                        $"Stopping facial clip {clipName} left blend-shape {((ArrayMesh)mesh.Mesh!).GetBlendShapeName(blendShapeIndex)} changed on {modelCase.Path}.");
+            }
+            return true;
+        }
+
+        return false;
     }
 
     private static async Task ValidateTestPanel(Node3D holder)
