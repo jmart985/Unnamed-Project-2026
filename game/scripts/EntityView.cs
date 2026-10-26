@@ -18,8 +18,11 @@ public partial class EntityView : CharacterBody3D
     private Node3D? _rig;
     private Node3D? _visualModelRoot;
     private ProceduralGait? _gait;
+    private readonly NpcLocomotionAnimator _npcLocomotionAnimator = new();
     private Vector3 _lastPosition;
     private float _smoothedSpeed;
+    private float _tickMovementSpeed;
+    private double _secondsSinceMovementTick;
     private Func<Vector3?>? _greeterPosition;
     private ActionState? _currentTask;
     private ActionState? _greetingTask;
@@ -163,15 +166,7 @@ public partial class EntityView : CharacterBody3D
         AddCollision(totalHeight, radius);
 
         var animationPlayer = model.FindChild("AnimationPlayer", recursive: true, owned: false) as AnimationPlayer;
-        if (animationPlayer is not null)
-        {
-            var idle = animationPlayer.GetAnimationList()
-                .FirstOrDefault(name => string.Equals(name, "idle", StringComparison.OrdinalIgnoreCase));
-            if (idle is not null)
-            {
-                animationPlayer.Play(idle);
-            }
-        }
+        _npcLocomotionAnimator.Bind(animationPlayer, _speciesId, _isCreature, _movementSpeed);
 
         return true;
     }
@@ -205,17 +200,7 @@ public partial class EntityView : CharacterBody3D
         AddCollision(totalHeight: 1.75f, radius: 0.32f);
 
         var animationPlayer = model.FindChild("AnimationPlayer", recursive: true, owned: false) as AnimationPlayer;
-        if (animationPlayer is not null)
-        {
-            var idle = animationPlayer.GetAnimationList()
-                .FirstOrDefault(name => string.Equals(name, "human_idle", StringComparison.OrdinalIgnoreCase))
-                ?? animationPlayer.GetAnimationList()
-                    .FirstOrDefault(name => string.Equals(name, "idle", StringComparison.OrdinalIgnoreCase));
-            if (idle is not null)
-            {
-                animationPlayer.Play(idle);
-            }
-        }
+        _npcLocomotionAnimator.Bind(animationPlayer, _speciesId, _isCreature, _movementSpeed);
 
         return true;
     }
@@ -459,9 +444,13 @@ public partial class EntityView : CharacterBody3D
         var position = GlobalPosition;
         var step = new Vector3(position.X - _lastPosition.X, 0, position.Z - _lastPosition.Z);
         _lastPosition = position;
-        // Large jumps are loads, resets, or respawns, not walking.
-        var speed = step.Length() > 3f ? 0f : step.Length() / (float)delta;
+        // Hold the completed simulation tick's speed between render frames. A pause
+        // stops supplying ticks, so settle to idle after two tick intervals.
+        _secondsSinceMovementTick += delta;
+        var speed = _secondsSinceMovementTick <= SimulationClock.TickIntervalSeconds * 2
+            ? _tickMovementSpeed : 0f;
         _smoothedSpeed = Mathf.Lerp(_smoothedSpeed, speed, 1 - Mathf.Exp(-12 * (float)delta));
+        _npcLocomotionAnimator.Update(_smoothedSpeed);
         if (_smoothedSpeed > 0.15f && step.LengthSquared() > 1e-8f)
         {
             var targetYaw = Mathf.Atan2(-step.X, -step.Z);
@@ -517,17 +506,32 @@ public partial class EntityView : CharacterBody3D
         OrderService? orders = null,
         Func<string, NumericsVector3, NumericsVector3, NumericsVector3>? constrainStep = null)
     {
-        if (_navigationAdapter is not { HasActiveRequest: true } adapter) return;
+        var previousPosition = GlobalPosition;
+        if (_navigationAdapter is not { HasActiveRequest: true } adapter)
+        {
+            SampleLocomotionTick(previousPosition, simulationSeconds);
+            return;
+        }
         adapter.AdvanceMovement(simulationSeconds, _movementSpeed, (current, proposed) =>
         {
             var afterSquad = squad is null ? proposed : squad.ConstrainFollowStep(EntityId, current, proposed);
             var afterIndividualOrder = orders is null ? afterSquad : orders.ConstrainFollowStep(EntityId, current, afterSquad);
             return constrainStep is null ? afterIndividualOrder : constrainStep(EntityId, current, afterIndividualOrder);
         });
+        SampleLocomotionTick(previousPosition, simulationSeconds);
         var position = GlobalPosition;
         if (!world.TrySetEntityPosition(EntityId, new NumericsVector3(position.X, position.Y, position.Z)) && adapter.ActiveRequestId is { } requestId)
             adapter.RemoveTarget(requestId);
     }
+
+    internal void SampleLocomotionTick(Vector3 previousPosition, double simulationSeconds)
+    {
+        var step = GlobalPosition - previousPosition;
+        step.Y = 0;
+        // Loads, resets and respawns must not become locomotion samples.
+        _tickMovementSpeed = simulationSeconds > 0 && step.Length() <= 3f
+            ? step.Length() / (float)simulationSeconds : 0f;
+        _secondsSinceMovementTick = 0;
+    }
+
 }
-
-

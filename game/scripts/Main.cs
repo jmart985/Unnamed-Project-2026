@@ -213,6 +213,8 @@ public partial class Main : Node3D
 			Callable.From(RunFarPopulationTransitionsValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-starter-wildlife-proximity"))
 			Callable.From(RunStarterWildlifeProximityValidation).CallDeferred();
+		else if (OS.GetCmdlineUserArgs().Contains("--validate-npc-locomotion"))
+			Callable.From(RunNpcLocomotionValidation).CallDeferred();
 	}
 
 	public override void _Process(double delta)

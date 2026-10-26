@@ -256,7 +256,11 @@
     ]
   },
   "runtime_glb_bytes": 27790088,
-  "animation_clips": [],
+  "animation_clips": [
+    "human_idle",
+    "human_run",
+    "human_walk"
+  ],
   "interaction_anchors": {
     "locomotion": [
       "anchor_root",
@@ -317,8 +321,18 @@
     "Source materials are translated to glTF PBR using the included color, normal, roughness, opacity, cracked-skin, and genital maps.",
     "Runtime texture maps are resampled to the declared per-material limits and repacked before export; original source maps remain unchanged.",
     "Godot semantic anchors are non-deforming child nodes; source bone names remain unchanged.",
-    "The purchased package contains no animation clips; this asset uses its original rest pose until a rig-compatible animation is added.",
     "Simulation anatomy stays separate from the render skeleton; NPC sex comes from saved EntityRecord.Sex.",
-    "The source asset is approved by the owner for use in this public game project."
-  ]
+    "The source asset is approved by the owner for use in this public game project.",
+    "Includes project-authored, in-place human idle, walk, and run actions; simulation/controller movement remains authoritative."
+  ],
+  "locomotion": {
+    "controller": "NPC simulation movement; clips are in-place",
+    "clips": {
+      "idle": "human_idle",
+      "walk": "human_walk",
+      "run": "human_run"
+    },
+    "frame_rate": 30,
+    "root_motion": false
+  }
 }
