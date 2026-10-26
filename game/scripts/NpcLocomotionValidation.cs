@@ -49,6 +49,7 @@ internal static class NpcLocomotionValidation
             holder = new Node3D { Name = "NpcLocomotionValidationModels" };
             main.AddChild(holder);
             var facialBlendShapeResetValidated = false;
+            var facialBlendShapeDiagnostics = new List<string>();
             foreach (var modelCase in cases)
             {
                 var scene = GD.Load<PackedScene>(modelCase.Path)
@@ -65,13 +66,17 @@ internal static class NpcLocomotionValidation
                 RequireClip(player, modelCase.MidSpeedClip, modelCase.Path, modelCase.Speed * 0.55f, animator);
                 RequireClip(player, modelCase.FastClip, modelCase.Path, modelCase.Speed * 0.9f, animator);
                 RequireClip(player, idleClip, modelCase.Path, 0, animator);
-                facialBlendShapeResetValidated |= ValidateFacialBlendShapeReset(player, animator, modelCase);
+                var facialResetPassed = ValidateFacialBlendShapeReset(player, animator, modelCase);
+                facialBlendShapeResetValidated |= facialResetPassed;
+                if (!facialResetPassed)
+                    facialBlendShapeDiagnostics.Add(DescribeFacialBlendShapeCandidates(player, animator, modelCase));
                 await ValidateManualPlayback(player, animator, modelCase);
                 ValidateTickMovement(holder, modelCase);
             }
 
             if (!facialBlendShapeResetValidated)
-                throw new InvalidOperationException("NPC locomotion validation found no imported facial blend-shape clip to verify reset behavior.");
+                throw new InvalidOperationException("NPC locomotion validation found no imported facial blend-shape clip to verify reset behavior. "
+                    + string.Join(" | ", facialBlendShapeDiagnostics));
 
             await ValidateTestPanel(holder);
             main.ValidateNpcAnimationTestClosesGameplayOverlays();
@@ -127,7 +132,7 @@ internal static class NpcLocomotionValidation
         if (root is null) return false;
 
         foreach (var clipName in animator.GetAnimationNames()
-            .Where(name => name.StartsWith("npc_face_", StringComparison.OrdinalIgnoreCase)))
+            .Where(name => name.Contains("npc_face_", StringComparison.OrdinalIgnoreCase)))
         {
             var animation = player.GetAnimation(clipName);
             var baselines = new List<(MeshInstance3D Mesh, int BlendShapeIndex, float Weight)>();
@@ -193,6 +198,37 @@ internal static class NpcLocomotionValidation
         }
 
         return false;
+    }
+
+    private static string DescribeFacialBlendShapeCandidates(AnimationPlayer player,
+        NpcLocomotionAnimator animator, ModelCase modelCase)
+    {
+        var root = player.GetNodeOrNull(player.RootNode);
+        var details = new List<string>();
+        foreach (var clipName in animator.GetAnimationNames()
+            .Where(name => name.Contains("npc_face_", StringComparison.OrdinalIgnoreCase)))
+        {
+            var animation = player.GetAnimation(clipName);
+            var tracks = new List<string>();
+            for (var trackIndex = 0; trackIndex < animation.GetTrackCount(); trackIndex++)
+            {
+                if (animation.TrackGetType(trackIndex) != Animation.TrackType.Value) continue;
+                var path = animation.TrackGetPath(trackIndex).ToString();
+                if (!path.Contains("blend_shapes/", StringComparison.OrdinalIgnoreCase)) continue;
+                var separatorIndex = path.IndexOf(':');
+                var target = separatorIndex >= 0 && root is not null
+                    ? root.GetNodeOrNull(new NodePath(path[..separatorIndex]))
+                    : null;
+                var meshDescription = target is MeshInstance3D mesh
+                    ? $"{mesh.Mesh?.GetClass() ?? "no-mesh"}/{(mesh.Mesh is ArrayMesh arrayMesh ? arrayMesh.GetBlendShapeCount() : 0)}-shapes"
+                    : target?.GetClass() ?? "missing-target";
+                tracks.Add($"{path}=>{meshDescription}");
+            }
+            details.Add($"{clipName}({animation.GetTrackCount()} tracks: {string.Join(",", tracks)})");
+        }
+
+        return $"{modelCase.Path}: animations=[{string.Join(",", animator.GetAnimationNames())}], "
+            + $"facial=[{string.Join(";", details)}]";
     }
 
     private static async Task ValidateTestPanel(Node3D holder)
