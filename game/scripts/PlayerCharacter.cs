@@ -52,6 +52,14 @@ public partial class PlayerCharacter : CharacterBody3D
 	public bool IsAttacking => _swing.IsActive;
 	public string EntityId { get; private set; } = string.Empty;
 	public string AimedBodyPart => CombatAim.PartForPitch(_headPitch, _swingLeft);
+	public bool MouseLookEnabled { get; set; } = true;
+
+	public bool StartAttackForTesting(bool left)
+	{
+		var wasActive = _swing.IsActive;
+		StartAttackSwing(left, left ? LeftShieldEquipped : RightShieldEquipped);
+		return !wasActive && _swing.IsActive;
+	}
 
 	/// Raised once per swing at the moment of impact: the swinging side and the aimed body part.
 	/// Main resolves this event through the World-owned melee/social combat boundary.
@@ -169,7 +177,7 @@ public partial class PlayerCharacter : CharacterBody3D
 	public override void _UnhandledInput(InputEvent @event)
 	{
 		if (!GameplayInputEnabled) return;
-		if (@event is InputEventMouseMotion motion)
+		if (MouseLookEnabled && @event is InputEventMouseMotion motion)
 		{
 			RotateY(-motion.Relative.X * MouseSensitivity);
 			// Allow a wider upward look for close overhead targets while keeping a

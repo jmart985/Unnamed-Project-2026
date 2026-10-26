@@ -64,8 +64,11 @@ internal static class NpcLocomotionValidation
                 RequireClip(player, modelCase.MidSpeedClip, modelCase.Path, modelCase.Speed * 0.55f, animator);
                 RequireClip(player, modelCase.FastClip, modelCase.Path, modelCase.Speed * 0.9f, animator);
                 RequireClip(player, idleClip, modelCase.Path, 0, animator);
+                await ValidateManualPlayback(player, animator, modelCase);
                 ValidateTickMovement(holder, modelCase);
             }
+
+            await ValidateTestPanel(holder);
 
             holder.QueueFree();
             await main.ToSignal(main.GetTree(), SceneTree.SignalName.ProcessFrame);
@@ -80,6 +83,69 @@ internal static class NpcLocomotionValidation
             GD.PushError($"NPC LOCOMOTION VALIDATION FAILED: {exception}");
             main.GetTree().Quit(1);
         }
+    }
+
+    private static async Task ValidateManualPlayback(AnimationPlayer player, NpcLocomotionAnimator animator,
+        ModelCase modelCase)
+    {
+        if (!animator.PlayManual(modelCase.WalkClip, loop: true))
+            throw new InvalidOperationException($"Test panel could not start {modelCase.WalkClip} on {modelCase.Path}.");
+
+        animator.Update(modelCase.Speed * 0.95f);
+        RequireClip(player, modelCase.WalkClip, modelCase.Path);
+
+        animator.StopManual(modelCase.Speed * 0.95f);
+        RequireClip(player, modelCase.FastClip, modelCase.Path);
+
+        if (!animator.PlayManual(modelCase.WalkClip, loop: false))
+            throw new InvalidOperationException($"Test panel could not start one-shot playback on {modelCase.Path}.");
+        player.Advance(player.GetAnimation(modelCase.WalkClip).Length + 0.05);
+        await player.ToSignal(player.GetTree(), SceneTree.SignalName.ProcessFrame);
+        animator.Update(modelCase.Speed * 0.95f);
+        RequireClip(player, modelCase.FastClip, modelCase.Path);
+    }
+
+    private static async Task ValidateTestPanel(Node3D holder)
+    {
+        var view = new EntityView();
+        view.Bind("npc-test-panel-validation", 3f, isCreature: false, "human", sex: BiologicalSex.Female);
+        holder.AddChild(view);
+
+        var panel = new NpcAnimationTestPanel();
+        holder.AddChild(panel);
+        await panel.ToSignal(panel.GetTree(), SceneTree.SignalName.ProcessFrame);
+        var actorId = "npc-test-panel-validation";
+        panel.Open([new NpcAnimationTestActor(actorId, "Test NPC")], id => id == actorId ? view : null);
+        if (!panel.IsOpen || panel.ActorCount != 1 || panel.AnimationCount == 0)
+            throw new InvalidOperationException("NPC Test Lab did not populate its actor and imported clip selectors.");
+
+        var buttons = panel.FindChildren("*", "Button", recursive: true, owned: false)
+            .OfType<Button>().ToDictionary(button => button.Text.ToString(), StringComparer.Ordinal);
+        var requiredButtons = new[]
+        {
+            "Play clip", "Stop / locomotion", "Walk 4 m", "Run 4 m", "Stop move", "Set target", "Greet",
+            "Interact / feed / pet", "Left strike", "Right strike", "Follow player", "Stay here"
+        };
+        if (requiredButtons.Any(name => !buttons.ContainsKey(name)))
+            throw new InvalidOperationException("NPC Test Lab is missing one or more movement/action controls.");
+
+        var player = view.FindChild("AnimationPlayer", recursive: true, owned: false) as AnimationPlayer
+            ?? throw new InvalidOperationException("NPC Test Lab validation view has no AnimationPlayer.");
+        var firstClip = view.PresentationAnimationNames[0];
+        buttons["Play clip"].EmitSignal(Button.SignalName.Pressed);
+        if (player.CurrentAnimation.ToString() != firstClip)
+            throw new InvalidOperationException("NPC Test Lab play button did not start the selected clip.");
+
+        NpcAnimationTestMovement? requestedMovement = null;
+        NpcAnimationTestAction? requestedAction = null;
+        panel.MovementRequested += (_, movement) => requestedMovement = movement;
+        panel.ActionRequested += (_, action) => requestedAction = action;
+        buttons["Run 4 m"].EmitSignal(Button.SignalName.Pressed);
+        buttons["Interact / feed / pet"].EmitSignal(Button.SignalName.Pressed);
+        if (requestedMovement != NpcAnimationTestMovement.Run || requestedAction != NpcAnimationTestAction.Interact)
+            throw new InvalidOperationException("NPC Test Lab did not dispatch movement and interaction button requests.");
+
+        panel.Close();
     }
 
     private static void ValidateTickMovement(Node3D holder, ModelCase modelCase)

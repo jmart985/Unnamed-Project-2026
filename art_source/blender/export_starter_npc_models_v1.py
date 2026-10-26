@@ -23,6 +23,67 @@ from humanoid_locomotion_v1 import (
 
 EXPECTED_ACTIONS = {"human_idle", "human_walk", "human_run"}
 MAX_TEXTURE_EDGE = 1024
+FACIAL_ACTION_FRAME_END = 30
+FACIAL_EXPRESSION_ALTERNATIVES: dict[str, list[list[tuple[str, float]]]] = {
+    "happy": [
+        [(r"^eJCMSmile(?:Open)?FullFace(?:_HD_div2)?$", 0.8)],
+        [(r"^Mout_Smile$", 0.75)],
+        [(r"^Mouth_Soft_Smile$", 0.75)],
+        [(r"^Mouth_Smile(?:_Open|_open)?$", 0.75)],
+        [(r"^facs(?:_bs)?_MouthSmileLeft(?:_div2)?$", 0.65),
+         (r"^facs(?:_bs)?_MouthSmileRight(?:_div2)?$", 0.65)],
+        [(r"^smile_l$", 0.65), (r"^smile_r$", 0.65)],
+    ],
+    "sad": [
+        [(r"^eJCMSad(?:_HD_div2)?$", 0.8)],
+        [(r"^eJCMFrown(?:_HD_div2)?$", 0.75)],
+        [(r"^sad_l$", 0.7), (r"^sad_r$", 0.7)],
+        [(r"^facs(?:_bs)?_MouthFrownLeft(?:_div2)?$", 0.65),
+         (r"^facs(?:_bs)?_MouthFrownRight(?:_div2)?$", 0.65)],
+    ],
+    "angry": [
+        [(r"^eJCMAngry(?:_HD_div2)?$", 0.8)],
+        [(r"^facs(?:_bs)?_BrowDownLeft(?:_div2)?$", 0.7),
+         (r"^facs(?:_bs)?_BrowDownRight(?:_div2)?$", 0.7)],
+        [(r"^brow_inner_down_l$", 0.7), (r"^brow_inner_down_r$", 0.7)],
+        [(r"^facs(?:_bs)?_BrowSqueezeLeft(?:_div2)?$", 0.65),
+         (r"^facs(?:_bs)?_BrowSqueezeRight(?:_div2)?$", 0.65)],
+    ],
+    "surprised": [
+        [(r"^eJCMSurprise(?:_HD_div2)?$", 0.8)],
+        [(r"^Eyebrows_Surprised$", 0.75)],
+        [(r"^facs(?:_(?:bs|cbs))?_?EyesWideLeft(?:_div2)?$", 0.7),
+         (r"^facs(?:_(?:bs|cbs))?_?EyesWideRight(?:_div2)?$", 0.7)],
+        [(r"^facs(?:_bs)?_BrowOuterUpLeft(?:_div2)?$", 0.65),
+         (r"^facs(?:_bs)?_BrowOuterUpRight(?:_div2)?$", 0.65)],
+        [(r"^brow_outer_up_l$", 0.65), (r"^brow_outer_up_r$", 0.65)],
+    ],
+    "fear": [
+        [(r"^eJCMFear(?:_HD_div2)?$", 0.8)],
+        [(r"^facs(?:_(?:bs|cbs))?_?EyesWideLeft(?:_div2)?$", 0.65),
+         (r"^facs(?:_(?:bs|cbs))?_?EyesWideRight(?:_div2)?$", 0.65),
+         (r"^facs(?:_bs)?_BrowInnerUpLeft(?:_div2)?$", 0.5),
+         (r"^facs(?:_bs)?_BrowInnerUpRight(?:_div2)?$", 0.5)],
+        [(r"^facs(?:_bs)?_BrowInnerUpLeft(?:_div2)?$", 0.55),
+         (r"^facs(?:_bs)?_BrowInnerUpRight(?:_div2)?$", 0.55)],
+        [(r"^brow_inner_up_l$", 0.55), (r"^brow_inner_up_r$", 0.55)],
+    ],
+    "blink": [
+        [(r"^facs(?:_(?:bs|cbs))?_?EyeBlinkLeft(?:_div2)?$", 1.0),
+         (r"^facs(?:_(?:bs|cbs))?_?EyeBlinkRight(?:_div2)?$", 1.0)],
+        [(r"^facs(?:_(?:bs|cbs))?_?EyelidCloseUpperLeft(?:_div2)?$", 0.9),
+         (r"^facs(?:_(?:bs|cbs))?_?EyelidCloseUpperRight(?:_div2)?$", 0.9)],
+        [(r"^lid_blink_l$", 1.0), (r"^lid_blink_r$", 1.0)],
+    ],
+}
+FACIAL_SOURCE_ACTIONS: dict[str, list[str]] = {
+    "happy": [r"^Mouth_Soft_Smile$", r"^Mout_Smile$", r"^Mouth.*Smile"],
+    "sad": [r"^Eyebrows Sad$", r"^Eyebrows_Frown$", r"sad|frown"],
+    "angry": [r"^Eyebrows_Angry$", r"angry"],
+    "surprised": [r"^Eyebrows_Surprised$", r"surpris"],
+    "fear": [r"fear"],
+    "blink": [r"^Eyelids_Closed$", r"^rig_blink_top$", r"blink|eyelid.*close"],
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -34,6 +95,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--roster", type=Path,
                         default=Path(__file__).with_name("starter_npc_model_roster_v1.json"))
     parser.add_argument("--model", help="Optional roster slug for a focused export.")
+    parser.add_argument(
+        "--preserve-base-from",
+        type=Path,
+        help="Optional directory of existing runtime GLBs whose rest meshes, node transforms, and skin binds must be preserved.",
+    )
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     return parser.parse_args(argv)
 
@@ -308,6 +374,178 @@ def _prepare_animation_tracks(nodes: list[bpy.types.Object],
     return source_names
 
 
+def _select_facial_targets(
+    meshes: list[bpy.types.Object],
+    alternatives: list[list[tuple[str, float]]],
+) -> list[tuple[bpy.types.Object, bpy.types.ShapeKey, float]]:
+    """Choose the first complete facial-key pattern supported by this model."""
+    for alternative in alternatives:
+        selected: list[tuple[bpy.types.Object, bpy.types.ShapeKey, float]] = []
+        complete = True
+        for pattern, weight in alternative:
+            expression = re.compile(pattern, re.IGNORECASE)
+            matches: list[tuple[bpy.types.Object, bpy.types.ShapeKey, float]] = []
+            for mesh in meshes:
+                shape_keys = mesh.data.shape_keys
+                if shape_keys is None:
+                    continue
+                target = next((key for key in list(shape_keys.key_blocks)[1:]
+                               if expression.fullmatch(key.name)), None)
+                if target is not None:
+                    matches.append((mesh, target, weight))
+            if not matches:
+                complete = False
+                break
+            selected.extend(matches)
+        if complete:
+            unique: dict[tuple[int, str], tuple[bpy.types.Object, bpy.types.ShapeKey, float]] = {}
+            for mesh, key, weight in selected:
+                unique[(mesh.as_pointer(), key.name)] = (mesh, key, weight)
+            return list(unique.values())
+    return []
+
+
+def _capture_and_freeze_shape_key_values(
+    meshes: list[bpy.types.Object],
+) -> dict[int, dict[str, float]]:
+    """Freeze source driver results so export keeps the source model's current appearance."""
+    values: dict[int, dict[str, float]] = {}
+    for mesh in meshes:
+        shape_keys = mesh.data.shape_keys
+        if shape_keys is None:
+            continue
+        values[shape_keys.as_pointer()] = {
+            key.name: float(key.value) for key in list(shape_keys.key_blocks)[1:]
+        }
+        animation_data = shape_keys.animation_data
+        if animation_data is not None:
+            for driver in list(animation_data.drivers):
+                animation_data.drivers.remove(driver)
+        for key in list(shape_keys.key_blocks)[1:]:
+            key.value = values[shape_keys.as_pointer()][key.name]
+    return values
+
+
+def _shape_key_coordinates(shape_keys: bpy.types.Key, values: dict[str, float]) -> list[Vector]:
+    """Evaluate relative shape-key offsets in local mesh space without modifiers."""
+    blocks = list(shape_keys.key_blocks)
+    basis = blocks[0]
+    coordinates = [vertex.co.copy() for vertex in basis.data]
+    for key in blocks[1:]:
+        weight = values.get(key.name, 0.0)
+        if abs(weight) <= 1e-8:
+            continue
+        relative = key.relative_key or basis
+        for index, vertex in enumerate(key.data):
+            coordinates[index] += (vertex.co - relative.data[index].co) * weight
+    return coordinates
+
+
+def _add_facial_expression_actions(
+    meshes: list[bpy.types.Object],
+) -> tuple[dict[str, str], dict[str, list[dict[str, str]]], int, int]:
+    """Preserve the runtime base mesh and create compact facial clips from source-key deltas."""
+    baseline_values = _capture_and_freeze_shape_key_values(meshes)
+    selected_by_expression: dict[str, list[tuple[bpy.types.Object, bpy.types.ShapeKey, float]]] = {}
+    for emotion, alternatives in FACIAL_EXPRESSION_ALTERNATIVES.items():
+        selected = _select_facial_targets(meshes, alternatives)
+        if selected:
+            selected_by_expression[emotion] = selected
+
+    facial_clips: dict[str, str] = {}
+    facial_targets: dict[str, list[dict[str, str]]] = {}
+    mesh_data: dict[int, tuple[bpy.types.Object, bpy.types.Key, list[Vector], list[Vector]]] = {}
+    for mesh in meshes:
+        shape_keys = mesh.data.shape_keys
+        if shape_keys is None or shape_keys.as_pointer() in mesh_data:
+            continue
+        pointer = shape_keys.as_pointer()
+        source_baseline = _shape_key_coordinates(shape_keys, baseline_values[pointer])
+        runtime_basis = [vertex.co.copy() for vertex in shape_keys.key_blocks[0].data]
+        mesh_data[pointer] = (mesh, shape_keys, runtime_basis, source_baseline)
+
+    selected_by_data: dict[int, dict[str, list[tuple[bpy.types.ShapeKey, float]]]] = {}
+    for emotion, selected in selected_by_expression.items():
+        for mesh, key, peak in selected:
+            pointer = mesh.data.shape_keys.as_pointer()
+            selected_by_data.setdefault(pointer, {}).setdefault(emotion, []).append((key, peak))
+
+    expression_coordinates: dict[int, dict[str, list[Vector]]] = {}
+    for pointer, expressions in selected_by_data.items():
+        mesh, shape_keys, _, _ = mesh_data[pointer]
+        for emotion, keys in expressions.items():
+            values = dict(baseline_values[pointer])
+            for key, peak in keys:
+                values[key.name] = min(1.0, max(0.0, peak))
+            coordinates = _shape_key_coordinates(shape_keys, values)
+            expression_coordinates.setdefault(pointer, {})[emotion] = coordinates
+
+    source_target_count = sum(len(values) for values in baseline_values.values())
+    runtime_target_count = 0
+    action_by_emotion: dict[str, bpy.types.Action] = {}
+    for emotion in {emotion for expressions in expression_coordinates.values()
+                    for emotion in expressions}:
+        action_name = f"npc_face_{emotion}"
+        while bpy.data.actions.get(action_name) is not None:
+            action_name += "_generated"
+        action_by_emotion[emotion] = bpy.data.actions.new(action_name)
+
+    for pointer, (mesh, shape_keys, runtime_basis, source_baseline) in mesh_data.items():
+        basis = shape_keys.key_blocks[0]
+        for vertex, coordinate in zip(basis.data, runtime_basis):
+            vertex.co = coordinate
+        for key in list(shape_keys.key_blocks)[1:]:
+            mesh.shape_key_remove(key)
+
+        for emotion, coordinates in expression_coordinates.get(pointer, {}).items():
+            action = action_by_emotion[emotion]
+            name = action.name
+            expression_key = mesh.shape_key_add(name=name, from_mix=False)
+            expression_key.relative_key = basis
+            for vertex, base_coordinate, source_baseline_coordinate, expression_coordinate in zip(
+                    expression_key.data, runtime_basis, source_baseline, coordinates):
+                vertex.co = base_coordinate + (expression_coordinate - source_baseline_coordinate)
+            expression_key.value = 0.0
+
+            animation_data = shape_keys.animation_data_create()
+            for track in animation_data.nla_tracks:
+                track.mute = True
+            animation_data.action = action
+            action_slot = animation_data.action_slot
+            for frame, value in ((1, 0.0), (8, 1.0), (20, 1.0),
+                                 (FACIAL_ACTION_FRAME_END, 0.0)):
+                expression_key.value = value
+                expression_key.keyframe_insert(data_path="value", frame=frame)
+            expression_key.value = 0.0
+            _put_action_on_track(shape_keys, action, name, action_slot)
+            animation_data.action = None
+            for track in animation_data.nla_tracks:
+                track.mute = False
+
+            facial_clips[emotion] = name
+            facial_targets.setdefault(name, []).append({
+                "mesh": mesh.name,
+                "shape_key": expression_key.name,
+            })
+            runtime_target_count += 1
+
+    return facial_clips, facial_targets, source_target_count, runtime_target_count
+
+
+def _source_facial_clip_map(source_action_names: set[str]) -> dict[str, str]:
+    """Map source-authored face clips to the project's stable expression labels."""
+    result: dict[str, str] = {}
+    names = sorted(source_action_names, key=str.casefold)
+    for emotion, patterns in FACIAL_SOURCE_ACTIONS.items():
+        for pattern in patterns:
+            expression = re.compile(pattern, re.IGNORECASE)
+            match = next((name for name in names if expression.search(name)), None)
+            if match is not None:
+                result[emotion] = match
+                break
+    return result
+
+
 def _enable_mesh(mesh: bpy.types.Object) -> None:
     mesh.hide_set(False)
     mesh.hide_viewport = False
@@ -389,6 +627,145 @@ def _glb_json(path: Path) -> tuple[dict, memoryview]:
     bin_header = 20 + json_length
     bin_length = struct.unpack_from("<I", data, bin_header)[0]
     return document, memoryview(data)[bin_header + 8:bin_header + 8 + bin_length]
+
+
+def _accessor_elements(document: dict, binary: bytes | bytearray | memoryview,
+                       accessor_index: int) -> list[bytes]:
+    accessor = document["accessors"][accessor_index]
+    if "sparse" in accessor:
+        raise RuntimeError("Sparse accessors are not supported for base-mesh preservation.")
+    component_sizes = {5121: 1, 5123: 2, 5125: 4, 5126: 4}
+    component_size = component_sizes.get(accessor["componentType"])
+    component_counts = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4,
+                        "MAT2": 4, "MAT3": 9, "MAT4": 16}
+    component_count = component_counts.get(accessor["type"])
+    if component_size is None or component_count is None:
+        raise RuntimeError("Unsupported accessor layout in base-mesh preservation.")
+    element_size = component_size * component_count
+    view = document["bufferViews"][accessor["bufferView"]]
+    start = view.get("byteOffset", 0) + accessor.get("byteOffset", 0)
+    stride = view.get("byteStride", element_size)
+    if stride < element_size:
+        raise RuntimeError("Accessor stride is smaller than its element size.")
+    result = []
+    for index in range(accessor["count"]):
+        element_start = start + index * stride
+        element_end = element_start + element_size
+        if element_end > len(binary):
+            raise RuntimeError("Accessor data exceeds the GLB binary buffer.")
+        result.append(bytes(binary[element_start:element_end]))
+    return result
+
+
+def _copy_accessor_data(source_document: dict, source_binary: bytes | bytearray | memoryview,
+                        source_index: int, target_document: dict,
+                        target_binary: bytearray, target_index: int) -> None:
+    source = source_document["accessors"][source_index]
+    target = target_document["accessors"][target_index]
+    if (source.get("componentType"), source.get("type"), source.get("count")) != (
+            target.get("componentType"), target.get("type"), target.get("count")):
+        raise RuntimeError("Reference and generated accessors have incompatible layouts.")
+    elements = _accessor_elements(source_document, source_binary, source_index)
+    view = target_document["bufferViews"][target["bufferView"]]
+    target_start = view.get("byteOffset", 0) + target.get("byteOffset", 0)
+    target_stride = view.get("byteStride", len(elements[0]) if elements else 0)
+    for index, element in enumerate(elements):
+        element_start = target_start + index * target_stride
+        target_binary[element_start:element_start + len(element)] = element
+    for key in ("min", "max"):
+        if key in source:
+            target[key] = source[key]
+        else:
+            target.pop(key, None)
+
+
+def _write_glb(path: Path, document: dict, binary: bytearray) -> None:
+    document["buffers"][0]["byteLength"] = len(binary)
+    json_chunk = json.dumps(document, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    json_chunk += b" " * ((-len(json_chunk)) % 4)
+    binary.extend(b"\0" * ((-len(binary)) % 4))
+    output = bytearray(b"glTF" + struct.pack("<II", 2, 0))
+    output.extend(struct.pack("<II", len(json_chunk), 0x4E4F534A))
+    output.extend(json_chunk)
+    output.extend(struct.pack("<II", len(binary), 0x004E4942))
+    output.extend(binary)
+    struct.pack_into("<I", output, 8, len(output))
+    path.write_bytes(output)
+
+
+def _preserve_reference_rest_pose(reference_path: Path, generated_path: Path) -> None:
+    """Keep a prior runtime model's base geometry and bind pose while adding clips."""
+    reference, reference_binary_view = _glb_json(reference_path)
+    generated, generated_binary_view = _glb_json(generated_path)
+    reference_binary = bytes(reference_binary_view)
+    generated_binary = bytearray(generated_binary_view)
+
+    def index_unique_nodes(document: dict, path: Path) -> dict[str, dict]:
+        nodes = document.get("nodes", [])
+        names = [node.get("name") for node in nodes]
+        if any(not name for name in names) or len(names) != len(set(names)):
+            raise RuntimeError(f"{path.name} has missing or duplicate node names; cannot match its rest pose.")
+        return {node["name"]: node for node in nodes}
+
+    reference_nodes = index_unique_nodes(reference, reference_path)
+    generated_nodes = index_unique_nodes(generated, generated_path)
+    if reference_nodes.keys() != generated_nodes.keys():
+        raise RuntimeError(f"{generated_path.name} has a different node set from its rest-pose reference.")
+
+    for name, target_node in generated_nodes.items():
+        source_node = reference_nodes[name]
+        if ("mesh" in source_node) != ("mesh" in target_node):
+            raise RuntimeError(f"Node {name!r} changed mesh assignment in {generated_path.name}.")
+        for transform in ("translation", "rotation", "scale", "matrix"):
+            target_node.pop(transform, None)
+            if transform in source_node:
+                target_node[transform] = source_node[transform]
+
+    for name, target_node in generated_nodes.items():
+        if "mesh" not in target_node:
+            continue
+        source_mesh = reference["meshes"][reference_nodes[name]["mesh"]]
+        target_mesh = generated["meshes"][target_node["mesh"]]
+        if source_mesh.get("name") != target_mesh.get("name"):
+            raise RuntimeError(f"Mesh assignment for node {name!r} changed in {generated_path.name}.")
+        source_primitives = source_mesh.get("primitives", [])
+        target_primitives = target_mesh.get("primitives", [])
+        if len(source_primitives) != len(target_primitives):
+            raise RuntimeError(f"Primitive count changed for mesh {source_mesh.get('name')!r}.")
+        for source_primitive, target_primitive in zip(source_primitives, target_primitives):
+            source_position = source_primitive.get("attributes", {}).get("POSITION")
+            target_position = target_primitive.get("attributes", {}).get("POSITION")
+            if source_position is None or target_position is None:
+                raise RuntimeError(f"Mesh {source_mesh.get('name')!r} has no POSITION accessor.")
+            if (source_primitive.get("indices") is None) != (target_primitive.get("indices") is None):
+                raise RuntimeError(f"Index layout changed for mesh {source_mesh.get('name')!r}.")
+            if source_primitive.get("indices") is not None:
+                source_indices = _accessor_elements(reference, reference_binary, source_primitive["indices"])
+                target_indices = _accessor_elements(generated, generated_binary, target_primitive["indices"])
+                if source_indices != target_indices:
+                    raise RuntimeError(f"Topology changed for mesh {source_mesh.get('name')!r}.")
+            _copy_accessor_data(reference, reference_binary, source_position,
+                                generated, generated_binary, target_position)
+
+    reference_skins = {skin.get("name"): skin for skin in reference.get("skins", [])}
+    generated_skins = {skin.get("name"): skin for skin in generated.get("skins", [])}
+    if reference_skins.keys() != generated_skins.keys():
+        raise RuntimeError(f"{generated_path.name} has a different skin set from its rest-pose reference.")
+    for name, target_skin in generated_skins.items():
+        source_skin = reference_skins[name]
+        source_joints = [reference["nodes"][index]["name"] for index in source_skin["joints"]]
+        target_joints = [generated["nodes"][index]["name"] for index in target_skin["joints"]]
+        if source_joints != target_joints:
+            raise RuntimeError(f"Joint order changed for skin {name!r}.")
+        source_bind = source_skin.get("inverseBindMatrices")
+        target_bind = target_skin.get("inverseBindMatrices")
+        if (source_bind is None) != (target_bind is None):
+            raise RuntimeError(f"Bind matrix layout changed for skin {name!r}.")
+        if source_bind is not None:
+            _copy_accessor_data(reference, reference_binary, source_bind,
+                                generated, generated_binary, target_bind)
+
+    _write_glb(generated_path, generated, generated_binary)
 
 
 def _image_dimensions(data: bytes | memoryview) -> tuple[int, int]:
@@ -577,7 +954,8 @@ def _compact_glb(path: Path) -> None:
 
 
 def _validate_glb(path: Path, expected_source_actions: set[str],
-                  required_bones: set[str]) -> list[str]:
+                  required_bones: set[str], expected_facial_clips: set[str],
+                  generated_facial_clips: set[str], required_facial_targets: set[str]) -> list[str]:
     document, binary = _glb_json(path)
     for image in document.get("images", []):
         view = document["bufferViews"][image["bufferView"]]
@@ -597,6 +975,49 @@ def _validate_glb(path: Path, expected_source_actions: set[str],
     missing_source = expected_source_actions - set(animation_names)
     if missing_source:
         raise RuntimeError(f"{path.name} omitted source animation clips: {sorted(missing_source)}")
+    missing_facial = expected_facial_clips - set(animation_names)
+    if missing_facial:
+        raise RuntimeError(f"{path.name} omitted facial animation clips: {sorted(missing_facial)}")
+    available_facial_targets = {
+        name
+        for mesh in document.get("meshes", [])
+        for name in mesh.get("extras", {}).get("targetNames", [])
+    }
+    missing_targets = required_facial_targets - available_facial_targets
+    if missing_targets:
+        raise RuntimeError(f"{path.name} omitted facial morph targets: {sorted(missing_targets)}")
+    animated_target_nodes = {
+        index
+        for index, node in enumerate(document.get("nodes", []))
+        if isinstance(node.get("mesh"), int)
+        and document["meshes"][node["mesh"]].get("primitives")
+        and any(primitive.get("targets")
+                for primitive in document["meshes"][node["mesh"]]["primitives"])
+    }
+    for animation in document.get("animations", []):
+        if animation.get("name") not in generated_facial_clips:
+            continue
+        animated_weights = False
+        for channel in animation.get("channels", []):
+            target = channel.get("target", {})
+            if target.get("path") != "weights" or target.get("node") not in animated_target_nodes:
+                continue
+            sampler = animation["samplers"][channel["sampler"]]
+            accessor = document["accessors"][sampler["output"]]
+            if accessor.get("componentType") != 5126 or accessor.get("type") != "SCALAR":
+                raise RuntimeError(
+                    f"{path.name}:{animation['name']} has an invalid facial weight accessor.")
+            view = document["bufferViews"][accessor["bufferView"]]
+            stride = view.get("byteStride", 4)
+            first = view.get("byteOffset", 0) + accessor.get("byteOffset", 0)
+            values = [struct.unpack_from("<f", binary, first + index * stride)[0]
+                      for index in range(accessor["count"])]
+            if values and max(values) - min(values) > 0.01:
+                animated_weights = True
+                break
+        if not animated_weights:
+            raise RuntimeError(
+                f"{path.name}:{animation['name']} does not change any facial morph weight.")
     root_indices = {index for index, node in enumerate(document.get("nodes", []))
                     if node.get("name") == "NPC_ModelRoot"}
     if not root_indices:
@@ -696,15 +1117,8 @@ def _export_model_with_texture_workspace(
     if texture_errors:
         raise RuntimeError(f"{model['slug']} has unresolved used textures: {texture_errors[:20]}")
 
-    # The runtime roster currently drives faces and other expressive detail with
-    # bone animation. Large source libraries may contain thousands of unused
-    # shape-key targets; keep the native .blend as the source of truth and omit
-    # those targets from the runtime GLB until a morph-driven feature uses them.
-    source_morph_target_count = sum(
-        max(0, len(obj.data.shape_keys.key_blocks) - 1)
-        for obj in meshes
-        if obj.data.shape_keys is not None
-    )
+    facial_clips, facial_targets, source_morph_target_count, runtime_morph_target_count = (
+        _add_facial_expression_actions(meshes))
 
     for object_name, ratio in model.get("decimate_ratios", {}).items():
         obj = bpy.context.scene.objects.get(object_name)
@@ -742,7 +1156,7 @@ def _export_model_with_texture_workspace(
         # vertices and removes the skin in several downloaded model packages.
         export_apply=False,
         export_skins=True,
-        export_morph=False,
+        export_morph=True,
         export_animations=True,
         export_animation_mode="ACTIONS",
         export_nla_strips=True,
@@ -758,7 +1172,24 @@ def _export_model_with_texture_workspace(
         export_jpeg_quality=90,
     )
     _compact_glb(output)
-    exported_actions = _validate_glb(output, source_action_names, set(bone_map.values()))
+    reference_path = None
+    if args.preserve_base_from:
+        reference_path = args.preserve_base_from / f"{model['slug']}.glb"
+        if not reference_path.is_file():
+            raise FileNotFoundError(f"Missing base-pose reference GLB: {reference_path}")
+        _preserve_reference_rest_pose(reference_path, output)
+    facial_clip_map = _source_facial_clip_map(source_action_names)
+    facial_clip_map.update(facial_clips)
+    if not facial_clip_map:
+        raise RuntimeError(f"{model['slug']} has no usable facial actions or expression targets.")
+    exported_actions = _validate_glb(
+        output,
+        source_action_names,
+        set(bone_map.values()),
+        set(facial_clip_map.values()),
+        set(facial_targets),
+        {target["shape_key"] for targets in facial_targets.values() for target in targets},
+    )
     result = {
         "npc_id": model["npc_id"],
         "slug": model["slug"],
@@ -770,14 +1201,20 @@ def _export_model_with_texture_workspace(
         "animation_clips": exported_actions,
         "locomotion_clips": sorted(EXPECTED_ACTIONS),
         "locomotion_root_motion": False,
+        "facial_expression_clips": facial_clip_map,
+        "facial_expression_targets": facial_targets,
         "target_height_m": target_height,
         "source_height_m": target_height / root.scale.x,
         "normalized_scale": root.scale.x,
         "glb_bytes": output.stat().st_size,
         "textures_max_edge": MAX_TEXTURE_EDGE,
         "source_animations_expected": sorted(source_action_names),
+        "source_morph_target_count": source_morph_target_count,
         "source_morph_targets_omitted": source_morph_target_count,
-        "runtime_morph_targets_included": False,
+        "runtime_expression_targets_generated": runtime_morph_target_count,
+        "runtime_morph_targets_included": runtime_morph_target_count > 0,
+        "runtime_morph_target_count": runtime_morph_target_count,
+        "base_mesh_preserved_from": reference_path.name if reference_path else None,
     }
     output.with_suffix(".json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({**result, "output": str(output)}, indent=2))
@@ -788,6 +1225,8 @@ def main() -> None:
     args = parse_args()
     args.source_root = args.source_root.expanduser().resolve()
     args.output_root = args.output_root.expanduser().resolve()
+    if args.preserve_base_from:
+        args.preserve_base_from = args.preserve_base_from.expanduser().resolve()
     roster = json.loads(args.roster.read_text(encoding="utf-8"))
     models = roster["models"]
     if args.model:

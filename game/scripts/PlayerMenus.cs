@@ -41,6 +41,7 @@ public partial class Main
 			button.Pressed += () => ToggleMenu(menu);
 			navigation.AddChild(button);
 		}
+		AddMenuButton(navigation, "NPC Test Lab", ToggleNpcAnimationTestPanel);
 		_menuHint = new Label { Position = new Vector2(20, 52), MouseFilter = Control.MouseFilterEnum.Ignore };
 		_menuHud.AddChild(_menuHint);
 
@@ -293,6 +294,19 @@ public partial class Main
 	public override void _Input(InputEvent input)
 	{
 		if (!_sessionActive) return;
+		if (_npcAnimationTestPanel?.IsOpen == true)
+		{
+			if (input.IsActionPressed(ControllerActions.CloseMenu))
+			{
+				_npcAnimationTestPanel.Close();
+				GetViewport().SetInputAsHandled();
+				return;
+			}
+			if (input.IsActionPressed(ControllerActions.Inventory)
+				|| input.IsActionPressed(ControllerActions.Settlement)
+				|| input.IsActionPressed(ControllerActions.Settings))
+				_npcAnimationTestPanel.Close();
+		}
 		if (input is InputEventKey { Pressed: false } or InputEventKey { Echo: true }
 			or InputEventMouseButton { Pressed: false } or InputEventJoypadButton { Pressed: false }) return;
 		if (PlacementPanelOpen)

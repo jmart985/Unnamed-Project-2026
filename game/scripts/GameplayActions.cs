@@ -116,7 +116,8 @@ public partial class Main
         && !ConstructionPanelOpen && !PlacementPanelOpen && !_clock.IsPaused;
 
     private bool GameplayCameraCaptureAllowed => _sessionActive && _menuState.ActiveMenu is null
-        && !WorkstationPanelOpen && !FarmPanelOpen && !ConstructionPanelOpen && !_clock.IsPaused;
+        && !WorkstationPanelOpen && !FarmPanelOpen && !ConstructionPanelOpen
+        && _npcAnimationTestPanel?.IsOpen != true && !_clock.IsPaused;
 
     private void ConfigureGameplayActions()
     {
@@ -172,6 +173,8 @@ public partial class Main
 
     private void UpdateGameplayFeedback(double delta)
     {
+        var cameraCaptureAllowed = GameplayCameraCaptureAllowed;
+        _playerCharacter.MouseLookEnabled = cameraCaptureAllowed;
         if (_actionHud is null) return;
         UpdateSocialPopups(delta);
         _feedbackSeconds = Math.Max(0, _feedbackSeconds - delta);
@@ -179,7 +182,7 @@ public partial class Main
         _targetReticle.Visible = GameplayActionsAllowed || PlacementPanelOpen;
         // Direct build mode keeps the live camera and centered reticle while its hotbar
         // suppresses world actions; ordinary modal menus release the captured cursor.
-        Input.MouseMode = GameplayCameraCaptureAllowed ? Input.MouseModeEnum.Captured : Input.MouseModeEnum.Visible;
+        Input.MouseMode = cameraCaptureAllowed ? Input.MouseModeEnum.Captured : Input.MouseModeEnum.Visible;
         var collect = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.Collect).Desktop);
         var interact = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.Interact).Desktop);
         var greet = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.Greet).Desktop);

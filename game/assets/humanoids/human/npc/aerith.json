@@ -80,6 +80,14 @@
     "human_walk"
   ],
   "locomotion_root_motion": false,
+  "facial_expression_clips": {
+    "happy": "Mouth_Soft_Smile",
+    "sad": "Eyebrows Sad",
+    "angry": "Eyebrows_Angry",
+    "surprised": "Eyebrows_Surprised",
+    "blink": "Eyelids_Closed"
+  },
+  "facial_expression_targets": {},
   "target_height_m": 1.75,
   "source_height_m": 1.6647615738414931,
   "normalized_scale": 1.051201581954956,
@@ -124,6 +132,10 @@
     "Mouth_X_K_G",
     "rig_blink_top"
   ],
+  "source_morph_target_count": 20,
   "source_morph_targets_omitted": 20,
-  "runtime_morph_targets_included": false
+  "runtime_expression_targets_generated": 0,
+  "runtime_morph_targets_included": false,
+  "runtime_morph_target_count": 0,
+  "base_mesh_preserved_from": "aerith.glb"
 }
