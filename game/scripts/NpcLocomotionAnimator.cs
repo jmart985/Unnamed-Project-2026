@@ -11,9 +11,12 @@ internal sealed class NpcLocomotionAnimator
     private string _speciesId = string.Empty;
     private string? _currentAnimation;
     private string? _manualAnimation;
+    private bool _manualAnimationLoops;
     private float _movementSpeed;
     private float _lastMovementSpeed;
     private bool _isCreature;
+
+    public bool HoldsPositionForManualAction => _manualAnimation is not null && !_manualAnimationLoops;
 
     public void Bind(AnimationPlayer? player, string speciesId, bool isCreature, float movementSpeed)
     {
@@ -24,6 +27,7 @@ internal sealed class NpcLocomotionAnimator
         _movementSpeed = Mathf.Max(movementSpeed, 0.5f);
         _currentAnimation = null;
         _manualAnimation = null;
+        _manualAnimationLoops = false;
         _animationNames.Clear();
         if (player is null) return;
 
@@ -48,6 +52,7 @@ internal sealed class NpcLocomotionAnimator
             if (player.IsPlaying()) return;
             RestoreManualBlendShapeBaseline();
             _manualAnimation = null;
+            _manualAnimationLoops = false;
             _currentAnimation = null;
         }
 
@@ -115,6 +120,7 @@ internal sealed class NpcLocomotionAnimator
         animation.LoopMode = loop ? Animation.LoopModeEnum.Linear : Animation.LoopModeEnum.None;
         player.Play(actualName, customBlend: 0.18f);
         _manualAnimation = actualName;
+        _manualAnimationLoops = loop;
         _currentAnimation = actualName;
         return true;
     }
@@ -125,6 +131,7 @@ internal sealed class NpcLocomotionAnimator
         _player?.Stop(keepState: true);
         RestoreManualBlendShapeBaseline();
         _manualAnimation = null;
+        _manualAnimationLoops = false;
         _currentAnimation = null;
         Update(movementSpeed);
     }
@@ -136,6 +143,7 @@ internal sealed class NpcLocomotionAnimator
 
         RestoreManualBlendShapeBaseline();
         _manualAnimation = null;
+        _manualAnimationLoops = false;
         _currentAnimation = null;
         Update(_lastMovementSpeed);
     }

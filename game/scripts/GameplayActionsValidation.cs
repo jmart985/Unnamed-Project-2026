@@ -338,6 +338,8 @@ public partial class Main
             SendMenuKey(Key.F);
             Require(_actionHud.Text.Contains("petted") && _targetResponse.Visible
                 && _world.TryGetRelationship(cow.Id, player.Id, out var petBond) && petBond!.Trust == 53, "F pets with visible directed response when no compatible food is carried");
+            Require(!_entityViews[cow.Id].IsMovementHeldForInteraction,
+                "ordinary pet interaction does not stop mobile conversation or locomotion");
             var captured = _interactionResolver.Resolve(new(player.Id, cow.Id, InteractionType.Physical, "capture"));
             Require(captured.Succeeded && cow.CaptivityState == CreatureCaptivityState.Captured, "live capture resolver uses World lifecycle");
             var given = new ResourceContainer("give descriptor", 1); given.TryAdd(ItemIds.Food, 1);
@@ -348,7 +350,14 @@ public partial class Main
             SelectEntity(human.Id); SendMenuKey(Key.G);
             Require(_actionHud.Text.Contains("Successfully performed greet") && _targetResponse.Visible, "G greets humans visibly");
             var humanView = _entityViews[human.Id];
+            Require(_playerCharacter.IsMovementHeldForInteraction && humanView.IsMovementHeldForInteraction,
+                "successful greeting briefly holds both participants in place");
             humanView._Process(3);
+            Require(!humanView.IsMovementHeldForInteraction,
+                "greeting pause ends while sustained attention remains available");
+            _playerCharacter.AdvanceInteractionMovementHold(0.7f);
+            Require(!_playerCharacter.IsMovementHeldForInteraction,
+                "player movement resumes after the greeting pause");
             Require(humanView.VisualForward.Dot((_playerCharacter.GlobalPosition - humanView.GlobalPosition).Normalized()) > 0.99f,
                 "human continues facing greeter after acknowledgment");
             await CaptureGameplayRefinement("human-greeting.png");
