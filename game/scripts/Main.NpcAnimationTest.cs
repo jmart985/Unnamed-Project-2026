@@ -87,6 +87,17 @@ public partial class Main
                 continue;
             }
 
+            if (view.NavigationOutcome is { } outcome && outcome != NavigationOutcome.InProgress)
+            {
+                StopNpcAnimationTestMovement(entityId);
+                _lastActionMessage = outcome == NavigationOutcome.Arrived
+                    ? $"Completed the test route for {entityId}."
+                    : $"Stopped the test route for {entityId}: navigation {outcome}.";
+                UpdateStatus();
+                _npcAnimationTestPanel?.SetStatus(_lastActionMessage);
+                continue;
+            }
+
             var position = new System.Numerics.Vector3(entity.Position.X, entity.Position.Y, entity.Position.Z);
             var horizontalTarget = new System.Numerics.Vector3(target.X, position.Y, target.Z);
             if (System.Numerics.Vector3.DistanceSquared(position, horizontalTarget) <= 0.35f * 0.35f)
@@ -98,6 +109,35 @@ public partial class Main
             if (view.NavigationTarget is not { } current
                 || System.Numerics.Vector3.DistanceSquared(current, target) > 0.01f)
                 view.RequestNavigation(target);
+        }
+    }
+
+    internal void ValidateNpcAnimationTestRouteFailureRecovery()
+    {
+        var entity = _world.Entities.FirstOrDefault(candidate => candidate.Id != _world.PlayerEntityId
+            && !candidate.Health.IsDead && _entityViews.ContainsKey(candidate.Id))
+            ?? throw new InvalidOperationException("NPC Test Lab route validation requires a live NPC view.");
+        var view = _entityViews[entity.Id];
+        var target = new System.Numerics.Vector3(entity.Position.X + 4f, entity.Position.Y, entity.Position.Z);
+        view.SetAnimationTestMovementMultiplier(0.45f);
+        _npcAnimationTestRouteTargets[entity.Id] = target;
+        var requestId = view.RequestNavigation(target);
+
+        try
+        {
+            var outcome = view.NavigationAdapter.Poll(requestId, 9d);
+            if (outcome != NavigationOutcome.TimedOut)
+                throw new InvalidOperationException($"NPC Test Lab timeout fixture ended as {outcome}, expected TimedOut.");
+
+            AdvanceNpcAnimationTestRoutes();
+            if (IsNpcAnimationTestMoving(entity.Id))
+                throw new InvalidOperationException("NPC Test Lab kept suppressing autonomous behavior after a timed-out route.");
+            if (view.NavigationOutcome != NavigationOutcome.TimedOut)
+                throw new InvalidOperationException("NPC Test Lab route cleanup lost the terminal navigation outcome.");
+        }
+        finally
+        {
+            StopNpcAnimationTestMovement(entity.Id);
         }
     }
 
