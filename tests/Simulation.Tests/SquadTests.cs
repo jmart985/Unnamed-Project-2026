@@ -286,6 +286,137 @@ public sealed class SquadTests
     }
 
     [Fact]
+    public void AttentionPausesOnlyOneSquadMemberAndResumesTheSharedMoveOrder()
+    {
+        var world = Session();
+        var members = Members(world);
+        var navigators = members.ToDictionary(member => member.Id, _ => new FakeNavigationAdapter());
+        var squad = new SquadOrderService(world, member => navigators[member.Id]);
+        foreach (var member in members) world.AddSquadMember(member.Id);
+        var goal = new Vector3(12, 0, 7);
+
+        squad.Execute(SquadOrderKind.MoveTo, goal);
+        squad.Advance();
+        var distracted = members[0];
+        var activeMember = members[1];
+        var originalPausedRequest = Assert.Single(navigators[distracted.Id].Requests).Key;
+        var originalActiveRequest = Assert.Single(navigators[activeMember.Id].Requests).Key;
+        var assignedGoal = navigators[distracted.Id].RequestTargets[originalPausedRequest];
+
+        Assert.Equal(ActionStartResult.Preempted, distracted.Actions.TryStart(
+            new ActionCandidate("focused-action", ActionKind.Haul, interruptsMovementOrders: true)));
+        squad.Advance();
+
+        Assert.Equal(NavigationOutcome.Cancelled, navigators[distracted.Id].Requests[originalPausedRequest]);
+        Assert.Equal(NavigationOutcome.InProgress, navigators[activeMember.Id].Requests[originalActiveRequest]);
+        Assert.Single(navigators[distracted.Id].Requests);
+        Assert.Single(navigators[activeMember.Id].Requests);
+        Assert.Equal(SquadOrderKind.MoveTo, squad.Order);
+        Assert.Equal(goal, squad.Target);
+
+        distracted.Actions.Complete();
+        squad.Advance();
+
+        Assert.Equal(2, navigators[distracted.Id].Requests.Count);
+        var resumedRequest = Assert.Single(navigators[distracted.Id].Requests, request => request.Value == NavigationOutcome.InProgress);
+        Assert.Equal(assignedGoal, navigators[distracted.Id].RequestTargets[resumedRequest.Key]);
+        Assert.Equal(NavigationOutcome.InProgress, navigators[activeMember.Id].Requests[originalActiveRequest]);
+        Assert.Single(navigators[activeMember.Id].Requests);
+    }
+
+    [Fact]
+    public void FollowResumesAgainstThePlayersCurrentPositionAfterAttention()
+    {
+        var world = Session();
+        var member = Members(world)[0];
+        world.AddSquadMember(member.Id);
+        world.TrySetEntityPosition(world.PlayerEntityId, Vector3.Zero);
+        world.TrySetEntityPosition(member.Id, new Vector3(8, 0, 0));
+        var nav = new FakeNavigationAdapter();
+        var squad = new SquadOrderService(world, _ => nav);
+
+        squad.Execute(SquadOrderKind.FollowPlayer);
+        squad.Advance();
+        var original = Assert.Single(nav.RequestTargets);
+        Assert.Equal(ActionStartResult.Preempted, member.Actions.TryStart(
+            new ActionCandidate("focused-action", ActionKind.Haul, interruptsMovementOrders: true)));
+        squad.Advance();
+        Assert.Equal(NavigationOutcome.Cancelled, nav.Requests[original.Key]);
+        Assert.Single(nav.Requests);
+
+        world.TrySetEntityPosition(world.PlayerEntityId, new Vector3(0, 0, 5));
+        member.Actions.Cancel();
+        squad.Advance();
+
+        Assert.Equal(2, nav.RequestTargets.Count);
+        Assert.NotEqual(original.Value, nav.RequestTargets.Last().Value);
+        Assert.Equal(NavigationOutcome.InProgress, nav.Requests.Last().Value);
+        Assert.Equal(SquadOrderKind.FollowPlayer, squad.Order);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void StopOrMemberRemovalWhileDistractedPreventsTheOldOrderFromResuming(bool stopOrder)
+    {
+        var world = Session();
+        var member = Members(world)[0];
+        world.AddSquadMember(member.Id);
+        var nav = new FakeNavigationAdapter();
+        var squad = new SquadOrderService(world, _ => nav);
+        squad.Execute(SquadOrderKind.MoveTo, new Vector3(10, 0, 10));
+        squad.Advance();
+        var firstRequest = Assert.Single(nav.Requests).Key;
+        Assert.Equal(ActionStartResult.Preempted, member.Actions.TryStart(
+            new ActionCandidate("focused-action", ActionKind.Haul, interruptsMovementOrders: true)));
+        squad.Advance();
+        Assert.Equal(NavigationOutcome.Cancelled, nav.Requests[firstRequest]);
+
+        if (stopOrder)
+        {
+            Assert.Equal(SquadResult.Accepted, squad.Execute(SquadOrderKind.Stop).Code);
+        }
+        else
+        {
+            world.RemoveSquadMember(member.Id);
+        }
+        member.Actions.Complete();
+        squad.Advance();
+
+        Assert.Single(nav.Requests);
+        Assert.DoesNotContain(NavigationOutcome.InProgress, nav.Requests.Values);
+        Assert.Equal(stopOrder ? SquadOrderKind.Stop : SquadOrderKind.MoveTo, squad.Order);
+    }
+
+    [Fact]
+    public void ReplacingSquadOrderWhileDistractedUsesOnlyTheNewTarget()
+    {
+        var world = Session();
+        var member = Members(world)[0];
+        world.AddSquadMember(member.Id);
+        var nav = new FakeNavigationAdapter();
+        var squad = new SquadOrderService(world, _ => nav);
+        var oldGoal = new Vector3(10, 0, 10);
+        var newGoal = new Vector3(-6, 0, 4);
+        squad.Execute(SquadOrderKind.MoveTo, oldGoal);
+        squad.Advance();
+        var originalRequest = Assert.Single(nav.Requests).Key;
+        Assert.Equal(ActionStartResult.Preempted, member.Actions.TryStart(
+            new ActionCandidate("focused-action", ActionKind.Haul, interruptsMovementOrders: true)));
+        squad.Advance();
+
+        Assert.Equal(SquadResult.Accepted, squad.Execute(SquadOrderKind.MoveTo, newGoal).Code);
+        squad.Advance();
+
+        Assert.Equal(NavigationOutcome.Cancelled, nav.Requests[originalRequest]);
+        Assert.Equal(newGoal, squad.Target);
+        Assert.Equal(2, nav.RequestTargets.Count);
+        Assert.Equal(newGoal, nav.RequestTargets.Last().Value);
+        Assert.Equal(NavigationOutcome.InProgress, nav.Requests.Last().Value);
+        Assert.Equal(ActionKind.SquadMove, member.Actions.Current?.Kind);
+    }
+
+    [Fact]
     public void ArrivedMemberReturnsAfterFoodPreemptionMovesItAway()
     {
         var world = Session();
