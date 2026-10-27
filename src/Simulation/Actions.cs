@@ -29,7 +29,11 @@ public enum ActionStartResult
 
 public sealed class ActionCandidate
 {
-    public ActionCandidate(string id, ActionKind kind, bool requiresEmptyCargo = false)
+    public ActionCandidate(
+        string id,
+        ActionKind kind,
+        bool requiresEmptyCargo = false,
+        bool interruptsMovementOrders = false)
     {
         if (string.IsNullOrWhiteSpace(id))
         {
@@ -39,6 +43,7 @@ public sealed class ActionCandidate
         Id = id;
         Kind = kind;
         RequiresEmptyCargo = requiresEmptyCargo;
+        InterruptsMovementOrders = interruptsMovementOrders || kind is ActionKind.Eat or ActionKind.Flee;
     }
 
     public string Id { get; }
@@ -50,6 +55,13 @@ public sealed class ActionCandidate
     /// resume delivering (depositing) its carried items before claiming this kind of work.
     /// </summary>
     public bool RequiresEmptyCargo { get; }
+
+    /// <summary>
+    /// When true, this action temporarily suspends explicit squad or individual movement orders.
+    /// The order intent remains active and its route is rebuilt when the action ends. Eating and
+    /// fleeing always carry this behavior.
+    /// </summary>
+    public bool InterruptsMovementOrders { get; }
 
     public int Priority => Kind switch
     {
@@ -72,12 +84,14 @@ public sealed class ActionState
         Id = candidate.Id;
         Kind = candidate.Kind;
         Priority = candidate.Priority;
+        InterruptsMovementOrders = candidate.InterruptsMovementOrders;
         Cleanup = cleanup;
     }
 
     public string Id { get; }
     public ActionKind Kind { get; }
     public int Priority { get; }
+    public bool InterruptsMovementOrders { get; }
     public double Progress { get; internal set; }
     public ActionStatus Status { get; internal set; } = ActionStatus.Active;
     internal Action? Cleanup { get; }
@@ -117,7 +131,15 @@ public sealed class ActionLifecycle
             return ActionStartResult.Started;
         }
 
-        if (candidate.Priority <= Current.Priority)
+        var candidateIsMovementOrder = candidate.Kind is ActionKind.SquadMove or ActionKind.CommandMove;
+        if (Current.InterruptsMovementOrders && candidateIsMovementOrder)
+        {
+            return ActionStartResult.Rejected;
+        }
+
+        var interruptsCurrentMovementOrder = candidate.InterruptsMovementOrders
+            && Current.Kind is ActionKind.SquadMove or ActionKind.CommandMove;
+        if (candidate.Priority <= Current.Priority && !interruptsCurrentMovementOrder)
         {
             return ActionStartResult.Rejected;
         }
