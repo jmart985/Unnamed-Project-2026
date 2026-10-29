@@ -159,6 +159,36 @@ public sealed class SquadTests
     }
 
     [Fact]
+    public void SuspendedMemberKeepsTemporaryRouteAndResumesCurrentSquadOrder()
+    {
+        var world = Session();
+        var member = Members(world)[0];
+        world.AddSquadMember(member.Id);
+        var navigator = new FakeNavigationAdapter();
+        var squad = new SquadOrderService(world, _ => navigator);
+        var squadTarget = new Vector3(20, 0, 5);
+        Assert.Equal(SquadResult.Accepted, squad.Execute(SquadOrderKind.MoveTo, squadTarget).Code);
+        squad.Advance();
+        var originalRequestId = navigator.Requests.Keys.Single();
+
+        squad.SuspendMember(member.Id);
+        Assert.Equal(NavigationOutcome.Cancelled, navigator.Requests[originalRequestId]);
+        var testTarget = member.Position + new Vector3(4, 0, 0);
+        var testRequestId = navigator.Request(new NavigationRequest(testTarget));
+        squad.Advance();
+        Assert.Equal(NavigationOutcome.InProgress, navigator.Requests[testRequestId]);
+        Assert.Equal(2, navigator.Requests.Count);
+
+        squad.ResumeMember(member.Id);
+        squad.Advance();
+
+        Assert.Equal(3, navigator.Requests.Count);
+        Assert.Equal(ActionKind.SquadMove, member.Actions.Current?.Kind);
+        var resumedRequestId = navigator.Requests.Keys.Order(StringComparer.Ordinal).Last();
+        Assert.Equal(squadTarget, navigator.RequestTargets[resumedRequestId]);
+    }
+
+    [Fact]
     public void MoveToAssignsStableNearbySlotsWithoutChangingTheRequestedTarget()
     {
         var world = Session();

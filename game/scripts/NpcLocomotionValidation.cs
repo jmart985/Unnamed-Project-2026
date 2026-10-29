@@ -49,6 +49,7 @@ internal static class NpcLocomotionValidation
             holder = new Node3D { Name = "NpcLocomotionValidationModels" };
             main.AddChild(holder);
             var facialBlendShapeResetValidated = false;
+            var skeletalPoseResetValidated = false;
             var facialBlendShapeDiagnostics = new List<string>();
             foreach (var modelCase in cases)
             {
@@ -71,17 +72,21 @@ internal static class NpcLocomotionValidation
                 if (!facialResetPassed)
                     facialBlendShapeDiagnostics.Add(DescribeFacialBlendShapeCandidates(player, animator, modelCase));
                 await ValidateManualPlayback(player, animator, modelCase);
+                skeletalPoseResetValidated |= await ValidateManualSkeletalPoseReset(player, animator, modelCase);
                 ValidateTickMovement(holder, modelCase);
             }
 
             if (!facialBlendShapeResetValidated)
                 throw new InvalidOperationException("NPC locomotion validation found no imported facial blend-shape clip to verify reset behavior. "
                     + string.Join(" | ", facialBlendShapeDiagnostics));
+            if (!skeletalPoseResetValidated)
+                throw new InvalidOperationException("NPC locomotion validation found no humanoid finger rig with a manual clip to verify skeletal-pose restoration.");
 
             await ValidateTestPanel(holder);
             main.ValidateNpcAnimationTestClosesGameplayOverlays();
             main.ValidateNpcAnimationTestRouteFailureRecovery();
             main.ValidateNpcAnimationTestRouteResumesStayOrder();
+            main.ValidateNpcAnimationTestRouteResumesSquadOrder();
 
             holder.QueueFree();
             await main.ToSignal(main.GetTree(), SceneTree.SignalName.ProcessFrame);
@@ -123,6 +128,120 @@ internal static class NpcLocomotionValidation
         if (animator.HoldsPositionForManualAction)
             throw new InvalidOperationException($"Completed Test Lab clip kept movement held on {modelCase.Path}.");
         RequireClip(player, modelCase.FastClip, modelCase.Path);
+    }
+
+    private sealed record FingerPose(Skeleton3D Skeleton, int BoneIndex, string BoneName,
+        Vector3 Position, Quaternion Rotation, Vector3 Scale);
+
+    private static async Task<bool> ValidateManualSkeletalPoseReset(AnimationPlayer player,
+        NpcLocomotionAnimator animator, ModelCase modelCase)
+    {
+        var root = player.GetNodeOrNull(player.RootNode);
+        if (root is null) return false;
+
+        var fingerPoses = CaptureFingerPoses(root);
+        if (fingerPoses.Count == 0) return false;
+
+        var locomotionNames = new HashSet<string>(
+            [modelCase.WalkClip, modelCase.MidSpeedClip, modelCase.FastClip,
+                modelCase.IsCreature ? "idle" : "human_idle"],
+            StringComparer.OrdinalIgnoreCase);
+        var clipName = animator.GetAnimationNames().FirstOrDefault(name =>
+            !locomotionNames.Contains(name)
+            && !name.Contains("npc_face_", StringComparison.OrdinalIgnoreCase)
+            && player.GetAnimation(name).Length > 0);
+        if (clipName is null) return false;
+
+        var testPoses = fingerPoses.ToArray();
+        if (!animator.PlayManual(clipName, loop: true))
+            throw new InvalidOperationException($"Could not start manual clip {clipName} on {modelCase.Path}.");
+        ApplyTemporaryFingerPose(testPoses);
+        animator.StopManual(modelCase.Speed * 0.95f);
+        RequireFingerPosesRestored(testPoses, clipName, modelCase.Path, "stop");
+
+        if (!animator.PlayManual(clipName, loop: true))
+            throw new InvalidOperationException($"Could not restart manual clip {clipName} on {modelCase.Path}.");
+        ApplyTemporaryFingerPose(testPoses);
+        if (!animator.PlayManual(modelCase.IsCreature ? "idle" : "human_idle", loop: true))
+            throw new InvalidOperationException($"Could not switch to idle while testing {clipName} on {modelCase.Path}.");
+        RequireFingerPosesRestored(testPoses, clipName, modelCase.Path, "clip switch");
+        animator.StopManual(modelCase.Speed * 0.95f);
+
+        var completionBaseline = CaptureFingerPoses(root);
+        if (!animator.PlayManual(clipName, loop: false))
+            throw new InvalidOperationException($"Could not start one-shot clip {clipName} on {modelCase.Path}.");
+        ApplyTemporaryFingerPose(completionBaseline);
+        var duration = player.GetAnimation(clipName).Length;
+        animator.Update(modelCase.Speed * 0.95f, duration + 0.05);
+        await player.ToSignal(player.GetTree(), SceneTree.SignalName.ProcessFrame);
+        RequireFingerPosesRestored(completionBaseline, clipName, modelCase.Path, "natural completion");
+        return true;
+    }
+
+    private static List<FingerPose> CaptureFingerPoses(Node root)
+    {
+        var skeletons = root.FindChildren("*", "Skeleton3D", recursive: true, owned: false)
+            .OfType<Skeleton3D>();
+        if (root is Skeleton3D rootSkeleton)
+            skeletons = skeletons.Prepend(rootSkeleton);
+
+        return skeletons.Distinct()
+            .SelectMany(skeleton => Enumerable.Range(0, skeleton.GetBoneCount())
+                .Where(index => IsFingerBone(skeleton.GetBoneName(index).ToString()))
+                .Select(index => new FingerPose(
+                    skeleton, index, skeleton.GetBoneName(index).ToString(),
+                    skeleton.GetBonePosePosition(index), skeleton.GetBonePoseRotation(index),
+                    skeleton.GetBonePoseScale(index))))
+            .ToList();
+    }
+
+    private static bool IsFingerBone(string name)
+    {
+        if (name.Contains("_ik", StringComparison.OrdinalIgnoreCase)
+            || name.Contains("pole", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        foreach (var marker in new[] { "thumb", "index", "middle", "ring", "pinky", "finger" })
+        {
+            var markerIndex = name.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+            if (markerIndex < 0) continue;
+            var suffix = name[(markerIndex + marker.Length)..];
+            if (suffix.Length <= 4 && suffix.Any(char.IsDigit)) return true;
+        }
+
+        return false;
+    }
+
+    private static void ApplyTemporaryFingerPose(IEnumerable<FingerPose> poses)
+    {
+        var changed = 0;
+        foreach (var pose in poses)
+        {
+            if (!GodotObject.IsInstanceValid(pose.Skeleton) || pose.BoneIndex >= pose.Skeleton.GetBoneCount()) continue;
+            pose.Skeleton.SetBonePoseRotation(pose.BoneIndex,
+                pose.Rotation * Quaternion.FromEuler(new Vector3(0.21f, -0.13f, 0.17f)));
+            changed++;
+        }
+
+        if (changed == 0) throw new InvalidOperationException("No finger poses were available for restoration validation.");
+    }
+
+    private static void RequireFingerPosesRestored(IEnumerable<FingerPose> expectedPoses,
+        string clipName, string modelPath, string transition)
+    {
+        foreach (var pose in expectedPoses)
+        {
+            if (!GodotObject.IsInstanceValid(pose.Skeleton)
+                || pose.BoneIndex >= pose.Skeleton.GetBoneCount())
+                throw new InvalidOperationException($"Skeleton disappeared while validating {clipName} on {modelPath}.");
+
+            var restored = pose.Skeleton.GetBonePosePosition(pose.BoneIndex).DistanceTo(pose.Position) <= 0.001f
+                && pose.Skeleton.GetBonePoseRotation(pose.BoneIndex).AngleTo(pose.Rotation) <= 0.01f
+                && pose.Skeleton.GetBonePoseScale(pose.BoneIndex).DistanceTo(pose.Scale) <= 0.001f;
+            if (!restored)
+                throw new InvalidOperationException(
+                    $"Finger bone {pose.BoneName} remained animated after {transition} from {clipName} on {modelPath}.");
+        }
     }
 
     private static bool ValidateFacialBlendShapeReset(AnimationPlayer player, NpcLocomotionAnimator animator,
