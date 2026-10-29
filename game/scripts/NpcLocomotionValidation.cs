@@ -10,7 +10,7 @@ public partial class Main
 
 internal static class NpcLocomotionValidation
 {
-    private sealed record ModelCase(string Path, string SpeciesId, bool IsCreature, float Speed,
+    private sealed record ModelCase(string Path, string SpeciesId, string BodyCategory, bool IsCreature, float Speed,
         string WalkClip, string MidSpeedClip, string FastClip,
         string EntityId = "locomotion-validation", BiologicalSex Sex = BiologicalSex.Unspecified,
         string? ExpectedEntityViewPath = null);
@@ -22,29 +22,30 @@ internal static class NpcLocomotionValidation
         {
             var cases = new List<ModelCase>
             {
-                new ModelCase("res://assets/humanoids/human/human_humanoid_rig_v1.glb", "human", false, 3f,
+                new ModelCase("res://assets/humanoids/human/human_humanoid_rig_v1.glb", "human", "humanoid", false, 3f,
                     "human_walk", "human_walk", "human_run", Sex: BiologicalSex.Female),
-                new ModelCase("res://assets/humanoids/human/radagon_male_humanoid_rig_v1.glb", "human", false, 3f,
+                new ModelCase("res://assets/humanoids/human/radagon_male_humanoid_rig_v1.glb", "human", "humanoid", false, 3f,
                     "human_walk", "human_walk", "human_run", Sex: BiologicalSex.Male),
-                new ModelCase("res://assets/creatures/ape/ape_primate_rig_v1.glb", "ape", true, 2f,
+                new ModelCase("res://assets/creatures/ape/ape_primate_rig_v1.glb", "ape", "primate", true, 2f,
                     "knuckle_walk", "knuckle_walk", "run"),
-                new ModelCase("res://assets/creatures/cat/cat_felid_rig_v1.glb", "cat", true, 2.2f,
+                new ModelCase("res://assets/creatures/cat/cat_felid_rig_v1.glb", "cat", "quadruped", true, 2.2f,
                     "walk", "trot", "run"),
-                new ModelCase("res://assets/creatures/cow/cow_ungulate_rig_v1.glb", "cow", true, 2.4f,
+                new ModelCase("res://assets/creatures/cow/cow_ungulate_rig_v1.glb", "cow", "ungulate", true, 2.4f,
                     "walk", "trot", "trot"),
-                new ModelCase("res://assets/creatures/fox/fox_vulpine_rig_v1.glb", "fox", true, 1.8f,
+                new ModelCase("res://assets/creatures/fox/fox_vulpine_rig_v1.glb", "fox", "quadruped", true, 1.8f,
                     "walk", "trot", "run"),
-                new ModelCase("res://assets/creatures/pig/pig_suiform_rig_v1.glb", "pig", true, 2.1f,
+                new ModelCase("res://assets/creatures/pig/pig_suiform_rig_v1.glb", "pig", "quadruped", true, 2.1f,
                     "walk", "trot", "run"),
-                new ModelCase("res://assets/creatures/wolf/wolf_canid_rig_v1.glb", "wolf", true, 3.4f,
+                new ModelCase("res://assets/creatures/wolf/wolf_canid_rig_v1.glb", "wolf", "canid", true, 3.4f,
                     "walk", "trot", "run"),
             };
             foreach (var presentation in StarterNpcPresentationCatalog.All)
             {
-                cases.Add(new ModelCase(presentation.AssetPath, "human", false, 3f,
+                cases.Add(new ModelCase(presentation.AssetPath, "human", "humanoid", false, 3f,
                     "human_walk", "human_walk", "human_run", presentation.EntityId,
                     presentation.Sex, presentation.AssetPath));
             }
+            var presentationCatalog = EntityPresentationCatalog.LoadFromResource("res://data/entity_presentations.json");
 
             holder = new Node3D { Name = "NpcLocomotionValidationModels" };
             main.AddChild(holder);
@@ -60,7 +61,8 @@ internal static class NpcLocomotionValidation
                 var player = model.FindChild("AnimationPlayer", recursive: true, owned: false) as AnimationPlayer
                     ?? throw new InvalidOperationException($"AnimationPlayer missing from {modelCase.Path}");
                 var animator = new NpcLocomotionAnimator();
-                animator.Bind(player, modelCase.SpeciesId, modelCase.IsCreature, modelCase.Speed);
+                var presentation = presentationCatalog.Resolve(modelCase.SpeciesId, modelCase.IsCreature, modelCase.BodyCategory);
+                animator.Bind(player, presentation.LocomotionFamily, modelCase.IsCreature, modelCase.Speed);
                 var idleClip = modelCase.IsCreature ? "idle" : "human_idle";
                 RequireClip(player, idleClip, modelCase.Path);
                 RequireClip(player, modelCase.WalkClip, modelCase.Path, modelCase.Speed * 0.2f, animator);
@@ -73,7 +75,7 @@ internal static class NpcLocomotionValidation
                     facialBlendShapeDiagnostics.Add(DescribeFacialBlendShapeCandidates(player, animator, modelCase));
                 await ValidateManualPlayback(player, animator, modelCase);
                 skeletalPoseResetValidated |= await ValidateManualSkeletalPoseReset(player, animator, modelCase);
-                ValidateTickMovement(holder, modelCase);
+                ValidateTickMovement(holder, modelCase, presentationCatalog);
             }
 
             if (!facialBlendShapeResetValidated)
@@ -82,7 +84,7 @@ internal static class NpcLocomotionValidation
             if (!skeletalPoseResetValidated)
                 throw new InvalidOperationException("NPC locomotion validation found no humanoid finger rig with a manual clip to verify skeletal-pose restoration.");
 
-            await ValidateTestPanel(holder);
+            await ValidateTestPanel(holder, presentationCatalog);
             main.ValidateNpcAnimationTestClosesGameplayOverlays();
             main.ValidateNpcAnimationTestRouteFailureRecovery();
             main.ValidateNpcAnimationTestRouteResumesStayOrder();
@@ -406,10 +408,11 @@ internal static class NpcLocomotionValidation
         return -1;
     }
 
-    private static async Task ValidateTestPanel(Node3D holder)
+    private static async Task ValidateTestPanel(Node3D holder, EntityPresentationCatalog presentationCatalog)
     {
         var view = new EntityView();
-        view.Bind("npc-test-panel-validation", 3f, isCreature: false, "human", sex: BiologicalSex.Female);
+        view.Bind("npc-test-panel-validation", 3f, isCreature: false, "human", sex: BiologicalSex.Female,
+            presentationCatalog: presentationCatalog);
         holder.AddChild(view);
 
         var panel = new NpcAnimationTestPanel();
@@ -456,13 +459,16 @@ internal static class NpcLocomotionValidation
         panel.Close();
     }
 
-    private static void ValidateTickMovement(Node3D holder, ModelCase modelCase)
+    private static void ValidateTickMovement(Node3D holder, ModelCase modelCase,
+        EntityPresentationCatalog presentationCatalog)
     {
         var view = new EntityView();
         view.Bind(modelCase.EntityId, modelCase.Speed, modelCase.IsCreature, modelCase.SpeciesId,
+            modelCase.BodyCategory,
             sex: modelCase.Sex == BiologicalSex.Unspecified
                 ? (modelCase.Path.Contains("radagon") ? BiologicalSex.Male : BiologicalSex.Female)
-                : modelCase.Sex);
+                : modelCase.Sex,
+            presentationCatalog: presentationCatalog);
         holder.AddChild(view);
         view.SetProcess(false);
         view.SetPhysicsProcess(false);

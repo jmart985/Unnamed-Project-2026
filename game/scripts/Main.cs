@@ -36,6 +36,7 @@ public partial class Main : Node3D
 	private TreeRegrowthService? _treeRegrowth;
 	private CarcassDecayService? _carcassDecay;
 	private SpeciesCatalog _speciesCatalog = null!;
+	private EntityPresentationCatalog _entityPresentationCatalog = null!;
 	private WildlifeRegionCatalog _wildlifeRegionCatalog = null!;
 	private WildlifeProximityCoordinator? _wildlifeProximity;
 	private RelationshipEventCatalog _relationshipEventCatalog = null!;
@@ -126,6 +127,7 @@ public partial class Main : Node3D
 		_saveSlotPath = ProjectSettings.GlobalizePath("user://ant-farm-save.json");
 		_speciesCatalog = SpeciesCatalog.LoadFromFile(
 			Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
+		_entityPresentationCatalog = EntityPresentationCatalog.LoadFromResource("res://data/entity_presentations.json");
 		_wildlifeRegionCatalog = WildlifeRegionCatalog.LoadFromFile(
 			Path.Combine(AppContext.BaseDirectory, "data", "wildlife_regions.json"), _speciesCatalog);
 		_relationshipEventCatalog = RelationshipEventCatalog.LoadFromFile(
@@ -215,6 +217,8 @@ public partial class Main : Node3D
 			Callable.From(RunStarterWildlifeProximityValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-npc-locomotion"))
 			Callable.From(RunNpcLocomotionValidation).CallDeferred();
+		else if (OS.GetCmdlineUserArgs().Contains("--validate-species-presentations"))
+			Callable.From(RunEntityPresentationValidation).CallDeferred();
 	}
 
 	public override void _Process(double delta)
@@ -561,9 +565,11 @@ public partial class Main : Node3D
 	{
 		var species = _speciesCatalog.GetRequired(entity.SpeciesId);
 		var movementSpeed = (float)species.MovementSpeed;
+		var isCreature = CreatureBodyPlanResolver.Resolve(species.BodyCategory, isCreature: true)
+			!= CreatureBodyPlan.Humanoid;
 		var view = new EntityView { Name = $"View_{entity.Id}" };
-		view.Bind(entity.Id, movementSpeed, isCreature: !string.Equals(entity.SpeciesId, "human", StringComparison.Ordinal),
-			entity.SpeciesId, species.BodyCategory, species.Anchors, entity.Sex);
+		view.Bind(entity.Id, movementSpeed, isCreature, entity.SpeciesId, species.BodyCategory, species.Anchors,
+			entity.Sex, _entityPresentationCatalog);
 		AddChild(view);
 		_entityViews.Add(entity.Id, view);
 
@@ -584,6 +590,8 @@ public partial class Main : Node3D
 		_entityButtons.Add(entity.Id, button);
 		view.Sync(_world);
 	}
+
+	internal EntityPresentationCatalog GetEntityPresentationCatalog() => _entityPresentationCatalog;
 
 	private void SelectEntity(string entityId)
 	{
