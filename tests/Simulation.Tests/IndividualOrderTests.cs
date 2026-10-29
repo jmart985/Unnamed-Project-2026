@@ -126,6 +126,39 @@ public sealed class IndividualOrderTests
     }
 
     [Fact]
+    public void AttentionActionPausesIndividualMovementAndRebuildsItsRouteWhenComplete()
+    {
+        var (world, _, player, target, resolver) = Harness();
+        Bond(world, player, target);
+        var stayPosition = new Vector3(4, 0, 7);
+        world.TrySetEntityPosition(target.Id, stayPosition);
+        Assert.True(resolver.Resolve(new InteractionRequest(player.Id, target.Id, InteractionType.Command, "stay")).Succeeded);
+        world.TrySetEntityPosition(target.Id, new Vector3(12, 0, 7));
+        var nav = new FakeNavigationAdapter();
+        var orders = new OrderService(world, _ => nav);
+        orders.Advance();
+        var originalRequest = Assert.Single(nav.Requests).Key;
+
+        Assert.Equal(ActionStartResult.Preempted, target.Actions.TryStart(
+            new ActionCandidate("focused-action", ActionKind.Haul, interruptsMovementOrders: true)));
+        orders.Advance();
+
+        Assert.Equal(NavigationOutcome.Cancelled, nav.Requests[originalRequest]);
+        Assert.NotNull(target.OrderIntent);
+        Assert.False(orders.ShouldSuppressAutonomousBehavior(target));
+        Assert.Single(nav.Requests);
+
+        target.Actions.Complete();
+        orders.Advance();
+
+        Assert.Equal(2, nav.Requests.Count);
+        var resumedRequest = Assert.Single(nav.Requests, request => request.Value == NavigationOutcome.InProgress);
+        Assert.Equal(stayPosition, nav.RequestTargets[resumedRequest.Key]);
+        Assert.Equal(ActionKind.CommandMove, target.Actions.Current?.Kind);
+        Assert.NotNull(target.OrderIntent);
+    }
+
+    [Fact]
     public void ExhaustionAloneDoesNotSuspendAnOrderWithoutNpcRecovery()
     {
         var world = new World(needsTuning: new NeedsTuning(initialFatigue: 90));
