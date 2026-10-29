@@ -109,7 +109,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: A total item-count cap did not represent physical load and prevented resource hoarding without improving simulation behavior.
 - Consequence: Save validation and inventory transfers follow the current D056 rule; finite storage containers remain capacity-limited.
 - Revisit: If testing shows the per-item cap or fatigue model needs adjustment.
-## D013 — Generic cargo retention and bounded action retries
+## D062 — Generic cargo retention and bounded action retries
 
 - Date: 2026-09-27
 - Status: Provisional; implemented for J01c
@@ -287,7 +287,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: Creature Core needs explainable behavior differences from existing bounded wandering goals without introducing random state, new ecology systems, or a behavior framework.
 - Consequence: Fixed profiles and inputs produce repeatable goals, and navigation outcomes continue through the existing action lifecycle. Sociability remains profile data for future behavior rather than affecting this roaming decision.
 - Revisit: When the integrated Creature Core scenario is exercised or a later issue introduces explicit social stimuli or additional wild actions.
-## D030 — Bounded faction foundation
+## D063 — Bounded faction foundation
 
 - Date: 2026-10-02
 - Status: Implemented for F07a–F07d
@@ -305,7 +305,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Tracks are explicit immutable observations supplied to the query and are not generated, aged, or persisted by this feature. Queries do not reserve food, mutate World state, or introduce hunting/tracking behavior.
 - Revisit: When a bounded hunting/tracking consumer defines observation creation, expiry, and persistence requirements.
 
-## D031 — Vertical integration is an evidence gate
+## D064 — Vertical integration is an evidence gate
 
 - Date: 2026-10-02
 - Status: Provisional planning decision for Milestone 0.9; implementation pending
@@ -314,7 +314,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: The milestone verifies existing creature, combat, relationship, faction, settlement, and local economy state together, with repeatability, exact resource accounting, and rejection/recovery checks. It does not expand those systems or turn the long-term vision into a delivery commitment. Issue #341 is gated on acceptance of prerequisites #325, #333, and #340.
 - Revisit: After the one-region scenario has recorded results and limitations.
 
-## D032 — Capability-gated creature greeting
+## D065 — Capability-gated creature greeting
 
 - Date: 2026-10-02
 - Status: Implemented for issue #297

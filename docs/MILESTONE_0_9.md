@@ -53,6 +53,6 @@ The fixed-input integration test and its actual results are documented in
 - [Long-term vision at source commit 3e9de38](https://github.com/jmart985/Unnamed-Project-2026/blob/3e9de38abf0bfd07849a612bbedc4e01c977ba71/docs/LONG_TERM_VISION.md): systems should create observable interactions, with larger scales earned incrementally.
 - [Technical architecture](TECHNICAL_ARCHITECTURE.md): one authoritative World, stable ownership, fixed ticks, and validated snapshots.
 - [Milestone 0.8 acceptance](MILESTONE_0_8.md): local economy inputs and rejection behavior reused without expanding the trade system.
-- [Decisions log](DECISIONS.md): D031 records the integration boundary.
+- [Decisions log](DECISIONS.md): D064 records the integration boundary.
 
 This milestone is accepted when the integration scenario is repeatable, failure paths preserve exact state, actual evidence is recorded, and any missing behavior is explicitly deferred or tracked separately.
