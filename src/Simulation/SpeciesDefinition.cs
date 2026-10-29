@@ -35,7 +35,12 @@ public sealed class SpeciesDefinition
         IEnumerable<string>? preySpeciesIds = null,
         int carcassMeatUnits = 1,
         double threatDetectionRange = 0,
-        double carcassFreshnessSeconds = 300)
+        double carcassFreshnessSeconds = 300,
+        bool canBePlayerCharacter = false,
+        bool canJoinPlayerSquad = false,
+        bool canHaveWorkSchedule = false,
+        bool canBeCaptured = false,
+        bool canBePetted = false)
     {
         Id = id;
         DisplayName = displayName;
@@ -64,6 +69,11 @@ public sealed class SpeciesDefinition
         CarcassMeatUnits = carcassMeatUnits;
         ThreatDetectionRange = threatDetectionRange;
         CarcassFreshnessSeconds = carcassFreshnessSeconds;
+        CanBePlayerCharacter = canBePlayerCharacter;
+        CanJoinPlayerSquad = canJoinPlayerSquad;
+        CanHaveWorkSchedule = canHaveWorkSchedule;
+        CanBeCaptured = canBeCaptured;
+        CanBePetted = canBePetted;
         _dietItems = new HashSet<string>(Diet, StringComparer.Ordinal);
     }
 
@@ -94,6 +104,11 @@ public sealed class SpeciesDefinition
     public int CarcassMeatUnits { get; }
     public double ThreatDetectionRange { get; }
     public double CarcassFreshnessSeconds { get; }
+    public bool CanBePlayerCharacter { get; }
+    public bool CanJoinPlayerSquad { get; }
+    public bool CanHaveWorkSchedule { get; }
+    public bool CanBeCaptured { get; }
+    public bool CanBePetted { get; }
 
     public CharacterStats CreateCharacterStats(CharacterStats defaults)
     {

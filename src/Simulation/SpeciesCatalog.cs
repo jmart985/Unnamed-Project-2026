@@ -139,7 +139,12 @@ public sealed class SpeciesCatalog
                 preySpeciesIds,
                 carcassMeatUnits,
                 threatDetectionRange,
-                carcassFreshnessSeconds));
+                carcassFreshnessSeconds,
+                entry.CanBePlayerCharacter ?? false,
+                entry.CanJoinPlayerSquad ?? false,
+                entry.CanHaveWorkSchedule ?? false,
+                entry.CanBeCaptured ?? false,
+                entry.CanBePetted ?? false));
         }
 
         var knownSpeciesIds = ids;
@@ -372,6 +377,11 @@ public sealed class SpeciesCatalog
         public string[]? PreySpeciesIds { get; init; }
         public int? CarcassMeatUnits { get; init; }
         public double? CarcassFreshnessSeconds { get; init; }
+        public bool? CanBePlayerCharacter { get; init; }
+        public bool? CanJoinPlayerSquad { get; init; }
+        public bool? CanHaveWorkSchedule { get; init; }
+        public bool? CanBeCaptured { get; init; }
+        public bool? CanBePetted { get; init; }
         public string[]? AnatomyRegions { get; init; }
         public string[]? LocomotionAnchors { get; init; }
         public string[]? EquipmentAnchors { get; init; }

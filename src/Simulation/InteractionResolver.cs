@@ -162,13 +162,11 @@ public sealed class InteractionResolver
 
     private InteractionResult ResolvePet(EntityRecord actor, EntityRecord target)
     {
-        if (string.Equals(target.SpeciesId, "human", StringComparison.Ordinal))
-        {
-            return new(false, "Cannot pet a human.");
-        }
-
-        if (_world.SpeciesCatalog is not { } catalog || !catalog.TryGet(target.SpeciesId, out _))
+        if (_world.SpeciesCatalog is not { } catalog
+            || !catalog.TryGet(target.SpeciesId, out var species) || species is null)
             return new(false, "Target species definition is unavailable.");
+        if (!species.CanBePetted)
+            return new(false, "This species cannot be petted.");
         if (_world.GetBondLevel(target.Id, actor.Id) is not (RelationshipBondLevel.Trusted or RelationshipBondLevel.Loyal))
             return new(false, "Pet unavailable until this creature is Trusted.");
 

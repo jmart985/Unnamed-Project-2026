@@ -19,6 +19,7 @@ public sealed class RegionIntegrationScenarioTests
         var goods = TradeGoodsCatalog.LoadFromFile(Data("trade_goods.json"));
         var events = RelationshipEventCatalog.LoadFromFile(Data("relationship_events.json"));
         var world = new World();
+        world.SpeciesCatalog = species;
         var human = world.SpawnEntity(species.GetRequired("human"), Vector3.Zero);
         var creature = world.SpawnEntity(species.GetRequired("creature"), Vector3.UnitX, satiety: 70);
         Assert.Equal(FactionDefinitionResult.Defined, world.DefineFaction("settlers"));

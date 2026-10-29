@@ -1,9 +1,11 @@
 # Squad membership and orders — issue #312
 
-Select a human NPC in the entity list and use **Add selected** or **Remove member**.
-The single World-owned squad stores distinct stable human NPC IDs. The player,
-creatures, dead entities, and missing entities cannot be added. Removing an entity
-removes its membership and cancels its squad navigation.
+Select an NPC whose species declares `canJoinPlayerSquad` and use **Add selected**
+or **Remove member**. The current catalog enables this only for humans. The single
+World-owned squad stores distinct stable IDs. The player, dead entities, and missing
+entities cannot be added. A creature or other species can join only after its catalog
+entry explicitly opts in. Removing an entity removes its membership and cancels its
+squad navigation.
 
 Set map X/Z coordinates and press **Move to**, **Follow player**, or **Stop**.
 Orders apply on the next running fixed tick. Repeated identical orders are no-ops;

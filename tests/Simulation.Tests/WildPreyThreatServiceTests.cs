@@ -113,6 +113,7 @@ public sealed class WildPreyThreatServiceTests
     public void DeadIncapacitatedFriendlyAndUnrelatedEntitiesDoNotTriggerFleeing()
     {
         var world = new World();
+        world.SpeciesCatalog = Catalog;
         world.DefineFaction("herd");
         var cow = world.SpawnEntity(Catalog.GetRequired("cow"), Vector3.Zero);
         world.SetEntityAllegiance(cow.Id, "herd");
