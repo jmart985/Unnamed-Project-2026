@@ -87,6 +87,7 @@ internal static class NpcLocomotionValidation
             main.ValidateNpcAnimationTestRouteFailureRecovery();
             main.ValidateNpcAnimationTestRouteResumesStayOrder();
             main.ValidateNpcAnimationTestRouteResumesSquadOrder();
+            ValidateSharedModelAnimationIsolation(holder);
 
             holder.QueueFree();
             await main.ToSignal(main.GetTree(), SceneTree.SignalName.ProcessFrame);
@@ -242,6 +243,46 @@ internal static class NpcLocomotionValidation
                 throw new InvalidOperationException(
                     $"Finger bone {pose.BoneName} remained animated after {transition} from {clipName} on {modelPath}.");
         }
+    }
+
+    private static void ValidateSharedModelAnimationIsolation(Node holder)
+    {
+        const string modelPath = "res://assets/humanoids/human/human_humanoid_rig_v1.glb";
+        var scene = GD.Load<PackedScene>(modelPath)
+            ?? throw new InvalidOperationException($"Could not load shared-animation validation model {modelPath}.");
+        var firstModel = scene.Instantiate<Node3D>();
+        var secondModel = scene.Instantiate<Node3D>();
+        holder.AddChild(firstModel);
+        holder.AddChild(secondModel);
+
+        var firstPlayer = firstModel.FindChild("AnimationPlayer", recursive: true, owned: false) as AnimationPlayer
+            ?? throw new InvalidOperationException("First shared-animation fixture has no AnimationPlayer.");
+        var secondPlayer = secondModel.FindChild("AnimationPlayer", recursive: true, owned: false) as AnimationPlayer
+            ?? throw new InvalidOperationException("Second shared-animation fixture has no AnimationPlayer.");
+        var firstAnimator = new NpcLocomotionAnimator();
+        var secondAnimator = new NpcLocomotionAnimator();
+        firstAnimator.Bind(firstPlayer, "human", isCreature: false, movementSpeed: 3f);
+        secondAnimator.Bind(secondPlayer, "human", isCreature: false, movementSpeed: 3f);
+        var firstWalk = firstPlayer.GetAnimation("human_walk");
+        var secondWalk = secondPlayer.GetAnimation("human_walk");
+        secondAnimator.Update(1.35f);
+
+        if (firstWalk.GetInstanceId() == secondWalk.GetInstanceId())
+            throw new InvalidOperationException("Two actors instantiated from one model still share their Animation resource.");
+        if (secondPlayer.CurrentAnimation.ToString() != "human_walk")
+            throw new InvalidOperationException("Second shared-animation fixture did not begin its walk clip.");
+
+        var secondLoopMode = secondWalk.LoopMode;
+        if (!firstAnimator.PlayManual("human_walk", loop: false))
+            throw new InvalidOperationException("First shared-animation fixture could not start its one-shot walk test.");
+        if (firstWalk.LoopMode != Animation.LoopModeEnum.None
+            || secondWalk.LoopMode != secondLoopMode
+            || !secondPlayer.IsPlaying()
+            || secondPlayer.CurrentAnimation.ToString() != "human_walk")
+            throw new InvalidOperationException("Changing one actor's manual clip altered the other actor's shared locomotion.");
+
+        firstAnimator.StopManual(movementSpeed: 0f);
+        secondAnimator.StopManual(movementSpeed: 0f);
     }
 
     private static bool ValidateFacialBlendShapeReset(AnimationPlayer player, NpcLocomotionAnimator animator,

@@ -37,6 +37,7 @@ internal sealed class NpcLocomotionAnimator
         _animationNames.Clear();
         if (player is null) return;
 
+        IsolateAnimationLibraries(player);
         player.AnimationFinished += OnAnimationFinished;
 
         foreach (var animationName in player.GetAnimationList())
@@ -263,6 +264,24 @@ internal sealed class NpcLocomotionAnimator
     {
         RestoreManualBlendShapeBaseline();
         RestoreManualBonePoseBaseline();
+    }
+
+    private static void IsolateAnimationLibraries(AnimationPlayer player)
+    {
+        // Imported model instances can share mutable Animation resources through a
+        // cached PackedScene. LoopMode is changed per actor, so give each player
+        // its own deep-copied libraries before locomotion or manual clips are used.
+        foreach (var libraryName in player.GetAnimationLibraryList())
+        {
+            var sourceLibrary = player.GetAnimationLibrary(libraryName);
+            if (sourceLibrary is null) continue;
+
+            var localLibrary = sourceLibrary.Duplicate(true) as AnimationLibrary
+                ?? throw new InvalidOperationException(
+                    $"Could not create an actor-local animation library '{libraryName}' for {player.GetPath()}.");
+            player.RemoveAnimationLibrary(libraryName);
+            player.AddAnimationLibrary(libraryName, localLibrary);
+        }
     }
 
     private static int FindBlendShapeIndex(ArrayMesh mesh, string blendShapeName)
