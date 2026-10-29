@@ -7,8 +7,10 @@ namespace UnnamedProject2026;
 public partial class EntityView : CharacterBody3D
 {
     private const double CrowdRecoveryTimeoutSeconds = 8;
+    internal const float GreetingMovementHoldSeconds = 0.65f;
     private GodotNavigationAdapter? _navigationAdapter;
     private float _movementSpeed;
+    private float _animationTestMovementMultiplier = 1f;
     private bool _isCreature;
     private string _speciesId = string.Empty;
     private BiologicalSex _sex = BiologicalSex.Unspecified;
@@ -26,8 +28,22 @@ public partial class EntityView : CharacterBody3D
     private Func<Vector3?>? _greeterPosition;
     private ActionState? _currentTask;
     private ActionState? _greetingTask;
+    private float _interactionMovementHoldSeconds;
 
     public bool HasGreetingAttention => _greeterPosition is not null;
+    public bool IsMovementHeldForInteraction => _interactionMovementHoldSeconds > 0;
+    public bool IsMovementHeldForPresentationAction => _npcLocomotionAnimator.HoldsPositionForManualAction;
+    public bool IsNavigationMovementPaused => IsMovementHeldForInteraction || IsMovementHeldForPresentationAction;
+    public IReadOnlyList<string> PresentationAnimationNames => _npcLocomotionAnimator.GetAnimationNames();
+
+    public bool PlayPresentationAnimationForTesting(string animationName, bool loop)
+        => _npcLocomotionAnimator.PlayManual(animationName, loop);
+
+    public void StopPresentationAnimationForTesting()
+        => _npcLocomotionAnimator.StopManual(_smoothedSpeed);
+
+    public void SetAnimationTestMovementMultiplier(float multiplier)
+        => _animationTestMovementMultiplier = Mathf.Clamp(multiplier, 0.2f, 1.2f);
 
     // Imported Blender rigs in this prototype use +Z as their source forward;
     // normalize them at the asset boundary so every actor uses the same -Z rule.
@@ -40,6 +56,12 @@ public partial class EntityView : CharacterBody3D
         _greeterPosition = greeterPosition;
         _greetingTask = _currentTask;
         FaceGreeter();
+    }
+
+    public void HoldMovementForInteraction(float seconds)
+    {
+        if (!float.IsFinite(seconds) || seconds <= 0) return;
+        _interactionMovementHoldSeconds = Mathf.Max(_interactionMovementHoldSeconds, seconds);
     }
 
     private void FaceGreeter()
@@ -179,14 +201,24 @@ public partial class EntityView : CharacterBody3D
         }
 
         var malePresentation = _sex == BiologicalSex.Male;
-        var assetPath = malePresentation
+        var fallbackAssetPath = malePresentation
             ? "res://assets/humanoids/human/radagon_male_humanoid_rig_v1.glb"
             : "res://assets/humanoids/human/human_humanoid_rig_v1.glb";
-        var packed = GD.Load<PackedScene>(assetPath);
-        if (packed is null && malePresentation)
+        var assetPath = fallbackAssetPath;
+        var displayName = malePresentation ? "RadagonMaleProductionModel" : "HumanProductionModel";
+        if (StarterNpcPresentationCatalog.TryGet(EntityId, _sex, out var starterPresentation)
+            && starterPresentation is not null)
         {
-            GD.PushWarning("Radagon male humanoid is unavailable; using the default human presentation.");
-            assetPath = "res://assets/humanoids/human/human_humanoid_rig_v1.glb";
+            assetPath = starterPresentation.AssetPath;
+            displayName = $"{starterPresentation.DisplayName}ProductionModel";
+        }
+
+        var packed = GD.Load<PackedScene>(assetPath);
+        if (packed is null && !string.Equals(assetPath, fallbackAssetPath, StringComparison.Ordinal))
+        {
+            GD.PushWarning($"Starter NPC model '{assetPath}' is unavailable; using the default sex-based human presentation.");
+            assetPath = fallbackAssetPath;
+            displayName = malePresentation ? "RadagonMaleProductionModel" : "HumanProductionModel";
             packed = GD.Load<PackedScene>(assetPath);
         }
         if (packed is null)
@@ -195,7 +227,7 @@ public partial class EntityView : CharacterBody3D
             return false;
         }
 
-        var model = AddImportedModel(packed, malePresentation ? "RadagonMaleProductionModel" : "HumanProductionModel");
+        var model = AddImportedModel(packed, displayName);
         PresentationModelAssetPath = assetPath;
         AddCollision(totalHeight: 1.75f, radius: 0.32f);
 
@@ -440,6 +472,8 @@ public partial class EntityView : CharacterBody3D
 
     public override void _Process(double delta)
     {
+        if (double.IsFinite(delta) && delta > 0)
+            _interactionMovementHoldSeconds = Mathf.Max(0, _interactionMovementHoldSeconds - (float)delta);
         if (_gait is null || _rig is null || delta <= 0) return;
         var position = GlobalPosition;
         var step = new Vector3(position.X - _lastPosition.X, 0, position.Z - _lastPosition.Z);
@@ -450,7 +484,7 @@ public partial class EntityView : CharacterBody3D
         var speed = _secondsSinceMovementTick <= SimulationClock.TickIntervalSeconds * 2
             ? _tickMovementSpeed : 0f;
         _smoothedSpeed = Mathf.Lerp(_smoothedSpeed, speed, 1 - Mathf.Exp(-12 * (float)delta));
-        _npcLocomotionAnimator.Update(_smoothedSpeed);
+        _npcLocomotionAnimator.Update(_smoothedSpeed, delta);
         if (_smoothedSpeed > 0.15f && step.LengthSquared() > 1e-8f)
         {
             var targetYaw = Mathf.Atan2(-step.X, -step.Z);
@@ -476,6 +510,7 @@ public partial class EntityView : CharacterBody3D
         EntityId = entityId;
         _movementSpeed = movementSpeed;
         _isCreature = isCreature;
+        _animationTestMovementMultiplier = 1f;
         _speciesId = speciesId ?? (isCreature ? "creature" : "human");
         _sex = sex;
         _bodyCategory = bodyCategory ?? (isCreature ? "quadruped" : "humanoid");
@@ -507,12 +542,17 @@ public partial class EntityView : CharacterBody3D
         Func<string, NumericsVector3, NumericsVector3, NumericsVector3>? constrainStep = null)
     {
         var previousPosition = GlobalPosition;
+        if (IsNavigationMovementPaused)
+        {
+            SampleLocomotionTick(previousPosition, simulationSeconds);
+            return;
+        }
         if (_navigationAdapter is not { HasActiveRequest: true } adapter)
         {
             SampleLocomotionTick(previousPosition, simulationSeconds);
             return;
         }
-        adapter.AdvanceMovement(simulationSeconds, _movementSpeed, (current, proposed) =>
+        adapter.AdvanceMovement(simulationSeconds, _movementSpeed * _animationTestMovementMultiplier, (current, proposed) =>
         {
             var afterSquad = squad is null ? proposed : squad.ConstrainFollowStep(EntityId, current, proposed);
             var afterIndividualOrder = orders is null ? afterSquad : orders.ConstrainFollowStep(EntityId, current, afterSquad);

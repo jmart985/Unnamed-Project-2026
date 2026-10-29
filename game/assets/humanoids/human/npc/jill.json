@@ -1,0 +1,184 @@
+{
+  "npc_id": "entity-000006",
+  "slug": "jill",
+  "sex": "female",
+  "source_file": "jill/Jill Valentine G8F Public Version.blend",
+  "rig": "Jill Valentine Rig",
+  "source_meshes": [
+    "Jill Valentine Mesh",
+    "Jill Valentine Eyelashes Mesh",
+    "Eyebrows V1 Mesh",
+    "Jill-EyeLashes Mesh",
+    "Jill-Accessories Mesh",
+    "Jill-Bandage Mesh",
+    "Jill-Boot Mesh",
+    "Jill-Bottum Mesh",
+    "Jill-Glove Mesh",
+    "Jill-HandBand Mesh",
+    "Jill-Top Mesh",
+    "RE3R Hair"
+  ],
+  "bone_map": {
+    "pelvis": "pelvis",
+    "spine_02": "spine-1",
+    "spine_03": "chest",
+    "head": "head",
+    "upperarm_l": "upper_arm.L",
+    "lowerarm_l": "forearm.L",
+    "upperarm_r": "upper_arm.R",
+    "lowerarm_r": "forearm.R",
+    "thigh_l": "thigh.L",
+    "calf_l": "shin.L",
+    "foot_l": "foot.L",
+    "thigh_r": "thigh.R",
+    "calf_r": "shin.R",
+    "foot_r": "foot.R"
+  },
+  "animation_clips": [
+    "human_idle",
+    "human_run",
+    "human_walk",
+    "npc_face_angry",
+    "npc_face_blink",
+    "npc_face_fear",
+    "npc_face_happy",
+    "npc_face_sad",
+    "npc_face_surprised"
+  ],
+  "locomotion_clips": [
+    "human_idle",
+    "human_run",
+    "human_walk"
+  ],
+  "locomotion_root_motion": false,
+  "facial_expression_clips": {
+    "happy": "npc_face_happy",
+    "sad": "npc_face_sad",
+    "angry": "npc_face_angry",
+    "surprised": "npc_face_surprised",
+    "fear": "npc_face_fear",
+    "blink": "npc_face_blink"
+  },
+  "facial_expression_targets": {
+    "npc_face_happy": [
+      {
+        "mesh": "Jill Valentine Mesh",
+        "shape_key": "npc_face_happy"
+      },
+      {
+        "mesh": "Jill Valentine Eyelashes Mesh",
+        "shape_key": "npc_face_happy"
+      },
+      {
+        "mesh": "Eyebrows V1 Mesh",
+        "shape_key": "npc_face_happy"
+      },
+      {
+        "mesh": "Jill-EyeLashes Mesh",
+        "shape_key": "npc_face_happy"
+      }
+    ],
+    "npc_face_sad": [
+      {
+        "mesh": "Jill Valentine Mesh",
+        "shape_key": "npc_face_sad"
+      },
+      {
+        "mesh": "Jill Valentine Eyelashes Mesh",
+        "shape_key": "npc_face_sad"
+      },
+      {
+        "mesh": "Eyebrows V1 Mesh",
+        "shape_key": "npc_face_sad"
+      },
+      {
+        "mesh": "Jill-EyeLashes Mesh",
+        "shape_key": "npc_face_sad"
+      }
+    ],
+    "npc_face_angry": [
+      {
+        "mesh": "Jill Valentine Mesh",
+        "shape_key": "npc_face_angry"
+      },
+      {
+        "mesh": "Jill Valentine Eyelashes Mesh",
+        "shape_key": "npc_face_angry"
+      },
+      {
+        "mesh": "Eyebrows V1 Mesh",
+        "shape_key": "npc_face_angry"
+      },
+      {
+        "mesh": "Jill-EyeLashes Mesh",
+        "shape_key": "npc_face_angry"
+      }
+    ],
+    "npc_face_surprised": [
+      {
+        "mesh": "Jill Valentine Mesh",
+        "shape_key": "npc_face_surprised"
+      },
+      {
+        "mesh": "Jill Valentine Eyelashes Mesh",
+        "shape_key": "npc_face_surprised"
+      },
+      {
+        "mesh": "Eyebrows V1 Mesh",
+        "shape_key": "npc_face_surprised"
+      },
+      {
+        "mesh": "Jill-EyeLashes Mesh",
+        "shape_key": "npc_face_surprised"
+      }
+    ],
+    "npc_face_fear": [
+      {
+        "mesh": "Jill Valentine Mesh",
+        "shape_key": "npc_face_fear"
+      },
+      {
+        "mesh": "Jill Valentine Eyelashes Mesh",
+        "shape_key": "npc_face_fear"
+      },
+      {
+        "mesh": "Eyebrows V1 Mesh",
+        "shape_key": "npc_face_fear"
+      },
+      {
+        "mesh": "Jill-EyeLashes Mesh",
+        "shape_key": "npc_face_fear"
+      }
+    ],
+    "npc_face_blink": [
+      {
+        "mesh": "Jill Valentine Mesh",
+        "shape_key": "npc_face_blink"
+      },
+      {
+        "mesh": "Jill Valentine Eyelashes Mesh",
+        "shape_key": "npc_face_blink"
+      },
+      {
+        "mesh": "Eyebrows V1 Mesh",
+        "shape_key": "npc_face_blink"
+      },
+      {
+        "mesh": "Jill-EyeLashes Mesh",
+        "shape_key": "npc_face_blink"
+      }
+    ]
+  },
+  "target_height_m": 1.75,
+  "source_height_m": 1.8325104028528119,
+  "normalized_scale": 0.9549741148948669,
+  "glb_bytes": 46002000,
+  "textures_max_edge": 1024,
+  "source_animations_expected": [],
+  "source_morph_target_count": 1148,
+  "source_morph_targets_omitted": 1148,
+  "runtime_expression_targets_generated": 24,
+  "runtime_morph_targets_included": true,
+  "runtime_morph_target_count": 24,
+  "base_mesh_preserved_from": "jill.glb"
+}

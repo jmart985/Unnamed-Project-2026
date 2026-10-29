@@ -23,10 +23,28 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
     private readonly Dictionary<string, Vector3> _moveTargets = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Vector2> _followOffsets = new(StringComparer.Ordinal);
     private readonly HashSet<string> _failedMembers = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _suspendedMembers = new(StringComparer.Ordinal);
     private long _nextActionId;
     public SquadOrderKind Order { get; private set; }
     public Vector3? Target { get; private set; }
     public string Status { get; private set; } = "No squad order.";
+
+    /// <summary>Temporarily pauses one member's squad route while another system owns its navigation.</summary>
+    public void SuspendMember(string entityId)
+    {
+        if (!world.SquadMemberIds.Contains(entityId) || !_suspendedMembers.Add(entityId)) return;
+        CancelTrip(entityId);
+        _finishedTargets.Remove(entityId);
+        _failedMembers.Remove(entityId);
+    }
+
+    /// <summary>Rejoins a member to the current squad order after its temporary route ends.</summary>
+    public void ResumeMember(string entityId)
+    {
+        if (!_suspendedMembers.Remove(entityId)) return;
+        _finishedTargets.Remove(entityId);
+        _failedMembers.Remove(entityId);
+    }
 
     public SquadOrderResult Execute(SquadOrderKind order, Vector3? target = null)
     {
@@ -40,7 +58,7 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
             return Reject(SquadResult.PlayerUnavailable, "The player is unavailable.");
         var effectiveTarget = order == SquadOrderKind.MoveTo ? target : null;
         if (Order == order && Target == effectiveTarget) return new(SquadResult.Unchanged, "Squad order already active.");
-        Reset();
+        ClearOrderState();
         Order = order;
         Target = effectiveTarget;
         if (order == SquadOrderKind.MoveTo)
@@ -61,6 +79,7 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
 
     public void Advance()
     {
+        _suspendedMembers.RemoveWhere(id => !world.SquadMemberIds.Contains(id));
         foreach (var id in _trips.Keys.Where(id => !world.SquadMemberIds.Contains(id)).ToArray()) CancelTrip(id);
         foreach (var id in _finishedTargets.Keys.Where(id => !world.SquadMemberIds.Contains(id)).ToArray()) _finishedTargets.Remove(id);
         foreach (var id in _moveTargets.Keys.Where(id => !world.SquadMemberIds.Contains(id)).ToArray()) _moveTargets.Remove(id);
@@ -68,7 +87,7 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
         if (Order == SquadOrderKind.None) return;
         if (Order == SquadOrderKind.FollowPlayer && !TryPlayer(out _))
         {
-            Reset();
+            ClearOrderState();
             Status = "Follow stopped: player unavailable.";
             return;
         }
@@ -89,6 +108,7 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
         {
             if (!world.TryGetEntity(id, out var entity) || entity is null) continue;
             if (entity.Health.IsDead) { CancelTrip(id); continue; }
+            if (_suspendedMembers.Contains(id)) continue;
             if (entity.OrderIntent is not null) { CancelTrip(id); continue; }
             if (Order == SquadOrderKind.Stop)
             {
@@ -180,6 +200,12 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
         => Vector2.DistanceSquared(new(first.X, first.Z), new(second.X, second.Z));
 
     public void Reset()
+    {
+        ClearOrderState();
+        _suspendedMembers.Clear();
+    }
+
+    private void ClearOrderState()
     {
         foreach (var id in _trips.Keys.ToArray()) CancelTrip(id);
         _finishedTargets.Clear();
