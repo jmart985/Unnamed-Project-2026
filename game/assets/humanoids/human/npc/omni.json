@@ -1,0 +1,137 @@
+{
+  "npc_id": "entity-000003",
+  "slug": "omni",
+  "sex": "male",
+  "source_file": "omni/OMNI MAN FREE SMUTBASE.blend",
+  "rig": "Omni Man",
+  "source_meshes": [
+    "Omni Man Body",
+    "L Eye",
+    "R Eye",
+    "Eyelashes",
+    "Omni Man Bodysuit",
+    "Omni Man Gloves ",
+    "Omni Man Shoes ",
+    "OmniMan Hair",
+    "OmniMan Mustache"
+  ],
+  "bone_map": {
+    "pelvis": "pelvis",
+    "spine_02": "spine-1",
+    "spine_03": "chest",
+    "head": "head",
+    "upperarm_l": "upper_arm.L",
+    "lowerarm_l": "forearm.L",
+    "upperarm_r": "upper_arm.R",
+    "lowerarm_r": "forearm.R",
+    "thigh_l": "thigh.L",
+    "calf_l": "shin.L",
+    "foot_l": "foot.L",
+    "thigh_r": "thigh.R",
+    "calf_r": "shin.R",
+    "foot_r": "foot.R"
+  },
+  "animation_clips": [
+    "human_idle",
+    "human_run",
+    "human_walk",
+    "npc_face_angry",
+    "npc_face_blink",
+    "npc_face_fear",
+    "npc_face_happy",
+    "npc_face_surprised",
+    "npc_face_sad"
+  ],
+  "locomotion_clips": [
+    "human_idle",
+    "human_run",
+    "human_walk"
+  ],
+  "locomotion_root_motion": false,
+  "facial_expression_clips": {
+    "happy": "npc_face_happy",
+    "sad": "npc_face_sad",
+    "angry": "npc_face_angry",
+    "surprised": "npc_face_surprised",
+    "fear": "npc_face_fear",
+    "blink": "npc_face_blink"
+  },
+  "facial_expression_targets": {
+    "npc_face_happy": [
+      {
+        "mesh": "Omni Man Body",
+        "shape_key": "npc_face_happy"
+      },
+      {
+        "mesh": "Eyelashes",
+        "shape_key": "npc_face_happy"
+      },
+      {
+        "mesh": "OmniMan Mustache",
+        "shape_key": "npc_face_happy"
+      }
+    ],
+    "npc_face_sad": [
+      {
+        "mesh": "Omni Man Body",
+        "shape_key": "npc_face_sad"
+      },
+      {
+        "mesh": "OmniMan Mustache",
+        "shape_key": "npc_face_sad"
+      }
+    ],
+    "npc_face_angry": [
+      {
+        "mesh": "Omni Man Body",
+        "shape_key": "npc_face_angry"
+      },
+      {
+        "mesh": "Eyelashes",
+        "shape_key": "npc_face_angry"
+      }
+    ],
+    "npc_face_surprised": [
+      {
+        "mesh": "Omni Man Body",
+        "shape_key": "npc_face_surprised"
+      },
+      {
+        "mesh": "Eyelashes",
+        "shape_key": "npc_face_surprised"
+      }
+    ],
+    "npc_face_fear": [
+      {
+        "mesh": "Omni Man Body",
+        "shape_key": "npc_face_fear"
+      },
+      {
+        "mesh": "Eyelashes",
+        "shape_key": "npc_face_fear"
+      }
+    ],
+    "npc_face_blink": [
+      {
+        "mesh": "Omni Man Body",
+        "shape_key": "npc_face_blink"
+      },
+      {
+        "mesh": "Eyelashes",
+        "shape_key": "npc_face_blink"
+      }
+    ]
+  },
+  "target_height_m": 1.75,
+  "source_height_m": 1.9332744047173798,
+  "normalized_scale": 0.9052000045776367,
+  "glb_bytes": 34419524,
+  "textures_max_edge": 1024,
+  "source_animations_expected": [],
+  "source_morph_target_count": 453,
+  "source_morph_targets_omitted": 453,
+  "runtime_expression_targets_generated": 13,
+  "runtime_morph_targets_included": true,
+  "runtime_morph_target_count": 13,
+  "base_mesh_preserved_from": "omni.glb"
+}

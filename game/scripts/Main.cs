@@ -508,7 +508,8 @@ public partial class Main : Node3D
 		_orders = new OrderService(
 			_world,
 			GetNavigationAdapter,
-			entityId => _wildPreyThreat!.SuppressesOtherBehavior(entityId));
+			entityId => _wildPreyThreat!.SuppressesOtherBehavior(entityId)
+				|| IsNpcAnimationTestMoving(entityId));
 
 		RebuildResourceMarkersFromWorld();
 		RebuildFireplaceViews();
@@ -691,6 +692,7 @@ public partial class Main : Node3D
 		foreach (var entity in _world.Entities)
 		{
 			if (string.Equals(entity.Id, _world.PlayerEntityId, StringComparison.Ordinal)
+				|| IsNpcAnimationTestMoving(entity.Id)
 				|| (_squad?.Order != SquadOrderKind.None && _world.SquadMemberIds.Contains(entity.Id)))
 			{
 				continue;
@@ -794,7 +796,8 @@ public partial class Main : Node3D
 		foreach (var entity in _world.Entities)
 		{
 			// An explicit squad order takes precedence over schedule-driven travel.
-			if (_squad?.Order != SquadOrderKind.None && _world.SquadMemberIds.Contains(entity.Id))
+			if (IsNpcAnimationTestMoving(entity.Id)
+				|| (_squad?.Order != SquadOrderKind.None && _world.SquadMemberIds.Contains(entity.Id)))
 				continue;
 			_woodHauling!.ReconcileSchedule(entity, _clock.SimulationTime);
 		}
@@ -806,6 +809,7 @@ public partial class Main : Node3D
 		_orders!.Advance();
 		AdvanceWoodHauling();
 		AdvanceWandering();
+		AdvanceNpcAnimationTestRoutes();
 	}
 
 	private void UpdateWildlifeProximity()
@@ -886,6 +890,7 @@ public partial class Main : Node3D
 			{
 				continue;
 			}
+			if (IsNpcAnimationTestMoving(entity.Id)) continue;
 
 			var threatResult = _wildPreyThreat!.Advance(entity, _simulationTick);
 			if (threatResult.Status is WildPreyThreatStatus.Fleeing or WildPreyThreatStatus.Waiting)
@@ -929,6 +934,7 @@ public partial class Main : Node3D
 		foreach (var entity in _world.Entities)
 		{
 			if (string.Equals(entity.Id, _world.PlayerEntityId, StringComparison.Ordinal)
+				|| IsNpcAnimationTestMoving(entity.Id)
 				|| (_squad?.Order != SquadOrderKind.None && _world.SquadMemberIds.Contains(entity.Id))
 				|| _wildPreyThreat!.SuppressesOtherBehavior(entity.Id))
 			{
@@ -952,6 +958,8 @@ public partial class Main : Node3D
 
 	private void ClearEntityViews()
 	{
+		ResetNpcAnimationTestRoutes();
+		_npcAnimationTestPanel?.Close();
 		foreach (var view in _entityViews.Values)
 		{
 			view.QueueFree();
