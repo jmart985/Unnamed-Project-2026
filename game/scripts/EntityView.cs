@@ -7,8 +7,10 @@ namespace UnnamedProject2026;
 public partial class EntityView : CharacterBody3D
 {
     private const double CrowdRecoveryTimeoutSeconds = 8;
+    internal const float GreetingMovementHoldSeconds = 0.65f;
     private GodotNavigationAdapter? _navigationAdapter;
     private float _movementSpeed;
+    private float _animationTestMovementMultiplier = 1f;
     private bool _isCreature;
     private string _speciesId = string.Empty;
     private BiologicalSex _sex = BiologicalSex.Unspecified;
@@ -28,8 +30,22 @@ public partial class EntityView : CharacterBody3D
     private Func<Vector3?>? _greeterPosition;
     private ActionState? _currentTask;
     private ActionState? _greetingTask;
+    private float _interactionMovementHoldSeconds;
 
     public bool HasGreetingAttention => _greeterPosition is not null;
+    public bool IsMovementHeldForInteraction => _interactionMovementHoldSeconds > 0;
+    public bool IsMovementHeldForPresentationAction => _npcLocomotionAnimator.HoldsPositionForManualAction;
+    public bool IsNavigationMovementPaused => IsMovementHeldForInteraction || IsMovementHeldForPresentationAction;
+    public IReadOnlyList<string> PresentationAnimationNames => _npcLocomotionAnimator.GetAnimationNames();
+
+    public bool PlayPresentationAnimationForTesting(string animationName, bool loop)
+        => _npcLocomotionAnimator.PlayManual(animationName, loop);
+
+    public void StopPresentationAnimationForTesting()
+        => _npcLocomotionAnimator.StopManual(_smoothedSpeed);
+
+    public void SetAnimationTestMovementMultiplier(float multiplier)
+        => _animationTestMovementMultiplier = Mathf.Clamp(multiplier, 0.2f, 1.2f);
 
     // Imported Blender rigs in this prototype use +Z as their source forward;
     // normalize them at the asset boundary so every actor uses the same -Z rule.
@@ -42,6 +58,12 @@ public partial class EntityView : CharacterBody3D
         _greeterPosition = greeterPosition;
         _greetingTask = _currentTask;
         FaceGreeter();
+    }
+
+    public void HoldMovementForInteraction(float seconds)
+    {
+        if (!float.IsFinite(seconds) || seconds <= 0) return;
+        _interactionMovementHoldSeconds = Mathf.Max(_interactionMovementHoldSeconds, seconds);
     }
 
     private void FaceGreeter()
@@ -176,28 +198,37 @@ public partial class EntityView : CharacterBody3D
             return false;
         }
 
-        var assetPath = _presentation.GetModelPath(_sex);
+        var catalogAssetPath = _presentation.GetModelPath(_sex);
+        StarterNpcPresentationCatalog.TryGet(EntityId, _sex, out var starterPresentation);
+        var assetPath = starterPresentation?.AssetPath ?? catalogAssetPath;
         if (string.IsNullOrWhiteSpace(assetPath))
             return false;
 
         var selectedPath = assetPath;
         var packed = LoadPresentationModel(assetPath);
-        if (packed is null && _presentation.GetDefaultModelPath() is { } fallbackPath
-            && fallbackPath != assetPath)
+        if (packed is null)
         {
-            GD.PushWarning($"{_presentation.GetDisplayName(_sex)} is unavailable; using the default species presentation.");
-            assetPath = fallbackPath;
-            packed = LoadPresentationModel(assetPath);
+            var fallbackPath = starterPresentation is not null
+                ? catalogAssetPath
+                : _presentation.GetDefaultModelPath();
+            if (!string.IsNullOrWhiteSpace(fallbackPath) && fallbackPath != assetPath)
+            {
+                GD.PushWarning($"{starterPresentation?.DisplayName ?? _presentation.GetDisplayName(_sex)} is unavailable; using the configured species presentation.");
+                assetPath = fallbackPath;
+                packed = LoadPresentationModel(assetPath);
+            }
         }
         if (packed is null)
         {
-            GD.PushWarning($"{_presentation.DisplayName} is unavailable; using the procedural humanoid fallback.");
+            GD.PushWarning($"{starterPresentation?.DisplayName ?? _presentation.GetDisplayName(_sex)} is unavailable; using the procedural humanoid fallback.");
             return false;
         }
 
-        var displayName = assetPath == selectedPath
-            ? _presentation.GetDisplayName(_sex)
-            : _presentation.DisplayName;
+        var displayName = assetPath == selectedPath && starterPresentation is not null
+            ? $"{starterPresentation.DisplayName}ProductionModel"
+            : assetPath == selectedPath || assetPath == catalogAssetPath
+                ? _presentation.GetDisplayName(_sex)
+                : _presentation.DisplayName;
         var model = AddImportedModel(packed, displayName);
         PresentationModelAssetPath = assetPath;
         AddCollision(_presentation.ModelHeight, _presentation.ModelCollisionRadius);
@@ -436,6 +467,8 @@ public partial class EntityView : CharacterBody3D
 
     public override void _Process(double delta)
     {
+        if (double.IsFinite(delta) && delta > 0)
+            _interactionMovementHoldSeconds = Mathf.Max(0, _interactionMovementHoldSeconds - (float)delta);
         if (_gait is null || _rig is null || delta <= 0) return;
         var position = GlobalPosition;
         var step = new Vector3(position.X - _lastPosition.X, 0, position.Z - _lastPosition.Z);
@@ -446,7 +479,7 @@ public partial class EntityView : CharacterBody3D
         var speed = _secondsSinceMovementTick <= SimulationClock.TickIntervalSeconds * 2
             ? _tickMovementSpeed : 0f;
         _smoothedSpeed = Mathf.Lerp(_smoothedSpeed, speed, 1 - Mathf.Exp(-12 * (float)delta));
-        _npcLocomotionAnimator.Update(_smoothedSpeed);
+        _npcLocomotionAnimator.Update(_smoothedSpeed, delta);
         if (_smoothedSpeed > 0.15f && step.LengthSquared() > 1e-8f)
         {
             var targetYaw = Mathf.Atan2(-step.X, -step.Z);
@@ -472,6 +505,7 @@ public partial class EntityView : CharacterBody3D
         EntityId = entityId;
         _movementSpeed = movementSpeed;
         _isCreature = isCreature;
+        _animationTestMovementMultiplier = 1f;
         _speciesId = speciesId ?? (isCreature ? "creature" : "human");
         _sex = sex;
         _bodyCategory = bodyCategory ?? (isCreature ? "quadruped" : "humanoid");
@@ -505,12 +539,17 @@ public partial class EntityView : CharacterBody3D
         Func<string, NumericsVector3, NumericsVector3, NumericsVector3>? constrainStep = null)
     {
         var previousPosition = GlobalPosition;
+        if (IsNavigationMovementPaused)
+        {
+            SampleLocomotionTick(previousPosition, simulationSeconds);
+            return;
+        }
         if (_navigationAdapter is not { HasActiveRequest: true } adapter)
         {
             SampleLocomotionTick(previousPosition, simulationSeconds);
             return;
         }
-        adapter.AdvanceMovement(simulationSeconds, _movementSpeed, (current, proposed) =>
+        adapter.AdvanceMovement(simulationSeconds, _movementSpeed * _animationTestMovementMultiplier, (current, proposed) =>
         {
             var afterSquad = squad is null ? proposed : squad.ConstrainFollowStep(EntityId, current, proposed);
             var afterIndividualOrder = orders is null ? afterSquad : orders.ConstrainFollowStep(EntityId, current, afterSquad);

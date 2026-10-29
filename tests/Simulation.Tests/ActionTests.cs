@@ -87,4 +87,25 @@ public sealed class ActionTests
             lifecycle.TryStart(new ActionCandidate("haul-1", ActionKind.Haul)));
         Assert.Equal("eat-1", lifecycle.Current?.Id);
     }
+
+    [Fact]
+    public void AttentionActionsCanPauseMovementOrdersButMovementCannotReplaceThem()
+    {
+        var lifecycle = new ActionLifecycle();
+        Assert.Equal(ActionStartResult.Started,
+            lifecycle.TryStart(new ActionCandidate("squad-move", ActionKind.SquadMove)));
+        Assert.Equal(ActionStartResult.Rejected,
+            lifecycle.TryStart(new ActionCandidate("locomotion-compatible", ActionKind.Haul)));
+        Assert.Equal("squad-move", lifecycle.Current?.Id);
+
+        Assert.Equal(ActionStartResult.Preempted,
+            lifecycle.TryStart(new ActionCandidate("focused-action", ActionKind.Haul, interruptsMovementOrders: true)));
+        Assert.True(lifecycle.Current?.InterruptsMovementOrders);
+        Assert.Equal(ActionStartResult.Rejected,
+            lifecycle.TryStart(new ActionCandidate("replacement-move", ActionKind.SquadMove)));
+
+        Assert.Equal(ActionStartResult.Preempted,
+            lifecycle.TryStart(new ActionCandidate("urgent-flee", ActionKind.Flee)));
+        Assert.True(lifecycle.Current?.InterruptsMovementOrders);
+    }
 }

@@ -5,22 +5,40 @@ namespace UnnamedProject2026;
 /// <summary>Chooses in-place locomotion clips for a rendered NPC from simulation movement speed.</summary>
 internal sealed class NpcLocomotionAnimator
 {
+    private readonly List<(MeshInstance3D Mesh, int BlendShapeIndex, float Value)> _manualBlendShapeBaseline = [];
+    private readonly List<(Skeleton3D Skeleton, int BoneIndex, Vector3 Position, Quaternion Rotation, Vector3 Scale)>
+        _manualBonePoseBaseline = [];
     private readonly Dictionary<string, string> _animationNames = new(StringComparer.OrdinalIgnoreCase);
     private AnimationPlayer? _player;
     private string _locomotionFamily = string.Empty;
     private string? _currentAnimation;
+    private string? _manualAnimation;
+    private bool _manualAnimationLoops;
+    private double _manualAnimationElapsedSeconds;
+    private double _manualAnimationDurationSeconds;
     private float _movementSpeed;
+    private float _lastMovementSpeed;
     private bool _isCreature;
+
+    public bool HoldsPositionForManualAction => _manualAnimation is not null && !_manualAnimationLoops;
 
     public void Bind(AnimationPlayer? player, string locomotionFamily, bool isCreature, float movementSpeed)
     {
+        RestoreManualPoseBaseline();
         _player = player;
         _locomotionFamily = locomotionFamily;
         _isCreature = isCreature;
         _movementSpeed = Mathf.Max(movementSpeed, 0.5f);
         _currentAnimation = null;
+        _manualAnimation = null;
+        _manualAnimationLoops = false;
+        _manualAnimationElapsedSeconds = 0;
+        _manualAnimationDurationSeconds = 0;
         _animationNames.Clear();
         if (player is null) return;
+
+        IsolateAnimationLibraries(player);
+        player.AnimationFinished += OnAnimationFinished;
 
         foreach (var animationName in player.GetAnimationList())
         {
@@ -31,10 +49,18 @@ internal sealed class NpcLocomotionAnimator
         Update(0);
     }
 
-    public void Update(float movementSpeed)
+    public void Update(float movementSpeed, double deltaSeconds = 0)
     {
         var player = _player;
         if (player is null || _animationNames.Count == 0 || !float.IsFinite(movementSpeed)) return;
+        _lastMovementSpeed = Mathf.Max(0, movementSpeed);
+        if (_manualAnimation is not null)
+        {
+            if (double.IsFinite(deltaSeconds) && deltaSeconds > 0)
+                _manualAnimationElapsedSeconds += deltaSeconds;
+            if (!HasManualAnimationCompleted(player)) return;
+            CompleteManualAnimation();
+        }
 
         var speed = Mathf.Max(0, movementSpeed);
         var idle = Find("human_idle", "idle");
@@ -78,6 +104,194 @@ internal sealed class NpcLocomotionAnimator
         player.GetAnimation(selected).LoopMode = Animation.LoopModeEnum.Linear;
         player.Play(selected, customBlend: 0.18f);
         _currentAnimation = selected;
+    }
+
+    public IReadOnlyList<string> GetAnimationNames() => _animationNames.Keys
+        .OrderBy(name => name, StringComparer.OrdinalIgnoreCase).ToArray();
+
+    public bool PlayManual(string animationName, bool loop)
+    {
+        var player = _player;
+        if (player is null || !_animationNames.TryGetValue(animationName, out var actualName))
+            return false;
+
+        if (_manualAnimation is not null)
+        {
+            player.Stop(keepState: true);
+            RestoreManualPoseBaseline();
+        }
+
+        var animation = player.GetAnimation(actualName);
+        CaptureManualBlendShapeBaseline(player, animation);
+        CaptureManualBonePoseBaseline(player);
+        animation.LoopMode = loop ? Animation.LoopModeEnum.Linear : Animation.LoopModeEnum.None;
+        player.SpeedScale = 1f;
+        player.Play(actualName, customBlend: 0.18f);
+        _manualAnimation = actualName;
+        _manualAnimationLoops = loop;
+        _manualAnimationElapsedSeconds = 0;
+        _manualAnimationDurationSeconds = loop ? double.PositiveInfinity : Math.Max(0, animation.Length);
+        _currentAnimation = actualName;
+        return true;
+    }
+
+    public void StopManual(float movementSpeed)
+    {
+        if (_manualAnimation is null) return;
+        _player?.Stop(keepState: true);
+        RestoreManualPoseBaseline();
+        _manualAnimation = null;
+        _manualAnimationLoops = false;
+        _manualAnimationElapsedSeconds = 0;
+        _manualAnimationDurationSeconds = 0;
+        _currentAnimation = null;
+        Update(movementSpeed);
+    }
+
+    private void OnAnimationFinished(StringName animationName)
+    {
+        if (_manualAnimation is null || !string.Equals(_manualAnimation, animationName.ToString(), StringComparison.Ordinal))
+            return;
+
+        CompleteManualAnimation();
+    }
+
+    private bool HasManualAnimationCompleted(AnimationPlayer player)
+    {
+        var manualAnimation = _manualAnimation;
+        if (manualAnimation is null) return true;
+        if (!player.IsPlaying() || !string.Equals(player.CurrentAnimation.ToString(), manualAnimation, StringComparison.Ordinal))
+            return true;
+        if (_manualAnimationLoops || !_animationNames.TryGetValue(manualAnimation, out var actualName)) return false;
+
+        // Imported clips can fail to raise AnimationFinished on some runtimes. Track
+        // their finite playback duration as a fallback so the NPC cannot stay held.
+        var animation = player.GetAnimation(actualName);
+        return player.CurrentAnimationPosition >= animation.Length - 0.001
+            || _manualAnimationElapsedSeconds >= _manualAnimationDurationSeconds;
+    }
+
+    private void CompleteManualAnimation()
+    {
+        RestoreManualPoseBaseline();
+        _manualAnimation = null;
+        _manualAnimationLoops = false;
+        _manualAnimationElapsedSeconds = 0;
+        _manualAnimationDurationSeconds = 0;
+        _currentAnimation = null;
+        Update(_lastMovementSpeed);
+    }
+
+    private void CaptureManualBlendShapeBaseline(AnimationPlayer player, Animation animation)
+    {
+        _manualBlendShapeBaseline.Clear();
+        var animationRoot = player.GetNodeOrNull(player.RootNode);
+        if (animationRoot is null) return;
+
+        for (var trackIndex = 0; trackIndex < animation.GetTrackCount(); trackIndex++)
+        {
+            var trackType = animation.TrackGetType(trackIndex);
+            if (trackType is not (Animation.TrackType.Value or Animation.TrackType.BlendShape)) continue;
+
+            var trackPath = animation.TrackGetPath(trackIndex).ToString();
+            var separatorIndex = trackPath.IndexOf(':');
+            if (separatorIndex < 0) continue;
+
+            var propertyName = trackPath[(separatorIndex + 1)..];
+            const string blendShapePrefix = "blend_shapes/";
+            if (trackType == Animation.TrackType.Value)
+            {
+                if (!propertyName.StartsWith(blendShapePrefix, StringComparison.Ordinal)) continue;
+                propertyName = propertyName[blendShapePrefix.Length..];
+            }
+
+            if (animationRoot.GetNodeOrNull(new NodePath(trackPath[..separatorIndex])) is not MeshInstance3D mesh
+                || mesh.Mesh is not ArrayMesh arrayMesh) continue;
+            var blendShapeIndex = FindBlendShapeIndex(arrayMesh, propertyName);
+            if (blendShapeIndex < 0 || _manualBlendShapeBaseline.Any(entry => ReferenceEquals(entry.Mesh, mesh)
+                && entry.BlendShapeIndex == blendShapeIndex)) continue;
+
+            _manualBlendShapeBaseline.Add((mesh, blendShapeIndex, mesh.GetBlendShapeValue(blendShapeIndex)));
+        }
+    }
+
+    private void RestoreManualBlendShapeBaseline()
+    {
+        foreach (var (mesh, blendShapeIndex, value) in _manualBlendShapeBaseline)
+            mesh.SetBlendShapeValue(blendShapeIndex, value);
+        _manualBlendShapeBaseline.Clear();
+    }
+
+    private void CaptureManualBonePoseBaseline(AnimationPlayer player)
+    {
+        _manualBonePoseBaseline.Clear();
+        var animationRoot = player.GetNodeOrNull(player.RootNode);
+        if (animationRoot is null) return;
+
+        var skeletons = animationRoot.FindChildren("*", "Skeleton3D", recursive: true, owned: false)
+            .OfType<Skeleton3D>();
+        if (animationRoot is Skeleton3D rootSkeleton)
+            skeletons = skeletons.Prepend(rootSkeleton);
+
+        foreach (var skeleton in skeletons.Distinct())
+        {
+            for (var boneIndex = 0; boneIndex < skeleton.GetBoneCount(); boneIndex++)
+            {
+                _manualBonePoseBaseline.Add((
+                    skeleton,
+                    boneIndex,
+                    skeleton.GetBonePosePosition(boneIndex),
+                    skeleton.GetBonePoseRotation(boneIndex),
+                    skeleton.GetBonePoseScale(boneIndex)));
+            }
+        }
+    }
+
+    private void RestoreManualBonePoseBaseline()
+    {
+        foreach (var (skeleton, boneIndex, position, rotation, scale) in _manualBonePoseBaseline)
+        {
+            if (!GodotObject.IsInstanceValid(skeleton) || boneIndex >= skeleton.GetBoneCount()) continue;
+            skeleton.SetBonePosePosition(boneIndex, position);
+            skeleton.SetBonePoseRotation(boneIndex, rotation);
+            skeleton.SetBonePoseScale(boneIndex, scale);
+        }
+
+        _manualBonePoseBaseline.Clear();
+    }
+
+    private void RestoreManualPoseBaseline()
+    {
+        RestoreManualBlendShapeBaseline();
+        RestoreManualBonePoseBaseline();
+    }
+
+    private static void IsolateAnimationLibraries(AnimationPlayer player)
+    {
+        // Imported model instances can share mutable Animation resources through a
+        // cached PackedScene. LoopMode is changed per actor, so give each player
+        // its own deep-copied libraries before locomotion or manual clips are used.
+        foreach (var libraryName in player.GetAnimationLibraryList())
+        {
+            var sourceLibrary = player.GetAnimationLibrary(libraryName);
+            if (sourceLibrary is null) continue;
+
+            var localLibrary = sourceLibrary.Duplicate(true) as AnimationLibrary
+                ?? throw new InvalidOperationException(
+                    $"Could not create an actor-local animation library '{libraryName}' for {player.GetPath()}.");
+            player.RemoveAnimationLibrary(libraryName);
+            player.AddAnimationLibrary(libraryName, localLibrary);
+        }
+    }
+
+    private static int FindBlendShapeIndex(ArrayMesh mesh, string blendShapeName)
+    {
+        for (var index = 0; index < mesh.GetBlendShapeCount(); index++)
+        {
+            if (mesh.GetBlendShapeName(index).ToString() == blendShapeName) return index;
+        }
+
+        return -1;
     }
 
     private string? Find(params string[] candidates)

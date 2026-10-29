@@ -1,0 +1,221 @@
+{
+  "npc_id": "entity-000010",
+  "slug": "yuffie",
+  "sex": "female",
+  "source_file": "yuffie/Yuffie_model_v1.blend",
+  "rig": "Genesis 8.1 Female",
+  "source_meshes": [
+    "Yuffie Hair Mesh",
+    "Genesis 8.1 Female Mesh",
+    "Genesis 8.1 Female Eyelashes Mesh",
+    "Yuffie Eyelashes. Mesh",
+    "Yuffie Eyebrows Mesh",
+    "Eye_L",
+    "Eye_R",
+    "Yuffie Armor Mesh",
+    "Yuffie Left Arm Mesh",
+    "Yuffie Pants Mesh",
+    "Yuffie Right Arm Mesh",
+    "Yuffie Shoes Mesh",
+    "Yuffie Tasset Mesh",
+    "Yuffie Top Mesh"
+  ],
+  "bone_map": {
+    "pelvis": "pelvis",
+    "spine_02": "spine-1",
+    "spine_03": "chest",
+    "head": "head",
+    "upperarm_l": "upper_arm.L",
+    "lowerarm_l": "forearm.L",
+    "upperarm_r": "upper_arm.R",
+    "lowerarm_r": "forearm.R",
+    "thigh_l": "thigh.L",
+    "calf_l": "shin.L",
+    "foot_l": "foot.L",
+    "thigh_r": "thigh.R",
+    "calf_r": "shin.R",
+    "foot_r": "foot.R"
+  },
+  "animation_clips": [
+    "Genesis 8.1 FemaleAction",
+    "human_idle",
+    "human_run",
+    "human_walk",
+    "npc_face_angry",
+    "npc_face_blink",
+    "npc_face_fear",
+    "npc_face_happy",
+    "npc_face_sad",
+    "npc_face_surprised"
+  ],
+  "locomotion_clips": [
+    "human_idle",
+    "human_run",
+    "human_walk"
+  ],
+  "locomotion_root_motion": false,
+  "facial_expression_clips": {
+    "happy": "npc_face_happy",
+    "sad": "npc_face_sad",
+    "angry": "npc_face_angry",
+    "surprised": "npc_face_surprised",
+    "fear": "npc_face_fear",
+    "blink": "npc_face_blink"
+  },
+  "facial_expression_targets": {
+    "npc_face_happy": [
+      {
+        "mesh": "Genesis 8.1 Female Mesh",
+        "shape_key": "npc_face_happy"
+      },
+      {
+        "mesh": "Genesis 8.1 Female Eyelashes Mesh",
+        "shape_key": "npc_face_happy"
+      },
+      {
+        "mesh": "Yuffie Eyelashes. Mesh",
+        "shape_key": "npc_face_happy"
+      },
+      {
+        "mesh": "Yuffie Eyebrows Mesh",
+        "shape_key": "npc_face_happy"
+      },
+      {
+        "mesh": "Yuffie Armor Mesh",
+        "shape_key": "npc_face_happy"
+      },
+      {
+        "mesh": "Yuffie Top Mesh",
+        "shape_key": "npc_face_happy"
+      }
+    ],
+    "npc_face_sad": [
+      {
+        "mesh": "Genesis 8.1 Female Mesh",
+        "shape_key": "npc_face_sad"
+      },
+      {
+        "mesh": "Genesis 8.1 Female Eyelashes Mesh",
+        "shape_key": "npc_face_sad"
+      },
+      {
+        "mesh": "Yuffie Eyelashes. Mesh",
+        "shape_key": "npc_face_sad"
+      },
+      {
+        "mesh": "Yuffie Eyebrows Mesh",
+        "shape_key": "npc_face_sad"
+      },
+      {
+        "mesh": "Yuffie Armor Mesh",
+        "shape_key": "npc_face_sad"
+      },
+      {
+        "mesh": "Yuffie Top Mesh",
+        "shape_key": "npc_face_sad"
+      }
+    ],
+    "npc_face_angry": [
+      {
+        "mesh": "Genesis 8.1 Female Mesh",
+        "shape_key": "npc_face_angry"
+      },
+      {
+        "mesh": "Genesis 8.1 Female Eyelashes Mesh",
+        "shape_key": "npc_face_angry"
+      },
+      {
+        "mesh": "Yuffie Eyelashes. Mesh",
+        "shape_key": "npc_face_angry"
+      },
+      {
+        "mesh": "Yuffie Eyebrows Mesh",
+        "shape_key": "npc_face_angry"
+      },
+      {
+        "mesh": "Yuffie Armor Mesh",
+        "shape_key": "npc_face_angry"
+      },
+      {
+        "mesh": "Yuffie Top Mesh",
+        "shape_key": "npc_face_angry"
+      }
+    ],
+    "npc_face_surprised": [
+      {
+        "mesh": "Genesis 8.1 Female Mesh",
+        "shape_key": "npc_face_surprised"
+      },
+      {
+        "mesh": "Genesis 8.1 Female Eyelashes Mesh",
+        "shape_key": "npc_face_surprised"
+      },
+      {
+        "mesh": "Yuffie Eyelashes. Mesh",
+        "shape_key": "npc_face_surprised"
+      },
+      {
+        "mesh": "Yuffie Eyebrows Mesh",
+        "shape_key": "npc_face_surprised"
+      },
+      {
+        "mesh": "Yuffie Armor Mesh",
+        "shape_key": "npc_face_surprised"
+      },
+      {
+        "mesh": "Yuffie Top Mesh",
+        "shape_key": "npc_face_surprised"
+      }
+    ],
+    "npc_face_fear": [
+      {
+        "mesh": "Genesis 8.1 Female Mesh",
+        "shape_key": "npc_face_fear"
+      },
+      {
+        "mesh": "Genesis 8.1 Female Eyelashes Mesh",
+        "shape_key": "npc_face_fear"
+      },
+      {
+        "mesh": "Yuffie Eyelashes. Mesh",
+        "shape_key": "npc_face_fear"
+      },
+      {
+        "mesh": "Yuffie Eyebrows Mesh",
+        "shape_key": "npc_face_fear"
+      }
+    ],
+    "npc_face_blink": [
+      {
+        "mesh": "Genesis 8.1 Female Mesh",
+        "shape_key": "npc_face_blink"
+      },
+      {
+        "mesh": "Genesis 8.1 Female Eyelashes Mesh",
+        "shape_key": "npc_face_blink"
+      },
+      {
+        "mesh": "Yuffie Eyelashes. Mesh",
+        "shape_key": "npc_face_blink"
+      },
+      {
+        "mesh": "Yuffie Eyebrows Mesh",
+        "shape_key": "npc_face_blink"
+      }
+    ]
+  },
+  "target_height_m": 1.75,
+  "source_height_m": 1.716320771471132,
+  "normalized_scale": 1.0196229219436646,
+  "glb_bytes": 29098648,
+  "textures_max_edge": 1024,
+  "source_animations_expected": [
+    "Genesis 8.1 FemaleAction"
+  ],
+  "source_morph_target_count": 2089,
+  "source_morph_targets_omitted": 2089,
+  "runtime_expression_targets_generated": 32,
+  "runtime_morph_targets_included": true,
+  "runtime_morph_target_count": 32,
+  "base_mesh_preserved_from": "yuffie.glb"
+}

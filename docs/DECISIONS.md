@@ -109,7 +109,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: A total item-count cap did not represent physical load and prevented resource hoarding without improving simulation behavior.
 - Consequence: Save validation and inventory transfers follow the current D056 rule; finite storage containers remain capacity-limited.
 - Revisit: If testing shows the per-item cap or fatigue model needs adjustment.
-## D013 — Generic cargo retention and bounded action retries
+## D062 — Generic cargo retention and bounded action retries
 
 - Date: 2026-09-27
 - Status: Provisional; implemented for J01c
@@ -287,7 +287,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Reason: Creature Core needs explainable behavior differences from existing bounded wandering goals without introducing random state, new ecology systems, or a behavior framework.
 - Consequence: Fixed profiles and inputs produce repeatable goals, and navigation outcomes continue through the existing action lifecycle. Sociability remains profile data for future behavior rather than affecting this roaming decision.
 - Revisit: When the integrated Creature Core scenario is exercised or a later issue introduces explicit social stimuli or additional wild actions.
-## D030 — Bounded faction foundation
+## D063 — Bounded faction foundation
 
 - Date: 2026-10-02
 - Status: Implemented for F07a–F07d
@@ -305,7 +305,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: Tracks are explicit immutable observations supplied to the query and are not generated, aged, or persisted by this feature. Queries do not reserve food, mutate World state, or introduce hunting/tracking behavior.
 - Revisit: When a bounded hunting/tracking consumer defines observation creation, expiry, and persistence requirements.
 
-## D031 — Vertical integration is an evidence gate
+## D064 — Vertical integration is an evidence gate
 
 - Date: 2026-10-02
 - Status: Provisional planning decision for Milestone 0.9; implementation pending
@@ -314,7 +314,7 @@ Record date, status, decision, reason, consequences, and revisit trigger. Supers
 - Consequence: The milestone verifies existing creature, combat, relationship, faction, settlement, and local economy state together, with repeatability, exact resource accounting, and rejection/recovery checks. It does not expand those systems or turn the long-term vision into a delivery commitment. Issue #341 is gated on acceptance of prerequisites #325, #333, and #340.
 - Revisit: After the one-region scenario has recorded results and limitations.
 
-## D032 — Capability-gated creature greeting
+## D065 — Capability-gated creature greeting
 
 - Date: 2026-10-02
 - Status: Implemented for issue #297
@@ -648,3 +648,12 @@ User reported only an obstacle at the expected workbench. Replace that legacy ce
 - Reason: The user selected this model for male NPCs and confirmed the acquired assets are valid for use in the public game project. Its source hierarchy already contains the project's core humanoid chains, so the presentation adapter can preserve the authored rig instead of rebuilding the model around another skeleton.
   - Consequence: `EntityRecord.Sex` selects Radagon for male human NPCs; other species and female human NPCs keep their existing presentation paths. The provided Radagon package contains no animation clips, so the model uses its authored rest pose until a compatible idle/locomotion animation is added. The derived asset preserves topology, not every source vertex position or skin weight. Runtime maps are resampled to the declared per-material texture limits while the original source maps remain unchanged. Reimported GLB checks confirm the semantic reproductive anchors remain aligned with the adapted mesh. This does not change simulation anatomy, save identity, combat state, or character-creation sex persistence.
 - Revisit: If playtesting finds the source proportions, source rig, import materials, or missing locomotion animation unsuitable, or the owner changes the selected asset.
+
+## D061 — Attention actions temporarily interrupt movement orders
+
+- Date: 2026-10-27
+- Status: Accepted for the current squad and individual order prototype; implemented for issue #512.
+- Decision: Allow an action candidate to declare `InterruptsMovementOrders`. This action can preempt a squad or individual movement action even when its normal action priority is lower. While it remains active, order services preserve intent and do not replace it with movement. On completion or cancellation, rebuild only that entity's route from the current order; Follow uses the current issuer position. Eating and fleeing retain this behavior automatically. Walking-compatible actions leave the flag unset.
+- Reason: A brief focused interaction or similar attention-demanding event should pause the affected actor without discarding its task or freezing other squad members. Encoding the interruption on the existing action candidate keeps ownership and cleanup in the action lifecycle.
+- Consequence: Paths and actions remain transient; squad membership and individual order-intent save behavior are unchanged. No event bus, parallel movement system, or snapshot migration is introduced.
+- Revisit: If playtesting shows that a class of focused action should not interrupt movement, if order priorities need a different policy, or if attention must continue across save/load.

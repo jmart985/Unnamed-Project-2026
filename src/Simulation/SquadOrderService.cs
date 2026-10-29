@@ -23,10 +23,28 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
     private readonly Dictionary<string, Vector3> _moveTargets = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Vector2> _followOffsets = new(StringComparer.Ordinal);
     private readonly HashSet<string> _failedMembers = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _suspendedMembers = new(StringComparer.Ordinal);
     private long _nextActionId;
     public SquadOrderKind Order { get; private set; }
     public Vector3? Target { get; private set; }
     public string Status { get; private set; } = "No squad order.";
+
+    /// <summary>Temporarily pauses one member's squad route while another system owns its navigation.</summary>
+    public void SuspendMember(string entityId)
+    {
+        if (!world.SquadMemberIds.Contains(entityId) || !_suspendedMembers.Add(entityId)) return;
+        CancelTrip(entityId);
+        _finishedTargets.Remove(entityId);
+        _failedMembers.Remove(entityId);
+    }
+
+    /// <summary>Rejoins a member to the current squad order after its temporary route ends.</summary>
+    public void ResumeMember(string entityId)
+    {
+        if (!_suspendedMembers.Remove(entityId)) return;
+        _finishedTargets.Remove(entityId);
+        _failedMembers.Remove(entityId);
+    }
 
     public SquadOrderResult Execute(SquadOrderKind order, Vector3? target = null)
     {
@@ -40,7 +58,7 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
             return Reject(SquadResult.PlayerUnavailable, "The player is unavailable.");
         var effectiveTarget = order == SquadOrderKind.MoveTo ? target : null;
         if (Order == order && Target == effectiveTarget) return new(SquadResult.Unchanged, "Squad order already active.");
-        Reset();
+        ClearOrderState();
         Order = order;
         Target = effectiveTarget;
         if (order == SquadOrderKind.MoveTo)
@@ -61,6 +79,7 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
 
     public void Advance()
     {
+        _suspendedMembers.RemoveWhere(id => !world.SquadMemberIds.Contains(id));
         foreach (var id in _trips.Keys.Where(id => !world.SquadMemberIds.Contains(id)).ToArray()) CancelTrip(id);
         foreach (var id in _finishedTargets.Keys.Where(id => !world.SquadMemberIds.Contains(id)).ToArray()) _finishedTargets.Remove(id);
         foreach (var id in _moveTargets.Keys.Where(id => !world.SquadMemberIds.Contains(id)).ToArray()) _moveTargets.Remove(id);
@@ -68,7 +87,7 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
         if (Order == SquadOrderKind.None) return;
         if (Order == SquadOrderKind.FollowPlayer && !TryPlayer(out _))
         {
-            Reset();
+            ClearOrderState();
             Status = "Follow stopped: player unavailable.";
             return;
         }
@@ -79,7 +98,7 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
             foreach (var id in _trips.Keys.ToArray()) CancelTrip(id);
             foreach (var id in world.SquadMemberIds)
                 if (world.TryGetEntity(id, out var member) && member is not null
-                    && member.Actions.Current?.Kind != ActionKind.Eat)
+                    && member.Actions.Current?.InterruptsMovementOrders != true)
                     member.Actions.Cancel();
             _finishedTargets.Clear();
             _failedMembers.Clear();
@@ -89,10 +108,19 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
         {
             if (!world.TryGetEntity(id, out var entity) || entity is null) continue;
             if (entity.Health.IsDead) { CancelTrip(id); continue; }
+            if (_suspendedMembers.Contains(id)) continue;
             if (entity.OrderIntent is not null) { CancelTrip(id); continue; }
             if (Order == SquadOrderKind.Stop)
             {
                 if (entity.Actions.Current is null) entity.Activity = "Squad stopped";
+                continue;
+            }
+            if (entity.Actions.Current?.InterruptsMovementOrders == true)
+            {
+                // The action owns this member temporarily. Keep the squad intent intact so
+                // this member can rebuild its route after the action finishes; other members
+                // continue advancing their own trips.
+                CancelTrip(id, updateActivity: false);
                 continue;
             }
             var following = Order == SquadOrderKind.FollowPlayer;
@@ -130,7 +158,7 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
                     continue;
                 }
             }
-            if (entity.Actions.Current?.Kind == ActionKind.Eat || entity.Needs.IsHungry) continue;
+            if (entity.Needs.IsHungry) continue;
             if (_finishedTargets.TryGetValue(id, out var finished) && Vector3.DistanceSquared(goal, finished) <= 1
                 && (_failedMembers.Contains(id) || distanceSquared <= arrivalTolerance * arrivalTolerance)) continue;
             if (distanceSquared <= arrivalTolerance * arrivalTolerance)
@@ -181,6 +209,12 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
 
     public void Reset()
     {
+        ClearOrderState();
+        _suspendedMembers.Clear();
+    }
+
+    private void ClearOrderState()
+    {
         foreach (var id in _trips.Keys.ToArray()) CancelTrip(id);
         _finishedTargets.Clear();
         _moveTargets.Clear();
@@ -191,13 +225,16 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
         Status = "No squad order.";
     }
 
-    private void CancelTrip(string id)
+    private void CancelTrip(string id, bool updateActivity = true)
     {
         if (!_trips.Remove(id, out var trip)) return;
         trip.Navigator.Cancel(trip.RequestId);
         if (trip.Entity.Actions.Current?.Kind == ActionKind.SquadMove) trip.Entity.Actions.Cancel();
-        trip.Entity.Activity = "Idle";
-        trip.Entity.WaitingReason = null;
+        if (updateActivity)
+        {
+            trip.Entity.Activity = "Idle";
+            trip.Entity.WaitingReason = null;
+        }
     }
 
     private bool TryPlayer(out EntityRecord? player) => world.TryGetEntity(world.PlayerEntityId, out player) && player is not null && !player.Health.IsDead;

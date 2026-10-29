@@ -26,15 +26,19 @@ Review the diff for unrelated edits, commit the branch, push it, and open a pull
 
 When no independent Ready issue remains after the readiness/dependency audit, report the dependency or decision blocking progress instead of inventing substitute architecture or silently widening scope.
 
-## Current accepted slices
+## Historical project status snapshots
 
-### Current project status (2026-10-23)
+Use the live GitHub Project #1, active milestone, and current issue dependencies to choose work. The dated notes below preserve historical context; they are not a current work sequence and must not be used to infer issue readiness.
 
-Milestone 1.2 territory and wolf hunting (#461–#463), prey response (#467/#469), carcass freshness (#471), and World-owned far-population aggregates (#473) are merged. PR #474 delivered #473 with snapshot schema 19. The next bounded Living Region slice is #475: validate one starter wildlife region, keep its distant populations abstract, activate and demote wildlife by player proximity, and persist active membership in schema 20 so survivors return to the right counts and dead/removed wildlife is not restored. Predator teamwork, migration, respawning, and broad world streaming remain future scope; use tracker #202 for later evidence-based expansion.
+### Snapshot recorded 2026-10-23
+
+At the time of this snapshot, Milestone 1.2 territory and wolf hunting (#461–#463), prey response (#467/#469), carcass freshness (#471), and World-owned far-population aggregates (#473) were recorded as merged. PR #474 delivered #473 with snapshot schema 19. Issue #475 was described as the next bounded Living Region slice: validate one starter wildlife region, keep distant populations abstract, activate and demote wildlife by player proximity, and persist active membership in schema 20. This entry records the plan at that date only. Verify the live issue and project state before selecting work.
 
 ### Historical project status (2026-10-05)
 
-At that point, the Ant Farm board was the live routing source for implementation work. Character Core issues #135, #136, #137, and #139, far-population validation #369, actor-spacing work #415, and Basic Settlement acceptance #406 were complete and belonged in **Done**. Deferred health/facing persistence #302, future capability-gated actions #306, Advanced Creature Behavior #201, Captivity Systems #225, and Breeding & Genetics #226 were planning horizons and belonged in **Backlog**. There were no independent Ready implementation issues at that time; the current route is recorded above.
+At that point, the Ant Farm board was the live routing source for implementation work. Character Core issues #135, #136, #137, and #139, far-population validation #369, actor-spacing work #415, and Basic Settlement acceptance #406 were complete and belonged in **Done**. Deferred health/facing persistence #302, future capability-gated actions #306, Advanced Creature Behavior #201, Captivity Systems #225, and Breeding & Genetics #226 were planning horizons and belonged in **Backlog**. There were no independent Ready implementation issues at that time; the 2026-10-23 snapshot above records the later routing state.
+
+The selection history below preserves decisions and acceptance references from that period. It is historical context, not a current task order; check GitHub before acting on any issue number or status.
 
 Do not infer readiness from an issue being open or assigned a future milestone. A closed issue with a merged pull request is Done even if an old project status was left behind; a planning issue remains Backlog until its minimum playable slice, dependencies, and validation steps are explicit.
 
