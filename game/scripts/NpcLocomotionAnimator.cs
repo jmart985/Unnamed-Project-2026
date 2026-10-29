@@ -6,6 +6,8 @@ namespace UnnamedProject2026;
 internal sealed class NpcLocomotionAnimator
 {
     private readonly List<(MeshInstance3D Mesh, int BlendShapeIndex, float Value)> _manualBlendShapeBaseline = [];
+    private readonly List<(Skeleton3D Skeleton, int BoneIndex, Vector3 Position, Quaternion Rotation, Vector3 Scale)>
+        _manualBonePoseBaseline = [];
     private readonly Dictionary<string, string> _animationNames = new(StringComparer.OrdinalIgnoreCase);
     private AnimationPlayer? _player;
     private string _speciesId = string.Empty;
@@ -22,7 +24,7 @@ internal sealed class NpcLocomotionAnimator
 
     public void Bind(AnimationPlayer? player, string speciesId, bool isCreature, float movementSpeed)
     {
-        RestoreManualBlendShapeBaseline();
+        RestoreManualPoseBaseline();
         _player = player;
         _speciesId = speciesId;
         _isCreature = isCreature;
@@ -115,11 +117,12 @@ internal sealed class NpcLocomotionAnimator
         if (_manualAnimation is not null)
         {
             player.Stop(keepState: true);
-            RestoreManualBlendShapeBaseline();
+            RestoreManualPoseBaseline();
         }
 
         var animation = player.GetAnimation(actualName);
         CaptureManualBlendShapeBaseline(player, animation);
+        CaptureManualBonePoseBaseline(player);
         animation.LoopMode = loop ? Animation.LoopModeEnum.Linear : Animation.LoopModeEnum.None;
         player.SpeedScale = 1f;
         player.Play(actualName, customBlend: 0.18f);
@@ -135,7 +138,7 @@ internal sealed class NpcLocomotionAnimator
     {
         if (_manualAnimation is null) return;
         _player?.Stop(keepState: true);
-        RestoreManualBlendShapeBaseline();
+        RestoreManualPoseBaseline();
         _manualAnimation = null;
         _manualAnimationLoops = false;
         _manualAnimationElapsedSeconds = 0;
@@ -169,7 +172,7 @@ internal sealed class NpcLocomotionAnimator
 
     private void CompleteManualAnimation()
     {
-        RestoreManualBlendShapeBaseline();
+        RestoreManualPoseBaseline();
         _manualAnimation = null;
         _manualAnimationLoops = false;
         _manualAnimationElapsedSeconds = 0;
@@ -216,6 +219,50 @@ internal sealed class NpcLocomotionAnimator
         foreach (var (mesh, blendShapeIndex, value) in _manualBlendShapeBaseline)
             mesh.SetBlendShapeValue(blendShapeIndex, value);
         _manualBlendShapeBaseline.Clear();
+    }
+
+    private void CaptureManualBonePoseBaseline(AnimationPlayer player)
+    {
+        _manualBonePoseBaseline.Clear();
+        var animationRoot = player.GetNodeOrNull(player.RootNode);
+        if (animationRoot is null) return;
+
+        var skeletons = animationRoot.FindChildren("*", "Skeleton3D", recursive: true, owned: false)
+            .OfType<Skeleton3D>();
+        if (animationRoot is Skeleton3D rootSkeleton)
+            skeletons = skeletons.Prepend(rootSkeleton);
+
+        foreach (var skeleton in skeletons.Distinct())
+        {
+            for (var boneIndex = 0; boneIndex < skeleton.GetBoneCount(); boneIndex++)
+            {
+                _manualBonePoseBaseline.Add((
+                    skeleton,
+                    boneIndex,
+                    skeleton.GetBonePosePosition(boneIndex),
+                    skeleton.GetBonePoseRotation(boneIndex),
+                    skeleton.GetBonePoseScale(boneIndex)));
+            }
+        }
+    }
+
+    private void RestoreManualBonePoseBaseline()
+    {
+        foreach (var (skeleton, boneIndex, position, rotation, scale) in _manualBonePoseBaseline)
+        {
+            if (!GodotObject.IsInstanceValid(skeleton) || boneIndex >= skeleton.GetBoneCount()) continue;
+            skeleton.SetBonePosePosition(boneIndex, position);
+            skeleton.SetBonePoseRotation(boneIndex, rotation);
+            skeleton.SetBonePoseScale(boneIndex, scale);
+        }
+
+        _manualBonePoseBaseline.Clear();
+    }
+
+    private void RestoreManualPoseBaseline()
+    {
+        RestoreManualBlendShapeBaseline();
+        RestoreManualBonePoseBaseline();
     }
 
     private static int FindBlendShapeIndex(ArrayMesh mesh, string blendShapeName)

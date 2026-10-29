@@ -78,6 +78,7 @@ public partial class Main
         view.StopPresentationAnimationForTesting();
         var destination = new System.Numerics.Vector3(entity.Position.X + 4f, entity.Position.Y, entity.Position.Z);
         view.SetAnimationTestMovementMultiplier(movement == NpcAnimationTestMovement.Walk ? 0.45f : 1f);
+        _squad?.SuspendMember(entityId);
         _npcAnimationTestRouteTargets[entityId] = destination;
         var result = view.RequestNavigation(destination);
         _lastActionMessage = $"{movement} test route for {entityId}: {result}.";
@@ -200,10 +201,72 @@ public partial class Main
             if (view.NavigationTarget is not { } resumedTarget
                 || System.Numerics.Vector3.DistanceSquared(resumedTarget, stayPosition) > 0.01f)
                 throw new InvalidOperationException("NPC Test Lab restored a Stay order without rebuilding its navigation target.");
+
+            StopNpcAnimationTestMovement(entity.Id);
+            if (view.NavigationOutcome != NavigationOutcome.InProgress
+                || view.NavigationTarget is not { } unchangedTarget
+                || System.Numerics.Vector3.DistanceSquared(unchangedTarget, stayPosition) > 0.01f)
+                throw new InvalidOperationException("Stop move cancelled ordinary Stay navigation when no Test Lab route was active.");
         }
         finally
         {
             if (IsNpcAnimationTestMoving(entity.Id)) StopNpcAnimationTestMovement(entity.Id);
+        }
+    }
+
+    internal void ValidateNpcAnimationTestRouteResumesSquadOrder()
+    {
+        var squad = _squad
+            ?? throw new InvalidOperationException("NPC Test Lab squad recovery validation requires an active squad service.");
+        if (squad.Order != SquadOrderKind.None || _world.SquadMemberIds.Count != 0)
+            throw new InvalidOperationException("NPC Test Lab squad recovery validation requires a fresh world with no squad order.");
+
+        var entity = _world.Entities.FirstOrDefault(candidate => candidate.Id != _world.PlayerEntityId
+            && candidate.SpeciesId == "human" && !candidate.Health.IsDead && !candidate.Health.IsIncapacitated
+            && candidate.SleepState != SleepState.Sleeping && !candidate.Needs.IsHungry
+            && candidate.OrderIntent is null
+            && candidate.Actions.Current?.Kind is not (ActionKind.CommandMove or ActionKind.Eat or ActionKind.Flee)
+            && _entityViews.ContainsKey(candidate.Id))
+            ?? throw new InvalidOperationException("NPC Test Lab squad recovery validation requires an available live human NPC.");
+        var view = _entityViews[entity.Id];
+        var start = new System.Numerics.Vector3(entity.Position.X, entity.Position.Y, entity.Position.Z);
+        var squadTarget = start + new System.Numerics.Vector3(0, 0, 8);
+        if (_world.AddSquadMember(entity.Id) != SquadResult.Accepted
+            || squad.Execute(SquadOrderKind.MoveTo, squadTarget).Code != SquadResult.Accepted)
+            throw new InvalidOperationException("NPC Test Lab squad recovery validation could not create its MoveTo fixture.");
+
+        try
+        {
+            squad.Advance();
+            if (view.NavigationTarget is not { } initialTarget
+                || System.Numerics.Vector3.DistanceSquared(initialTarget, squadTarget) > 0.01f)
+                throw new InvalidOperationException("NPC Test Lab squad recovery fixture did not start its MoveTo route.");
+
+            HandleNpcAnimationTestMovement(entity.Id, NpcAnimationTestMovement.Walk);
+            var testTarget = start + new System.Numerics.Vector3(4, 0, 0);
+            squad.Advance();
+            if (view.NavigationTarget is not { } activeTestTarget
+                || System.Numerics.Vector3.DistanceSquared(activeTestTarget, testTarget) > 0.01f)
+                throw new InvalidOperationException("Squad advancement replaced a member's active Test Lab route.");
+
+            StopNpcAnimationTestMovement(entity.Id);
+            squad.Advance();
+            if (view.NavigationTarget is not { } resumedTarget
+                || System.Numerics.Vector3.DistanceSquared(resumedTarget, squadTarget) > 0.01f
+                || entity.Actions.Current?.Kind != ActionKind.SquadMove)
+                throw new InvalidOperationException("NPC Test Lab did not resume its member's current squad MoveTo order.");
+
+            StopNpcAnimationTestMovement(entity.Id);
+            if (view.NavigationOutcome != NavigationOutcome.InProgress
+                || view.NavigationTarget is not { } unchangedTarget
+                || System.Numerics.Vector3.DistanceSquared(unchangedTarget, squadTarget) > 0.01f)
+                throw new InvalidOperationException("Stop move cancelled ordinary squad navigation when no Test Lab route was active.");
+        }
+        finally
+        {
+            if (IsNpcAnimationTestMoving(entity.Id)) StopNpcAnimationTestMovement(entity.Id);
+            squad.Reset();
+            _world.RemoveSquadMember(entity.Id);
         }
     }
 
@@ -255,14 +318,15 @@ public partial class Main
 
     private void StopNpcAnimationTestMovement(string entityId)
     {
-        _npcAnimationTestRouteTargets.Remove(entityId);
+        var hadTestRoute = _npcAnimationTestRouteTargets.Remove(entityId);
         if (_entityViews.TryGetValue(entityId, out var view))
         {
-            view.CancelNavigation();
+            if (hadTestRoute) view.CancelNavigation();
             view.SetAnimationTestMovementMultiplier(1f);
             view.StopPresentationAnimationForTesting();
         }
 
+        if (hadTestRoute) _squad?.ResumeMember(entityId);
     }
 
     private void ResetNpcAnimationTestRoutes()
