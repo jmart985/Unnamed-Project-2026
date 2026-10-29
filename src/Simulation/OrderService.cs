@@ -277,7 +277,7 @@ public sealed class OrderService : ITransientSimulationState
     private static bool IsInterrupted(EntityRecord entity)
         => entity.Needs.IsHungry
             || entity.SleepState == SleepState.Sleeping
-            || entity.Actions.Current?.Kind is ActionKind.Eat or ActionKind.Flee;
+            || entity.Actions.Current?.InterruptsMovementOrders == true;
 
     private static bool IsValidIntent(EntityOrder intent)
         => Enum.IsDefined(intent.Kind)
