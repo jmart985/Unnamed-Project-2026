@@ -116,7 +116,8 @@ public partial class Main
         && !ConstructionPanelOpen && !PlacementPanelOpen && !_clock.IsPaused;
 
     private bool GameplayCameraCaptureAllowed => _sessionActive && _menuState.ActiveMenu is null
-        && !WorkstationPanelOpen && !FarmPanelOpen && !ConstructionPanelOpen && !_clock.IsPaused;
+        && !WorkstationPanelOpen && !FarmPanelOpen && !ConstructionPanelOpen
+        && _npcAnimationTestPanel?.IsOpen != true && !_clock.IsPaused;
 
     private void ConfigureGameplayActions()
     {
@@ -172,6 +173,8 @@ public partial class Main
 
     private void UpdateGameplayFeedback(double delta)
     {
+        var cameraCaptureAllowed = GameplayCameraCaptureAllowed;
+        _playerCharacter.MouseLookEnabled = cameraCaptureAllowed;
         if (_actionHud is null) return;
         UpdateSocialPopups(delta);
         _feedbackSeconds = Math.Max(0, _feedbackSeconds - delta);
@@ -179,7 +182,7 @@ public partial class Main
         _targetReticle.Visible = GameplayActionsAllowed || PlacementPanelOpen;
         // Direct build mode keeps the live camera and centered reticle while its hotbar
         // suppresses world actions; ordinary modal menus release the captured cursor.
-        Input.MouseMode = GameplayCameraCaptureAllowed ? Input.MouseModeEnum.Captured : Input.MouseModeEnum.Visible;
+        Input.MouseMode = cameraCaptureAllowed ? Input.MouseModeEnum.Captured : Input.MouseModeEnum.Visible;
         var collect = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.Collect).Desktop);
         var interact = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.Interact).Desktop);
         var greet = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.Greet).Desktop);
@@ -411,7 +414,8 @@ public partial class Main
         if (!string.Equals(target.SpeciesId, "human", StringComparison.Ordinal))
         {
             var reason = GreetSelectedEntity();
-            ShowEntityInteractionResult(new InteractionResult(reason.StartsWith("Greeted", StringComparison.Ordinal), reason), target.Id, "Friendly greeting acknowledged");
+            ShowEntityInteractionResult(new InteractionResult(reason.StartsWith("Greeted", StringComparison.Ordinal), reason), target.Id,
+                "Friendly greeting acknowledged", pauseForGreeting: true);
             return;
         }
 
@@ -421,15 +425,22 @@ public partial class Main
             InteractionType.Social,
             "greet"));
 
-        ShowEntityInteractionResult(result, target.Id, "Friendly greeting acknowledged");
+        ShowEntityInteractionResult(result, target.Id, "Friendly greeting acknowledged", pauseForGreeting: true);
     }
 
-    private void ShowEntityInteractionResult(InteractionResult result, string targetId, string acknowledgment)
+    private void ShowEntityInteractionResult(InteractionResult result, string targetId, string acknowledgment,
+        bool pauseForGreeting = false)
     {
         if (result.Succeeded)
         {
+            if (pauseForGreeting)
+                _playerCharacter.HoldMovementForInteraction(EntityView.GreetingMovementHoldSeconds);
             if (_entityViews.TryGetValue(targetId, out var view))
+            {
+                if (pauseForGreeting)
+                    view.HoldMovementForInteraction(EntityView.GreetingMovementHoldSeconds);
                 view.AcknowledgeGreeting(() => _world.TryGetEntity(_playerCharacter.EntityId, out _) ? _playerCharacter.GlobalPosition : null);
+            }
             ShowActionFeedback(result.Reason, targetId, acknowledgment);
         }
         else ShowActionFeedback(result.Reason);

@@ -1,0 +1,103 @@
+{
+  "npc_id": "entity-000009",
+  "slug": "undeadf",
+  "sex": "female",
+  "source_file": "undeadf/UndeadF v.1.0.2.blend",
+  "rig": "UndeadF_RIG",
+  "source_meshes": [
+    "UndeadF_GEO",
+    "UndeadF_Scalp",
+    "UndeadF_Hair03_Loose"
+  ],
+  "bone_map": {
+    "pelvis": "Pelvis",
+    "spine_02": "Spine_02",
+    "spine_03": "Chest",
+    "head": "Head",
+    "upperarm_l": "DEF-Upperarm_01.L",
+    "lowerarm_l": "DEF-Forearm_01.L",
+    "upperarm_r": "DEF-Upperarm_01.R",
+    "lowerarm_r": "DEF-Forearm_01.R",
+    "thigh_l": "DEF-Thigh_01.L",
+    "calf_l": "DEF-Shin_01.L",
+    "foot_l": "DEF-Foot.L",
+    "thigh_r": "DEF-Thigh_01.R",
+    "calf_r": "DEF-Shin_01.R",
+    "foot_r": "DEF-Foot.R"
+  },
+  "animation_clips": [
+    "human_idle",
+    "human_run",
+    "human_walk",
+    "npc_face_angry",
+    "npc_face_blink",
+    "npc_face_fear",
+    "npc_face_happy",
+    "npc_face_sad",
+    "npc_face_surprised"
+  ],
+  "locomotion_clips": [
+    "human_idle",
+    "human_run",
+    "human_walk"
+  ],
+  "locomotion_root_motion": false,
+  "facial_expression_clips": {
+    "happy": "npc_face_happy",
+    "sad": "npc_face_sad",
+    "angry": "npc_face_angry",
+    "surprised": "npc_face_surprised",
+    "fear": "npc_face_fear",
+    "blink": "npc_face_blink"
+  },
+  "facial_expression_targets": {
+    "npc_face_happy": [
+      {
+        "mesh": "UndeadF_GEO",
+        "shape_key": "npc_face_happy"
+      }
+    ],
+    "npc_face_sad": [
+      {
+        "mesh": "UndeadF_GEO",
+        "shape_key": "npc_face_sad"
+      }
+    ],
+    "npc_face_angry": [
+      {
+        "mesh": "UndeadF_GEO",
+        "shape_key": "npc_face_angry"
+      }
+    ],
+    "npc_face_surprised": [
+      {
+        "mesh": "UndeadF_GEO",
+        "shape_key": "npc_face_surprised"
+      }
+    ],
+    "npc_face_fear": [
+      {
+        "mesh": "UndeadF_GEO",
+        "shape_key": "npc_face_fear"
+      }
+    ],
+    "npc_face_blink": [
+      {
+        "mesh": "UndeadF_GEO",
+        "shape_key": "npc_face_blink"
+      }
+    ]
+  },
+  "target_height_m": 1.75,
+  "source_height_m": 1.655772490633027,
+  "normalized_scale": 1.0569084882736206,
+  "glb_bytes": 12631368,
+  "textures_max_edge": 1024,
+  "source_animations_expected": [],
+  "source_morph_target_count": 90,
+  "source_morph_targets_omitted": 90,
+  "runtime_expression_targets_generated": 6,
+  "runtime_morph_targets_included": true,
+  "runtime_morph_target_count": 6,
+  "base_mesh_preserved_from": "undeadf.glb"
+}

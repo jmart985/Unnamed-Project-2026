@@ -39,16 +39,24 @@ public partial class Main
             Require(_world.TryGetEntity(_world.PlayerEntityId ?? string.Empty, out var malePlayer)
                 && malePlayer?.Sex == BiologicalSex.Male,
                 "male player creation sets the authoritative entity sex");
-            var maleNpc = _world.Entities.First(entity => entity.Id != _world.PlayerEntityId
-                && entity.SpeciesId == "human" && entity.Sex == BiologicalSex.Male);
-            var femaleNpc = _world.Entities.First(entity => entity.Id != _world.PlayerEntityId
-                && entity.SpeciesId == "human" && entity.Sex == BiologicalSex.Female);
-            Require(_entityViews[maleNpc.Id].PresentationModelAssetPath
-                    == "res://assets/humanoids/human/radagon_male_humanoid_rig_v1.glb",
-                "male NPC selects the Radagon presentation model");
-            Require(_entityViews[femaleNpc.Id].PresentationModelAssetPath
-                    == "res://assets/humanoids/human/human_humanoid_rig_v1.glb",
-                "female NPC keeps the existing humanoid presentation model");
+            var starterNpcs = _world.Entities
+                .Where(entity => entity.Id != _world.PlayerEntityId && entity.SpeciesId == "human")
+                .ToDictionary(entity => entity.Id, StringComparer.Ordinal);
+            Require(starterNpcs.Count == NewGameSession.HumanNpcCount
+                && starterNpcs.Values.Count(entity => entity.Sex == BiologicalSex.Male) == 4
+                && starterNpcs.Values.Count(entity => entity.Sex == BiologicalSex.Female) == 6,
+                "starter NPCs use the configured four-male, six-female mix");
+            foreach (var presentation in StarterNpcPresentationCatalog.All)
+            {
+                Require(starterNpcs.TryGetValue(presentation.EntityId, out var npc)
+                    && npc.Sex == presentation.Sex
+                    && _entityViews[presentation.EntityId].PresentationModelAssetPath == presentation.AssetPath,
+                    $"{presentation.DisplayName} has its matching sex and distinct model");
+            }
+            Require(!StarterNpcPresentationCatalog.All.Any(model => model.EntityId == _world.PlayerEntityId)
+                && _world.TryGetEntity(_world.PlayerEntityId ?? string.Empty, out var maleProfilePlayer)
+                && maleProfilePlayer?.Sex == BiologicalSex.Male,
+                "player model assignment remains separate from the NPC roster");
             GD.Print("SESSION PROFILE VALIDATION PASSED: new-game and baseline resources remain explicit; reset preserves the selected profile.");
             GetTree().Quit();
         }
