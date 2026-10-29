@@ -10,7 +10,7 @@ internal sealed class NpcLocomotionAnimator
         _manualBonePoseBaseline = [];
     private readonly Dictionary<string, string> _animationNames = new(StringComparer.OrdinalIgnoreCase);
     private AnimationPlayer? _player;
-    private string _speciesId = string.Empty;
+    private string _locomotionFamily = string.Empty;
     private string? _currentAnimation;
     private string? _manualAnimation;
     private bool _manualAnimationLoops;
@@ -22,11 +22,11 @@ internal sealed class NpcLocomotionAnimator
 
     public bool HoldsPositionForManualAction => _manualAnimation is not null && !_manualAnimationLoops;
 
-    public void Bind(AnimationPlayer? player, string speciesId, bool isCreature, float movementSpeed)
+    public void Bind(AnimationPlayer? player, string locomotionFamily, bool isCreature, float movementSpeed)
     {
         RestoreManualPoseBaseline();
         _player = player;
-        _speciesId = speciesId;
+        _locomotionFamily = locomotionFamily;
         _isCreature = isCreature;
         _movementSpeed = Mathf.Max(movementSpeed, 0.5f);
         _currentAnimation = null;
@@ -72,7 +72,7 @@ internal sealed class NpcLocomotionAnimator
         }
         else
         {
-            var walk = _isCreature && _speciesId.Equals("ape", StringComparison.OrdinalIgnoreCase)
+            var walk = _isCreature && _locomotionFamily.Equals("primate", StringComparison.OrdinalIgnoreCase)
                 ? Find("knuckle_walk", "walk")
                 : Find("human_walk", "walk");
             var trot = _isCreature ? Find("trot") : null;

@@ -17,6 +17,8 @@ public partial class EntityView : CharacterBody3D
     private string _bodyCategory = string.Empty;
     private InteractionAnchorDefinition _anchorDefinition = InteractionAnchorDefinition.Empty;
     private CreatureBodyPlan _bodyPlan;
+    private EntityPresentationCatalog.EntityPresentationDefinition _presentation =
+        EntityPresentationCatalog.EntityPresentationDefinition.CreateFallback(CreatureBodyPlan.Humanoid, isCreature: false);
     private Node3D? _rig;
     private Node3D? _visualModelRoot;
     private ProceduralGait? _gait;
@@ -135,15 +137,8 @@ public partial class EntityView : CharacterBody3D
         // Deterministic per-entity variation so individuals are distinguishable without extra state.
         var hash = (uint)StringComparer.Ordinal.GetHashCode(EntityId);
         var variation = (hash % 100) / 100f;
-        var (bodyColor, accentColor) = _speciesId switch
-        {
-            "cow" => (new Color(0.92f, 0.9f, 0.85f), new Color(0.15f, 0.12f, 0.1f)),
-            "wolf" => (new Color(0.45f, 0.45f, 0.5f), new Color(0.2f, 0.2f, 0.24f)),
-            "ape" => (new Color(0.3f, 0.2f, 0.14f), new Color(0.55f, 0.4f, 0.3f)),
-            "pig" or "swine" or "boar" => (new Color(0.64f, 0.36f, 0.32f), new Color(0.35f, 0.16f, 0.14f)),
-            _ when _isCreature => (new Color(0.6f, 0.45f + variation * 0.15f, 0.3f), new Color(0.35f, 0.25f, 0.15f)),
-            _ => (Color.FromHsv(variation, 0.45f, 0.75f), new Color(0.85f, 0.68f + variation * 0.12f, 0.55f))
-        };
+        var bodyColor = _presentation.ResolveBodyColor(variation);
+        var accentColor = _presentation.AccentColor;
 
         if (_bodyPlan != CreatureBodyPlan.Humanoid)
         {
@@ -162,80 +157,90 @@ public partial class EntityView : CharacterBody3D
             return false;
         }
 
-        var (assetPath, displayName, totalHeight, radius) = _speciesId switch
-        {
-            "wolf" => ("res://assets/creatures/wolf/wolf_canid_rig_v1.glb", "WolfProductionModel", 1.0f, 0.32f),
-            "cow" => ("res://assets/creatures/cow/cow_ungulate_rig_v1.glb", "CowProductionModel", 1.65f, 0.45f),
-            "ape" => ("res://assets/creatures/ape/ape_primate_rig_v1.glb", "ApeProductionModel", 1.75f, 0.38f),
-            "fox" or "vulpine" => ("res://assets/creatures/fox/fox_vulpine_rig_v1.glb", "FoxProductionModel", 0.95f, 0.24f),
-            "cat" or "feline" => ("res://assets/creatures/cat/cat_felid_rig_v1.glb", "CatProductionModel", 0.80f, 0.24f),
-            "pig" or "swine" or "boar" => ("res://assets/creatures/pig/pig_suiform_rig_v1.glb", "PigProductionModel", 0.78f, 0.30f),
-            _ => (string.Empty, string.Empty, 0f, 0f)
-        };
-        if (string.IsNullOrEmpty(assetPath))
+        var assetPath = _presentation.GetModelPath(_sex);
+        if (string.IsNullOrWhiteSpace(assetPath))
         {
             return false;
         }
 
-        var packed = GD.Load<PackedScene>(assetPath);
+        var selectedPath = assetPath;
+        var packed = LoadPresentationModel(assetPath);
+        if (packed is null && _presentation.GetDefaultModelPath() is { } fallbackPath
+            && fallbackPath != assetPath)
+        {
+            GD.PushWarning($"{_presentation.GetDisplayName(_sex)} is unavailable; using the default species presentation.");
+            assetPath = fallbackPath;
+            packed = LoadPresentationModel(assetPath);
+        }
         if (packed is null)
         {
-            GD.PushWarning($"{displayName} is unavailable; using the procedural creature fallback.");
+            GD.PushWarning($"{_presentation.GetDisplayName(_sex)} is unavailable; using the procedural creature fallback.");
             return false;
         }
 
+        var displayName = assetPath == selectedPath
+            ? _presentation.GetDisplayName(_sex)
+            : _presentation.DisplayName;
         var model = AddImportedModel(packed, displayName);
-        AddCollision(totalHeight, radius);
+        PresentationModelAssetPath = assetPath;
+        AddCollision(_presentation.ModelHeight, _presentation.ModelCollisionRadius);
 
         var animationPlayer = model.FindChild("AnimationPlayer", recursive: true, owned: false) as AnimationPlayer;
-        _npcLocomotionAnimator.Bind(animationPlayer, _speciesId, _isCreature, _movementSpeed);
+        _npcLocomotionAnimator.Bind(animationPlayer, _presentation.LocomotionFamily, _isCreature, _movementSpeed);
 
         return true;
     }
 
     private bool TryBuildProductionHumanoid()
     {
-        if (_isCreature || !_speciesId.Equals("human", StringComparison.OrdinalIgnoreCase))
+        if (_isCreature || _bodyPlan != CreatureBodyPlan.Humanoid)
         {
             return false;
         }
 
-        var malePresentation = _sex == BiologicalSex.Male;
-        var fallbackAssetPath = malePresentation
-            ? "res://assets/humanoids/human/radagon_male_humanoid_rig_v1.glb"
-            : "res://assets/humanoids/human/human_humanoid_rig_v1.glb";
-        var assetPath = fallbackAssetPath;
-        var displayName = malePresentation ? "RadagonMaleProductionModel" : "HumanProductionModel";
-        if (StarterNpcPresentationCatalog.TryGet(EntityId, _sex, out var starterPresentation)
-            && starterPresentation is not null)
-        {
-            assetPath = starterPresentation.AssetPath;
-            displayName = $"{starterPresentation.DisplayName}ProductionModel";
-        }
+        var catalogAssetPath = _presentation.GetModelPath(_sex);
+        StarterNpcPresentationCatalog.TryGet(EntityId, _sex, out var starterPresentation);
+        var assetPath = starterPresentation?.AssetPath ?? catalogAssetPath;
+        if (string.IsNullOrWhiteSpace(assetPath))
+            return false;
 
-        var packed = GD.Load<PackedScene>(assetPath);
-        if (packed is null && !string.Equals(assetPath, fallbackAssetPath, StringComparison.Ordinal))
+        var selectedPath = assetPath;
+        var packed = LoadPresentationModel(assetPath);
+        if (packed is null)
         {
-            GD.PushWarning($"Starter NPC model '{assetPath}' is unavailable; using the default sex-based human presentation.");
-            assetPath = fallbackAssetPath;
-            displayName = malePresentation ? "RadagonMaleProductionModel" : "HumanProductionModel";
-            packed = GD.Load<PackedScene>(assetPath);
+            var fallbackPath = starterPresentation is not null
+                ? catalogAssetPath
+                : _presentation.GetDefaultModelPath();
+            if (!string.IsNullOrWhiteSpace(fallbackPath) && fallbackPath != assetPath)
+            {
+                GD.PushWarning($"{starterPresentation?.DisplayName ?? _presentation.GetDisplayName(_sex)} is unavailable; using the configured species presentation.");
+                assetPath = fallbackPath;
+                packed = LoadPresentationModel(assetPath);
+            }
         }
         if (packed is null)
         {
-            GD.PushWarning("Human Humanoid Rig v1 is unavailable; using the procedural human fallback.");
+            GD.PushWarning($"{starterPresentation?.DisplayName ?? _presentation.GetDisplayName(_sex)} is unavailable; using the procedural humanoid fallback.");
             return false;
         }
 
+        var displayName = assetPath == selectedPath && starterPresentation is not null
+            ? $"{starterPresentation.DisplayName}ProductionModel"
+            : assetPath == selectedPath || assetPath == catalogAssetPath
+                ? _presentation.GetDisplayName(_sex)
+                : _presentation.DisplayName;
         var model = AddImportedModel(packed, displayName);
         PresentationModelAssetPath = assetPath;
-        AddCollision(totalHeight: 1.75f, radius: 0.32f);
+        AddCollision(_presentation.ModelHeight, _presentation.ModelCollisionRadius);
 
         var animationPlayer = model.FindChild("AnimationPlayer", recursive: true, owned: false) as AnimationPlayer;
-        _npcLocomotionAnimator.Bind(animationPlayer, _speciesId, _isCreature, _movementSpeed);
+        _npcLocomotionAnimator.Bind(animationPlayer, _presentation.LocomotionFamily, _isCreature, _movementSpeed);
 
         return true;
     }
+
+    private static PackedScene? LoadPresentationModel(string path) =>
+        ResourceLoader.Exists(path) ? GD.Load<PackedScene>(path) : null;
 
     private Node3D AddImportedModel(PackedScene packed, string displayName)
     {
@@ -303,17 +308,7 @@ public partial class EntityView : CharacterBody3D
     private void BuildQuadruped(Color bodyColor, Color accentColor)
     {
         var rig = _rig ?? throw new InvalidOperationException("Build the body rig before its limbs.");
-        var bodySize = _speciesId switch
-        {
-            "cow" => new Vector3(0.9f, 0.8f, 1.45f),
-            "wolf" => new Vector3(0.6f, 0.5f, 1.2f),
-            "ape" => new Vector3(0.82f, 0.62f, 1.15f),
-            "pig" or "swine" or "boar" => new Vector3(0.78f, 0.62f, 1.05f),
-            _ when _bodyPlan == CreatureBodyPlan.Ungulate => new Vector3(0.88f, 0.78f, 1.4f),
-            _ when _bodyPlan == CreatureBodyPlan.Canid => new Vector3(0.6f, 0.5f, 1.2f),
-            _ when _bodyPlan == CreatureBodyPlan.Primate => new Vector3(0.82f, 0.62f, 1.15f),
-            _ => new Vector3(0.75f, 0.65f, 1.25f)
-        };
+        var bodySize = _presentation.ProceduralBodySize;
         var ape = _bodyPlan == CreatureBodyPlan.Primate;
         var legLength = bodySize.Y * (_bodyPlan == CreatureBodyPlan.Canid ? 0.85f
             : ape ? 0.95f : 0.75f);
@@ -322,7 +317,7 @@ public partial class EntityView : CharacterBody3D
         var frontLegLength = ape ? bodySize.Y * 1.15f : legLength;
         var rearLegLength = ape ? bodySize.Y * 0.82f : legLength;
         var bodyY = Mathf.Max(frontLegLength, rearLegLength) + bodySize.Y * 0.5f - 0.05f;
-        AddCollision(Mathf.Max(frontLegLength, rearLegLength) + bodySize.Y, Mathf.Max(bodySize.X, bodySize.Z) * 0.4f);
+        AddCollision(_presentation.FallbackCollisionHeight, _presentation.FallbackCollisionRadius);
         _gait!.BobHeight = 0.03f;
         _gait.RadiansPerMeter = 3.4f;
 
@@ -395,18 +390,18 @@ public partial class EntityView : CharacterBody3D
     private void BuildUpright(Color shirt, Color skin, float variation)
     {
         var rig = _rig ?? throw new InvalidOperationException("Build the body rig before its limbs.");
-        var ape = _speciesId == "ape";
-        var legLength = ape ? 0.55f : 0.9f;
-        var shoulderWidth = ape ? 0.85f : 0.5f;
-        var chest = ape ? new Vector3(0.75f, 0.6f, 0.45f) : new Vector3(0.5f, 0.55f, 0.28f);
-        var armLength = ape ? 0.95f : 0.68f;
-        var lean = ape ? -0.5f : 0f;
-        var pants = ape ? shirt : new Color(0.22f, 0.25f, 0.36f);
-        var armColor = ape ? shirt : shirt.Darkened(0.1f);
-        var handColor = ape ? skin : skin;
-        var totalHeight = legLength + chest.Y + 0.35f;
-        AddCollision(totalHeight, 0.32f);
-        _gait!.BobHeight = ape ? 0.05f : 0.035f;
+        var primate = _bodyPlan == CreatureBodyPlan.Primate;
+        var proportions = _presentation.Upright;
+        var legLength = proportions.LegLength;
+        var shoulderWidth = proportions.ShoulderWidth;
+        var chest = proportions.ChestSize;
+        var armLength = proportions.ArmLength;
+        var lean = proportions.ForwardLeanRadians;
+        var pants = primate ? shirt : _presentation.LowerBodyColor;
+        var armColor = primate ? shirt : shirt.Darkened(0.1f);
+        var handColor = skin;
+        AddCollision(_presentation.FallbackCollisionHeight, _presentation.FallbackCollisionRadius);
+        _gait!.BobHeight = proportions.BobHeight;
 
 		AddPart(new SphereMesh { Radius = 0.5f, Height = 2f }, new Vector3(0, legLength, 0), pants,
 			scale: new Vector3(chest.X * 0.88f, 0.1f, chest.Z * 0.92f));
@@ -418,7 +413,7 @@ public partial class EntityView : CharacterBody3D
 			scale: new Vector3(chest.X * 0.72f, 0.05f, chest.Z * 0.8f), parent: torso);
         AddPart(new CylinderMesh { TopRadius = 0.07f, BottomRadius = 0.08f, Height = 0.12f }, new Vector3(0, chest.Y + 0.1f, 0), skin, parent: torso);
 
-        var headPivot = AddJoint(torso, new Vector3(0, chest.Y + 0.15f, ape ? -0.08f : 0));
+        var headPivot = AddJoint(torso, new Vector3(0, chest.Y + 0.15f, primate ? -0.08f : 0));
         AddPart(new SphereMesh { Height = 0.46f, Radius = 0.22f }, new Vector3(0, 0.15f, 0), skin, parent: headPivot);
         AddPart(new SphereMesh { Radius = 0.03f, Height = 0.06f }, new Vector3(-0.08f, 0.2f, -0.19f), Colors.Black, parent: headPivot);
         AddPart(new SphereMesh { Radius = 0.03f, Height = 0.06f }, new Vector3(0.08f, 0.2f, -0.19f), Colors.Black, parent: headPivot);
@@ -428,7 +423,7 @@ public partial class EntityView : CharacterBody3D
             AddPart(new SphereMesh { Radius = 0.05f, Height = 0.1f }, new Vector3(x, 0.15f, 0), skin, parent: headPivot);
         }
 
-        if (ape)
+        if (primate)
         {
             AddPart(new BoxMesh { Size = new Vector3(0.3f, 0.14f, 0.12f) }, new Vector3(0, 0.05f, -0.17f), skin.Lightened(0.1f), parent: headPivot);
             AddPart(new BoxMesh { Size = new Vector3(0.42f, 0.08f, 0.1f) }, new Vector3(0, 0.3f, -0.15f), shirt.Darkened(0.1f), parent: headPivot);
@@ -441,13 +436,13 @@ public partial class EntityView : CharacterBody3D
 
         _gait.Limbs.Add(new ProceduralGait.Limb { Pivot = headPivot, Axis = Vector3.Up, Amplitude = 0.05f, IdleAmplitude = 0.2f, IdleFrequency = 0.6f });
 
-        var swing = ape ? 0.55f : 0.6f;
+        var swing = primate ? 0.55f : 0.6f;
         var shoulderY = chest.Y + 0.02f;
-        AddArm(torso, new Vector3(-(shoulderWidth * 0.5f + 0.06f), shoulderY, 0), armLength, ape ? 0.17f : 0.11f, armColor, handColor, Mathf.Pi, swing);
-        AddArm(torso, new Vector3(shoulderWidth * 0.5f + 0.06f, shoulderY, 0), armLength, ape ? 0.17f : 0.11f, armColor, handColor, 0, swing);
+        AddArm(torso, new Vector3(-(shoulderWidth * 0.5f + 0.06f), shoulderY, 0), armLength, proportions.ArmThickness, armColor, handColor, Mathf.Pi, swing);
+        AddArm(torso, new Vector3(shoulderWidth * 0.5f + 0.06f, shoulderY, 0), armLength, proportions.ArmThickness, armColor, handColor, 0, swing);
 
         var hipX = chest.X * 0.28f;
-        var thickness = ape ? 0.17f : 0.15f;
+        var thickness = proportions.LegThickness;
         AddLeg(_rig, new Vector3(-hipX, legLength, 0), legLength, thickness, pants, new Color(0.15f, 0.12f, 0.1f), 0, 0.6f, 0.9f);
         AddLeg(_rig, new Vector3(hipX, legLength, 0), legLength, thickness, pants, new Color(0.15f, 0.12f, 0.1f), Mathf.Pi, 0.6f, 0.9f);
     }
@@ -504,7 +499,7 @@ public partial class EntityView : CharacterBody3D
 
     public void Bind(string entityId, float movementSpeed, bool isCreature = false, string? speciesId = null,
         string? bodyCategory = null, InteractionAnchorDefinition? anchorDefinition = null,
-        BiologicalSex sex = BiologicalSex.Unspecified)
+        BiologicalSex sex = BiologicalSex.Unspecified, EntityPresentationCatalog? presentationCatalog = null)
     {
         if (!float.IsFinite(movementSpeed) || movementSpeed <= 0) throw new ArgumentOutOfRangeException(nameof(movementSpeed));
         EntityId = entityId;
@@ -516,6 +511,8 @@ public partial class EntityView : CharacterBody3D
         _bodyCategory = bodyCategory ?? (isCreature ? "quadruped" : "humanoid");
         _anchorDefinition = anchorDefinition ?? InteractionAnchorDefinition.Empty;
         _bodyPlan = CreatureBodyPlanResolver.Resolve(_bodyCategory, _isCreature);
+        _presentation = (presentationCatalog ?? EntityPresentationCatalog.Empty)
+            .Resolve(_speciesId, _isCreature, _bodyCategory);
     }
 
     public bool Sync(World world)
