@@ -12,6 +12,7 @@ public sealed class CreatureHuntingServiceTests
     public void HungryWolfSelectsNearestConfiguredWildPreyWithStableTieBreakAndEatsCarcass()
     {
         var world = new World();
+        world.SpeciesCatalog = Catalog;
         var wolf = world.SpawnEntity(Catalog.GetRequired("wolf"), Vector3.Zero, satiety: 20);
         var firstCow = world.SpawnEntity(Catalog.GetRequired("cow"), new Vector3(1, 0, 0));
         var tiedCow = world.SpawnEntity(Catalog.GetRequired("cow"), new Vector3(-1, 0, 0));
@@ -69,6 +70,7 @@ public sealed class CreatureHuntingServiceTests
     public void HuntIgnoresDeadCapturedDomesticWrongSpeciesAndFriendlyTargets()
     {
         var world = new World();
+        world.SpeciesCatalog = Catalog;
         world.DefineFaction("wolf-home");
         var wolf = world.SpawnEntity(Catalog.GetRequired("wolf"), Vector3.Zero, satiety: 20);
         world.SetEntityAllegiance(wolf.Id, "wolf-home");

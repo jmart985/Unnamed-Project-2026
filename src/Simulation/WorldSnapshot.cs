@@ -578,7 +578,7 @@ public static class WorldSnapshotSerializer
                 throw new InvalidDataException($"Snapshot contains duplicate entity ID '{entity.Id}'.");
             }
 
-            if (!speciesCatalog.TryGet(entity.SpeciesId, out _))
+            if (!speciesCatalog.TryGet(entity.SpeciesId, out var species) || species is null)
             {
                 throw new InvalidDataException(
                     $"Snapshot entity '{entity.Id}' references unknown species '{entity.SpeciesId}'.");
@@ -595,7 +595,7 @@ public static class WorldSnapshotSerializer
 
             if (!Enum.IsDefined(entity.CaptivityState)
                 || (entity.CaptivityState != CreatureCaptivityState.Wild
-                    && string.Equals(entity.SpeciesId, "human", StringComparison.Ordinal)))
+                    && !species.CanBeCaptured))
             {
                 throw new InvalidDataException(
                     $"Snapshot entity '{entity.Id}' has an invalid creature captivity state.");
@@ -617,7 +617,7 @@ public static class WorldSnapshotSerializer
                 "Snapshot last allocated entity ID must include every entity ID.");
         }
 
-        ValidateSessionPlayer(snapshot, entityIds);
+        ValidateSessionPlayer(snapshot, entityIds, speciesCatalog);
         if (snapshot.PlayerEntityId is not null)
         {
             if (snapshot.PlayerHealth is null || snapshot.PlayerHealth.Count == 0)
@@ -631,8 +631,10 @@ public static class WorldSnapshotSerializer
         {
             if (string.IsNullOrWhiteSpace(id) || !memberIds.Add(id)
                 || id == snapshot.PlayerEntityId
-                || !snapshot.Entities.Any(entity => entity.Id == id && entity.SpeciesId == "human"))
-                throw new InvalidDataException("Snapshot squad members must be distinct live human NPCs.");
+                || !snapshot.Entities.Any(entity => entity.Id == id
+                    && speciesCatalog.TryGet(entity.SpeciesId, out var species)
+                    && species is { CanJoinPlayerSquad: true }))
+                throw new InvalidDataException("Snapshot squad members must be distinct eligible NPCs.");
         }
         if (snapshot.WorkSchedules is null) throw new InvalidDataException("Snapshot work schedules are required.");
         var scheduleIds = new HashSet<string>(StringComparer.Ordinal);
@@ -640,9 +642,11 @@ public static class WorldSnapshotSerializer
         {
             if (setting is null || string.IsNullOrWhiteSpace(setting.EntityId)
                 || !scheduleIds.Add(setting.EntityId) || setting.EntityId == snapshot.PlayerEntityId
-                || !snapshot.Entities.Any(entity => entity.Id == setting.EntityId && entity.SpeciesId == "human")
+                || !snapshot.Entities.Any(entity => entity.Id == setting.EntityId
+                    && speciesCatalog.TryGet(entity.SpeciesId, out var species)
+                    && species is { CanHaveWorkSchedule: true })
                 || !new NpcWorkSchedule(setting.StartHour, setting.EndHour).IsValid)
-                throw new InvalidDataException("Snapshot work schedules must reference distinct human NPCs with valid work hours.");
+                throw new InvalidDataException("Snapshot work schedules must reference distinct eligible NPCs with valid work hours.");
         }
         if (snapshot.HomePositions is null) throw new InvalidDataException("Snapshot home positions are required.");
         var homeIds = new HashSet<string>(StringComparer.Ordinal);
@@ -650,8 +654,10 @@ public static class WorldSnapshotSerializer
         {
             if (home is null || string.IsNullOrWhiteSpace(home.EntityId)
                 || !homeIds.Add(home.EntityId) || home.EntityId == snapshot.PlayerEntityId
-                || !snapshot.Entities.Any(entity => entity.Id == home.EntityId && entity.SpeciesId == "human"))
-                throw new InvalidDataException("Snapshot home positions must reference distinct human NPCs.");
+                || !snapshot.Entities.Any(entity => entity.Id == home.EntityId
+                    && speciesCatalog.TryGet(entity.SpeciesId, out var species)
+                    && species is { CanHaveWorkSchedule: true }))
+                throw new InvalidDataException("Snapshot home positions must reference distinct eligible NPCs.");
             ValidatePosition(home.Position, $"home '{home.EntityId}' position");
         }
         if (snapshot.WildTerritories is null) throw new InvalidDataException("Snapshot wild territories are required.");
@@ -938,7 +944,8 @@ public static class WorldSnapshotSerializer
 
     private static void ValidateSessionPlayer(
         WorldSnapshot snapshot,
-        HashSet<string> entityIds)
+        HashSet<string> entityIds,
+        SpeciesCatalog speciesCatalog)
     {
         var hasSessionMetadata = snapshot.SessionSeed is not null
             || snapshot.PlayerEntityId is not null
@@ -968,9 +975,10 @@ public static class WorldSnapshotSerializer
 
         var player = snapshot.Entities.First(entity =>
             string.Equals(entity.Id, snapshot.PlayerEntityId, StringComparison.Ordinal));
-        if (!string.Equals(player.SpeciesId, "human", StringComparison.Ordinal))
+        if (!speciesCatalog.TryGet(player.SpeciesId, out var species)
+            || species is not { CanBePlayerCharacter: true })
         {
-            throw new InvalidDataException("Snapshot session player must reference a human entity.");
+            throw new InvalidDataException("Snapshot session player must reference a species with player-character capability.");
         }
         if (player.Sex != snapshot.PlayerProfile.EntitySex)
             throw new InvalidDataException("Snapshot player entity sex must match the character creation profile.");

@@ -145,8 +145,11 @@ public sealed class World
     public bool RemoveWildTerritory(string? entityId) =>
         !string.IsNullOrWhiteSpace(entityId) && _wildTerritories.Remove(entityId);
 
-    public bool HasDailySchedule(EntityRecord entity) => entity.SpeciesId == "human" && entity.Id != PlayerEntityId
-        && TryGetEntity(entity.Id, out var owned) && ReferenceEquals(entity, owned);
+    public bool HasDailySchedule(EntityRecord entity) => entity.Id != PlayerEntityId
+        && TryGetEntity(entity.Id, out var owned) && ReferenceEquals(entity, owned)
+        && SpeciesCatalog is { } catalog
+        && catalog.TryGet(entity.SpeciesId, out var species)
+        && species is { CanHaveWorkSchedule: true };
 
     public NpcWorkSchedule GetWorkSchedule(string entityId) => _workSchedules.GetValueOrDefault(entityId, NpcWorkSchedule.Default);
     public bool TryGetHomePosition(string? entityId, out Vector3 position) => _homePositions.TryGetValue(entityId ?? string.Empty, out position);
@@ -176,7 +179,11 @@ public sealed class World
     public SquadResult AddSquadMember(string? id)
     {
         if (!TryGetEntity(id, out var entity) || entity is null) return SquadResult.InvalidEntity;
-        if (entity.SpeciesId != "human" || entity.Id == PlayerEntityId || entity.Health.IsDead) return SquadResult.IneligibleEntity;
+        if (entity.Id == PlayerEntityId || entity.Health.IsDead
+            || SpeciesCatalog is not { } catalog
+            || !catalog.TryGet(entity.SpeciesId, out var species)
+            || species is not { CanJoinPlayerSquad: true })
+            return SquadResult.IneligibleEntity;
         return _squadMembers.Add(entity.Id) ? SquadResult.Accepted : SquadResult.Unchanged;
     }
 
@@ -270,9 +277,11 @@ public sealed class World
 
         if (!TryGetEntity(playerEntityId, out var player)
             || player is null
-            || !string.Equals(player.SpeciesId, "human", StringComparison.Ordinal))
+            || SpeciesCatalog is not { } catalog
+            || !catalog.TryGet(player.SpeciesId, out var species)
+            || species is not { CanBePlayerCharacter: true })
         {
-            throw new ArgumentException("A live human entity is required as the session player.", nameof(playerEntityId));
+            throw new ArgumentException("A live entity with player-character capability is required as the session player.", nameof(playerEntityId));
         }
 
         SessionSeed = seed;
@@ -556,7 +565,9 @@ public sealed class World
             return CreatureLifecycleTransitionResult.TargetNotFound;
         }
 
-        if (string.Equals(entity.SpeciesId, "human", StringComparison.Ordinal))
+        if (SpeciesCatalog is not { } catalog
+            || !catalog.TryGet(entity.SpeciesId, out var species)
+            || species is not { CanBeCaptured: true })
         {
             return CreatureLifecycleTransitionResult.NotCreature;
         }
@@ -811,7 +822,7 @@ public sealed class World
             && TryGetEntity(targetId, out var target) && observer is not null && target is not null
             && catalog.TryGet(observer.SpeciesId, out var species) && species is { IsDomestic: true }
             && catalog.TryGet(target.SpeciesId, out var targetSpecies) && targetSpecies is not null
-            && (target.SpeciesId == "human" || !targetSpecies.IsPredator))
+            && !targetSpecies.IsPredator)
         {
             relationship.ApplyDelta(RelationshipDimension.Familiarity, RelationshipBondThresholds.ProvisionalDefault.FamiliarityForFamiliar);
             relationship.ApplyDelta(RelationshipDimension.Trust, species.BaseTrust);

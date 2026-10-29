@@ -9,7 +9,7 @@ public sealed class WorldSnapshotCreatureCaptureTests
     [Fact]
     public void SnapshotRoundTripPreservesCreatureCaptivity()
     {
-        var source = new World();
+        var source = CreateWorld();
         var creature = source.SpawnEntity("creature", Vector3.One);
         Assert.Equal(CreatureCaptureResult.Captured, source.TryCaptureCreature(creature.Id));
         var json = WorldSnapshotSerializer.Serialize(source, 3);
@@ -28,7 +28,7 @@ public sealed class WorldSnapshotCreatureCaptureTests
     [Fact]
     public void SnapshotRoundTripPreservesEveryCreatureLifecycleState()
     {
-        var source = new World();
+        var source = CreateWorld();
         var captured = source.SpawnEntity("creature", Vector3.Zero);
         var captive = source.SpawnEntity("wolf", Vector3.One);
         var domesticated = source.SpawnEntity("cow", Vector3.UnitX * 2);
@@ -63,7 +63,7 @@ public sealed class WorldSnapshotCreatureCaptureTests
     [Fact]
     public void InvalidCaptivitySnapshotDoesNotResetServicesOrReplaceWorld()
     {
-        var source = new World();
+        var source = CreateWorld();
         var creature = source.SpawnEntity("creature", Vector3.One);
         Assert.Equal(CreatureCaptureResult.Captured, source.TryCaptureCreature(creature.Id));
         var invalidJson = WorldSnapshotSerializer.Serialize(source, 3)
@@ -86,7 +86,7 @@ public sealed class WorldSnapshotCreatureCaptureTests
     [Fact]
     public void VersionFourSnapshotsRestoreEntitiesAsWild()
     {
-        var source = new World();
+        var source = CreateWorld();
         source.SpawnEntity("creature", Vector3.One);
         var json = WorldSnapshotSerializer.Serialize(source, 3);
         var legacySnapshot = JsonNode.Parse(json)!;
@@ -128,6 +128,8 @@ public sealed class WorldSnapshotCreatureCaptureTests
 
     private static SpeciesCatalog GetSpeciesCatalog() =>
         SpeciesCatalog.LoadFromFile(Path.Combine(AppContext.BaseDirectory, "data", "species.json"));
+
+    private static World CreateWorld() => new() { SpeciesCatalog = GetSpeciesCatalog() };
 
     private sealed class CountingTransientState : ITransientSimulationState
     {

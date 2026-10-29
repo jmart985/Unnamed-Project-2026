@@ -24,6 +24,7 @@ public sealed class CreatureCoreScenarioTests
         Assert.Equal(new TemperamentProfile(0.85, 0.75, 0.25, 0.65, 0.45, 0.8), exploratorySpecies.Temperament);
 
         var world = new World();
+        world.SpeciesCatalog = catalog;
         var cautiousCreature = world.SpawnEntity("creature", Vector3.Zero, satiety: 70);
         var exploratoryCreature = world.SpawnEntity("wolf", Vector3.Zero, satiety: 70);
         var navigators = new Dictionary<string, FakeNavigationAdapter>(StringComparer.Ordinal)

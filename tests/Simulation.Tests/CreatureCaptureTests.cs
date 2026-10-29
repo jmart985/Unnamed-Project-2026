@@ -8,7 +8,7 @@ public sealed class CreatureCaptureTests
     [Fact]
     public void CreatureLifecycleSupportsCaptureCaptivityDomesticationAndRelease()
     {
-        var world = new World();
+        var world = CreateWorld();
         var creature = world.SpawnEntity("creature", Vector3.One);
 
         Assert.Equal(CreatureCaptureResult.Captured, world.TryCaptureCreature(creature.Id));
@@ -41,7 +41,7 @@ public sealed class CreatureCaptureTests
         CreatureCaptivityState initialState,
         CreatureCaptivityState targetState)
     {
-        var world = new World();
+        var world = CreateWorld();
         var creature = world.SpawnEntity("creature", Vector3.One);
         SetLifecycleState(world, creature.Id, initialState);
 
@@ -58,7 +58,7 @@ public sealed class CreatureCaptureTests
     [InlineData(CreatureCaptivityState.Domesticated)]
     public void DeathIsTerminalForLifecycleTransitions(CreatureCaptivityState initialState)
     {
-        var world = new World();
+        var world = CreateWorld();
         var creature = world.SpawnEntity("creature", Vector3.One);
         SetLifecycleState(world, creature.Id, initialState);
         Assert.True(creature.Health.TryDamage("Torso", creature.BaseStats.MaxHealth));
@@ -75,7 +75,7 @@ public sealed class CreatureCaptureTests
     [InlineData(CreatureCaptivityState.Domesticated)]
     public void ReleaseReturnsCreatureToWild(CreatureCaptivityState initialState)
     {
-        var world = new World();
+        var world = CreateWorld();
         var creature = world.SpawnEntity("creature", Vector3.One);
         SetLifecycleState(world, creature.Id, initialState);
 
@@ -88,7 +88,7 @@ public sealed class CreatureCaptureTests
     [Fact]
     public void RejectsRepeatedStateAndNonCreatureTransitions()
     {
-        var world = new World();
+        var world = CreateWorld();
         var human = world.SpawnEntity("human", Vector3.Zero);
         var creature = world.SpawnEntity("creature", Vector3.One);
 
@@ -104,7 +104,7 @@ public sealed class CreatureCaptureTests
     [Fact]
     public void RejectsMissingHumanDeadAndRemovedTargetsWithoutChangingState()
     {
-        var world = new World();
+        var world = CreateWorld();
         var human = world.SpawnEntity("human", Vector3.Zero);
         var deadCreature = world.SpawnEntity("creature", Vector3.One);
         deadCreature.Health.TryDamage("Torso", deadCreature.BaseStats.MaxHealth);
@@ -145,4 +145,10 @@ public sealed class CreatureCaptureTests
                 world.TryTransitionCreatureState(entityId, CreatureCaptivityState.Domesticated));
         }
     }
+
+    private static World CreateWorld() => new()
+    {
+        SpeciesCatalog = SpeciesCatalog.LoadFromFile(
+            Path.Combine(AppContext.BaseDirectory, "data", "species.json"))
+    };
 }

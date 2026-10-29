@@ -29,6 +29,11 @@ public sealed class SpeciesCatalogTests
         Assert.True(human.CanOpenDoors);
         Assert.False(human.CanTrack);
         Assert.False(human.UsesWildTerritory);
+        Assert.True(human.CanBePlayerCharacter);
+        Assert.True(human.CanJoinPlayerSquad);
+        Assert.True(human.CanHaveWorkSchedule);
+        Assert.False(human.CanBeCaptured);
+        Assert.False(human.CanBePetted);
 
         var ape = catalog.GetRequired("ape");
         Assert.Equal(2.4, ape.MovementSpeed);
@@ -46,6 +51,11 @@ public sealed class SpeciesCatalogTests
         Assert.True(ape.CanOpenDoors);
         Assert.True(ape.CanTrack);
         Assert.True(ape.UsesWildTerritory);
+        Assert.False(ape.CanBePlayerCharacter);
+        Assert.False(ape.CanJoinPlayerSquad);
+        Assert.False(ape.CanHaveWorkSchedule);
+        Assert.True(ape.CanBeCaptured);
+        Assert.True(ape.CanBePetted);
 
         var cow = catalog.GetRequired("cow");
         Assert.Equal(1.8, cow.MovementSpeed);
@@ -199,6 +209,11 @@ public sealed class SpeciesCatalogTests
         Assert.False(species.CanOpenDoors);
         Assert.False(species.CanTrack);
         Assert.False(species.UsesWildTerritory);
+        Assert.False(species.CanBePlayerCharacter);
+        Assert.False(species.CanJoinPlayerSquad);
+        Assert.False(species.CanHaveWorkSchedule);
+        Assert.False(species.CanBeCaptured);
+        Assert.False(species.CanBePetted);
         Assert.Equal(300, species.CarcassFreshnessSeconds);
     }
 

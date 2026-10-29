@@ -49,7 +49,7 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
     public SquadOrderResult Execute(SquadOrderKind order, Vector3? target = null)
     {
         if (!Enum.IsDefined(order) || order == SquadOrderKind.None) return Reject(SquadResult.InvalidOrder, "Choose move, follow, or stop.");
-        if (world.SquadMemberIds.Count == 0) return Reject(SquadResult.EmptySquad, "Add a human NPC first.");
+        if (world.SquadMemberIds.Count == 0) return Reject(SquadResult.EmptySquad, "Add an eligible NPC first.");
         if (world.SquadMemberIds.Any(id => !world.TryGetEntity(id, out var entity) || entity is null || entity.Health.IsDead))
             return Reject(SquadResult.InvalidEntity, "A squad member is unavailable.");
         if (order == SquadOrderKind.MoveTo && (target is null || !Finite(target.Value)))

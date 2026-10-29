@@ -295,7 +295,9 @@ public sealed class WanderingServiceTests
     public void CapturedCreatureDoesNotReceiveForcedTerritoryReturn()
     {
         var world = new World();
-        var species = SpeciesCatalog.LoadFromFile(GetSpeciesDataPath()).GetRequired("wolf");
+        var catalog = SpeciesCatalog.LoadFromFile(GetSpeciesDataPath());
+        world.SpeciesCatalog = catalog;
+        var species = catalog.GetRequired("wolf");
         var wolf = world.SpawnEntity(species.Id, new Vector3(10, 0, 0));
         world.SetWildTerritory(wolf.Id, Vector3.Zero, 8);
         Assert.Equal(CreatureCaptureResult.Captured, world.TryCaptureCreature(wolf.Id));

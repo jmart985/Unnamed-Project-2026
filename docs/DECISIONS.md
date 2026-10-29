@@ -657,3 +657,11 @@ User reported only an obstacle at the expected workbench. Replace that legacy ce
 - Reason: A brief focused interaction or similar attention-demanding event should pause the affected actor without discarding its task or freezing other squad members. Encoding the interruption on the existing action candidate keeps ownership and cleanup in the action lifecycle.
 - Consequence: Paths and actions remain transient; squad membership and individual order-intent save behavior are unchanged. No event bus, parallel movement system, or snapshot migration is introduced.
 - Revisit: If playtesting shows that a class of focused action should not interrupt movement, if order priorities need a different policy, or if attention must continue across save/load.
+
+## D066 — Species eligibility comes from explicit capabilities (2026-10-29)
+
+- Status: Accepted and implemented for issue #518.
+- Decision: Store player-character, player-squad, work-schedule, capture, and petting eligibility on validated species definitions. Omitted optional capability values default to `false`; current species data states supported roles explicitly. `World` enforces these capabilities and snapshot validation checks persisted player, squad, schedule, home, and captivity references against the same `SpeciesCatalog`. Use predator and other existing semantic species properties for social defaults instead of comparing species IDs to `human`.
+- Reason: Species IDs identify content and should not silently encode role permissions. Explicit data lets new species opt into supported behavior without adding species-name branches to simulation services.
+- Consequence: Current behavior is preserved: humans remain the only configured player, squad, and scheduled-worker species; non-human species keep the existing capture and pet eligibility; no new creature squad, player, or work behavior is introduced. No entity fields or snapshot schema change. Since saves store species IDs rather than a frozen copy of these capability values, changing a capability can make an existing saved reference invalid; capability changes must therefore include save-compatibility review.
+- Revisit: When a new species is intended to participate in player, squad, schedule, capture, or pet interactions, or when compatibility testing shows that capability changes must be versioned in saves.
