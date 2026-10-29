@@ -53,6 +53,6 @@ The deterministic integrated scenario and the commands/results actually observed
 
 - [Long-term vision at source commit 3e9de38](https://github.com/jmart985/Unnamed-Project-2026/blob/3e9de38abf0bfd07849a612bbedc4e01c977ba71/docs/LONG_TERM_VISION.md): factions participate in a larger simulation, but scale is earned by proving smaller layers first.
 - [Technical architecture](TECHNICAL_ARCHITECTURE.md): authoritative World ownership, stable IDs, and validated snapshots.
-- [Decisions log](DECISIONS.md): D030 records the provisional faction boundaries.
+- [Decisions log](DECISIONS.md): D063 records the provisional faction boundaries.
 
 This milestone is accepted when every linked task is accepted, the [recorded faction scenario](VALIDATION_0_7.md) passes, snapshot rejection preserves the live World, and no unmet acceptance check is left without an explicit follow-up or deferral.
