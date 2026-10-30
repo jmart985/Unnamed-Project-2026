@@ -523,9 +523,11 @@ public partial class PlayerCharacter : CharacterBody3D
                 if (headIndex >= 0)
                 {
                     var animationRotation = _visualSkeleton.GetBonePoseRotation(headIndex);
+                    // The source rigs face +Z, but the player adapter rotates them to
+                    // controller-forward (-Z), so the head's local pitch axis is reversed.
                     _visualSkeleton.SetBonePoseRotation(
                         headIndex,
-                        animationRotation * Quaternion.FromEuler(new Vector3(_headPitch, 0, 0)));
+                        animationRotation * Quaternion.FromEuler(new Vector3(-_headPitch, 0, 0)));
                 }
             }
             GetNode<Camera3D>("Camera3D").Rotation = new Vector3(CameraPitchOffset + _headPitch, 0, 0);

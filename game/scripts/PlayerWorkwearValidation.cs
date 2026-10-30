@@ -65,11 +65,12 @@ internal static class PlayerWorkwearValidation
                     ?? throw new InvalidOperationException($"{sex} player model is missing its canonical head bone");
                 character._UnhandledInput(new InputEventMouseMotion { Relative = new Vector2(0, -40) });
                 for (var frame = 0; frame < 12; frame++)
-                    character.AdvancePresentationForTesting(0, 1.0f / 60.0f);
+                    character.AdvancePresentationForTesting(0, 0);
                 var lookedHeadPose = character.PresentationHeadPoseForTesting
                     ?? throw new InvalidOperationException($"{sex} player model lost its canonical head bone");
-                Require(neutralHeadPose.AngleTo(lookedHeadPose) > 0.1f,
-                    $"{sex} mouse look did not visibly pitch the head");
+                var localPitchDelta = (neutralHeadPose.Inverse() * lookedHeadPose).GetEuler().X;
+                Require(localPitchDelta < -0.1f,
+                    $"{sex} upward mouse look did not pitch the imported head upward in player coordinates");
 
                 await main.ToSignal(main.GetTree(), SceneTree.SignalName.ProcessFrame);
                 var headPoseAfterAnimationProcess = character.PresentationHeadPoseForTesting
@@ -79,7 +80,7 @@ internal static class PlayerWorkwearValidation
 
                 character._UnhandledInput(new InputEventMouseMotion { Relative = new Vector2(0, 40) });
                 for (var frame = 0; frame < 24; frame++)
-                    character.AdvancePresentationForTesting(0, 1.0f / 60.0f);
+                    character.AdvancePresentationForTesting(0, 0);
 
                 var equipment = new PlayerEquipmentService(session.World);
                 Require(equipment.Unequip(EquipmentSlotIds.Torso).Code == PlayerEquipmentResultCode.Unequipped,
