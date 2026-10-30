@@ -75,6 +75,13 @@ internal static class NpcLocomotionValidation
                     facialBlendShapeDiagnostics.Add(DescribeFacialBlendShapeCandidates(player, animator, modelCase));
                 await ValidateManualPlayback(player, animator, modelCase);
                 skeletalPoseResetValidated |= await ValidateManualSkeletalPoseReset(player, animator, modelCase);
+                if (modelCase.ExpectedEntityViewPath is not null)
+                {
+                    await ValidateImportedHumanoidLocomotion(player, model, modelCase,
+                        modelCase.WalkClip);
+                    await ValidateImportedHumanoidLocomotion(player, model, modelCase,
+                        modelCase.FastClip);
+                }
                 ValidateTickMovement(holder, modelCase, presentationCatalog);
             }
 
@@ -131,6 +138,98 @@ internal static class NpcLocomotionValidation
         if (animator.HoldsPositionForManualAction)
             throw new InvalidOperationException($"Completed Test Lab clip kept movement held on {modelCase.Path}.");
         RequireClip(player, modelCase.FastClip, modelCase.Path);
+    }
+
+    private sealed record BodyPose(Skeleton3D Skeleton, int BoneIndex, string BoneName,
+        Vector3 Position, Quaternion Rotation, Vector3 Scale);
+
+    private static async Task ValidateImportedHumanoidLocomotion(AnimationPlayer player, Node3D model,
+        ModelCase modelCase, string clipName)
+    {
+        var skeletons = model.FindChildren("*", "Skeleton3D", recursive: true, owned: false)
+            .OfType<Skeleton3D>()
+            .ToList();
+        if (model is Skeleton3D rootSkeleton)
+            skeletons.Add(rootSkeleton);
+
+        var bodyBones = skeletons
+            .SelectMany(skeleton => Enumerable.Range(0, skeleton.GetBoneCount())
+                .Select(index => (Skeleton: skeleton, Index: index,
+                    Name: skeleton.GetBoneName(index).ToString())))
+            .Where(bone => IsLocomotionBodyBone(bone.Name))
+            .ToList();
+        if (bodyBones.Count < 8)
+            throw new InvalidOperationException(
+                $"Humanoid model {modelCase.Path} exposes only {bodyBones.Count} candidate body bones for animation validation.");
+
+        if (!player.HasAnimation(clipName))
+            throw new InvalidOperationException($"Humanoid model {modelCase.Path} is missing {clipName}.");
+        var clip = player.GetAnimation(clipName);
+        if (clip.Length <= 0.05)
+            throw new InvalidOperationException($"Humanoid model {modelCase.Path} has an empty {clipName} clip.");
+
+        player.Stop();
+        player.Play(clipName);
+        player.Seek(0.0, update: true);
+        await player.ToSignal(player.GetTree(), SceneTree.SignalName.ProcessFrame);
+        var startingPose = CaptureBodyPose(bodyBones);
+        var changedBones = new HashSet<(ulong SkeletonId, int BoneIndex)>();
+        foreach (var sampleFraction in new[] { 0.15, 0.37, 0.63, 0.87 })
+        {
+            player.Seek(clip.Length * sampleFraction, update: true);
+            await player.ToSignal(player.GetTree(), SceneTree.SignalName.ProcessFrame);
+            foreach (var expected in startingPose)
+            {
+                if (!GodotObject.IsInstanceValid(expected.Skeleton)
+                    || expected.BoneIndex >= expected.Skeleton.GetBoneCount())
+                    throw new InvalidOperationException(
+                        $"Humanoid skeleton disappeared while validating {clipName} on {modelCase.Path}.");
+
+                var changed = expected.Skeleton.GetBonePoseRotation(expected.BoneIndex)
+                        .AngleTo(expected.Rotation) > 0.004f
+                    || expected.Skeleton.GetBonePosePosition(expected.BoneIndex)
+                        .DistanceTo(expected.Position) > 0.002f
+                    || expected.Skeleton.GetBonePoseScale(expected.BoneIndex)
+                        .DistanceTo(expected.Scale) > 0.002f;
+                if (changed)
+                    changedBones.Add((expected.Skeleton.GetInstanceId(), expected.BoneIndex));
+            }
+        }
+
+        player.Stop();
+        if (changedBones.Count < 8)
+            throw new InvalidOperationException(
+                $"Humanoid model {modelCase.Path} {clipName} changed only {changedBones.Count} body-bone poses across the clip; expected at least 8.");
+    }
+
+    private static bool IsLocomotionBodyBone(string boneName)
+    {
+        var name = boneName.ToLowerInvariant();
+        if (new[]
+            {
+                "face", "eye", "jaw", "brow", "cheek", "lip", "mouth", "nose", "nostril",
+                "ear", "tongue", "finger", "thumb", "pinky", "index", "middle", "ring",
+                "toe", "hair", "lash", "teeth", "breast", "genital",
+            }.Any(name.Contains))
+            return false;
+
+        return new[]
+        {
+            "spine", "pelvis", "hip", "thigh", "leg", "shin", "foot", "upperarm", "upper_arm",
+            "forearm", "hand", "shoulder", "chest", "arm.", "arm_",
+        }.Any(name.Contains);
+    }
+
+    private static List<BodyPose> CaptureBodyPose(
+        IEnumerable<(Skeleton3D Skeleton, int Index, string Name)> bones)
+    {
+        return bones.Select(bone => new BodyPose(
+            bone.Skeleton,
+            bone.Index,
+            bone.Name,
+            bone.Skeleton.GetBonePosePosition(bone.Index),
+            bone.Skeleton.GetBonePoseRotation(bone.Index),
+            bone.Skeleton.GetBonePoseScale(bone.Index))).ToList();
     }
 
     private sealed record FingerPose(Skeleton3D Skeleton, int BoneIndex, string BoneName,

@@ -46,7 +46,9 @@ def _pose_rotations(armature: bpy.types.Object, values: Pose,
 
 
 def _key_pose(armature: bpy.types.Object, action: bpy.types.Action,
-              frames: list[tuple[int, Pose]], bone_map: dict[str, str]) -> None:
+              frames: list[tuple[int, Pose]], bone_map: dict[str, str],
+              animation_switches: dict[str, float],
+              bone_animation_switches: dict[str, dict[str, float]]) -> None:
     armature.animation_data_create()
     armature.animation_data.action = action
     for frame, values in frames:
@@ -56,6 +58,17 @@ def _key_pose(armature: bpy.types.Object, action: bpy.types.Action,
             name = bone_map[semantic_name]
             armature.pose.bones[name].keyframe_insert(
                 data_path="rotation_quaternion", frame=frame, group=name)
+        for property_name, switch_value in animation_switches.items():
+            armature[property_name] = switch_value
+            armature.keyframe_insert(
+                data_path=f'["{property_name}"]', frame=frame, group="Rig mode")
+        for bone_name, properties in bone_animation_switches.items():
+            pose_bone = armature.pose.bones[bone_name]
+            for property_name, switch_value in properties.items():
+                pose_bone[property_name] = switch_value
+                pose_bone.keyframe_insert(
+                    data_path=f'["{property_name}"]', frame=frame,
+                    group=f"{bone_name} rig mode")
     action.use_fake_user = True
     action.use_cyclic = True
 
@@ -92,6 +105,8 @@ def _phase_pose(phase: float, stride: float, knee_bend: float, arm_swing: float,
 def add_humanoid_locomotion_actions(
     armature: bpy.types.Object,
     bone_map: dict[str, str] | None = None,
+    animation_switches: dict[str, float] | None = None,
+    bone_animation_switches: dict[str, dict[str, float]] | None = None,
 ) -> list[str]:
     """Create looping, root-motion-free idle, walk, and run actions.
 
@@ -102,18 +117,33 @@ def add_humanoid_locomotion_actions(
     if armature.type != "ARMATURE":
         raise TypeError("Humanoid locomotion actions require an armature object.")
     bone_map = bone_map or {name: name for name in REQUIRED_LOCOMOTION_BONES}
+    animation_switches = animation_switches or {}
+    bone_animation_switches = bone_animation_switches or {}
     required_semantic = REQUIRED_LOCOMOTION_BONES - OPTIONAL_LOCOMOTION_BONES
     missing_semantic = required_semantic - set(bone_map)
     unknown_semantic = set(bone_map) - REQUIRED_LOCOMOTION_BONES
     missing_source = {name for name in bone_map.values() if name not in armature.data.bones}
+    missing_switches = set(animation_switches) - set(armature.keys())
+    missing_switch_bones = set(bone_animation_switches) - set(armature.pose.bones.keys())
+    missing_switch_properties = {
+        f'{bone_name}["{property_name}"]'
+        for bone_name, properties in bone_animation_switches.items()
+        if bone_name in armature.pose.bones
+        for property_name in properties
+        if property_name not in armature.pose.bones[bone_name]
+    }
     duplicate_source = sorted(name for name in set(bone_map.values())
                               if list(bone_map.values()).count(name) > 1)
-    if missing_semantic or unknown_semantic or missing_source or duplicate_source:
+    if (missing_semantic or unknown_semantic or missing_source or missing_switches
+            or missing_switch_bones or missing_switch_properties or duplicate_source):
         raise RuntimeError(
             "Invalid humanoid locomotion bone map: "
             f"missing semantic={sorted(missing_semantic)}, "
             f"unknown semantic={sorted(unknown_semantic)}, "
             f"missing source={sorted(missing_source)}, "
+            f"missing rig switches={sorted(missing_switches)}, "
+            f"missing switch bones={sorted(missing_switch_bones)}, "
+            f"missing switch properties={sorted(missing_switch_properties)}, "
             f"duplicate source={duplicate_source}"
         )
 
@@ -131,15 +161,17 @@ def add_humanoid_locomotion_actions(
     for frame in (1, 13, 25, 37, 49):
         phase = 2.0 * math.pi * (frame - 1) / 48.0
         idle_frames.append((frame, {
-            "spine_02": (((1.0, 0.0, 0.0), 0.012 * math.sin(phase)),),
-            "spine_03": (((1.0, 0.0, 0.0), 0.02 * math.sin(phase)),),
-            "head": (((1.0, 0.0, 0.0), -0.006 * math.sin(phase)),),
-            "upperarm_l": (((0.0, 1.0, 0.0), left_arm_drop),),
-            "upperarm_r": (((0.0, 1.0, 0.0), -right_arm_drop),),
-            "lowerarm_l": (((1.0, 0.0, 0.0), 0.12),),
-            "lowerarm_r": (((1.0, 0.0, 0.0), -0.12),),
+            "spine_02": (((1.0, 0.0, 0.0), 0.025 * math.sin(phase)),),
+            "spine_03": (((1.0, 0.0, 0.0), 0.015 * math.sin(phase)),),
+            "head": (((1.0, 0.0, 0.0), -0.008 * math.sin(phase)),),
+            "upperarm_l": (((0.0, 1.0, 0.0), left_arm_drop),
+                           ((1.0, 0.0, 0.0), 0.018 * math.sin(phase))),
+            "upperarm_r": (((0.0, 1.0, 0.0), -right_arm_drop),
+                           ((1.0, 0.0, 0.0), -0.018 * math.sin(phase))),
+            "lowerarm_l": (((1.0, 0.0, 0.0), 0.12 + 0.012 * math.sin(phase)),),
+            "lowerarm_r": (((1.0, 0.0, 0.0), -0.12 - 0.012 * math.sin(phase)),),
         }))
-    _key_pose(armature, idle, idle_frames, bone_map)
+    _key_pose(armature, idle, idle_frames, bone_map, animation_switches, bone_animation_switches)
 
     walk = bpy.data.actions.new("human_walk")
     walk_frames = []
@@ -148,7 +180,7 @@ def add_humanoid_locomotion_actions(
         walk_frames.append((frame, _phase_pose(phase, stride=0.34, knee_bend=0.38,
                                                arm_swing=0.30 * arm_swing_factor,
                                                arm_hang=left_arm_drop)))
-    _key_pose(armature, walk, walk_frames, bone_map)
+    _key_pose(armature, walk, walk_frames, bone_map, animation_switches, bone_animation_switches)
 
     run = bpy.data.actions.new("human_run")
     run_frames = []
@@ -159,7 +191,7 @@ def add_humanoid_locomotion_actions(
                            arm_hang=left_arm_drop * 0.85, elbow_flex=0.30)
         pose["spine_02"] = (((1.0, 0.0, 0.0), -0.045 + pose["spine_02"][0][1]),)
         run_frames.append((frame, pose))
-    _key_pose(armature, run, run_frames, bone_map)
+    _key_pose(armature, run, run_frames, bone_map, animation_switches, bone_animation_switches)
 
     # Preserve the first-pose rest transform in the scene and make both loops seamless.
     bpy.context.scene.frame_set(1)

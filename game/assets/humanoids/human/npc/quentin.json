@@ -27,6 +27,55 @@
     "calf_r": "shin.R",
     "foot_r": "foot.R"
   },
+  "locomotion_control_map": {
+    "pelvis": "pelvis",
+    "spine_02": "spine-1",
+    "spine_03": "chest",
+    "head": "head",
+    "upperarm_l": "upper_arm.fk.L",
+    "lowerarm_l": "forearm.fk.L",
+    "upperarm_r": "upper_arm.fk.R",
+    "lowerarm_r": "forearm.fk.R",
+    "thigh_l": "thigh.fk.L",
+    "calf_l": "shin.fk.L",
+    "foot_l": "foot.fk.L",
+    "thigh_r": "thigh.fk.R",
+    "calf_r": "shin.fk.R",
+    "foot_r": "foot.fk.R"
+  },
+  "animation_switches": {
+    "MhaArmIk_L": 0,
+    "MhaArmIk_R": 0,
+    "MhaLegIk_L": 0,
+    "MhaLegIk_R": 0
+  },
+  "bone_animation_switches": {},
+  "material_conversion": {
+    "baked": [
+      "quentin_Quentin_0_Face-2",
+      "quentin_Quentin_1_Torso-2",
+      "quentin_Quentin_2_Legs-2",
+      "quentin_Quentin_3_Toenails-2",
+      "quentin_Quentin_4_Arms-2",
+      "quentin_Quentin_5_Fingernails-2",
+      "quentin_Quentin_6_Penis",
+      "quentin_Quentin_7_Teeth-2",
+      "quentin_Quentin_8_EyeSocket-2",
+      "quentin_Quentin_9_Pupils-2",
+      "quentin_Quentin_10_EyeMoisture-3",
+      "quentin_Quentin_11_Cornea-2",
+      "quentin_Quentin_12_Sclera-2.001",
+      "quentin_Genesis 8 Male Eyelashes Mesh_0_EyeMoisture-4"
+    ],
+    "reconstructed": [
+      "quentin_Hair 1_0_MI_QSHair01",
+      "quentin_Pants 1_2_MI_QSLegs01",
+      "quentin_Shirt 1_0_MI_QSTorso01"
+    ],
+    "native": [
+      "Eyelashes-1"
+    ]
+  },
   "animation_clips": [
     "human_idle",
     "human_run",
@@ -91,9 +140,9 @@
     ]
   },
   "target_height_m": 1.75,
-  "source_height_m": 1.876108015553481,
-  "normalized_scale": 0.9327821135520935,
-  "glb_bytes": 16086624,
+  "source_height_m": 1.8761089746182604,
+  "normalized_scale": 0.9327816367149353,
+  "glb_bytes": 13806364,
   "textures_max_edge": 1024,
   "source_animations_expected": [],
   "source_morph_target_count": 229,
@@ -101,5 +150,5 @@
   "runtime_expression_targets_generated": 6,
   "runtime_morph_targets_included": true,
   "runtime_morph_target_count": 6,
-  "base_mesh_preserved_from": "quentin.glb"
+  "base_mesh_preserved_from": null
 }

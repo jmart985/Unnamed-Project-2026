@@ -31,6 +31,56 @@
     "calf_r": "shin.R",
     "foot_r": "foot.R"
   },
+  "locomotion_control_map": {
+    "pelvis": "pelvis",
+    "spine_02": "spine-1",
+    "spine_03": "chest",
+    "head": "head",
+    "upperarm_l": "upper_arm.fk.L",
+    "lowerarm_l": "forearm.fk.L",
+    "upperarm_r": "upper_arm.fk.R",
+    "lowerarm_r": "forearm.fk.R",
+    "thigh_l": "thigh.fk.L",
+    "calf_l": "shin.fk.L",
+    "foot_l": "foot.fk.L",
+    "thigh_r": "thigh.fk.R",
+    "calf_r": "shin.fk.R",
+    "foot_r": "foot.fk.R"
+  },
+  "animation_switches": {
+    "MhaArmIk_L": 0,
+    "MhaArmIk_R": 0,
+    "MhaLegIk_L": 0,
+    "MhaLegIk_R": 0
+  },
+  "bone_animation_switches": {},
+  "material_conversion": {
+    "baked": [
+      "omni_Omni Man Body_0_FACE",
+      "omni_Omni Man Body_1_FACE",
+      "omni_Omni Man Body_3_TORSO",
+      "omni_Omni Man Body_4_LEGS",
+      "omni_Omni Man Body_6_ARM",
+      "omni_Omni Man Body_8_Neck",
+      "omni_Omni Man Body_9_PENIS",
+      "omni_Eyelashes_0_Eyelashes-1.002"
+    ],
+    "reconstructed": [],
+    "native": [
+      "Teeth",
+      "Mouth",
+      "Pupils",
+      "0002-1.002",
+      "0003-1.002",
+      "Cloth-1.001",
+      "Default-5.001",
+      "Default-7.001",
+      "Default-6.001",
+      "MI_OmniMan_Hair001_Hair-1.002",
+      "MI_OmniManWhite_Hair001_Hair-1.002",
+      "MI_MI_OmniMan_Moustache-1.002"
+    ]
+  },
   "animation_clips": [
     "human_idle",
     "human_run",
@@ -123,9 +173,9 @@
     ]
   },
   "target_height_m": 1.75,
-  "source_height_m": 1.9332744047173798,
-  "normalized_scale": 0.9052000045776367,
-  "glb_bytes": 34419524,
+  "source_height_m": 1.9332742774171963,
+  "normalized_scale": 0.9052000641822815,
+  "glb_bytes": 19930432,
   "textures_max_edge": 1024,
   "source_animations_expected": [],
   "source_morph_target_count": 453,
@@ -133,5 +183,5 @@
   "runtime_expression_targets_generated": 13,
   "runtime_morph_targets_included": true,
   "runtime_morph_target_count": 13,
-  "base_mesh_preserved_from": "omni.glb"
+  "base_mesh_preserved_from": null
 }

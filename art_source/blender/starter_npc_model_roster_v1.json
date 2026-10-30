@@ -9,7 +9,9 @@
       "source_file": "dwight/dwight nude.blend",
       "armature": "Dwight rig",
       "meshes": ["Dwight Fairfield", "Genesis 8 Male Eyelashes Mesh", "Hair", "Glasses", "Pants", "Shirt", "Bracelets", "Watch"],
-      "bone_map": {"pelvis":"pelvis","spine_02":"spine-1","spine_03":"chest","head":"head","upperarm_l":"upper_arm.L","lowerarm_l":"forearm.L","upperarm_r":"upper_arm.R","lowerarm_r":"forearm.R","thigh_l":"thigh.L","calf_l":"shin.L","foot_l":"foot.L","thigh_r":"thigh.R","calf_r":"shin.R","foot_r":"foot.R"}
+      "bone_map": {"pelvis":"pelvis","spine_02":"spine-1","spine_03":"chest","head":"head","upperarm_l":"upper_arm.L","lowerarm_l":"forearm.L","upperarm_r":"upper_arm.R","lowerarm_r":"forearm.R","thigh_l":"thigh.L","calf_l":"shin.L","foot_l":"foot.L","thigh_r":"thigh.R","calf_r":"shin.R","foot_r":"foot.R"},
+      "locomotion_control_map": {"pelvis":"pelvis","spine_02":"spine-1","spine_03":"chest","head":"head","upperarm_l":"upper_arm.fk.L","lowerarm_l":"forearm.fk.L","upperarm_r":"upper_arm.fk.R","lowerarm_r":"forearm.fk.R","thigh_l":"thigh.fk.L","calf_l":"shin.fk.L","foot_l":"foot.fk.L","thigh_r":"thigh.fk.R","calf_r":"shin.fk.R","foot_r":"foot.fk.R"},
+      "animation_switches": {"MhaArmIk_L":0,"MhaArmIk_R":0,"MhaLegIk_L":0,"MhaLegIk_R":0}
     },
     {
       "npc_id": "entity-000002",
@@ -18,7 +20,10 @@
       "source_file": "aerith/Aerith_v2.2_by_mokujinh.blend",
       "armature": "Aerith_rig",
       "meshes": ["Aerith Body", "Aerith Eyes", "Aerith Teeth", "Aerith Eyelashes", "Aerith Extras - Eyebrow mesh", "Aerith Hair Default", "Aerith Pink Dress - Boots", "Aerith Pink Dress - Dress", "Aerith Pink Dress - Jacket", "Aerith Pink Dress - Bracelet", "Aerith Pink Dress - Necklace"],
-      "bone_map": {"spine_02":"spine_02.x","spine_03":"spine_03.x","head":"head.x","upperarm_l":"arm.l","lowerarm_l":"forearm.l","upperarm_r":"arm.r","lowerarm_r":"forearm.r","thigh_l":"thigh.l","calf_l":"leg.l","foot_l":"foot.l","thigh_r":"thigh.r","calf_r":"leg.r","foot_r":"foot.r"}
+      "bone_map": {"spine_02":"spine_02.x","spine_03":"spine_03.x","head":"head.x","upperarm_l":"arm.l","lowerarm_l":"forearm.l","upperarm_r":"arm.r","lowerarm_r":"forearm.r","thigh_l":"thigh.l","calf_l":"leg.l","foot_l":"foot.l","thigh_r":"thigh.r","calf_r":"leg.r","foot_r":"foot.r"},
+      "locomotion_control_map": {"spine_02":"spine_02.x","spine_03":"spine_03.x","head":"head.x","upperarm_l":"arm_fk.l","lowerarm_l":"forearm_fk.l","upperarm_r":"arm_fk.r","lowerarm_r":"forearm_fk.r","thigh_l":"thigh_fk.l","calf_l":"leg_fk.l","foot_l":"foot_fk.l","thigh_r":"thigh_fk.r","calf_r":"leg_fk.r","foot_r":"foot_fk.r"},
+      "animation_switches": {},
+      "bone_animation_switches": {"c_hand_ik.l":{"ik_fk_switch":1.0},"c_hand_ik.r":{"ik_fk_switch":1.0},"c_foot_ik.l":{"ik_fk_switch":1.0},"c_foot_ik.r":{"ik_fk_switch":1.0}}
     },
     {
       "npc_id": "entity-000003",
@@ -27,7 +32,9 @@
       "source_file": "omni/OMNI MAN FREE SMUTBASE.blend",
       "armature": "Omni Man",
       "meshes": ["Omni Man Body", "L Eye", "R Eye", "Eyelashes", "Omni Man Bodysuit", "Omni Man Gloves ", "Omni Man Shoes ", "OmniMan Hair", "OmniMan Mustache"],
-      "bone_map": {"pelvis":"pelvis","spine_02":"spine-1","spine_03":"chest","head":"head","upperarm_l":"upper_arm.L","lowerarm_l":"forearm.L","upperarm_r":"upper_arm.R","lowerarm_r":"forearm.R","thigh_l":"thigh.L","calf_l":"shin.L","foot_l":"foot.L","thigh_r":"thigh.R","calf_r":"shin.R","foot_r":"foot.R"}
+      "bone_map": {"pelvis":"pelvis","spine_02":"spine-1","spine_03":"chest","head":"head","upperarm_l":"upper_arm.L","lowerarm_l":"forearm.L","upperarm_r":"upper_arm.R","lowerarm_r":"forearm.R","thigh_l":"thigh.L","calf_l":"shin.L","foot_l":"foot.L","thigh_r":"thigh.R","calf_r":"shin.R","foot_r":"foot.R"},
+      "locomotion_control_map": {"pelvis":"pelvis","spine_02":"spine-1","spine_03":"chest","head":"head","upperarm_l":"upper_arm.fk.L","lowerarm_l":"forearm.fk.L","upperarm_r":"upper_arm.fk.R","lowerarm_r":"forearm.fk.R","thigh_l":"thigh.fk.L","calf_l":"shin.fk.L","foot_l":"foot.fk.L","thigh_r":"thigh.fk.R","calf_r":"shin.fk.R","foot_r":"foot.fk.R"},
+      "animation_switches": {"MhaArmIk_L":0,"MhaArmIk_R":0,"MhaLegIk_L":0,"MhaLegIk_R":0}
     },
     {
       "npc_id": "entity-000004",
@@ -37,7 +44,10 @@
       "armature": "Aloy",
       "meshes": ["Aloy Mesh", "Horizon Forbidden West - Aloy Hair Mesh", "G9 Eyebrows Fiber Style 02 Mesh", "Genesis 9 Eyes Mesh", "Genesis 9 Mouth Mesh", "Genesis 9 Eyelashes Mesh", "Horizon Forbidden West - Aloy Hair Nora Head gear Mesh", "Horizon Forbidden West - Aloy Nora Pants Mesh", "Horizon Forbidden West - Aloy Nora under amour Mesh", "Horizon Forbidden West - Aloy Hip BWDLeft Mesh", "Horizon Forbidden West - Aloy Hip BWDRight Mesh", "Horizon Forbidden West - Aloy Hip FWDLeft Mesh", "Horizon Forbidden West - Aloy Nora Belt Mesh", "Horizon Forbidden West - Aloy Hip FWDRight Mesh", "Horizon Forbidden West - Aloy Nora sleeves Mesh"],
       "decimate_ratios": {"Horizon Forbidden West - Aloy Hair Mesh": 0.35, "G9 Eyebrows Fiber Style 02 Mesh": 0.55},
-      "bone_map": {"pelvis":"pelvis","spine_02":"spine2","spine_03":"spine3","head":"head","upperarm_l":"l_upperarm","lowerarm_l":"l_forearm","upperarm_r":"r_upperarm","lowerarm_r":"r_forearm","thigh_l":"l_thigh","calf_l":"l_shin","foot_l":"l_foot","thigh_r":"r_thigh","calf_r":"r_shin","foot_r":"r_foot"}
+      "bone_map": {"pelvis":"pelvis","spine_02":"spine2","spine_03":"spine3","head":"head","upperarm_l":"l_upperarmtwist1","lowerarm_l":"l_forearmtwist1","upperarm_r":"r_upperarmtwist1","lowerarm_r":"r_forearmtwist1","thigh_l":"l_thightwist1","calf_l":"l_shin","foot_l":"l_foot","thigh_r":"r_thightwist1","calf_r":"r_shin","foot_r":"r_foot"},
+      "locomotion_control_map": {"pelvis":"pelvis","spine_02":"spine2","spine_03":"spine3","head":"head","upperarm_l":"l_upperarmtwist1","lowerarm_l":"l_forearmtwist1","upperarm_r":"r_upperarmtwist1","lowerarm_r":"r_forearmtwist1","thigh_l":"l_thightwist1","calf_l":"l_shin","foot_l":"l_foot","thigh_r":"r_thightwist1","calf_r":"r_shin","foot_r":"r_foot"},
+      "animation_switches": {},
+      "bone_animation_switches": {"Root":{"LeftArmFK/IK":0.0,"RightArmFK/IK":0.0,"LeftLegFK/IK":0.0,"RightLegFK/IK":0.0}}
     },
     {
       "npc_id": "entity-000005",
@@ -46,7 +56,9 @@
       "source_file": "quentin/Quentin smith nude.blend",
       "armature": "Quentin rig",
       "meshes": ["Quentin", "Genesis 8 Male Eyelashes Mesh", "Hair 1", "Pants 1", "Shirt 1"],
-      "bone_map": {"pelvis":"pelvis","spine_02":"spine-1","spine_03":"chest","head":"head","upperarm_l":"upper_arm.L","lowerarm_l":"forearm.L","upperarm_r":"upper_arm.R","lowerarm_r":"forearm.R","thigh_l":"thigh.L","calf_l":"shin.L","foot_l":"foot.L","thigh_r":"thigh.R","calf_r":"shin.R","foot_r":"foot.R"}
+      "bone_map": {"pelvis":"pelvis","spine_02":"spine-1","spine_03":"chest","head":"head","upperarm_l":"upper_arm.L","lowerarm_l":"forearm.L","upperarm_r":"upper_arm.R","lowerarm_r":"forearm.R","thigh_l":"thigh.L","calf_l":"shin.L","foot_l":"foot.L","thigh_r":"thigh.R","calf_r":"shin.R","foot_r":"foot.R"},
+      "locomotion_control_map": {"pelvis":"pelvis","spine_02":"spine-1","spine_03":"chest","head":"head","upperarm_l":"upper_arm.fk.L","lowerarm_l":"forearm.fk.L","upperarm_r":"upper_arm.fk.R","lowerarm_r":"forearm.fk.R","thigh_l":"thigh.fk.L","calf_l":"shin.fk.L","foot_l":"foot.fk.L","thigh_r":"thigh.fk.R","calf_r":"shin.fk.R","foot_r":"foot.fk.R"},
+      "animation_switches": {"MhaArmIk_L":0,"MhaArmIk_R":0,"MhaLegIk_L":0,"MhaLegIk_R":0}
     },
     {
       "npc_id": "entity-000006",
@@ -55,7 +67,9 @@
       "source_file": "jill/Jill Valentine G8F Public Version.blend",
       "armature": "Jill Valentine Rig",
       "meshes": ["Jill Valentine Mesh", "Jill Valentine Eyelashes Mesh", "Eyebrows V1 Mesh", "Jill-EyeLashes Mesh", "Jill-Accessories Mesh", "Jill-Bandage Mesh", "Jill-Boot Mesh", "Jill-Bottum Mesh", "Jill-Glove Mesh", "Jill-HandBand Mesh", "Jill-Top Mesh", "RE3R Hair"],
-      "bone_map": {"pelvis":"pelvis","spine_02":"spine-1","spine_03":"chest","head":"head","upperarm_l":"upper_arm.L","lowerarm_l":"forearm.L","upperarm_r":"upper_arm.R","lowerarm_r":"forearm.R","thigh_l":"thigh.L","calf_l":"shin.L","foot_l":"foot.L","thigh_r":"thigh.R","calf_r":"shin.R","foot_r":"foot.R"}
+      "bone_map": {"pelvis":"pelvis","spine_02":"spine-1","spine_03":"chest","head":"head","upperarm_l":"upper_arm.L","lowerarm_l":"forearm.L","upperarm_r":"upper_arm.R","lowerarm_r":"forearm.R","thigh_l":"thigh.L","calf_l":"shin.L","foot_l":"foot.L","thigh_r":"thigh.R","calf_r":"shin.R","foot_r":"foot.R"},
+      "locomotion_control_map": {"pelvis":"pelvis","spine_02":"spine-1","spine_03":"chest","head":"head","upperarm_l":"upper_arm.fk.L","lowerarm_l":"forearm.fk.L","upperarm_r":"upper_arm.fk.R","lowerarm_r":"forearm.fk.R","thigh_l":"thigh.fk.L","calf_l":"shin.fk.L","foot_l":"foot.fk.L","thigh_r":"thigh.fk.R","calf_r":"shin.fk.R","foot_r":"foot.fk.R"},
+      "animation_switches": {"MhaArmIk_L":0,"MhaArmIk_R":0,"MhaLegIk_L":0,"MhaLegIk_R":0}
     },
     {
       "npc_id": "entity-000007",
@@ -64,7 +78,9 @@
       "source_file": "vincent/VINCENT VALENTINE.blend",
       "armature": "Vincent Armature",
       "meshes": ["Vincent Body", "eye_ENV", "Eyelashes", "Eyes", "Head Wrap", "Hair"],
-      "bone_map": {"pelvis":"pelvis","spine_02":"spine-1","spine_03":"chest","head":"head","upperarm_l":"upper_arm.L","lowerarm_l":"forearm.L","upperarm_r":"upper_arm.R","lowerarm_r":"forearm.R","thigh_l":"thigh.L","calf_l":"shin.L","foot_l":"foot.L","thigh_r":"thigh.R","calf_r":"shin.R","foot_r":"foot.R"}
+      "bone_map": {"pelvis":"pelvis","spine_02":"spine-1","spine_03":"chest","head":"head","upperarm_l":"upper_arm.L","lowerarm_l":"forearm.L","upperarm_r":"upper_arm.R","lowerarm_r":"forearm.R","thigh_l":"thigh.L","calf_l":"shin.L","foot_l":"foot.L","thigh_r":"thigh.R","calf_r":"shin.R","foot_r":"foot.R"},
+      "locomotion_control_map": {"pelvis":"pelvis","spine_02":"spine-1","spine_03":"chest","head":"head","upperarm_l":"upper_arm.fk.L","lowerarm_l":"forearm.fk.L","upperarm_r":"upper_arm.fk.R","lowerarm_r":"forearm.fk.R","thigh_l":"thigh.fk.L","calf_l":"shin.fk.L","foot_l":"foot.fk.L","thigh_r":"thigh.fk.R","calf_r":"shin.fk.R","foot_r":"foot.fk.R"},
+      "animation_switches": {"MhaArmIk_L":0,"MhaArmIk_R":0,"MhaLegIk_L":0,"MhaLegIk_R":0}
     },
     {
       "npc_id": "entity-000008",
@@ -73,7 +89,10 @@
       "source_file": "serena/Serena Model.blend",
       "armature": "Rig",
       "meshes": ["Serena Mesh", "Tear", "Eyes", "Mouth", "EyeLashes", "EyeBrows", "Serena_HaIR (2) Mesh", "Serena_Shoulder Mesh", "Serena_Arm Mesh", "Serena_Lace Mesh", "Serena_Neck Mesh", "Serena_Dress Mesh", "Serena legs Mesh", "Serena_Chest Mesh", "Serena_Waist Mesh", "Serena_Boots Mesh"],
-      "bone_map": {"pelvis":"pelvis","spine_02":"DEF-spine.003","spine_03":"DEF-spine.005","head":"head","upperarm_l":"DEF-upper_arm.L","lowerarm_l":"DEF-forearm.L","upperarm_r":"DEF-upper_arm.R","lowerarm_r":"DEF-forearm.R","thigh_l":"DEF-thigh.L","calf_l":"DEF-shin.L","foot_l":"DEF-foot.L","thigh_r":"DEF-thigh.R","calf_r":"DEF-shin.R","foot_r":"DEF-foot.R"}
+      "bone_map": {"pelvis":"pelvis","spine_02":"DEF-spine.003","spine_03":"DEF-spine.005","head":"head","upperarm_l":"DEF-upper_arm.L","lowerarm_l":"DEF-forearm.L","upperarm_r":"DEF-upper_arm.R","lowerarm_r":"DEF-forearm.R","thigh_l":"DEF-thigh.L","calf_l":"DEF-shin.L","foot_l":"DEF-foot.L","thigh_r":"DEF-thigh.R","calf_r":"DEF-shin.R","foot_r":"DEF-foot.R"},
+      "locomotion_control_map": {"pelvis":"pelvis","spine_02":"DEF-spine.003","spine_03":"DEF-spine.005","head":"head","upperarm_l":"upper_arm_fk.L","lowerarm_l":"forearm_fk.L","upperarm_r":"upper_arm_fk.R","lowerarm_r":"forearm_fk.R","thigh_l":"thigh_fk.L","calf_l":"shin_fk.L","foot_l":"foot_fk.L","thigh_r":"thigh_fk.R","calf_r":"shin_fk.R","foot_r":"foot_fk.R"},
+      "animation_switches": {},
+      "bone_animation_switches": {"upper_arm_parent.L":{"IK_FK":1.0},"upper_arm_parent.R":{"IK_FK":1.0},"thigh_parent.L":{"IK_FK":1.0},"thigh_parent.R":{"IK_FK":1.0}}
     },
     {
       "npc_id": "entity-000009",
@@ -82,7 +101,10 @@
       "source_file": "undeadf/UndeadF v.1.0.2.blend",
       "armature": "UndeadF_RIG",
       "meshes": ["UndeadF_GEO", "UndeadF_Scalp", "UndeadF_Hair03_Loose"],
-      "bone_map": {"pelvis":"Pelvis","spine_02":"Spine_02","spine_03":"Chest","head":"Head","upperarm_l":"DEF-Upperarm_01.L","lowerarm_l":"DEF-Forearm_01.L","upperarm_r":"DEF-Upperarm_01.R","lowerarm_r":"DEF-Forearm_01.R","thigh_l":"DEF-Thigh_01.L","calf_l":"DEF-Shin_01.L","foot_l":"DEF-Foot.L","thigh_r":"DEF-Thigh_01.R","calf_r":"DEF-Shin_01.R","foot_r":"DEF-Foot.R"}
+      "bone_map": {"pelvis":"DEF-Pelvis","spine_02":"DEF-Spine_02","spine_03":"DEF-Chest","head":"DEF-Head","upperarm_l":"DEF-Upperarm_01.L","lowerarm_l":"DEF-Forearm_01.L","upperarm_r":"DEF-Upperarm_01.R","lowerarm_r":"DEF-Forearm_01.R","thigh_l":"DEF-Thigh_01.L","calf_l":"DEF-Shin_01.L","foot_l":"DEF-Foot.L","thigh_r":"DEF-Thigh_01.R","calf_r":"DEF-Shin_01.R","foot_r":"DEF-Foot.R"},
+      "locomotion_control_map": {"pelvis":"Pelvis","spine_02":"Spine_02","spine_03":"Chest","head":"Head","upperarm_l":"Upperarm_FK.L","lowerarm_l":"Forearm_FK.L","upperarm_r":"Upperarm_FK.R","lowerarm_r":"Forearm_FK.R","thigh_l":"Thigh_FK.L","calf_l":"Shin_FK.L","foot_l":"Foot_FK.L","thigh_r":"Thigh_FK.R","calf_r":"Shin_FK.R","foot_r":"Foot_FK.R"},
+      "animation_switches": {},
+      "bone_animation_switches": {"Shoulder.L":{"ik_fk":1.0},"Shoulder.R":{"ik_fk":1.0},"Thigh_IK_root.L":{"ik_fk":1.0},"Thigh_IK_root.R":{"ik_fk":1.0}}
     },
     {
       "npc_id": "entity-000010",
@@ -91,7 +113,9 @@
       "source_file": "yuffie/Yuffie_model_v1.blend",
       "armature": "Genesis 8.1 Female",
       "meshes": ["Yuffie Hair Mesh", "Genesis 8.1 Female Mesh", "Genesis 8.1 Female Eyelashes Mesh", "Yuffie Eyelashes. Mesh", "Yuffie Eyebrows Mesh", "Eye_L", "Eye_R", "Yuffie Armor Mesh", "Yuffie Left Arm Mesh", "Yuffie Pants Mesh", "Yuffie Right Arm Mesh", "Yuffie Shoes Mesh", "Yuffie Tasset Mesh", "Yuffie Top Mesh"],
-      "bone_map": {"pelvis":"pelvis","spine_02":"spine-1","spine_03":"chest","head":"head","upperarm_l":"upper_arm.L","lowerarm_l":"forearm.L","upperarm_r":"upper_arm.R","lowerarm_r":"forearm.R","thigh_l":"thigh.L","calf_l":"shin.L","foot_l":"foot.L","thigh_r":"thigh.R","calf_r":"shin.R","foot_r":"foot.R"}
+      "bone_map": {"pelvis":"pelvis","spine_02":"spine-1","spine_03":"chest","head":"head","upperarm_l":"upper_arm.L","lowerarm_l":"forearm.L","upperarm_r":"upper_arm.R","lowerarm_r":"forearm.R","thigh_l":"thigh.L","calf_l":"shin.L","foot_l":"foot.L","thigh_r":"thigh.R","calf_r":"shin.R","foot_r":"foot.R"},
+      "locomotion_control_map": {"pelvis":"pelvis","spine_02":"spine-1","spine_03":"chest","head":"head","upperarm_l":"upper_arm.fk.L","lowerarm_l":"forearm.fk.L","upperarm_r":"upper_arm.fk.R","lowerarm_r":"forearm.fk.R","thigh_l":"thigh.fk.L","calf_l":"shin.fk.L","foot_l":"foot.fk.L","thigh_r":"thigh.fk.R","calf_r":"shin.fk.R","foot_r":"foot.fk.R"},
+      "animation_switches": {"MhaArmIk_L":0,"MhaArmIk_R":0,"MhaLegIk_L":0,"MhaLegIk_R":0}
     }
   ]
 }

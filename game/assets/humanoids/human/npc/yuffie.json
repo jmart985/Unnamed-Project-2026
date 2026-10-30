@@ -36,6 +36,76 @@
     "calf_r": "shin.R",
     "foot_r": "foot.R"
   },
+  "locomotion_control_map": {
+    "pelvis": "pelvis",
+    "spine_02": "spine-1",
+    "spine_03": "chest",
+    "head": "head",
+    "upperarm_l": "upper_arm.fk.L",
+    "lowerarm_l": "forearm.fk.L",
+    "upperarm_r": "upper_arm.fk.R",
+    "lowerarm_r": "forearm.fk.R",
+    "thigh_l": "thigh.fk.L",
+    "calf_l": "shin.fk.L",
+    "foot_l": "foot.fk.L",
+    "thigh_r": "thigh.fk.R",
+    "calf_r": "shin.fk.R",
+    "foot_r": "foot.fk.R"
+  },
+  "animation_switches": {
+    "MhaArmIk_L": 0,
+    "MhaArmIk_R": 0,
+    "MhaLegIk_L": 0,
+    "MhaLegIk_R": 0
+  },
+  "bone_animation_switches": {},
+  "material_conversion": {
+    "baked": [
+      "yuffie_Genesis 8.1 Female Mesh_2_Teeth-1.001",
+      "yuffie_Genesis 8.1 Female Mesh_5_Teeth-1.001",
+      "yuffie_Genesis 8.1 Female Mesh_7_Pupils-1.002",
+      "yuffie_Genesis 8.1 Female Mesh_8_EyeMoisture-1.002",
+      "yuffie_Genesis 8.1 Female Mesh_10_Cornea-1.002",
+      "yuffie_Genesis 8.1 Female Mesh_11_Irises-1.002",
+      "yuffie_Genesis 8.1 Female Mesh_12_Sclera-1.002",
+      "yuffie_Genesis 8.1 Female Eyelashes Mesh_0_Eyelashes-1.002",
+      "yuffie_Yuffie Eyelashes. Mesh_0_24_eyelashes_0.2_0_0-1.002",
+      "yuffie_Yuffie Eyebrows Mesh_0_25_eyebrows_0.2_0_0-1.002",
+      "yuffie_Eye_L_0_Auto Eye - IRIS",
+      "yuffie_Eye_L_1_Auto Eye - CORNEA/SCLERA",
+      "yuffie_Eye_L_2_Auto Eye - PUPIL",
+      "yuffie_Eye_R_0_Auto Eye - IRIS",
+      "yuffie_Eye_R_1_Auto Eye - CORNEA/SCLERA",
+      "yuffie_Eye_R_2_Auto Eye - PUPIL",
+      "yuffie_Yuffie Armor Mesh_0_24_armor_0.8_0_0-5.002",
+      "yuffie_Yuffie Armor Mesh_1_24_cothes_0.1_0_0-5.002",
+      "yuffie_Yuffie Armor Mesh_2_24_armor_0.8_0_0-4.002",
+      "yuffie_Yuffie Left Arm Mesh_0_24_armor_0.8_0_0-6.002",
+      "yuffie_Yuffie Pants Mesh_0_25_pants_0.35_0_0-4.002",
+      "yuffie_Yuffie Right Arm Mesh_0_24_armor_0.8_0_0-7.002",
+      "yuffie_Yuffie Shoes Mesh_0_25_pants_0.35_0_0-5.002",
+      "yuffie_Yuffie Tasset Mesh_0_25_tassels_0.2_0_0-1.002",
+      "yuffie_Yuffie Tasset Mesh_1_25_pants_0.35_0_0-3.002",
+      "yuffie_Yuffie Tasset Mesh_2_24_cothes_0.1_0_0-4.002",
+      "yuffie_Yuffie Top Mesh_0_24_cothes_0.1_0_0-6.002"
+    ],
+    "reconstructed": [
+      "YFBC_DefaultMaterial_BaseColor_1004.001",
+      "YFBC_DefaultMaterial_BaseColor_1004.001",
+      "YFBC_DefaultMaterial_BaseColor_1004.001",
+      "yuffie_Genesis 8.1 Female Mesh_4_EyeSocket-1.002",
+      "YFBC_DefaultMaterial_BaseColor_1004.003",
+      "YFBC_DefaultMaterial_BaseColor_1004.001",
+      "YFBC_DefaultMaterial_BaseColor_1004.001",
+      "YFBC_DefaultMaterial_BaseColor_1004.001",
+      "YFBC_DefaultMaterial_BaseColor_1004.003"
+    ],
+    "native": [
+      "DaniHairShader-1.002",
+      "Fingernails-1.002",
+      "Toenails-1.002"
+    ]
+  },
   "animation_clips": [
     "Genesis 8.1 FemaleAction",
     "human_idle",
@@ -205,9 +275,9 @@
     ]
   },
   "target_height_m": 1.75,
-  "source_height_m": 1.716320771471132,
-  "normalized_scale": 1.0196229219436646,
-  "glb_bytes": 29098648,
+  "source_height_m": 1.716320570807385,
+  "normalized_scale": 1.019623041152954,
+  "glb_bytes": 24525084,
   "textures_max_edge": 1024,
   "source_animations_expected": [
     "Genesis 8.1 FemaleAction"
@@ -217,5 +287,5 @@
   "runtime_expression_targets_generated": 32,
   "runtime_morph_targets_included": true,
   "runtime_morph_target_count": 32,
-  "base_mesh_preserved_from": "yuffie.glb"
+  "base_mesh_preserved_from": null
 }

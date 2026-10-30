@@ -28,6 +28,50 @@
     "calf_r": "shin.R",
     "foot_r": "foot.R"
   },
+  "locomotion_control_map": {
+    "pelvis": "pelvis",
+    "spine_02": "spine-1",
+    "spine_03": "chest",
+    "head": "head",
+    "upperarm_l": "upper_arm.fk.L",
+    "lowerarm_l": "forearm.fk.L",
+    "upperarm_r": "upper_arm.fk.R",
+    "lowerarm_r": "forearm.fk.R",
+    "thigh_l": "thigh.fk.L",
+    "calf_l": "shin.fk.L",
+    "foot_l": "foot.fk.L",
+    "thigh_r": "thigh.fk.R",
+    "calf_r": "shin.fk.R",
+    "foot_r": "foot.fk.R"
+  },
+  "animation_switches": {
+    "MhaArmIk_L": 0,
+    "MhaArmIk_R": 0,
+    "MhaLegIk_L": 0,
+    "MhaLegIk_R": 0
+  },
+  "bone_animation_switches": {},
+  "material_conversion": {
+    "baked": [
+      "vincent_Vincent Body_0_Face-2",
+      "vincent_Vincent Body_2_Teeth-2",
+      "vincent_Vincent Body_3_Torso-2",
+      "vincent_Vincent Body_4_Legs-2",
+      "vincent_Vincent Body_5_EyeSocket-2",
+      "vincent_Vincent Body_6_Arms-2",
+      "vincent_Vincent Body_7_Fingernails-2",
+      "vincent_Vincent Body_8_Toenails-2",
+      "vincent_Vincent Body_9_Genitals",
+      "vincent_eye_ENV_0_5_eye_1_0_0.001",
+      "vincent_Eyelashes_0_5_hair_1_0_0",
+      "vincent_Head Wrap_0_5_body_1_0_0",
+      "vincent_Hair_0_5_hair_1_0_0.001"
+    ],
+    "reconstructed": [
+      "vincent_Eyes_0_5_eye_1_0_0"
+    ],
+    "native": []
+  },
   "animation_clips": [
     "human_idle",
     "human_run",
@@ -37,7 +81,8 @@
     "npc_face_fear",
     "npc_face_happy",
     "npc_face_sad",
-    "npc_face_surprised"
+    "npc_face_surprised",
+    "Vincent Hair Armature"
   ],
   "locomotion_clips": [
     "human_idle",
@@ -92,9 +137,9 @@
     ]
   },
   "target_height_m": 1.75,
-  "source_height_m": 1.9386010228584891,
-  "normalized_scale": 0.9027128219604492,
-  "glb_bytes": 36990616,
+  "source_height_m": 1.9386015348691885,
+  "normalized_scale": 0.9027125835418701,
+  "glb_bytes": 6941496,
   "textures_max_edge": 1024,
   "source_animations_expected": [],
   "source_morph_target_count": 283,
@@ -102,5 +147,5 @@
   "runtime_expression_targets_generated": 6,
   "runtime_morph_targets_included": true,
   "runtime_morph_target_count": 6,
-  "base_mesh_preserved_from": "vincent.glb"
+  "base_mesh_preserved_from": null
 }

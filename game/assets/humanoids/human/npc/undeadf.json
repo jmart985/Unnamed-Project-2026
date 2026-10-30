@@ -10,10 +10,10 @@
     "UndeadF_Hair03_Loose"
   ],
   "bone_map": {
-    "pelvis": "Pelvis",
-    "spine_02": "Spine_02",
-    "spine_03": "Chest",
-    "head": "Head",
+    "pelvis": "DEF-Pelvis",
+    "spine_02": "DEF-Spine_02",
+    "spine_03": "DEF-Chest",
+    "head": "DEF-Head",
     "upperarm_l": "DEF-Upperarm_01.L",
     "lowerarm_l": "DEF-Forearm_01.L",
     "upperarm_r": "DEF-Upperarm_01.R",
@@ -24,6 +24,51 @@
     "thigh_r": "DEF-Thigh_01.R",
     "calf_r": "DEF-Shin_01.R",
     "foot_r": "DEF-Foot.R"
+  },
+  "locomotion_control_map": {
+    "pelvis": "Pelvis",
+    "spine_02": "Spine_02",
+    "spine_03": "Chest",
+    "head": "Head",
+    "upperarm_l": "Upperarm_FK.L",
+    "lowerarm_l": "Forearm_FK.L",
+    "upperarm_r": "Upperarm_FK.R",
+    "lowerarm_r": "Forearm_FK.R",
+    "thigh_l": "Thigh_FK.L",
+    "calf_l": "Shin_FK.L",
+    "foot_l": "Foot_FK.L",
+    "thigh_r": "Thigh_FK.R",
+    "calf_r": "Shin_FK.R",
+    "foot_r": "Foot_FK.R"
+  },
+  "animation_switches": {},
+  "bone_animation_switches": {
+    "Shoulder.L": {
+      "ik_fk": 1.0
+    },
+    "Shoulder.R": {
+      "ik_fk": 1.0
+    },
+    "Thigh_IK_root.L": {
+      "ik_fk": 1.0
+    },
+    "Thigh_IK_root.R": {
+      "ik_fk": 1.0
+    }
+  },
+  "material_conversion": {
+    "baked": [
+      "undeadf_UndeadF_GEO_0_UndeadF_Face",
+      "undeadf_UndeadF_GEO_1_UndeadF_Gens",
+      "undeadf_UndeadF_GEO_5_UndeadF_Nails",
+      "undeadf_UndeadF_Scalp_7_UndeadF_Scalp",
+      "undeadf_UndeadF_Hair03_Loose_4_UndeadF_Hair"
+    ],
+    "reconstructed": [],
+    "native": [
+      "UndeadF_Eyeball_R",
+      "UndeadF_Eyeball_L"
+    ]
   },
   "animation_clips": [
     "human_idle",
@@ -91,7 +136,7 @@
   "target_height_m": 1.75,
   "source_height_m": 1.655772490633027,
   "normalized_scale": 1.0569084882736206,
-  "glb_bytes": 12631368,
+  "glb_bytes": 7269556,
   "textures_max_edge": 1024,
   "source_animations_expected": [],
   "source_morph_target_count": 90,
@@ -99,5 +144,5 @@
   "runtime_expression_targets_generated": 6,
   "runtime_morph_targets_included": true,
   "runtime_morph_target_count": 6,
-  "base_mesh_preserved_from": "undeadf.glb"
+  "base_mesh_preserved_from": null
 }
