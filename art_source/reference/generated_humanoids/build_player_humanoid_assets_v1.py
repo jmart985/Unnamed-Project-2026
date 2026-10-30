@@ -17,7 +17,6 @@ from mathutils import Matrix, Quaternion, Vector
 
 ROOT = Path(__file__).resolve().parents[3]
 GENERATED = ROOT / "art_source/reference/generated_humanoids"
-MALE_SOURCE = GENERATED / "human_male_humanoid_rig_v1.blend"
 FEMALE_BASE = GENERATED / "blender_female_base_source_v1.blend"
 FEMALE_RIG_SOURCE = GENERATED / "human_elf_adapted_rig_v1.blend"
 ASSET_ROOT = ROOT / "game/assets/humanoids/human"
@@ -417,10 +416,31 @@ def rebuild_player_shirt_and_belt():
 
 
 def build_male():
-    bpy.ops.wm.open_mainfile(filepath=str(MALE_SOURCE))
+    # Start from the same canonical rig template as the female player model,
+    # then import the Blender male base mesh directly. Do not inherit the
+    # previously adapted male presentation mesh as the player body's source.
+    bpy.ops.wm.open_mainfile(filepath=str(FEMALE_RIG_SOURCE))
+    builder.deform_upper_body()
+    builder.make_short_hair()
+    builder.add_semantic_anchors()
     builder.OUT_GLB = ASSET_ROOT / "player_male_humanoid_rig_v1.glb"
-    builder.ANCHOR_TARGETS = builder.ANCHOR_TARGETS
+    scene = bpy.context.scene
+    body = bpy.data.objects["HumanBody"]
+    if len(body.data.vertices) != 10582:
+        raise RuntimeError("The player male body must be built from the raw Blender male base mesh.")
+    if scene.get("male_base_source_sha256") != "811f43accbb31a88266d932f8f5563b2d13586fca0ba2693aad1f5fe582b3515":
+        raise RuntimeError("The player male body is not linked to the approved Blender base source.")
+    scene["asset_id"] = "player_human_male_humanoid_rig_v1"
+    scene["humanoid_rig_version"] = 1
+    scene["source_asset"] = "Blender Human Base Meshes v1.4.1 / GEO-body_male_realistic"
+    scene["source_license"] = "CC0 1.0 Universal body; shared project Humanoid Rig v1"
+    scene["variant"] = "male-presenting adult human player body prototype"
+    scene["body_mesh_vertices"] = len(body.data.vertices)
+    scene["target_height_m"] = builder.TARGET_HEIGHT_M
     rebuild_player_shirt_and_belt()
+    builder.make_trousers()
+    builder.make_male_boots()
+    builder.add_semantic_anchors()
     builder.configure_render()
     builder.OUT_PREVIEW = GENERATED / "player_human_male_humanoid_rig_v1_preview.png"
     builder.OUT_FRONT_PREVIEW = GENERATED / "player_human_male_humanoid_rig_v1_front.png"

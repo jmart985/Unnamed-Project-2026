@@ -234,11 +234,16 @@ def deform_upper_body():
         ))
         arm_region = (
             (normalized.z > 1.10 and abs(normalized.x) > 0.12)
-            or (normalized.z > 0.70 and abs(normalized.x) > 0.29)
+            or (normalized.z > 0.70 and abs(normalized.x) > 0.24)
         )
         if lift_a_pose_arm and arm_region:
             side = 1.0 if normalized.x > 0.0 else -1.0
-            influence = smoothstep(0.12, 0.29, abs(normalized.x))
+            # The Blender base male is posed with relaxed, lowered arms while
+            # Humanoid Rig v1 rests in an A/T-pose. Complete the pose correction
+            # across the upper arm instead of tapering it to zero at the elbow;
+            # the wider ramp left the upper arm down while lifting only the
+            # forearm, visibly kinking the limb after skinning.
+            influence = smoothstep(0.12, 0.18, abs(normalized.x))
             angle = -side * math.radians(58.0) * influence
             pivot = Vector((side * 0.16, target_body_y, 1.38))
             normalized = pivot + Matrix.Rotation(angle, 4, "Y") @ (normalized - pivot)
