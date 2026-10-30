@@ -170,6 +170,10 @@ public sealed class NewGameSession
         var player = world.SpawnEntity(catalog.GetRequired("human"), GetPlayerSpawnPosition(seed),
             sex: playerProfile.EntitySex);
         world.SetSessionPlayer(seed, player.Id, playerProfile);
+        // The starter clothing is worn from the beginning, so it is not also
+        // duplicated in carried inventory. Unequipping returns it to inventory.
+        player.SetEquippedItem(EquipmentSlotIds.Torso, ItemIds.WorkShirt);
+        player.SetEquippedItem(EquipmentSlotIds.Legs, ItemIds.WorkTrousers);
         AssignStarterNpcSchedulesAndHomes(world, humanNpcs);
         return new NewGameSession(world, seed, player.Id);
     }

@@ -8,6 +8,8 @@ public sealed class EntityRecord
     public const int MaxCarriedCountPerItem = 999;
     private readonly Dictionary<string, int> _inventory = new(StringComparer.Ordinal);
     private readonly ReadOnlyDictionary<string, int> _inventoryView;
+    private readonly Dictionary<string, string> _equippedItems = new(StringComparer.Ordinal);
+    private readonly ReadOnlyDictionary<string, string> _equippedItemsView;
 
     internal EntityRecord(
         string id,
@@ -30,6 +32,7 @@ public sealed class EntityRecord
         Health = CharacterHealth.CreateHumanoid(BaseStats.MaxHealth);
         Skills = new SkillSet();
         _inventoryView = new ReadOnlyDictionary<string, int>(_inventory);
+        _equippedItemsView = new ReadOnlyDictionary<string, string>(_equippedItems);
         Actions = new ActionLifecycle(id, reservations, () => _inventory.Count > 0);
     }
 
@@ -46,7 +49,10 @@ public sealed class EntityRecord
     public string? AllegianceFactionId { get; internal set; }
     public double Satiety => Needs.Satiety;
     public IReadOnlyDictionary<string, int> Inventory => _inventoryView;
-    public double CarriedWeightKg => _inventory.Sum(item => item.Value * ItemCatalog.GetWeightKg(item.Key));
+    public IReadOnlyDictionary<string, string> EquippedItems => _equippedItemsView;
+    public double CarriedWeightKg =>
+        _inventory.Sum(item => item.Value * ItemCatalog.GetWeightKg(item.Key))
+        + _equippedItems.Values.Sum(ItemCatalog.GetWeightKg);
     public string Activity { get; internal set; } = "Idle";
     public SleepState SleepState { get; internal set; }
     public string? BedId { get; internal set; }
@@ -100,6 +106,21 @@ public sealed class EntityRecord
 
     internal bool CanAddCarried(string itemId, int amount) =>
         amount > 0 && amount <= RemainingCarriedCapacity(itemId);
+
+    internal void SetEquippedItem(string slotId, string itemId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(slotId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(itemId);
+        if (!ItemCatalog.IsWearable(itemId)
+            || ItemCatalog.GetRequired(itemId).EquipmentSlot != slotId)
+            throw new ArgumentException($"Item '{itemId}' cannot be equipped in slot '{slotId}'.", nameof(itemId));
+        if (_equippedItems.Values.Contains(itemId, StringComparer.Ordinal)
+            && _equippedItems.GetValueOrDefault(slotId) != itemId)
+            throw new InvalidOperationException($"Item '{itemId}' is already equipped.");
+        _equippedItems[slotId] = itemId;
+    }
+
+    internal void ClearEquippedItem(string slotId) => _equippedItems.Remove(slotId);
 
     /// <summary>
     /// Atomically removes carried units of a known item from this entity's inventory. Never

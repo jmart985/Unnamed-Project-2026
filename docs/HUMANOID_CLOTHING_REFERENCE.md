@@ -85,3 +85,32 @@ front and back, and inspect both feet because the source body has a slight pose
 asymmetry. The builder writes three-quarter, front, side, and back renders.
 This remains prototype art until it has been checked in Godot through idle and
 locomotion; it is not selected for NPC spawning by this asset-only change.
+
+## Player starter workwear
+
+Issue #522 uses both Blender Human Base Meshes v1.4.1 body presentations:
+the male source is retained at
+art_source/reference/generated_humanoids/blender_male_base_source_v1.blend;
+the female rigged base is retained at
+art_source/reference/generated_humanoids/blender_female_base_source_v1.blend.
+The authoring outputs and repeatable generator are in the same
+generated_humanoids directory. Each runtime body and its fitted workwear
+exports use the project's Humanoid Rig v1 semantic bone names. Source-specific
+helper and facial bones remain presentation details and are not gameplay
+contracts.
+
+The starter outfit is one work shirt and one pair of trousers, with sex-specific
+fit meshes. Both use the same simulation item IDs and equipment slots. The
+player controller, capsule, camera, combat, and movement remain on the existing
+CharacterBody3D root. Character-creation height and body-profile values are
+applied to the presentation as before; the current clothing fit is validated
+for the supported starter profiles and generated idle/locomotion poses. New
+body morphs, substantially different proportions, and additional outfits need
+their own fit checks.
+
+Runtime bodies are
+game/assets/humanoids/human/player_male_humanoid_rig_v1.glb and
+player_female_humanoid_rig_v1.glb. Shirt and trouser fit variants are separate
+GLBs under game/assets/items/clothing/. The player validation scenario checks
+both presentations, equipment visibility, and save/load restoration. This
+player-only starter outfit does not change NPC models or NPC equipment.

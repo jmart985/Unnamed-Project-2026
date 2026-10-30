@@ -141,7 +141,7 @@ def bind_body_to_canonical_rig(body, armature):
 
 
 def make_project_material(name, color, roughness=0.82, metallic=0.0):
-    material = bpy.data.materials.new(name)
+    material = bpy.data.materials.get(name) or bpy.data.materials.new(name)
     material.diffuse_color = (*color, 1.0)
     material.use_nodes = True
     shader = next(node for node in material.node_tree.nodes if node.type == "BSDF_PRINCIPLED")
@@ -234,11 +234,16 @@ def deform_upper_body():
         ))
         arm_region = (
             (normalized.z > 1.10 and abs(normalized.x) > 0.12)
-            or (normalized.z > 0.70 and abs(normalized.x) > 0.29)
+            or (normalized.z > 0.70 and abs(normalized.x) > 0.24)
         )
         if lift_a_pose_arm and arm_region:
             side = 1.0 if normalized.x > 0.0 else -1.0
-            influence = smoothstep(0.12, 0.29, abs(normalized.x))
+            # The Blender base male is posed with relaxed, lowered arms while
+            # Humanoid Rig v1 rests in an A/T-pose. Complete the pose correction
+            # across the upper arm instead of tapering it to zero at the elbow;
+            # the wider ramp left the upper arm down while lifting only the
+            # forearm, visibly kinking the limb after skinning.
+            influence = smoothstep(0.12, 0.18, abs(normalized.x))
             angle = -side * math.radians(58.0) * influence
             pivot = Vector((side * 0.16, target_body_y, 1.38))
             normalized = pivot + Matrix.Rotation(angle, 4, "Y") @ (normalized - pivot)
@@ -360,7 +365,7 @@ def shirt_clearance_for_weights(position, normal, body_min_z, body_height, weigh
     return torso_clearance
 
 
-def make_male_shirt_torso():
+def make_male_shirt_torso(include_sleeves=True):
     body = bpy.data.objects["HumanBody"]
     armature = next(obj for obj in bpy.context.scene.objects if obj.type == "ARMATURE")
     body_height = body.dimensions.z
@@ -396,6 +401,10 @@ def make_male_shirt_torso():
         "clavicle_l", "upperarm_l", "lowerarm_l",
         "clavicle_r", "upperarm_r", "lowerarm_r",
     }
+    side_arm_groups = {
+        side: {f"clavicle_{side}", f"upperarm_{side}", f"lowerarm_{side}"}
+        for side in ("l", "r")
+    }
     hand_groups = {
         group.name for group in body.vertex_groups
         if group.name in {"hand_l", "hand_r"}
@@ -403,12 +412,22 @@ def make_male_shirt_torso():
     }
     group_names = {group.index: group.name for group in body.vertex_groups}
     arm_weights = [mesh_group_weight(vertex, group_names, arm_groups) for vertex in body.data.vertices]
+    side_arm_weights = {
+        side: [
+            mesh_group_weight(vertex, group_names, groups)
+            for vertex in body.data.vertices
+        ]
+        for side, groups in side_arm_groups.items()
+    }
     hand_weights = [mesh_group_weight(vertex, group_names, hand_groups) for vertex in body.data.vertices]
-
     selected_faces = []
     for polygon in body.data.polygons:
         center = polygon.center
         arm_weight = sum(arm_weights[index] for index in polygon.vertices) / len(polygon.vertices)
+        side_weights = {
+            side: sum(side_arm_weights[side][index] for index in polygon.vertices) / len(polygon.vertices)
+            for side in ("l", "r")
+        }
         hand_weight = max(hand_weights[index] for index in polygon.vertices)
         in_vertical_range = hem_z <= center.z <= collar_z
         width_blend = smoothstep(
@@ -427,8 +446,17 @@ def make_male_shirt_torso():
             abs(center.x) > neckline_profile["neckline_target_half_width"]
             or center.z <= neckline_z
         )
-        is_torso = in_vertical_range and abs(center.x) <= 0.38 and outside_neckline
-        is_sleeve = in_vertical_range and arm_weight >= 0.12 and hand_weight < 0.12 and outside_neckline
+        arm_surface_crossing = any(
+            arm_weights[index] >= 0.20
+            and abs(body.data.vertices[index].co.x) > 0.22
+            for index in polygon.vertices
+        )
+        is_torso = (
+            in_vertical_range and abs(center.x) <= 0.38
+            and outside_neckline
+            and (include_sleeves or not arm_surface_crossing)
+        )
+        is_sleeve = include_sleeves and in_vertical_range and arm_weight >= 0.12 and hand_weight < 0.12 and outside_neckline
         if is_torso or is_sleeve:
             selected_faces.append(polygon)
     if len(selected_faces) < 300:
@@ -537,7 +565,8 @@ def make_male_shirt_torso():
     shirt["fabric_inward_depth_range_m"] = [min(applied_thicknesses), max(applied_thicknesses)]
     shirt["fabric_outward_depth_m"] = thickness_profile["shirt_outward_depth_m"]
     print(
-        f"Created independently skinned male shirt from the measured body fit: "
+        f"Created independently skinned male shirt from the measured body fit "
+        f"({'sleeved' if include_sleeves else 'sleeveless'}): "
         f"{len(shirt_faces)} faces, "
         f"measured clearances {min(measured_offsets):.4f}–{max(measured_offsets):.4f} m "
         f"(median {sorted(measured_offsets)[len(measured_offsets) // 2]:.4f} m), "
@@ -615,16 +644,48 @@ def make_shirt_buttons():
 
 def make_leather_belt():
     armature = next(obj for obj in bpy.context.scene.objects if obj.type == "ARMATURE")
-    center_y = -0.015
+    body = bpy.data.objects["HumanBody"]
+    mesh = body.data
+    belt_heights = (1.055, 1.105)
+    torso_groups = {
+        group.name: group.index
+        for group in body.vertex_groups
+        if group.name in {"pelvis", "spine_01", "spine_02"}
+    }
+    if len(torso_groups) != 3:
+        raise RuntimeError("Body rig is missing torso weights needed to fit its belt.")
+    waist_samples = [
+        vertex.co for vertex in mesh.vertices
+        if min(belt_heights) - 0.045 <= vertex.co.z <= max(belt_heights) + 0.045
+        and abs(vertex.co.x) <= 0.28
+        and sum(
+            assignment.weight
+            for assignment in vertex.groups
+            if assignment.group in torso_groups.values()
+        ) >= 0.35
+    ]
+    if len(waist_samples) < 20:
+        raise RuntimeError("Could not measure the body's waist for its fitted belt.")
+    center_y = (
+        min(point.y for point in waist_samples)
+        + max(point.y for point in waist_samples)
+    ) * 0.5
+    front_depth = max(center_y - point.y for point in waist_samples) + 0.012
+    back_depth = max(point.y - center_y for point in waist_samples) + 0.012
+    half_width = max(abs(point.x) for point in waist_samples) + 0.012
     segments = 48
     vertices = []
     faces = []
-    for z in (1.055, 1.105):
+    for z in belt_heights:
         for step in range(segments):
             angle = 2.0 * math.pi * step / segments
             sine = math.sin(angle)
-            depth = 0.138 if sine < 0.0 else 0.126
-            vertices.append((0.154 * math.cos(angle), center_y + sine * depth, z))
+            depth = front_depth if sine < 0.0 else back_depth
+            vertices.append((
+                half_width * math.cos(angle),
+                center_y + sine * depth,
+                z,
+            ))
     for step in range(segments):
         nxt = (step + 1) % segments
         faces.append((step, nxt, segments + nxt, segments + step))
@@ -653,11 +714,14 @@ def make_leather_belt():
     bsdf.inputs["Roughness"].default_value = 0.9
     mesh.materials.append(material)
 
+    buckle_x = 0.0
+    buckle_front_y = center_y - front_depth - 0.010
+    buckle_back_y = center_y - front_depth + 0.002
     buckle_vertices = [
-        (-0.030, -0.158, 1.065), (0.030, -0.158, 1.065),
-        (0.030, -0.158, 1.095), (-0.030, -0.158, 1.095),
-        (-0.030, -0.166, 1.065), (0.030, -0.166, 1.065),
-        (0.030, -0.166, 1.095), (-0.030, -0.166, 1.095),
+        (buckle_x - 0.030, buckle_back_y, 1.065), (buckle_x + 0.030, buckle_back_y, 1.065),
+        (buckle_x + 0.030, buckle_back_y, 1.095), (buckle_x - 0.030, buckle_back_y, 1.095),
+        (buckle_x - 0.030, buckle_front_y, 1.065), (buckle_x + 0.030, buckle_front_y, 1.065),
+        (buckle_x + 0.030, buckle_front_y, 1.095), (buckle_x - 0.030, buckle_front_y, 1.095),
     ]
     buckle_faces = [
         (0, 1, 2, 3), (4, 7, 6, 5), (0, 4, 5, 1),
