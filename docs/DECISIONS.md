@@ -681,3 +681,11 @@ User reported only an obstacle at the expected workbench. Replace that legacy ce
 - Reason: Asset packs use source proportions and rigs that do not necessarily match the project's canonical player bodies. Stable simulation IDs let equipment and saves remain compatible while each body uses a tested presentation.
 - Consequence: Existing equipment and inventory snapshot fields save and restore the top and legs; no save-schema migration is required. The work shirt and trousers remain equipped in new games and are returned to inventory when replaced. This establishes one playable outfit adaptation only; it does not establish a general auto-fit pipeline or extend NPC clothing.
 - Revisit: When another player body profile or animation reveals fit problems, the source pack garments are successfully adapted to both body variants, or the equipment/save contract changes.
+
+## D069 — Starter scene uses ambient fill for shadowed model readability (2026-10-30)
+
+- Status: Accepted for the current prototype; implemented for issue #526.
+- Decision: Assign a shared Godot Environment to the starter scene with a restrained, near-neutral ambient color and keep the existing directional key light and shadows enabled. Do not brighten character meshes with per-actor material overrides.
+- Reason: Imported skin and clothing details should remain discernible when characters turn away from the key light, while keeping directional shading useful for form and depth.
+- Consequence: Shadowed surfaces receive global fill without changing authored material colors or simulation state. This is a scene presentation default, not a complete day/night or local-lighting system. Hair alpha remains controlled by its imported materials.
+- Revisit: If visual review still shows unreadable characters in shaded locations, if the starter world gains a sky/day-night cycle, or if later lighting tests show the fill flattens form or washes out material colors.

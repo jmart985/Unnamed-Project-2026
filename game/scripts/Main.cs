@@ -221,6 +221,8 @@ public partial class Main : Node3D
 			Callable.From(RunEntityPresentationValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-player-workwear"))
 			Callable.From(RunPlayerWorkwearValidation).CallDeferred();
+		else if (OS.GetCmdlineUserArgs().Contains("--validate-character-lighting"))
+			Callable.From(RunCharacterLightingValidation).CallDeferred();
 	}
 
 	private void RunPlayerWorkwearValidation()
@@ -233,6 +235,22 @@ public partial class Main : Node3D
 		validationCharacter.SetProcessUnhandledInput(false);
 		AddChild(validationCharacter);
 		PlayerWorkwearValidation.Run(this, validationCharacter, _speciesCatalog);
+	}
+
+	private void RunCharacterLightingValidation()
+	{
+		try
+		{
+			CharacterLightingValidation.Run(
+				GetNode<WorldEnvironment>("WorldEnvironment"),
+				GetNode<DirectionalLight3D>("DirectionalLight3D"));
+			GetTree().Quit();
+		}
+		catch (Exception exception)
+		{
+			GD.PushError($"CHARACTER LIGHTING VALIDATION FAILED: {exception}");
+			GetTree().Quit(1);
+		}
 	}
 
 	public override void _Process(double delta)
