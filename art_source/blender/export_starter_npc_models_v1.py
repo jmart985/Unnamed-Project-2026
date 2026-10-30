@@ -211,13 +211,18 @@ def _resolve_and_pack_textures(objects: list[bpy.types.Object], model_dir: Path,
                 if image.packed_file is not None:
                     image.unpack(method="REMOVE")
                 udim_suffix = "_<UDIM>" if image.source == "TILED" else ""
-                scaled_path = texture_workspace / f"texture_{image_index:03d}{udim_suffix}.png"
+                source_name = str(image.get("npc_source_texture_name", image.name))
+                safe_source_name = re.sub(r"[^A-Za-z0-9_.-]+", "_", source_name)
+                scaled_path = texture_workspace / (
+                    f"texture_{image_index:03d}_{safe_source_name}{udim_suffix}.png")
                 image.filepath_raw = str(scaled_path)
                 image.file_format = "PNG"
                 image.save()
                 # Use a newly loaded datablock so the exporter cannot reuse the
                 # original file or stale packed bytes from the source image.
                 resized_image = bpy.data.images.load(str(scaled_path), check_existing=False)
+                resized_image.name = source_name
+                resized_image["npc_source_texture_name"] = source_name
                 resized_image.colorspace_settings.name = image.colorspace_settings.name
                 resized_image.alpha_mode = image.alpha_mode
                 replacements[image.as_pointer()] = resized_image
@@ -301,6 +306,18 @@ def _source_actions_by_armature(
                 for bone_name in re.findall(r'pose\.bones\["([^\"]+)"\]', path)
             }
             if not animated_bones:
+                continue
+            # Facial shape-key expressions are exported separately as the
+            # compact npc_face_* clips. Retaining each source viseme would add
+            # dozens of redundant clips, most of them targeting control bones
+            # intentionally omitted from the runtime skeleton.
+            facial_markers = (
+                "brow", "eyebrow", "cheek", "eyelid", "eye_", "lid_", "lash",
+                "ulash", "lip", "mouth", "mout_", "tong", "jaw", "nostril",
+                "teeth", "facs", "blink",
+            )
+            if all(any(marker in bone_name.casefold() for marker in facial_markers)
+                   for bone_name in animated_bones):
                 continue
             for armature in armatures:
                 score = len(animated_bones.intersection(armature.data.bones.keys()))
@@ -546,10 +563,390 @@ def _source_facial_clip_map(source_action_names: set[str]) -> dict[str, str]:
     return result
 
 
+def _material_nodes(material: bpy.types.Material) -> list[bpy.types.Node]:
+    result: list[bpy.types.Node] = []
+    visited: set[int] = set()
+
+    def collect(tree: bpy.types.NodeTree | None) -> None:
+        if tree is None or tree.as_pointer() in visited:
+            return
+        visited.add(tree.as_pointer())
+        for node in tree.nodes:
+            result.append(node)
+            if node.type == "GROUP":
+                collect(node.node_tree)
+
+    if material.use_nodes and material.node_tree is not None:
+        collect(material.node_tree)
+    return result
+
+
+def _gltf_native_base_color(material: bpy.types.Material) -> bool:
+    """Keep simple Principled colors and images; bake node graphs glTF cannot represent."""
+    if not material.use_nodes or material.node_tree is None:
+        return True
+    output = next((node for node in material.node_tree.nodes
+                   if node.type == "OUTPUT_MATERIAL" and node.is_active_output), None)
+    surface = output.inputs.get("Surface") if output is not None else None
+    if surface is None or len(surface.links) != 1:
+        return False
+    shader = surface.links[0].from_node
+    if shader.type != "BSDF_PRINCIPLED":
+        return False
+    base_color = shader.inputs.get("Base Color")
+    if base_color is None or not base_color.is_linked:
+        return True
+    return len(base_color.links) == 1 and base_color.links[0].from_node.type in {
+        "TEX_IMAGE", "VERTEX_COLOR", "ATTRIBUTE"
+    }
+
+
+def _best_material_image(material: bpy.types.Material, kind: str,
+                         source_images: list[bpy.types.Image] | None = None) -> bpy.types.Image | None:
+    images = source_images or [node.image for node in _material_nodes(material)
+                               if node.type == "TEX_IMAGE" and node.image is not None]
+    if not images:
+        return None
+
+    def score(image: bpy.types.Image) -> tuple[int, str]:
+        name = str(image.get("npc_source_texture_name", image.name)).casefold()
+        non_color = image.colorspace_settings.name.casefold() in {"non-color", "non-colour"}
+        if kind == "base":
+            positive = ("basecolor", "base_color", "albedo", "diffuse", "color", "colour",
+                        "_bc", "_d0", "_d_")
+            negative = ("normal", "rough", "gloss", "metal", "spec", "bump", "height",
+                        "opacity", "trans", "mask", "ambient", "ao", "displace")
+            preference = 100 if any(token in name for token in positive) else 0
+            # Source packs often flag albedo maps as Non-Color by mistake.
+            # The semantic filename is stronger evidence; the export path
+            # explicitly restores base color to sRGB before using the image.
+            penalty = 20 if non_color else 0
+        elif kind == "normal":
+            positive = ("normal", "_n.", "_n_", "_n-", "normalmap")
+            negative = ("rough", "gloss", "metal", "spec", "opacity", "mask")
+            preference = 100 if any(token in name for token in positive) else 0
+            penalty = 0 if non_color else 100
+        elif kind == "roughness":
+            positive = ("rough", "gloss", "_r.", "_r_", "_r-")
+            negative = ("normal", "metal", "spec", "opacity", "mask")
+            preference = 100 if any(token in name for token in positive) else 0
+            penalty = 0 if non_color else 100
+        else:
+            positive = ("metal", "_m.", "_m_", "_m-")
+            negative = ("normal", "rough", "gloss", "spec", "opacity", "mask")
+            preference = 100 if any(token in name for token in positive) else 0
+            penalty = 0 if non_color else 100
+        if any(token in name for token in negative):
+            preference -= 200
+        return preference - penalty, name
+
+    ranked = sorted(images, key=lambda image: score(image), reverse=True)
+    best = ranked[0]
+    return best if score(best)[0] > 0 else None
+
+
+def _material_is_transparent(material: bpy.types.Material) -> bool:
+    if float(material.diffuse_color[3]) < 0.999:
+        return True
+    for node in _material_nodes(material):
+        if node.type == "BSDF_TRANSPARENT":
+            return True
+        if node.type == "TEX_IMAGE" and node.image is not None:
+            name = node.image.name.casefold()
+            if any(token in name for token in ("opacity", "transparency", "alpha", "cutout")):
+                return True
+        if node.type == "GROUP":
+            for socket in node.inputs:
+                if any(token in socket.name.casefold() for token in ("opacity", "alpha", "transparency")):
+                    try:
+                        default_alpha = float(socket.default_value)
+                    except (TypeError, ValueError, AttributeError):
+                        default_alpha = 1.0
+                    if socket.is_linked or default_alpha < 0.999:
+                        return True
+    return False
+
+
+def _make_principled_material(material: bpy.types.Material, base_image: bpy.types.Image,
+                               source_images: list[bpy.types.Image], transparent: bool) -> None:
+    base_color = tuple(material.diffuse_color)
+    nodes = material.node_tree.nodes
+    links = material.node_tree.links
+    nodes.clear()
+    output = nodes.new("ShaderNodeOutputMaterial")
+    output.name = "Material Output"
+    shader = nodes.new("ShaderNodeBsdfPrincipled")
+    shader.name = "Principled BSDF"
+    shader.inputs["Roughness"].default_value = 0.68
+    shader.inputs["Metallic"].default_value = 0.0
+    image_node = nodes.new("ShaderNodeTexImage")
+    image_node.image = base_image
+    image_node.image.colorspace_settings.name = "sRGB"
+    links.new(image_node.outputs["Color"], shader.inputs["Base Color"])
+    if transparent:
+        links.new(image_node.outputs["Alpha"], shader.inputs["Alpha"])
+        if hasattr(material, "surface_render_method"):
+            material.surface_render_method = "BLENDED"
+        if hasattr(material, "blend_method"):
+            material.blend_method = "BLEND"
+
+    normal_image = _related_material_image(base_image, source_images, "normal")
+    if normal_image is not None and normal_image != base_image:
+        normal_image_node = nodes.new("ShaderNodeTexImage")
+        normal_image_node.image = normal_image
+        normal_image.colorspace_settings.name = "Non-Color"
+        normal_map = nodes.new("ShaderNodeNormalMap")
+        links.new(normal_image_node.outputs["Color"], normal_map.inputs["Color"])
+        links.new(normal_map.outputs["Normal"], shader.inputs["Normal"])
+
+    roughness_image = _related_material_image(base_image, source_images, "roughness")
+    if roughness_image is not None and roughness_image not in {base_image, normal_image}:
+        roughness_node = nodes.new("ShaderNodeTexImage")
+        roughness_node.image = roughness_image
+        roughness_image.colorspace_settings.name = "Non-Color"
+        links.new(roughness_node.outputs["Color"], shader.inputs["Roughness"])
+
+    metallic_image = _related_material_image(base_image, source_images, "metallic")
+    if metallic_image is not None and metallic_image not in {base_image, normal_image, roughness_image}:
+        metallic_node = nodes.new("ShaderNodeTexImage")
+        metallic_node.image = metallic_image
+        metallic_image.colorspace_settings.name = "Non-Color"
+        links.new(metallic_node.outputs["Color"], shader.inputs["Metallic"])
+
+    links.new(shader.outputs["BSDF"], output.inputs["Surface"])
+    material.diffuse_color = base_color
+    material.node_tree.nodes.active = image_node
+
+
+def _related_material_image(base_image: bpy.types.Image,
+                            source_images: list[bpy.types.Image], kind: str) -> bpy.types.Image | None:
+    """Return an auxiliary map only when its filename matches this albedo family."""
+    base_name = str(base_image.get("npc_source_texture_name", base_image.name))
+    base_stem = Path(base_name).stem
+    family = re.sub(r"(?i)(?:[_-](?:base.?color|albedo|diffuse|bc|d0?1))$", "", base_stem)
+    if family == base_stem:
+        return None
+
+    patterns = {
+        "normal": re.compile(r"^(?:[_-](?:n|normal|normalmap))(?:$|[_-])", re.IGNORECASE),
+        "roughness": re.compile(r"^(?:[_-](?:roughness|rough|gloss))(?:$|[_-])", re.IGNORECASE),
+        "metallic": re.compile(r"^(?:[_-](?:metallic|metal))(?:$|[_-])", re.IGNORECASE),
+    }
+    suffix_pattern = patterns[kind]
+    for image in source_images:
+        source_name = str(image.get("npc_source_texture_name", image.name))
+        candidate_stem = Path(source_name).stem
+        suffix = candidate_stem[len(family):] if candidate_stem.casefold().startswith(family.casefold()) else ""
+        if suffix and suffix_pattern.match(suffix):
+            return image
+    return None
+
+
+def _reconstruct_disconnected_material(material: bpy.types.Material) -> str:
+    """Use named source maps when an intake material has no connected output shader."""
+    source_images = [node.image for node in _material_nodes(material)
+                     if node.type == "TEX_IMAGE" and node.image is not None]
+    base_image = _best_material_image(material, "base", source_images)
+    if base_image is None:
+        base_image = bpy.data.images.new(
+            f"{material.name}_BaseColor", width=1, height=1, alpha=True)
+        base_image.pixels = [*material.diffuse_color[:3], material.diffuse_color[3]]
+        base_image.pack()
+    material.use_nodes = True
+    _make_principled_material(material, base_image, source_images,
+                               _material_is_transparent(material))
+    return base_image.name
+
+
+def _image_sample_signature(image: bpy.types.Image) -> tuple[float, ...]:
+    width, height = int(image.size[0]), int(image.size[1])
+    sample_points = ((0, 0), (width // 2, height // 2),
+                     (width // 4, height // 4),
+                     (3 * width // 4, 3 * height // 4))
+    return tuple(
+        round(float(image.pixels[(y * width + x) * 4 + channel]), 5)
+        for x, y in sample_points for channel in range(3)
+    )
+
+
+def _bake_unsupported_materials(meshes: list[bpy.types.Object], model_slug: str) -> dict[str, list[str]]:
+    """Bake unsupported source shaders to portable base-color maps for the glTF export."""
+    converted: dict[str, list[str]] = {"baked": [], "reconstructed": [], "native": []}
+    scene = bpy.context.scene
+    previous_engine = scene.render.engine
+    targets: list[tuple[bpy.types.Material, bpy.types.Image, list[bpy.types.Image], bool, str]] = []
+
+    for mesh in meshes:
+        used_slots = {polygon.material_index for polygon in mesh.data.polygons}
+        for slot_index in sorted(used_slots):
+            if slot_index >= len(mesh.material_slots):
+                continue
+            material = mesh.material_slots[slot_index].material
+            if material is None:
+                continue
+            if _gltf_native_base_color(material):
+                converted["native"].append(material.name)
+                continue
+            if not material.use_nodes or material.node_tree is None:
+                converted["reconstructed"].append(
+                    _reconstruct_disconnected_material(material))
+                continue
+            output = next((node for node in material.node_tree.nodes
+                           if node.type == "OUTPUT_MATERIAL" and node.is_active_output), None)
+            surface = output.inputs.get("Surface") if output is not None else None
+            if surface is None or not surface.is_linked:
+                copied = material.copy()
+                copied.name = f"{model_slug}_{mesh.name}_{slot_index}_{material.name}"
+                if mesh.material_slots[slot_index].link == "OBJECT":
+                    mesh.material_slots[slot_index].material = copied
+                else:
+                    mesh.data.materials[slot_index] = copied
+                converted["reconstructed"].append(_reconstruct_disconnected_material(copied))
+                continue
+
+            copied = material.copy()
+            copied.name = f"{model_slug}_{mesh.name}_{slot_index}_{material.name}"
+            if mesh.material_slots[slot_index].link == "OBJECT":
+                mesh.material_slots[slot_index].material = copied
+            else:
+                mesh.data.materials[slot_index] = copied
+            source_images = [node.image for node in _material_nodes(copied)
+                             if node.type == "TEX_IMAGE" and node.image is not None]
+            transparent = _material_is_transparent(copied)
+            base_image = _best_material_image(copied, "base", source_images)
+            if base_image is not None:
+                _make_principled_material(copied, base_image, source_images, transparent)
+                converted["reconstructed"].append(copied.name)
+                continue
+            nodes = copied.node_tree.nodes
+            for node in nodes:
+                node.select = False
+            image = bpy.data.images.new(
+                f"NPC_{model_slug}_{mesh.name}_{slot_index}_BaseColor",
+                width=MAX_TEXTURE_EDGE,
+                height=MAX_TEXTURE_EDGE,
+                alpha=True,
+                float_buffer=False,
+            )
+            image.alpha_mode = "STRAIGHT"
+            target = nodes.new("ShaderNodeTexImage")
+            target.image = image
+            target.select = True
+            nodes.active = target
+            targets.append((copied, image, source_images, transparent, mesh.name))
+
+    scene.render.engine = "CYCLES"
+    scene.cycles.samples = 4
+    scene.render.bake.margin = 8
+    scene.render.bake.use_pass_color = True
+    scene.render.bake.use_pass_direct = False
+    scene.render.bake.use_pass_indirect = False
+    for mesh in meshes:
+        selected_materials = [record for record in targets if record[4] == mesh.name]
+        if not selected_materials:
+            continue
+        if not mesh.data.uv_layers:
+            raise RuntimeError(f"{model_slug}:{mesh.name} has no UV map for material conversion.")
+
+        # Blender bakes every material slot on the active mesh. A slot that was
+        # reconstructed directly from an existing color map still needs a
+        # separate bake target while another slot is being baked; otherwise
+        # Cycles can choose that source map as the active target and overwrite
+        # it with the bake result. Keep disposable targets on all non-baked
+        # slots so source maps remain intact.
+        baked_material_ids = {id(record[0]) for record in selected_materials}
+        bake_target_image_ids = {record[1].as_pointer() for record in selected_materials}
+        temporary_targets: list[tuple[bpy.types.Material, bpy.types.Node,
+                                      bpy.types.Image]] = []
+        protected_images: dict[int, tuple[bpy.types.Image, tuple[float, ...]]] = {}
+        for slot in mesh.material_slots:
+            if slot.material is None or slot.material.node_tree is None:
+                continue
+            for node in _material_nodes(slot.material):
+                image = node.image if node.type == "TEX_IMAGE" else None
+                if image is None or image.source == "TILED" or not image.size[0] or not image.size[1]:
+                    continue
+                if image.as_pointer() in bake_target_image_ids:
+                    continue
+                protected_images[image.as_pointer()] = (image, _image_sample_signature(image))
+
+        for slot_index, slot in enumerate(mesh.material_slots):
+            material = slot.material
+            if material is None or id(material) in baked_material_ids:
+                continue
+            if not material.use_nodes or material.node_tree is None:
+                material.use_nodes = True
+            nodes = material.node_tree.nodes
+            for node in nodes:
+                node.select = False
+            image = bpy.data.images.new(
+                f"NPC_{model_slug}_{mesh.name}_{slot_index}_DiscardBakeTarget",
+                width=1,
+                height=1,
+                alpha=True,
+                float_buffer=False,
+            )
+            target = nodes.new("ShaderNodeTexImage")
+            target.image = image
+            target.select = True
+            nodes.active = target
+            temporary_targets.append((material, target, image))
+
+        for view_object in bpy.context.view_layer.objects:
+            view_object.select_set(False)
+        mesh.hide_set(False)
+        mesh.select_set(True)
+        for selected in list(bpy.context.selected_objects):
+            if selected != mesh:
+                selected.select_set(False)
+        bpy.context.view_layer.objects.active = mesh
+        if bpy.context.view_layer.objects.active.type != "MESH" or any(
+            selected.type != "MESH" for selected in bpy.context.selected_objects
+        ):
+            raise RuntimeError(
+                f"Bake for {model_slug}:{mesh.name} requires mesh-only selection; "
+                f"active={bpy.context.view_layer.objects.active.name}, "
+                f"selected={[selected.name for selected in bpy.context.selected_objects]}"
+            )
+        try:
+            bpy.ops.object.bake(type="DIFFUSE", pass_filter={"COLOR"})
+        finally:
+            for material, target, image in temporary_targets:
+                if material.node_tree is not None and target.name in material.node_tree.nodes:
+                    material.node_tree.nodes.remove(target)
+                if image.name in bpy.data.images:
+                    bpy.data.images.remove(image, do_unlink=True)
+        changed_images = [image.name for image, before in protected_images.values()
+                          if _image_sample_signature(image) != before]
+        if changed_images:
+            raise RuntimeError(
+                f"Baking {model_slug}:{mesh.name} changed source color images: "
+                f"{', '.join(changed_images)}."
+            )
+        for material, image, source_images, transparent, mesh_name in selected_materials:
+            image.pack()
+            _make_principled_material(material, image, source_images, transparent)
+            converted["baked"].append(material.name)
+
+    scene.render.engine = previous_engine
+    return converted
+
+
 def _enable_mesh(mesh: bpy.types.Object) -> None:
+    # Some source rigs drive outfit visibility from an authoring-only outfit
+    # selector. The roster has already chosen the runtime meshes, so remove
+    # those visibility drivers in this export-only scene before exposing them.
+    for data_path in ("hide_viewport", "hide_render"):
+        if mesh.animation_data and any(
+            driver.data_path == data_path for driver in mesh.animation_data.drivers
+        ):
+            mesh.driver_remove(data_path)
     mesh.hide_set(False)
     mesh.hide_viewport = False
     mesh.hide_render = False
+    for collection in mesh.users_collection:
+        collection.hide_viewport = False
+        collection.hide_render = False
 
 
 def _enable_export_node(node: bpy.types.Object) -> None:
@@ -694,7 +1091,7 @@ def _write_glb(path: Path, document: dict, binary: bytearray) -> None:
 
 
 def _preserve_reference_rest_pose(reference_path: Path, generated_path: Path) -> None:
-    """Keep a prior runtime model's base geometry and bind pose while adding clips."""
+    """Keep prior mesh rest data where compatible while allowing added meshes and compact rigs."""
     reference, reference_binary_view = _glb_json(reference_path)
     generated, generated_binary_view = _glb_json(generated_path)
     reference_binary = bytes(reference_binary_view)
@@ -709,10 +1106,18 @@ def _preserve_reference_rest_pose(reference_path: Path, generated_path: Path) ->
 
     reference_nodes = index_unique_nodes(reference, reference_path)
     generated_nodes = index_unique_nodes(generated, generated_path)
-    if reference_nodes.keys() != generated_nodes.keys():
-        raise RuntimeError(f"{generated_path.name} has a different node set from its rest-pose reference.")
+    missing_reference_nodes = reference_nodes.keys() - generated_nodes.keys()
+    if missing_reference_nodes:
+        missing_mesh_nodes = sorted(name for name in missing_reference_nodes
+                                    if "mesh" in reference_nodes[name])
+        if missing_mesh_nodes:
+            raise RuntimeError(
+                f"{generated_path.name} is missing existing mesh nodes: {missing_mesh_nodes[:20]}.")
+    if "NPC_ModelRoot" not in reference_nodes or "NPC_ModelRoot" not in generated_nodes:
+        raise RuntimeError(f"{generated_path.name} has no shared normalized root to preserve.")
 
-    for name, target_node in generated_nodes.items():
+    for name in reference_nodes.keys() & generated_nodes.keys():
+        target_node = generated_nodes[name]
         source_node = reference_nodes[name]
         if ("mesh" in source_node) != ("mesh" in target_node):
             raise RuntimeError(f"Node {name!r} changed mesh assignment in {generated_path.name}.")
@@ -723,6 +1128,8 @@ def _preserve_reference_rest_pose(reference_path: Path, generated_path: Path) ->
 
     for name, target_node in generated_nodes.items():
         if "mesh" not in target_node:
+            continue
+        if name not in reference_nodes:
             continue
         source_mesh = reference["meshes"][reference_nodes[name]["mesh"]]
         target_mesh = generated["meshes"][target_node["mesh"]]
@@ -749,21 +1156,41 @@ def _preserve_reference_rest_pose(reference_path: Path, generated_path: Path) ->
 
     reference_skins = {skin.get("name"): skin for skin in reference.get("skins", [])}
     generated_skins = {skin.get("name"): skin for skin in generated.get("skins", [])}
-    if reference_skins.keys() != generated_skins.keys():
-        raise RuntimeError(f"{generated_path.name} has a different skin set from its rest-pose reference.")
+    preserved_skin_count = 0
     for name, target_skin in generated_skins.items():
+        if name not in reference_skins:
+            continue
         source_skin = reference_skins[name]
         source_joints = [reference["nodes"][index]["name"] for index in source_skin["joints"]]
         target_joints = [generated["nodes"][index]["name"] for index in target_skin["joints"]]
-        if source_joints != target_joints:
-            raise RuntimeError(f"Joint order changed for skin {name!r}.")
+        source_joint_indices = {joint_name: index for index, joint_name in enumerate(source_joints)}
+        missing_joints = [joint for joint in target_joints if joint not in source_joint_indices]
+        if missing_joints:
+            raise RuntimeError(
+                f"{generated_path.name} has joints with no source rest bind for skin {name!r}: "
+                f"{missing_joints[:20]}.")
         source_bind = source_skin.get("inverseBindMatrices")
         target_bind = target_skin.get("inverseBindMatrices")
         if (source_bind is None) != (target_bind is None):
             raise RuntimeError(f"Bind matrix layout changed for skin {name!r}.")
         if source_bind is not None:
-            _copy_accessor_data(reference, reference_binary, source_bind,
-                                generated, generated_binary, target_bind)
+            source_accessor = reference["accessors"][source_bind]
+            target_accessor = generated["accessors"][target_bind]
+            if (source_accessor.get("componentType"), source_accessor.get("type")) != (
+                    target_accessor.get("componentType"), target_accessor.get("type")):
+                raise RuntimeError(f"Bind matrix layout changed for skin {name!r}.")
+            source_elements = _accessor_elements(reference, reference_binary, source_bind)
+            target_view = generated["bufferViews"][target_accessor["bufferView"]]
+            element_size = len(source_elements[0]) if source_elements else 0
+            target_stride = target_view.get("byteStride", element_size)
+            target_start = target_view.get("byteOffset", 0) + target_accessor.get("byteOffset", 0)
+            for target_index, joint_name in enumerate(target_joints):
+                source_element = source_elements[source_joint_indices[joint_name]]
+                start = target_start + target_index * target_stride
+                generated_binary[start:start + element_size] = source_element
+        preserved_skin_count += 1
+    if not preserved_skin_count:
+        raise RuntimeError(f"{generated_path.name} has no matching source skin for rest-pose preservation.")
 
     _write_glb(generated_path, generated, generated_binary)
 
@@ -953,9 +1380,77 @@ def _compact_glb(path: Path) -> None:
     path.write_bytes(output)
 
 
+def _decode_accessor(document: dict, binary: bytes | bytearray | memoryview,
+                     accessor_index: int) -> list[tuple[float, ...]]:
+    accessor = document["accessors"][accessor_index]
+    components = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4, "MAT4": 16}
+    formats = {5121: ("B", 1, 255), 5123: ("H", 2, 65535),
+               5125: ("I", 4, 4294967295), 5126: ("f", 4, 1)}
+    if accessor.get("componentType") not in formats or accessor.get("type") not in components:
+        raise RuntimeError("Unsupported accessor layout in the generated GLB.")
+    fmt, component_size, max_value = formats[accessor["componentType"]]
+    component_count = components[accessor["type"]]
+    values: list[tuple[float, ...]] = []
+    for element in _accessor_elements(document, binary, accessor_index):
+        value = struct.unpack("<" + fmt * component_count, element)
+        if accessor.get("normalized") and accessor["componentType"] != 5126:
+            values.append(tuple(component / max_value for component in value))
+        else:
+            values.append(tuple(float(component) for component in value))
+    return values
+
+
+def _weighted_joint_nodes(document: dict, binary: bytes | bytearray | memoryview) -> set[int]:
+    weighted_nodes: set[int] = set()
+    for node in document.get("nodes", []):
+        mesh_index = node.get("mesh")
+        skin_index = node.get("skin")
+        if not isinstance(mesh_index, int) or not isinstance(skin_index, int):
+            continue
+        joints = document["skins"][skin_index]["joints"]
+        for primitive in document["meshes"][mesh_index].get("primitives", []):
+            attributes = primitive.get("attributes", {})
+            for set_index in range(4):
+                joint_accessor = attributes.get(f"JOINTS_{set_index}")
+                weight_accessor = attributes.get(f"WEIGHTS_{set_index}")
+                if joint_accessor is None or weight_accessor is None:
+                    continue
+                joint_rows = _decode_accessor(document, binary, joint_accessor)
+                weight_rows = _decode_accessor(document, binary, weight_accessor)
+                for joint_row, weight_row in zip(joint_rows, weight_rows):
+                    for joint_index, weight in zip(joint_row, weight_row):
+                        if weight > 0.001 and 0 <= int(joint_index) < len(joints):
+                            weighted_nodes.add(joints[int(joint_index)])
+    return weighted_nodes
+
+
+def _weighted_animation_motion(document: dict, binary: bytes | bytearray | memoryview,
+                               animation: dict, weighted_nodes: set[int]) -> dict[int, float]:
+    motion: dict[int, float] = {}
+    for channel in animation.get("channels", []):
+        target = channel.get("target", {})
+        node_index = target.get("node")
+        if target.get("path") != "rotation" or node_index not in weighted_nodes:
+            continue
+        sampler = animation["samplers"][channel["sampler"]]
+        accessor = document["accessors"][sampler["output"]]
+        if accessor.get("componentType") != 5126 or accessor.get("type") != "VEC4":
+            raise RuntimeError(
+                f"{animation.get('name')} has an invalid skeletal rotation accessor.")
+        rotations = _decode_accessor(document, binary, sampler["output"])
+        if len(rotations) < 2:
+            continue
+        baseline = rotations[0]
+        closest_dot = min(abs(sum(baseline[index] * rotation[index] for index in range(4)))
+                          for rotation in rotations[1:])
+        motion[node_index] = 2.0 * math.acos(max(0.0, min(1.0, closest_dot)))
+    return motion
+
+
 def _validate_glb(path: Path, expected_source_actions: set[str],
-                  required_bones: set[str], expected_facial_clips: set[str],
-                  generated_facial_clips: set[str], required_facial_targets: set[str]) -> list[str]:
+                  expected_facial_clips: set[str],
+                  generated_facial_clips: set[str], required_facial_targets: set[str],
+                  required_meshes: set[str], baked_materials: set[str]) -> list[str]:
     document, binary = _glb_json(path)
     for image in document.get("images", []):
         view = document["bufferViews"][image["bufferView"]]
@@ -1045,17 +1540,41 @@ def _validate_glb(path: Path, expected_source_actions: set[str],
                             if channel.get("target", {}).get("path") == "rotation"}
         if len(rotation_targets) < 12:
             raise RuntimeError(f"{path.name}:{animation['name']} animates too few articulated nodes.")
-        animated_bones = {
-            document["nodes"][index].get("name")
-            for index in rotation_targets
-            if isinstance(index, int) and 0 <= index < len(document["nodes"])
-        }
-        missing_bones = required_bones - animated_bones
-        if missing_bones:
-            raise RuntimeError(
-                f"{path.name}:{animation['name']} omits mapped body joints: {sorted(missing_bones)}")
+        # Source control bones are not necessarily exported: several assets
+        # drive hidden deformation joints through constraints and FK/IK rigs.
+        # Actual skin deformation is verified below against weighted joints.
     if not document.get("skins"):
         raise RuntimeError(f"{path.name} has no exported skinned armature.")
+    exported_mesh_nodes = {node.get("name") for node in document.get("nodes", [])
+                           if isinstance(node.get("mesh"), int)}
+    missing_meshes = required_meshes - exported_mesh_nodes
+    if missing_meshes:
+        raise RuntimeError(f"{path.name} omitted roster mesh nodes: {sorted(missing_meshes)}")
+
+    materials_by_name = {material.get("name"): material
+                         for material in document.get("materials", [])}
+    for material_name in baked_materials:
+        material = materials_by_name.get(material_name)
+        texture = material.get("pbrMetallicRoughness", {}).get("baseColorTexture") \
+            if material is not None else None
+        if texture is None:
+            raise RuntimeError(f"{path.name} did not retain baked base color for {material_name!r}.")
+
+    weighted_nodes = _weighted_joint_nodes(document, binary)
+    if not weighted_nodes:
+        raise RuntimeError(f"{path.name} has no weighted skin joints to validate.")
+    for animation in document.get("animations", []):
+        name = animation.get("name")
+        if name not in {"human_idle", "human_walk", "human_run"}:
+            continue
+        motion = _weighted_animation_motion(document, binary, animation, weighted_nodes)
+        threshold = 0.004 if name == "human_idle" else 0.035
+        moving_weighted_joints = sum(value >= threshold for value in motion.values())
+        minimum = 2 if name == "human_idle" else 8
+        if moving_weighted_joints < minimum:
+            raise RuntimeError(
+                f"{path.name}:{name} visibly animates only {moving_weighted_joints} weighted joints; "
+                f"expected at least {minimum} (threshold {threshold:.3f} rad).")
     if path.stat().st_size >= 100_000_000:
         raise RuntimeError(f"{path.name} exceeds GitHub's 100 MB file limit.")
     return animation_names
@@ -1087,6 +1606,8 @@ def _export_model_with_texture_workspace(
             missing_meshes.append(name)
         else:
             _enable_mesh(obj)
+            if bpy.context.scene.collection not in obj.users_collection:
+                bpy.context.scene.collection.objects.link(obj)
             meshes.append(obj)
     if missing_meshes:
         raise RuntimeError(f"{model['slug']} source mesh names not found: {missing_meshes}")
@@ -1095,13 +1616,37 @@ def _export_model_with_texture_workspace(
     if armature is None or armature.type != "ARMATURE":
         raise RuntimeError(f"{model['slug']} rig not found: {model['armature']}")
     bone_map = model["bone_map"]
+    locomotion_control_map = model.get("locomotion_control_map", bone_map)
+    animation_switches = model.get("animation_switches", {})
+    bone_animation_switches = model.get("bone_animation_switches", {})
     required = REQUIRED_LOCOMOTION_BONES
     if not (required - OPTIONAL_LOCOMOTION_BONES).issubset(bone_map):
         missing_semantic = required - OPTIONAL_LOCOMOTION_BONES - set(bone_map)
         raise RuntimeError(f"{model['slug']} has incomplete semantic bone map: {sorted(missing_semantic)}")
-    missing_bones = set(bone_map.values()) - set(armature.data.bones.keys())
+    if not (required - OPTIONAL_LOCOMOTION_BONES).issubset(locomotion_control_map):
+        missing_semantic = required - OPTIONAL_LOCOMOTION_BONES - set(locomotion_control_map)
+        raise RuntimeError(
+            f"{model['slug']} has incomplete locomotion control map: {sorted(missing_semantic)}")
+    missing_bones = (set(bone_map.values()) | set(locomotion_control_map.values())) \
+        - set(armature.data.bones.keys())
     if missing_bones:
-        raise RuntimeError(f"{model['slug']} rig is missing mapped bones: {sorted(missing_bones)}")
+        raise RuntimeError(f"{model['slug']} rig is missing mapped bones or controls: {sorted(missing_bones)}")
+    missing_switches = set(animation_switches) - set(armature.keys())
+    if missing_switches:
+        raise RuntimeError(f"{model['slug']} rig is missing animation switches: {sorted(missing_switches)}")
+    missing_switch_bones = set(bone_animation_switches) - set(armature.pose.bones.keys())
+    missing_switch_properties = {
+        f'{bone_name}["{property_name}"]'
+        for bone_name, properties in bone_animation_switches.items()
+        if bone_name in armature.pose.bones
+        for property_name in properties
+        if property_name not in armature.pose.bones[bone_name]
+    }
+    if missing_switch_bones or missing_switch_properties:
+        raise RuntimeError(
+            f"{model['slug']} rig is missing bone animation switches: "
+            f"bones={sorted(missing_switch_bones)}, "
+            f"properties={sorted(missing_switch_properties)}")
 
     nodes = _selected_asset_nodes(meshes)
     nodes_by_name = {node.name: node for node in nodes}
@@ -1111,11 +1656,15 @@ def _export_model_with_texture_workspace(
         nodes.append(armature)
     for node in nodes:
         _enable_export_node(node)
+        if bpy.context.scene.collection not in node.users_collection:
+            bpy.context.scene.collection.objects.link(node)
 
     texture_errors = _resolve_and_pack_textures(
         meshes, source.parent, global_index, texture_workspace)
     if texture_errors:
         raise RuntimeError(f"{model['slug']} has unresolved used textures: {texture_errors[:20]}")
+
+    material_conversion = _bake_unsupported_materials(meshes, model["slug"])
 
     facial_clips, facial_targets, source_morph_target_count, runtime_morph_target_count = (
         _add_facial_expression_actions(meshes))
@@ -1128,7 +1677,8 @@ def _export_model_with_texture_workspace(
         modifier.ratio = float(ratio)
 
     source_actions = _source_actions_by_armature(nodes)
-    actions = add_humanoid_locomotion_actions(armature, bone_map)
+    actions = add_humanoid_locomotion_actions(
+        armature, locomotion_control_map, animation_switches, bone_animation_switches)
     source_action_names = _prepare_animation_tracks(nodes, source_actions, actions, armature)
     scene = bpy.context.scene
     scene.render.fps = 30
@@ -1160,12 +1710,11 @@ def _export_model_with_texture_workspace(
         export_animations=True,
         export_animation_mode="ACTIONS",
         export_nla_strips=True,
-        export_force_sampling=False,
-        # Export keyed transforms directly. Full-rig baking expands every bone
-        # at every frame and bloats source rigs with hundreds of helper bones.
-        export_bake_animation=False,
-        # Imported control/helper bones are not part of the runtime skeleton.
-        # The semantic locomotion map is validated against the exported rig.
+        export_force_sampling=True,
+        # Sample rig constraints and FK/IK switches into the exported skeleton.
+        # Directly exporting authoring controls leaves weighted mesh joints at rest.
+        export_bake_animation=True,
+        # Keep the runtime skin compact while baking control motion onto its deform bones.
         export_def_bones=True,
         export_optimize_animation_size=True,
         export_image_format="AUTO",
@@ -1185,10 +1734,11 @@ def _export_model_with_texture_workspace(
     exported_actions = _validate_glb(
         output,
         source_action_names,
-        set(bone_map.values()),
         set(facial_clip_map.values()),
         set(facial_targets),
         {target["shape_key"] for targets in facial_targets.values() for target in targets},
+        required_meshes=set(model["meshes"]),
+        baked_materials=set(material_conversion["baked"]),
     )
     result = {
         "npc_id": model["npc_id"],
@@ -1198,6 +1748,10 @@ def _export_model_with_texture_workspace(
         "rig": model["armature"],
         "source_meshes": model["meshes"],
         "bone_map": bone_map,
+        "locomotion_control_map": locomotion_control_map,
+        "animation_switches": animation_switches,
+        "bone_animation_switches": bone_animation_switches,
+        "material_conversion": material_conversion,
         "animation_clips": exported_actions,
         "locomotion_clips": sorted(EXPECTED_ACTIONS),
         "locomotion_root_motion": False,

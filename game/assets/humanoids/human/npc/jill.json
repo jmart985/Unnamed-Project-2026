@@ -34,6 +34,65 @@
     "calf_r": "shin.R",
     "foot_r": "foot.R"
   },
+  "locomotion_control_map": {
+    "pelvis": "pelvis",
+    "spine_02": "spine-1",
+    "spine_03": "chest",
+    "head": "head",
+    "upperarm_l": "upper_arm.fk.L",
+    "lowerarm_l": "forearm.fk.L",
+    "upperarm_r": "upper_arm.fk.R",
+    "lowerarm_r": "forearm.fk.R",
+    "thigh_l": "thigh.fk.L",
+    "calf_l": "shin.fk.L",
+    "foot_l": "foot.fk.L",
+    "thigh_r": "thigh.fk.R",
+    "calf_r": "shin.fk.R",
+    "foot_r": "foot.fk.R"
+  },
+  "animation_switches": {
+    "MhaArmIk_L": 0,
+    "MhaArmIk_R": 0,
+    "MhaLegIk_L": 0,
+    "MhaLegIk_R": 0
+  },
+  "bone_animation_switches": {},
+  "material_conversion": {
+    "baked": [
+      "jill_Jill Valentine Mesh_0_BODY---torso",
+      "jill_Jill Valentine Mesh_1_FACE",
+      "jill_Jill Valentine Mesh_2_FACE",
+      "jill_Jill Valentine Mesh_3_FACE---teeth",
+      "jill_Jill Valentine Mesh_4_BODY---legs",
+      "jill_Jill Valentine Mesh_5_EyeSocket-3",
+      "jill_Jill Valentine Mesh_6_BODY---arms",
+      "jill_Jill Valentine Mesh_7_Pupils-3",
+      "jill_Jill Valentine Mesh_8_EyeMoisture-4",
+      "jill_Jill Valentine Mesh_9_Fingernails-3.002",
+      "jill_Jill Valentine Mesh_10_Cornea-3",
+      "jill_Jill Valentine Mesh_11_Irises-3",
+      "jill_Jill Valentine Mesh_12_Sclera-3",
+      "jill_Jill Valentine Mesh_13_Toenails-3.002",
+      "jill_Jill Valentine Eyelashes Mesh_0_EyeMoisture-5",
+      "jill_Eyebrows V1 Mesh_0_7_Model-0-Mesh-0-0.003-1"
+    ],
+    "reconstructed": [
+      "jill_Jill Valentine Mesh_14_GENS---torso",
+      "jill_Jill Valentine Mesh_15_GENS---torso ANUS",
+      "jill_Jill-EyeLashes Mesh_0_Hairs-2",
+      "jill_RE3R Hair_0_Hairs-3"
+    ],
+    "native": [
+      "Eyelashes-1",
+      "Asset-1",
+      "Cloth-5",
+      "Shoes-1",
+      "Cloth-6",
+      "Cloth-7",
+      "Cloth-8",
+      "Cloth-9"
+    ]
+  },
   "animation_clips": [
     "human_idle",
     "human_run",
@@ -172,7 +231,7 @@
   "target_height_m": 1.75,
   "source_height_m": 1.8325104028528119,
   "normalized_scale": 0.9549741148948669,
-  "glb_bytes": 46002000,
+  "glb_bytes": 30237060,
   "textures_max_edge": 1024,
   "source_animations_expected": [],
   "source_morph_target_count": 1148,
@@ -180,5 +239,5 @@
   "runtime_expression_targets_generated": 24,
   "runtime_morph_targets_included": true,
   "runtime_morph_target_count": 24,
-  "base_mesh_preserved_from": "jill.glb"
+  "base_mesh_preserved_from": null
 }

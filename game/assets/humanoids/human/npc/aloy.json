@@ -26,16 +26,90 @@
     "spine_02": "spine2",
     "spine_03": "spine3",
     "head": "head",
-    "upperarm_l": "l_upperarm",
-    "lowerarm_l": "l_forearm",
-    "upperarm_r": "r_upperarm",
-    "lowerarm_r": "r_forearm",
-    "thigh_l": "l_thigh",
+    "upperarm_l": "l_upperarmtwist1",
+    "lowerarm_l": "l_forearmtwist1",
+    "upperarm_r": "r_upperarmtwist1",
+    "lowerarm_r": "r_forearmtwist1",
+    "thigh_l": "l_thightwist1",
     "calf_l": "l_shin",
     "foot_l": "l_foot",
-    "thigh_r": "r_thigh",
+    "thigh_r": "r_thightwist1",
     "calf_r": "r_shin",
     "foot_r": "r_foot"
+  },
+  "locomotion_control_map": {
+    "pelvis": "pelvis",
+    "spine_02": "spine2",
+    "spine_03": "spine3",
+    "head": "head",
+    "upperarm_l": "l_upperarmtwist1",
+    "lowerarm_l": "l_forearmtwist1",
+    "upperarm_r": "r_upperarmtwist1",
+    "lowerarm_r": "r_forearmtwist1",
+    "thigh_l": "l_thightwist1",
+    "calf_l": "l_shin",
+    "foot_l": "l_foot",
+    "thigh_r": "r_thightwist1",
+    "calf_r": "r_shin",
+    "foot_r": "r_foot"
+  },
+  "animation_switches": {},
+  "bone_animation_switches": {
+    "Root": {
+      "LeftArmFK/IK": 0.0,
+      "RightArmFK/IK": 0.0,
+      "LeftLegFK/IK": 0.0,
+      "RightLegFK/IK": 0.0
+    }
+  },
+  "material_conversion": {
+    "baked": [
+      "aloy_Aloy Mesh_2_Legs",
+      "aloy_Aloy Mesh_3_Mouth Cavity",
+      "aloy_Aloy Mesh_4_Arms",
+      "aloy_Aloy Mesh_5_Head",
+      "aloy_Aloy Mesh_6_Body",
+      "aloy_Aloy Mesh_7_Body-1",
+      "aloy_Aloy Mesh_8_Genitalia",
+      "aloy_Aloy Mesh_9_Legs-1",
+      "aloy_Aloy Mesh_10_Body-2",
+      "aloy_G9 Eyebrows Fiber Style 02 Mesh_0_Eyebrows_Primary-1",
+      "aloy_G9 Eyebrows Fiber Style 02 Mesh_1_Eyebrows_Secondary-1",
+      "aloy_Genesis 9 Eyes Mesh_0_EyeMoisture Left-1",
+      "aloy_Genesis 9 Mouth Mesh_0_Mouth",
+      "aloy_Genesis 9 Mouth Mesh_1_Teeth"
+    ],
+    "reconstructed": [
+      "aloy_Aloy Mesh_0_Fingernails",
+      "aloy_Aloy Mesh_1_Toenails",
+      "aloy_Genesis 9 Eyes Mesh_1_Eye Left-1"
+    ],
+    "native": [
+      "01_-_Default-1",
+      "Material_#4134-1",
+      "Eyelashes Lower-1",
+      "material_D7EF_2EF_Headgear-1",
+      "material_D7EF_308_Pants-1",
+      "material_D7EF_3B8_Belts-9",
+      "material_D7EF_363_Fur-3",
+      "material_D7EF_3B8_Belts-11",
+      "material_D7EF_249_Top-1",
+      "material_D7EF_3B8_Belts-10",
+      "material_D7EF_363_Fur-4",
+      "material_D7EF_31C_Skirt-5",
+      "material_D7EF_3B8_Belts-12",
+      "material_D7EF_31C_Skirt-6",
+      "material_D7EF_3B8_Belts-13",
+      "material_D7EF_31C_Skirt-7",
+      "material_D7EF_3B8_Belts-14",
+      "material_D7EF_31C_Skirt-8",
+      "material_D7EF_3B8_Belts-15",
+      "material_D7EF_31C_Skirt-9",
+      "material_D7EF_3B8_Belts-16",
+      "material_D7EF_3D8_Sleeves-1",
+      "material_D7EF_3B8_Belts-17",
+      "material_D7EF_363_Fur-5"
+    ]
   },
   "animation_clips": [
     "human_idle",
@@ -133,9 +207,9 @@
     ]
   },
   "target_height_m": 1.75,
-  "source_height_m": 1.7506874518950633,
-  "normalized_scale": 0.9996073246002197,
-  "glb_bytes": 86798280,
+  "source_height_m": 1.7507798420047345,
+  "normalized_scale": 0.9995545744895935,
+  "glb_bytes": 72240028,
   "textures_max_edge": 1024,
   "source_animations_expected": [],
   "source_morph_target_count": 1114,
@@ -143,5 +217,5 @@
   "runtime_expression_targets_generated": 14,
   "runtime_morph_targets_included": true,
   "runtime_morph_target_count": 14,
-  "base_mesh_preserved_from": "aloy.glb"
+  "base_mesh_preserved_from": null
 }
