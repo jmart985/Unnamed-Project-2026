@@ -30,6 +30,59 @@
     "calf_r": "shin.R",
     "foot_r": "foot.R"
   },
+  "locomotion_control_map": {
+    "pelvis": "pelvis",
+    "spine_02": "spine-1",
+    "spine_03": "chest",
+    "head": "head",
+    "upperarm_l": "upper_arm.fk.L",
+    "lowerarm_l": "forearm.fk.L",
+    "upperarm_r": "upper_arm.fk.R",
+    "lowerarm_r": "forearm.fk.R",
+    "thigh_l": "thigh.fk.L",
+    "calf_l": "shin.fk.L",
+    "foot_l": "foot.fk.L",
+    "thigh_r": "thigh.fk.R",
+    "calf_r": "shin.fk.R",
+    "foot_r": "foot.fk.R"
+  },
+  "animation_switches": {
+    "MhaArmIk_L": 0,
+    "MhaArmIk_R": 0,
+    "MhaLegIk_L": 0,
+    "MhaLegIk_R": 0
+  },
+  "bone_animation_switches": {},
+  "material_conversion": {
+    "baked": [
+      "dwight_Dwight Fairfield_0_Face-2.001",
+      "dwight_Dwight Fairfield_7_Teeth-2.001",
+      "dwight_Dwight Fairfield_8_EyeSocket-2.001",
+      "dwight_Dwight Fairfield_9_Pupils-2.001",
+      "dwight_Dwight Fairfield_10_EyeMoisture-3.001",
+      "dwight_Dwight Fairfield_11_Cornea-2.001",
+      "dwight_Dwight Fairfield_12_Sclera-2.003",
+      "dwight_Genesis 8 Male Eyelashes Mesh_0_EyeMoisture-4.001",
+      "dwight_Hair_0_MI_DFHair01_TAA",
+      "dwight_Glasses_0_MI_DFGlass00"
+    ],
+    "reconstructed": [
+      "dwight_Dwight Fairfield_1_Torso-2.001",
+      "dwight_Dwight Fairfield_2_Legs-2.001",
+      "dwight_Dwight Fairfield_3_Toenails-2.001",
+      "dwight_Dwight Fairfield_4_Arms-2.001",
+      "dwight_Dwight Fairfield_5_Fingernails-2.001",
+      "dwight_Dwight Fairfield_6_Testicles-1.001",
+      "dwight_Glasses_1_MI_DFGlasses00",
+      "dwight_Pants_0_MI_DFLegs01",
+      "dwight_Shirt_1_MI_DFTorso01",
+      "dwight_Bracelets_1_MI_DFTorso01",
+      "dwight_Watch_1_MI_DFTorso01"
+    ],
+    "native": [
+      "Eyelashes-1.001"
+    ]
+  },
   "animation_clips": [
     "human_idle",
     "human_run",
@@ -94,9 +147,9 @@
     ]
   },
   "target_height_m": 1.75,
-  "source_height_m": 1.8471803412046823,
-  "normalized_scale": 0.9473899006843567,
-  "glb_bytes": 24630004,
+  "source_height_m": 1.8471805736338898,
+  "normalized_scale": 0.9473897814750671,
+  "glb_bytes": 15284044,
   "textures_max_edge": 1024,
   "source_animations_expected": [],
   "source_morph_target_count": 237,
@@ -104,5 +157,5 @@
   "runtime_expression_targets_generated": 6,
   "runtime_morph_targets_included": true,
   "runtime_morph_target_count": 6,
-  "base_mesh_preserved_from": "dwight.glb"
+  "base_mesh_preserved_from": null
 }

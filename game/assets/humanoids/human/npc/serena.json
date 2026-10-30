@@ -38,6 +38,78 @@
     "calf_r": "DEF-shin.R",
     "foot_r": "DEF-foot.R"
   },
+  "locomotion_control_map": {
+    "pelvis": "pelvis",
+    "spine_02": "DEF-spine.003",
+    "spine_03": "DEF-spine.005",
+    "head": "head",
+    "upperarm_l": "upper_arm_fk.L",
+    "lowerarm_l": "forearm_fk.L",
+    "upperarm_r": "upper_arm_fk.R",
+    "lowerarm_r": "forearm_fk.R",
+    "thigh_l": "thigh_fk.L",
+    "calf_l": "shin_fk.L",
+    "foot_l": "foot_fk.L",
+    "thigh_r": "thigh_fk.R",
+    "calf_r": "shin_fk.R",
+    "foot_r": "foot_fk.R"
+  },
+  "animation_switches": {},
+  "bone_animation_switches": {
+    "upper_arm_parent.L": {
+      "IK_FK": 1.0
+    },
+    "upper_arm_parent.R": {
+      "IK_FK": 1.0
+    },
+    "thigh_parent.L": {
+      "IK_FK": 1.0
+    },
+    "thigh_parent.R": {
+      "IK_FK": 1.0
+    }
+  },
+  "material_conversion": {
+    "baked": [
+      "serena_Tear_0_Tear-1",
+      "serena_Eyes_0_EyeMoisture Left-1",
+      "serena_Eyes_1_Eye Left",
+      "serena_Serena_Lace Mesh_0_Serena_Lace_Cover-1"
+    ],
+    "reconstructed": [
+      "serena_Serena Mesh_0_Fingernails-2",
+      "serena_Serena Mesh_1_Toenails-2",
+      "serena_Serena Mesh_2_Legs-2",
+      "serena_Serena Mesh_3_Mouth Cavity-2",
+      "serena_Serena Mesh_4_Arms-2",
+      "serena_Serena Mesh_5_Head-2",
+      "serena_Serena Mesh_6_Body-2",
+      "serena_Serena Mesh_7_GP_Torso",
+      "serena_Serena Mesh_8_GP_Vagina",
+      "serena_Serena Mesh_9_GP_Rectum",
+      "serena_Serena Mesh_10_GP_Torso_Back",
+      "serena_Serena Mesh_11_GP_Urethra",
+      "serena_Serena Mesh_12_GP_Labia Minora",
+      "serena_Mouth_0_Mouth",
+      "serena_Mouth_1_Teeth",
+      "serena_EyeBrows_0_PC_019_A0101_Eyebrow_MI-1"
+    ],
+    "native": [
+      "PC_019_A0101_Eyelash_MI-1",
+      "PC_019_A_VAR_HEAD_000_Hair_MI-3",
+      "Serena_PartB_Serena_Shoulder-1",
+      "Serena_PartB-1",
+      "Serena_PartA-1",
+      "Serena_Lace-3",
+      "Serena_PartA_Serena_Neck-1",
+      "Serena_PartA_Sim-1",
+      "Serena_PartA_Serena_Leg-1",
+      "Serena_PartB_Serena_Chest-1",
+      "Serena_PartB_Serena_Waist-1",
+      "Serena_PartA_Serena_Waist-1",
+      "Serena_PartB_Serena_Boots.001-1"
+    ]
+  },
   "animation_clips": [
     "human_idle",
     "human_run",
@@ -47,7 +119,8 @@
     "npc_face_fear",
     "npc_face_happy",
     "npc_face_sad",
-    "npc_face_surprised"
+    "npc_face_surprised",
+    "Serena_HaIR (2)"
   ],
   "locomotion_clips": [
     "human_idle",
@@ -102,9 +175,9 @@
     ]
   },
   "target_height_m": 1.75,
-  "source_height_m": 1.8137881523207213,
-  "normalized_scale": 0.964831531047821,
-  "glb_bytes": 37243264,
+  "source_height_m": 1.81378837642246,
+  "normalized_scale": 0.9648314118385315,
+  "glb_bytes": 33659264,
   "textures_max_edge": 1024,
   "source_animations_expected": [],
   "source_morph_target_count": 700,
@@ -112,5 +185,5 @@
   "runtime_expression_targets_generated": 6,
   "runtime_morph_targets_included": true,
   "runtime_morph_target_count": 6,
-  "base_mesh_preserved_from": "serena.glb"
+  "base_mesh_preserved_from": null
 }
