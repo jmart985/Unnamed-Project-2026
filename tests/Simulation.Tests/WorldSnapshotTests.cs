@@ -147,6 +147,23 @@ public sealed class WorldSnapshotTests
     }
 
     [Fact]
+    public void Schema23ClothingMigrationRejectsNullEntitiesWithoutReplacingWorld()
+    {
+        var source = NewGameSession.Create(GetSpeciesCatalog(), PlayerCharacterProfile.Create("Ada"));
+        var legacy = JsonNode.Parse(WorldSnapshotSerializer.Serialize(source.World, 9))!;
+        legacy["SchemaVersion"] = 23;
+        legacy["Entities"]!.AsArray()[0] = null;
+
+        var target = NewGameSession.Create(GetSpeciesCatalog(), PlayerCharacterProfile.Create("Existing"));
+        var before = WorldSnapshotSerializer.Serialize(target.World, 3);
+
+        Assert.Throws<InvalidDataException>(() =>
+            WorldSnapshotSerializer.Load(target.World, legacy.ToJsonString(), GetSpeciesCatalog()));
+        Assert.Equal(before, WorldSnapshotSerializer.Serialize(target.World, 3));
+        Assert.Same(target.Player, target.World.Entities.Single(item => item.Id == target.PlayerEntityId));
+    }
+
+    [Fact]
     public void SnapshotRoundTripPreservesPlayerPendingDeathAndDeadState()
     {
         var source = NewGameSession.Create(GetSpeciesCatalog(), PlayerCharacterProfile.Create("Ada"));

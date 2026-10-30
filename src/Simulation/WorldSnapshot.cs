@@ -366,6 +366,8 @@ public static class WorldSnapshotSerializer
             {
                 Entities = snapshot.Entities.Select(entity =>
                 {
+                    if (entity is null || string.IsNullOrWhiteSpace(entity.Id))
+                        throw new InvalidDataException("Snapshot entities must have IDs.");
                     if (!string.Equals(entity.Id, snapshot.PlayerEntityId, StringComparison.Ordinal))
                         return entity with { EquippedItems = new Dictionary<string, string>(StringComparer.Ordinal) };
                     if (entity.Inventory is null)
