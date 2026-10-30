@@ -10,6 +10,8 @@ public static class ItemIds
     public const string Rock = "rock";
     public const string Axe = "axe";
     public const string Coin = "coin";
+    public const string WorkShirt = "work_shirt";
+    public const string WorkTrousers = "work_trousers";
 
     public static bool IsKnown(string? itemId) => ItemCatalog.Contains(itemId);
 

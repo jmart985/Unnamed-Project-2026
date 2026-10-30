@@ -54,10 +54,24 @@ public partial class PlayerCharacter : CharacterBody3D
 	[Export] public bool LeftShieldEquipped { get; set; }
 	[Export] public bool RightShieldEquipped { get; set; }
 
+	private const string MalePlayerModelPath = "res://assets/humanoids/human/player_male_humanoid_rig_v1.glb";
+	private const string FemalePlayerModelPath = "res://assets/humanoids/human/player_female_humanoid_rig_v1.glb";
 	private Vector3 _lastGroundedPosition;
 	private double _attackCooldownRemaining;
-	private PlayerBodyRig _body = null!;
+	private PlayerBodyRig? _body;
+	private Node3D? _visualModelRoot;
+	private Skeleton3D? _visualSkeleton;
+	private AnimationPlayer? _visualAnimationPlayer;
+	private Node3D? _shirtMesh;
+	private Node3D? _shirtDetailsMesh;
+	private Node3D? _trousersMesh;
+	private Node3D? _beltMesh;
+	private Node3D? _beltBuckleMesh;
+	private Node3D? _toolAnchor;
 	private Node3D _axeView = null!;
+	private bool _axeEquipped;
+	private readonly Dictionary<string, string> _equippedClothing = new(StringComparer.Ordinal);
+	private readonly NpcLocomotionAnimator _modelAnimator = new();
 	private PlayerCharacterProfile _profile = PlayerCharacterProfile.Create("Player");
 	private readonly ProceduralGait _gait = new() { ReferenceSpeed = 5.0f, BobHeight = 0.03f };
 	private AttackSwing _swing = new();
@@ -68,6 +82,10 @@ public partial class PlayerCharacter : CharacterBody3D
 
 	public bool IsAttacking => _swing.IsActive;
 	public string EntityId { get; private set; } = string.Empty;
+	public string? PresentationModelAssetPath { get; private set; }
+	public bool UsesImportedHumanoidModel => _visualSkeleton is not null && _visualAnimationPlayer is not null;
+	public IReadOnlyList<string> PresentationAnimationNames => _modelAnimator.GetAnimationNames();
+	public string? CurrentPresentationAnimation => _visualAnimationPlayer?.CurrentAnimation.ToString();
 	public string AimedBodyPart => CombatAim.PartForPitch(_headPitch, _swingLeft);
 	public bool MouseLookEnabled { get; set; } = true;
 
@@ -102,11 +120,25 @@ public partial class PlayerCharacter : CharacterBody3D
 		if (_body is not null)
 		{
 			_body.Root.QueueFree();
+			_body = null;
 		}
+		if (_visualModelRoot is not null)
+		{
+			_visualModelRoot.QueueFree();
+			_visualModelRoot = null;
+		}
+		_modelAnimator.Bind(null, "humanoid", false, MovementSpeed);
+		_visualSkeleton = null;
+		_visualAnimationPlayer = null;
+		_shirtMesh = _shirtDetailsMesh = _trousersMesh = _beltMesh = _beltBuckleMesh = _toolAnchor = null;
 
 		var proportions = PlayerBodyProportions.From(profile);
-		_body = new PlayerBodyRig(proportions);
-		AddChild(_body.Root);
+		if (!TryBuildImportedHumanoid(profile, proportions))
+		{
+			_body = new PlayerBodyRig(proportions);
+			AddChild(_body.Root);
+			BuildGait();
+		}
 		BuildToolVisual();
 
 		var collision = GetNode<CollisionShape3D>("CollisionShape3D");
@@ -118,13 +150,75 @@ public partial class PlayerCharacter : CharacterBody3D
 		camera.Position = new Vector3(0, proportions.Height * 1.45f, _cameraZoomDistance);
 		camera.Rotation = new Vector3(CameraPitchOffset, 0, 0);
 
-		BuildGait();
+	}
+
+	private bool TryBuildImportedHumanoid(PlayerCharacterProfile profile, PlayerBodyProportions proportions)
+	{
+		var assetPath = profile.Sex == PlayerSex.Male ? MalePlayerModelPath : FemalePlayerModelPath;
+		if (!ResourceLoader.Exists(assetPath) || GD.Load<PackedScene>(assetPath) is not { } packed)
+		{
+			GD.PushWarning($"Player humanoid model '{assetPath}' is unavailable; using the procedural player visual.");
+			PresentationModelAssetPath = null;
+			return false;
+		}
+
+		var adapter = new Node3D
+		{
+			Name = "PlayerHumanoidForwardAdapter",
+			Rotation = Vector3.Up * Mathf.Pi,
+			Scale = PlayerVisualScale(proportions)
+		};
+		AddChild(adapter);
+		var model = packed.Instantiate<Node3D>();
+		adapter.AddChild(model);
+		var skeleton = model.FindChildren("*", "Skeleton3D", recursive: true, owned: false)
+			.OfType<Skeleton3D>().FirstOrDefault();
+		var animationPlayer = model.FindChild("AnimationPlayer", recursive: true, owned: false) as AnimationPlayer;
+		if (skeleton is null || animationPlayer is null)
+		{
+			adapter.QueueFree();
+			GD.PushWarning($"Player humanoid model '{assetPath}' is missing its skeleton or AnimationPlayer; using the procedural visual.");
+			PresentationModelAssetPath = null;
+			return false;
+		}
+
+		_visualModelRoot = adapter;
+		_visualSkeleton = skeleton;
+		_visualAnimationPlayer = animationPlayer;
+		PresentationModelAssetPath = assetPath;
+		_shirtMesh = model.FindChild("HumanWorkShirt", recursive: true, owned: false) as Node3D;
+		_shirtDetailsMesh = model.FindChild("HumanWorkShirtDetails", recursive: true, owned: false) as Node3D;
+		_trousersMesh = model.FindChild("HumanWorkTrousers", recursive: true, owned: false) as Node3D;
+		_beltMesh = model.FindChild("HumanWorkBelt", recursive: true, owned: false) as Node3D;
+		_beltBuckleMesh = model.FindChild("HumanWorkBeltBuckle", recursive: true, owned: false) as Node3D;
+		_toolAnchor = model.FindChild("anchor_hand_r", recursive: true, owned: false) as Node3D;
+		_modelAnimator.Bind(animationPlayer, "humanoid", false, MovementSpeed);
+		ApplyEquippedClothingVisibility();
+		return true;
+	}
+
+	private static Vector3 PlayerVisualScale(PlayerBodyProportions proportions)
+	{
+		// The source meshes provide the body shape; creation sliders make bounded
+		// whole-body proportion adjustments while the physics capsule stays separate.
+		var muscleWidth = 0.88f + proportions.LimbThickness * 0.12f;
+		return new Vector3(
+			Mathf.Clamp(proportions.TorsoWidth * muscleWidth, 0.72f, 1.48f),
+			proportions.Height / 1.75f,
+			Mathf.Clamp(proportions.TorsoDepth * (0.94f + proportions.LimbThickness * 0.06f), 0.72f, 1.38f));
 	}
 
 	private void BuildToolVisual()
 	{
-		_axeView = new Node3D { Name = "EquippedAxe", Visible = false, Position = new Vector3(0, -0.62f, 0) };
-		_body.RightElbow.AddChild(_axeView);
+		var parent = _toolAnchor ?? _body?.RightElbow;
+		if (parent is null) return;
+		_axeView = new Node3D
+		{
+			Name = "EquippedAxe",
+			Visible = _axeEquipped,
+			Position = _toolAnchor is null ? new Vector3(0, -0.62f, 0) : new Vector3(0, -0.02f, -0.08f)
+		};
+		parent.AddChild(_axeView);
 		var handleMaterial = new StandardMaterial3D { AlbedoColor = new Color(0.35f, 0.16f, 0.06f) };
 		var bladeMaterial = new StandardMaterial3D { AlbedoColor = new Color(0.65f, 0.68f, 0.72f), Metallic = 0.35f, Roughness = 0.35f };
 		_axeView.AddChild(new MeshInstance3D
@@ -141,31 +235,62 @@ public partial class PlayerCharacter : CharacterBody3D
 
 	public void SetAxeEquipped(bool equipped)
 	{
+		_axeEquipped = equipped;
 		if (_axeView is not null) _axeView.Visible = equipped;
+	}
+
+	public void SetEquippedClothing(IReadOnlyDictionary<string, string> equippedItems)
+	{
+		ArgumentNullException.ThrowIfNull(equippedItems);
+		_equippedClothing.Clear();
+		foreach (var (slot, itemId) in equippedItems)
+			_equippedClothing[slot] = itemId;
+		ApplyEquippedClothingVisibility();
+	}
+
+	public bool IsClothingVisibleForTesting(string itemId) => itemId switch
+	{
+		ItemIds.WorkShirt => _shirtMesh?.Visible == true,
+		ItemIds.WorkTrousers => _trousersMesh?.Visible == true,
+		_ => false
+	};
+
+	internal void SetPresentationMovementSpeedForTesting(float speed) => _modelAnimator.Update(speed);
+
+	private void ApplyEquippedClothingVisibility()
+	{
+		var wearingShirt = _equippedClothing.GetValueOrDefault(EquipmentSlotIds.Torso) == ItemIds.WorkShirt;
+		var wearingTrousers = _equippedClothing.GetValueOrDefault(EquipmentSlotIds.Legs) == ItemIds.WorkTrousers;
+		if (_shirtMesh is not null) _shirtMesh.Visible = wearingShirt;
+		if (_shirtDetailsMesh is not null) _shirtDetailsMesh.Visible = wearingShirt;
+		if (_trousersMesh is not null) _trousersMesh.Visible = wearingTrousers;
+		if (_beltMesh is not null) _beltMesh.Visible = wearingTrousers;
+		if (_beltBuckleMesh is not null) _beltBuckleMesh.Visible = wearingTrousers;
 	}
 
 	// Walk drives hips, knees, shoulders, elbows, head and torso; an attack layer overrides the swinging arm
 	// and adds a torso twist after the gait step, so locomotion and combat share joints without fighting.
 	private void BuildGait()
 	{
+		var body = _body ?? throw new InvalidOperationException("The procedural gait requires its fallback body rig.");
 		_gait.Limbs.Clear();
 		_gait.ReferenceSpeed = MovementSpeed;
-		_gait.Body = _body.Root;
-		var leg = new[] { (_body.LeftHip, _body.LeftKnee, 0f), (_body.RightHip, _body.RightKnee, Mathf.Pi) };
+		_gait.Body = body.Root;
+		var leg = new[] { (body.LeftHip, body.LeftKnee, 0f), (body.RightHip, body.RightKnee, Mathf.Pi) };
 		foreach (var (hip, knee, phase) in leg)
 		{
 			_gait.Limbs.Add(new ProceduralGait.Limb { Pivot = hip, Phase = phase, Amplitude = 0.6f });
 			_gait.Limbs.Add(new ProceduralGait.Limb { Pivot = knee, Phase = phase + Mathf.Pi * 0.5f, Amplitude = -0.9f, Rectify = true });
 		}
 
-		var arm = new[] { (_body.LeftShoulder, _body.LeftElbow, Mathf.Pi), (_body.RightShoulder, _body.RightElbow, 0f) };
+		var arm = new[] { (body.LeftShoulder, body.LeftElbow, Mathf.Pi), (body.RightShoulder, body.RightElbow, 0f) };
 		foreach (var (shoulder, elbow, phase) in arm)
 		{
 			_gait.Limbs.Add(new ProceduralGait.Limb { Pivot = shoulder, Phase = phase, Amplitude = 0.5f, IdleAmplitude = 0.03f, IdleFrequency = 1.1f });
 			_gait.Limbs.Add(new ProceduralGait.Limb { Pivot = elbow, Phase = phase, Amplitude = 0.25f, Bias = 0.2f, Rectify = true });
 		}
 
-		_gait.Limbs.Add(new ProceduralGait.Limb { Pivot = _body.Torso, Axis = Vector3.Up, Phase = 0, Amplitude = 0.08f, IdleAmplitude = 0.02f, IdleFrequency = 0.5f });
+		_gait.Limbs.Add(new ProceduralGait.Limb { Pivot = body.Torso, Axis = Vector3.Up, Phase = 0, Amplitude = 0.08f, IdleAmplitude = 0.02f, IdleFrequency = 0.5f });
 	}
 
 	public void BindPlayer(string entityId, PlayerCharacterProfile profile, float movementSpeed)
@@ -277,11 +402,15 @@ public partial class PlayerCharacter : CharacterBody3D
             Mathf.MoveToward(Velocity.Z, target.Z, rate * physicsDelta));
 
 		MoveAndSlide();
-		_gait.Advance(physicsDelta, IsOnFloor() ? new Vector2(Velocity.X, Velocity.Z).Length() : 0f);
+		var horizontalSpeed = IsOnFloor() ? new Vector2(Velocity.X, Velocity.Z).Length() : 0f;
+		if (_body is not null)
+			_gait.Advance(physicsDelta, horizontalSpeed);
         if (_swing.Advance(physicsDelta))
         {
             StrikeReleased?.Invoke(_swingLeft, CombatAim.PartForPitch(_headPitch, _swingLeft));
         }
+		if (_visualAnimationPlayer is not null)
+			_modelAnimator.Update(horizontalSpeed, physicsDelta);
 
 		ApplyAttackPose();
 		UpdateCameraPosition(physicsDelta);
@@ -344,6 +473,14 @@ public partial class PlayerCharacter : CharacterBody3D
         _interactionMovementHoldSeconds = 0;
         _swing = AttackSwing.ForTotalDuration(AttackDuration);
         _swing.Begin();
+        var attackClip = left ? "human_attack_l" : "human_attack_r";
+		var animationPlayer = _visualAnimationPlayer;
+        if (animationPlayer?.HasAnimation(attackClip) == true
+            && _modelAnimator.PlayManual(attackClip, loop: false))
+        {
+            var clipLength = animationPlayer.GetAnimation(attackClip).Length;
+            animationPlayer.SpeedScale = (float)clipLength / Mathf.Max(AttackDuration, 0.01f);
+        }
         AttackStarted?.Invoke();
         _attackCooldownRemaining = AttackCooldown;
     }
@@ -352,6 +489,24 @@ public partial class PlayerCharacter : CharacterBody3D
     // chops down through the aim, recovery returns. The torso twists into the swing.
     private void ApplyAttackPose()
     {
+        _headPitch = Mathf.Lerp(_headPitch, _headPitchTarget, 0.2f);
+        if (_body is null)
+        {
+            if (_visualSkeleton is not null)
+            {
+                var headIndex = _visualSkeleton.FindBone("head");
+                if (headIndex >= 0)
+                {
+                    var animationRotation = _visualSkeleton.GetBonePoseRotation(headIndex);
+                    _visualSkeleton.SetBonePoseRotation(
+                        headIndex,
+                        animationRotation * Quaternion.FromEuler(new Vector3(_headPitch, 0, 0)));
+                }
+            }
+            GetNode<Camera3D>("Camera3D").Rotation = new Vector3(CameraPitchOffset + _headPitch, 0, 0);
+            return;
+        }
+
         var pose = _swing.Pose;
         var shoulder = _swingLeft ? _body.LeftShoulder : _body.RightShoulder;
         var elbow = _swingLeft ? _body.LeftElbow : _body.RightElbow;
@@ -365,7 +520,6 @@ public partial class PlayerCharacter : CharacterBody3D
         }
 
         // Head follows aim pitch; sits on top of the idle sway applied by the gait.
-		_headPitch = Mathf.Lerp(_headPitch, _headPitchTarget, 0.2f);
 		_body.Head.Rotation = new Vector3(_headPitch, _body.Head.Rotation.Y, 0);
 		GetNode<Camera3D>("Camera3D").Rotation = new Vector3(CameraPitchOffset + _headPitch, 0, 0);
     }

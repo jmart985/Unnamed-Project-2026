@@ -24,6 +24,8 @@ public partial class Main
 	private VBoxContainer _settlementDetails = null!;
 	private PlayerButtonBindings _buttonBindings = null!;
 	private readonly Dictionary<(string Action, bool Controller), Button> _mappingButtons = [];
+	private Button _workShirtButton = null!;
+	private Button _workTrousersButton = null!;
 	private (string Action, bool Controller)? _captureBinding;
 
 	private void ConfigurePlayerMenus()
@@ -63,7 +65,7 @@ public partial class Main
 		_equipmentSummary = AddTextTab(_inventoryTabs, "Equipment");
 		_carriedItems = AddTextTab(_inventoryTabs, "Items");
 		_itemCategory = new OptionButton();
-		foreach (var category in new[] { "All items", "Food", "Materials", "Currency" }) _itemCategory.AddItem(category);
+		foreach (var category in new[] { "All items", "Food", "Materials", "Currency", "Clothing" }) _itemCategory.AddItem(category);
 		_carriedItems.GetParent().AddChild(_itemCategory);
 		_carriedItems.GetParent().MoveChild(_itemCategory, 0);
 		_itemCategory.ItemSelected += _ => UpdatePlayerMenuContents();
@@ -72,8 +74,13 @@ public partial class Main
 		slots.AddThemeConstantOverride("h_separation", 12);
 		slots.AddThemeConstantOverride("v_separation", 12);
 		_equipmentSummary.GetParent().AddChild(slots);
-		foreach (var slot in new[] { "Head", "Body", "Legs", "Feet", "Accessories" })
-			slots.AddChild(new Button { Text = $"{slot}\nPlanned", Disabled = true, CustomMinimumSize = new Vector2(170, 64), TooltipText = "Wearable equipment is planned; this slot is not usable yet." });
+		slots.AddChild(new Button { Text = "Head\nPlanned", Disabled = true, CustomMinimumSize = new Vector2(170, 64) });
+		_workShirtButton = AddMenuButton(slots, "Torso\nWork shirt", () => TogglePlayerClothing(
+			EquipmentSlotIds.Torso, ItemIds.WorkShirt));
+		_workTrousersButton = AddMenuButton(slots, "Legs\nWork trousers", () => TogglePlayerClothing(
+			EquipmentSlotIds.Legs, ItemIds.WorkTrousers));
+		slots.AddChild(new Button { Text = "Feet\nPlanned", Disabled = true, CustomMinimumSize = new Vector2(170, 64) });
+		slots.AddChild(new Button { Text = "Accessories\nPlanned", Disabled = true, CustomMinimumSize = new Vector2(170, 64) });
 		var toolActions = new HBoxContainer { Name = "ToolActions" };
 		_equipmentSummary.GetParent().AddChild(toolActions);
 		AddMenuButton(toolActions, "Craft axe", CraftPlayerAxe);
@@ -181,6 +188,24 @@ public partial class Main
 	{
 		var result = new PlayerToolService(_world).EquipAxe();
 		ShowActionFeedback(result.Message);
+		UpdatePlayerMenuContents();
+	}
+
+	private void TogglePlayerClothing(string slotId, string itemId)
+	{
+		if (_world.PlayerEntityId is { } id
+			&& _world.TryGetEntity(id, out var player)
+			&& player is not null
+			&& player.EquippedItems.GetValueOrDefault(slotId) == itemId)
+		{
+			var result = new PlayerEquipmentService(_world).Unequip(slotId);
+			ShowActionFeedback(result.Message);
+			UpdatePlayerMenuContents();
+			return;
+		}
+
+		var equipResult = new PlayerEquipmentService(_world).Equip(itemId);
+		ShowActionFeedback(equipResult.Message);
 		UpdatePlayerMenuContents();
 	}
 
@@ -409,15 +434,23 @@ public partial class Main
 		}
 		var profile = _world.PlayerProfile!;
 		_playerCharacter.SetAxeEquipped(string.Equals(player.EquippedTool, ItemIds.Axe, StringComparison.Ordinal));
+		_playerCharacter.SetEquippedClothing(player.EquippedItems);
 		_characterIdentity.Text = $"{profile.Name} · {profile.Height} · {profile.BodyType} · {profile.Sex}";
 		var stats = player.BaseStats;
 		_characterStatus.Text = $"STATUS\nSatiety: {player.Satiety:0.0} / 100\nCondition: {(player.Health.IsDead ? "Dead" : player.Health.IsIncapacitated ? "Incapacitated" : "Conscious")}\n\nBODY HEALTH\n" +
 			string.Join("\n", player.Health.Parts.Select(part => $"{part.Name}: {part.CurrentHealth:0.#} / {part.MaximumHealth:0.#}"));
 		_characterAttributes.Text = $"BASE ATTRIBUTES\n\nStrength: {stats.Strength:0.#}\nEndurance: {stats.Endurance:0.#}\nDefense: {stats.Defense:0.#}\nPerception: {stats.Perception:0.#}\nMovement speed: {stats.MovementSpeed:0.#}\nMaximum stamina: {stats.MaxStamina:0.#}";
-		_equipmentSummary.Text = $"EQUIPMENT\n\nTool: {(player.EquippedTool ?? "None")}\nLeft hand: {(_playerCharacter.LeftShieldEquipped ? "Shield" : "Empty")}\nRight hand: {(_playerCharacter.RightShieldEquipped ? "Shield" : "Empty")}\n\nUnarmed attacks are available in empty hands.\n\nPLANNED SLOTS";
+		var wornShirt = player.EquippedItems.GetValueOrDefault(EquipmentSlotIds.Torso);
+		var wornTrousers = player.EquippedItems.GetValueOrDefault(EquipmentSlotIds.Legs);
+		_workShirtButton.Text = $"Torso\n{(wornShirt is null ? "Equip work shirt" : "Unequip work shirt")}";
+		_workShirtButton.Disabled = wornShirt is null && player.Inventory.GetValueOrDefault(ItemIds.WorkShirt) == 0;
+		_workTrousersButton.Text = $"Legs\n{(wornTrousers is null ? "Equip work trousers" : "Unequip work trousers")}";
+		_workTrousersButton.Disabled = wornTrousers is null && player.Inventory.GetValueOrDefault(ItemIds.WorkTrousers) == 0;
+		_equipmentSummary.Text = $"EQUIPMENT\n\nTool: {(player.EquippedTool ?? "None")}\nTorso: {(wornShirt ?? "Empty")}\nLegs: {(wornTrousers ?? "Empty")}\nLeft hand: {(_playerCharacter.LeftShieldEquipped ? "Shield" : "Empty")}\nRight hand: {(_playerCharacter.RightShieldEquipped ? "Shield" : "Empty")}\n\nUnarmed attacks are available in empty hands.";
 		var items = player.Inventory.Where(item => _itemCategory.Selected switch
 		{
-			1 => ItemIds.IsEdibleFood(item.Key), 2 => item.Key == ItemIds.Wood, 3 => item.Key == ItemIds.Coin, _ => true
+			1 => ItemIds.IsEdibleFood(item.Key), 2 => item.Key == ItemIds.Wood, 3 => item.Key == ItemIds.Coin,
+			4 => ItemCatalog.IsWearable(item.Key), _ => true
 		}).OrderBy(item => item.Key, StringComparer.Ordinal).ToArray();
 		_carriedItems.Text = "CARRIED ITEMS\n" + (items.Length == 0 ? (player.Inventory.Count == 0 ? "Your inventory is empty." : "No items in this category.") :
 			string.Join("\n", items.Select(item => $"{char.ToUpperInvariant(item.Key[0])}{item.Key[1..]}   × {item.Value}"))) +

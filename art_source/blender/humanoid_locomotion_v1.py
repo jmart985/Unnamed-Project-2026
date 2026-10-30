@@ -24,13 +24,13 @@ def _local_axis_for_world(bone: bpy.types.Bone, axis: tuple[float, float, float]
 
 
 def _additional_arm_drop(armature: bpy.types.Object, side: str,
-                         bone_map: dict[str, str]) -> float:
+                         bone_map: dict[str, str], maximum_drop: float) -> float:
     """Relax an A-pose down, while respecting rigs whose arms already hang."""
     bone = armature.data.bones[bone_map[f"upperarm_{side}"]]
     direction = (bone.tail_local - bone.head_local).normalized()
     horizontal = math.hypot(direction.x, direction.y)
     source_drop = math.atan2(abs(direction.z), horizontal)
-    return max(0.0, 1.08 - source_drop)
+    return max(0.0, maximum_drop - source_drop)
 
 
 def _pose_rotations(armature: bpy.types.Object, values: Pose,
@@ -92,6 +92,7 @@ def _phase_pose(phase: float, stride: float, knee_bend: float, arm_swing: float,
 def add_humanoid_locomotion_actions(
     armature: bpy.types.Object,
     bone_map: dict[str, str] | None = None,
+    maximum_arm_drop: float = 1.08,
 ) -> list[str]:
     """Create looping, root-motion-free idle, walk, and run actions.
 
@@ -101,6 +102,8 @@ def add_humanoid_locomotion_actions(
     """
     if armature.type != "ARMATURE":
         raise TypeError("Humanoid locomotion actions require an armature object.")
+    if not math.isfinite(maximum_arm_drop) or maximum_arm_drop <= 0.0:
+        raise ValueError("Maximum humanoid arm drop must be positive and finite.")
     bone_map = bone_map or {name: name for name in REQUIRED_LOCOMOTION_BONES}
     required_semantic = REQUIRED_LOCOMOTION_BONES - OPTIONAL_LOCOMOTION_BONES
     missing_semantic = required_semantic - set(bone_map)
@@ -124,9 +127,9 @@ def add_humanoid_locomotion_actions(
 
     # A two-second breathing loop keeps the torso alive while the feet remain planted.
     idle = bpy.data.actions.new("human_idle")
-    left_arm_drop = _additional_arm_drop(armature, "l", bone_map)
-    right_arm_drop = _additional_arm_drop(armature, "r", bone_map)
-    arm_swing_factor = 0.55 + 0.45 * min(1.0, left_arm_drop / 1.08)
+    left_arm_drop = _additional_arm_drop(armature, "l", bone_map, maximum_arm_drop)
+    right_arm_drop = _additional_arm_drop(armature, "r", bone_map, maximum_arm_drop)
+    arm_swing_factor = 0.55 + 0.45 * min(1.0, left_arm_drop / maximum_arm_drop)
     idle_frames = []
     for frame in (1, 13, 25, 37, 49):
         phase = 2.0 * math.pi * (frame - 1) / 48.0

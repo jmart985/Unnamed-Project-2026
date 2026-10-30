@@ -123,7 +123,8 @@ public sealed record EntitySnapshot(
     string? EquippedTool = null,
     bool IsDead = false,
     EntityOrder? OrderIntent = null,
-    BiologicalSex? Sex = null);
+    BiologicalSex? Sex = null,
+    IReadOnlyDictionary<string, string>? EquippedItems = null);
 
 public sealed record FoodSourceSnapshot(
     string Id,
@@ -168,7 +169,8 @@ public static class WorldSnapshotSerializer
     private const int StarterWorkbenchRelocationSchemaVersion = 21;
     private const int IndividualOrdersSchemaVersion = 22;
     private const int BiologicalSexSchemaVersion = 23;
-    public const int CurrentSchemaVersion = BiologicalSexSchemaVersion;
+    private const int ClothingEquipmentSchemaVersion = 24;
+    public const int CurrentSchemaVersion = ClothingEquipmentSchemaVersion;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -202,7 +204,8 @@ public static class WorldSnapshotSerializer
                 entity.EquippedTool,
                 entity.Health.IsDead,
                 entity.OrderIntent,
-                entity.Sex))
+                entity.Sex,
+                new Dictionary<string, string>(entity.EquippedItems, StringComparer.Ordinal)))
             .ToArray();
         var foodSources = world.FoodSources
             .Select(source => new FoodSourceSnapshot(
@@ -348,6 +351,40 @@ public static class WorldSnapshotSerializer
             };
         }
 
+        // Previous player visuals represented the workwear outside simulation state.
+        // Convert that implicit starter outfit into explicit equipment when loading.
+        if (snapshot.SchemaVersion < ClothingEquipmentSchemaVersion)
+        {
+            if (snapshot.Entities is null)
+                throw new InvalidDataException("Snapshot entities are required for clothing equipment migration.");
+            var starterOutfit = new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                [EquipmentSlotIds.Torso] = ItemIds.WorkShirt,
+                [EquipmentSlotIds.Legs] = ItemIds.WorkTrousers
+            };
+            snapshot = snapshot with
+            {
+                Entities = snapshot.Entities.Select(entity =>
+                {
+                    if (!string.Equals(entity.Id, snapshot.PlayerEntityId, StringComparison.Ordinal))
+                        return entity with { EquippedItems = new Dictionary<string, string>(StringComparer.Ordinal) };
+                    if (entity.Inventory is null)
+                        throw new InvalidDataException($"Snapshot player '{entity.Id}' inventory is required for clothing migration.");
+                    var inventory = new Dictionary<string, int>(entity.Inventory, StringComparer.Ordinal);
+                    // Legacy models rendered these pieces outside inventory/equipment.
+                    // Remove any IDs that may have been present in an intermediate
+                    // development save before making the outfit the authoritative copy.
+                    inventory.Remove(ItemIds.WorkShirt);
+                    inventory.Remove(ItemIds.WorkTrousers);
+                    return entity with
+                    {
+                        Inventory = inventory,
+                        EquippedItems = new Dictionary<string, string>(starterOutfit, StringComparer.Ordinal)
+                    };
+                }).ToArray()
+            };
+        }
+
         // The starter workbench moved off the central crossroads. Preserve its
         // inventory/recipe state while relocating only the original fixed instance.
         if (snapshot.SchemaVersion >= WorkstationSchemaVersion
@@ -442,6 +479,9 @@ public static class WorldSnapshotSerializer
             return snapshot with { SchemaVersion = CurrentSchemaVersion };
 
         if (snapshot.SchemaVersion == IndividualOrdersSchemaVersion)
+            return snapshot with { SchemaVersion = CurrentSchemaVersion };
+
+        if (snapshot.SchemaVersion == BiologicalSexSchemaVersion)
             return snapshot with { SchemaVersion = CurrentSchemaVersion };
 
         if (snapshot.SchemaVersion != CurrentSchemaVersion)
@@ -608,6 +648,7 @@ public static class WorldSnapshotSerializer
             }
 
             ValidateInventory(entity.Inventory, entity.Id);
+            ValidateEquippedItems(entity.EquippedItems, entity.Id);
             ValidateOrder(entity.OrderIntent, entity.Id);
             highestEntityId = Math.Max(highestEntityId, ParseEntityId(entity.Id));
         }
@@ -1075,6 +1116,24 @@ public static class WorldSnapshotSerializer
                 throw new InvalidDataException(
                     $"Snapshot entity '{entityId}' inventory exceeds the per-item limit for '{item.Key}'.");
             }
+        }
+    }
+
+    private static void ValidateEquippedItems(
+        IReadOnlyDictionary<string, string>? equippedItems,
+        string entityId)
+    {
+        if (equippedItems is null)
+            throw new InvalidDataException($"Snapshot entity '{entityId}' equipped items are required.");
+        var seenItems = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var (slot, itemId) in equippedItems)
+        {
+            if (string.IsNullOrWhiteSpace(slot)
+                || !ItemCatalog.IsWearable(itemId)
+                || ItemCatalog.GetRequired(itemId).EquipmentSlot != slot
+                || !seenItems.Add(itemId))
+                throw new InvalidDataException(
+                    $"Snapshot entity '{entityId}' contains invalid or duplicate equipment in slot '{slot}'.");
         }
     }
 

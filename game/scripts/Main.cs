@@ -219,6 +219,20 @@ public partial class Main : Node3D
 			Callable.From(RunNpcLocomotionValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-species-presentations"))
 			Callable.From(RunEntityPresentationValidation).CallDeferred();
+		else if (OS.GetCmdlineUserArgs().Contains("--validate-player-workwear"))
+			Callable.From(RunPlayerWorkwearValidation).CallDeferred();
+	}
+
+	private void RunPlayerWorkwearValidation()
+	{
+		var validationCharacter = GD.Load<PackedScene>("res://player_character.tscn")
+			.Instantiate<PlayerCharacter>();
+		validationCharacter.Name = "PlayerWorkwearValidationCharacter";
+		validationCharacter.Visible = false;
+		validationCharacter.SetPhysicsProcess(false);
+		validationCharacter.SetProcessUnhandledInput(false);
+		AddChild(validationCharacter);
+		PlayerWorkwearValidation.Run(this, validationCharacter, _speciesCatalog);
 	}
 
 	public override void _Process(double delta)
@@ -527,6 +541,7 @@ public partial class Main : Node3D
 			player.Id,
 			profile,
 			(float)_speciesCatalog.GetRequired(player.SpeciesId).MovementSpeed);
+		_playerCharacter.SetEquippedClothing(player.EquippedItems);
 		_playerCharacter.Visible = true;
 		_playerCharacter.SetProcessUnhandledInput(true);
 		_playerCharacter.SetPhysicsProcess(true);
@@ -1300,6 +1315,7 @@ public partial class Main : Node3D
 				player.Id,
 				profile,
 				(float)_speciesCatalog.GetRequired(player.SpeciesId).MovementSpeed);
+			_playerCharacter.SetEquippedClothing(player.EquippedItems);
 			var facing = new Vector3(_world.PlayerFacing.X, 0, _world.PlayerFacing.Z);
 			if (facing.LengthSquared() > 0.0001f)
 				_playerCharacter.Rotation = new Vector3(0, Mathf.Atan2(-facing.X, -facing.Z), 0);
