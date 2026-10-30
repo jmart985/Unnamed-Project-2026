@@ -62,6 +62,7 @@ public partial class PlayerCharacter : CharacterBody3D
 	private Node3D? _visualModelRoot;
 	private Skeleton3D? _visualSkeleton;
 	private AnimationPlayer? _visualAnimationPlayer;
+	private UpperBodyAttackAnimator? _upperBodyAttackAnimator;
 	private Node3D? _shirtMesh;
 	private Node3D? _shirtDetailsMesh;
 	private Node3D? _trousersMesh;
@@ -86,6 +87,7 @@ public partial class PlayerCharacter : CharacterBody3D
 	public bool UsesImportedHumanoidModel => _visualSkeleton is not null && _visualAnimationPlayer is not null;
 	public IReadOnlyList<string> PresentationAnimationNames => _modelAnimator.GetAnimationNames();
 	public string? CurrentPresentationAnimation => _visualAnimationPlayer?.CurrentAnimation.ToString();
+	internal string? CurrentAttackPresentationAnimation => _upperBodyAttackAnimator?.CurrentAnimation;
 	public string AimedBodyPart => CombatAim.PartForPitch(_headPitch, _swingLeft);
 	public bool MouseLookEnabled { get; set; } = true;
 	internal Quaternion? PresentationHeadPoseForTesting
@@ -96,6 +98,12 @@ public partial class PlayerCharacter : CharacterBody3D
 			var headIndex = _visualSkeleton.FindBone("head");
 			return headIndex >= 0 ? _visualSkeleton.GetBonePoseRotation(headIndex) : null;
 		}
+	}
+	internal Quaternion? PresentationBonePoseForTesting(string boneName)
+	{
+		if (_visualSkeleton is null) return null;
+		var boneIndex = _visualSkeleton.FindBone(boneName);
+		return boneIndex >= 0 ? _visualSkeleton.GetBonePoseRotation(boneIndex) : null;
 	}
 
 	public bool StartAttackForTesting(bool left)
@@ -139,6 +147,7 @@ public partial class PlayerCharacter : CharacterBody3D
 		_modelAnimator.Bind(null, "humanoid", false, MovementSpeed);
 		_visualSkeleton = null;
 		_visualAnimationPlayer = null;
+		_upperBodyAttackAnimator = null;
 		_shirtMesh = _shirtDetailsMesh = _trousersMesh = _beltMesh = _beltBuckleMesh = _toolAnchor = null;
 
 		var proportions = PlayerBodyProportions.From(profile);
@@ -206,6 +215,7 @@ public partial class PlayerCharacter : CharacterBody3D
 		_toolAnchor = model.FindChild("anchor_hand_r", recursive: true, owned: false) as Node3D;
 		_modelAnimator.Bind(animationPlayer, "humanoid", false, MovementSpeed);
 		animationPlayer.Advance(0);
+		_upperBodyAttackAnimator = UpperBodyAttackAnimator.Create(animationPlayer, skeleton);
 		ApplyEquippedClothingVisibility();
 		return true;
 	}
@@ -443,13 +453,19 @@ public partial class PlayerCharacter : CharacterBody3D
 		if (_visualAnimationPlayer is null) return;
 		_modelAnimator.Update(horizontalSpeed, delta);
 		_visualAnimationPlayer.Advance(delta);
+		_upperBodyAttackAnimator?.Advance(delta);
 	}
 
 	internal void AdvancePresentationForTesting(float horizontalSpeed, float delta)
 	{
+		_attackCooldownRemaining = Math.Max(0, _attackCooldownRemaining - delta);
+		_swing.Advance(delta);
 		AdvanceImportedPresentationAnimation(horizontalSpeed, delta);
 		ApplyAttackPose();
 	}
+
+	internal bool HasAttackBoneTrackForTesting(string animationName, string boneName)
+		=> _upperBodyAttackAnimator?.HasBoneTrackForTesting(animationName, boneName) ?? false;
 
 	/// <summary>
 	/// Keeps the third-person camera from sitting inside a workbench, wall, or crowd.
@@ -499,12 +515,17 @@ public partial class PlayerCharacter : CharacterBody3D
         _swing = AttackSwing.ForTotalDuration(AttackDuration);
         _swing.Begin();
         var attackClip = left ? "human_attack_l" : "human_attack_r";
-		var animationPlayer = _visualAnimationPlayer;
-        if (animationPlayer?.HasAnimation(attackClip) == true
-            && _modelAnimator.PlayManual(attackClip, loop: false))
+        if (_upperBodyAttackAnimator?.Play(attackClip, AttackDuration) != true)
         {
-            var clipLength = animationPlayer.GetAnimation(attackClip).Length;
-            animationPlayer.SpeedScale = (float)clipLength / Mathf.Max(AttackDuration, 0.01f);
+            // Keep legacy/fallback rigs responsive if they do not provide imported
+            // attack clips with a usable upper-body skeleton branch.
+            var animationPlayer = _visualAnimationPlayer;
+            if (animationPlayer?.HasAnimation(attackClip) == true
+                && _modelAnimator.PlayManual(attackClip, loop: false))
+            {
+                var clipLength = animationPlayer.GetAnimation(attackClip).Length;
+                animationPlayer.SpeedScale = (float)clipLength / Mathf.Max(AttackDuration, 0.01f);
+            }
         }
         AttackStarted?.Invoke();
         _attackCooldownRemaining = AttackCooldown;

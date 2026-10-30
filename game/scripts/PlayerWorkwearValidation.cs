@@ -61,6 +61,33 @@ internal static class PlayerWorkwearValidation
                 character.SetPresentationMovementSpeedForTesting(0);
                 await main.ToSignal(main.GetTree(), SceneTree.SignalName.ProcessFrame);
 
+                var walkingSpeed = movementSpeed * 0.5f;
+                character.AdvancePresentationForTesting(walkingSpeed, 0.08f);
+                Require(character.CurrentPresentationAnimation == "human_walk",
+                    $"{sex} player did not resume locomotion before the moving-attack check");
+                var leftThighBeforeAttack = character.PresentationBonePoseForTesting("thigh_l")
+                    ?? throw new InvalidOperationException($"{sex} player model is missing its left thigh bone");
+                Require(character.StartAttackForTesting(left: true),
+                    $"{sex} left attack did not start for the locomotion-layer check");
+                Require(character.CurrentPresentationAnimation == "human_walk"
+                    && character.CurrentAttackPresentationAnimation == "human_attack_l",
+                    $"{sex} attack replaced the active locomotion animation instead of layering over it");
+                Require(character.HasAttackBoneTrackForTesting("human_attack_l", "upperarm_l")
+                    && !character.HasAttackBoneTrackForTesting("human_attack_l", "thigh_l")
+                    && !character.HasAttackBoneTrackForTesting("human_attack_l", "calf_l")
+                    && character.HasAttackBoneTrackForTesting("human_attack_r", "upperarm_r")
+                    && !character.HasAttackBoneTrackForTesting("human_attack_r", "thigh_r")
+                    && !character.HasAttackBoneTrackForTesting("human_attack_r", "calf_r"),
+                    $"{sex} attack overlay did not isolate upper-body tracks from the leg tracks");
+                character.AdvancePresentationForTesting(walkingSpeed, 0.08f);
+                var leftThighDuringAttack = character.PresentationBonePoseForTesting("thigh_l")
+                    ?? throw new InvalidOperationException($"{sex} player model lost its left thigh bone");
+                Require(character.CurrentAttackPresentationAnimation == "human_attack_l"
+                    && character.CurrentPresentationAnimation == "human_walk"
+                    && leftThighBeforeAttack.AngleTo(leftThighDuringAttack) > 0.02f,
+                    $"{sex} lower-body walk animation did not continue under the imported attack overlay");
+                character.AdvancePresentationForTesting(0, 0.4f);
+
                 var neutralHeadPose = character.PresentationHeadPoseForTesting
                     ?? throw new InvalidOperationException($"{sex} player model is missing its canonical head bone");
                 character._UnhandledInput(new InputEventMouseMotion { Relative = new Vector2(0, -40) });
