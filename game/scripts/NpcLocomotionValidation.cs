@@ -78,6 +78,8 @@ internal static class NpcLocomotionValidation
                 if (modelCase.ExpectedEntityViewPath is not null)
                 {
                     await ValidateImportedHumanoidLocomotion(player, model, modelCase,
+                        idleClip, minimumChangedBones: 3);
+                    await ValidateImportedHumanoidLocomotion(player, model, modelCase,
                         modelCase.WalkClip);
                     await ValidateImportedHumanoidLocomotion(player, model, modelCase,
                         modelCase.FastClip);
@@ -144,7 +146,7 @@ internal static class NpcLocomotionValidation
         Vector3 Position, Quaternion Rotation, Vector3 Scale);
 
     private static async Task ValidateImportedHumanoidLocomotion(AnimationPlayer player, Node3D model,
-        ModelCase modelCase, string clipName)
+        ModelCase modelCase, string clipName, int minimumChangedBones = 8)
     {
         var skeletons = model.FindChildren("*", "Skeleton3D", recursive: true, owned: false)
             .OfType<Skeleton3D>()
@@ -197,9 +199,9 @@ internal static class NpcLocomotionValidation
         }
 
         player.Stop();
-        if (changedBones.Count < 8)
+        if (changedBones.Count < minimumChangedBones)
             throw new InvalidOperationException(
-                $"Humanoid model {modelCase.Path} {clipName} changed only {changedBones.Count} body-bone poses across the clip; expected at least 8.");
+                $"Humanoid model {modelCase.Path} {clipName} changed only {changedBones.Count} body-bone poses across the clip; expected at least {minimumChangedBones}.");
     }
 
     private static bool IsLocomotionBodyBone(string boneName)
