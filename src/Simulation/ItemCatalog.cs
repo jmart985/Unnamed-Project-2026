@@ -23,7 +23,9 @@ public static class ItemCatalog
             [ItemIds.Axe] = new(ItemIds.Axe, 1.5),
             [ItemIds.Coin] = new(ItemIds.Coin, 0),
             [ItemIds.WorkShirt] = new(ItemIds.WorkShirt, 0.7, EquipmentSlotIds.Torso),
-            [ItemIds.WorkTrousers] = new(ItemIds.WorkTrousers, 0.9, EquipmentSlotIds.Legs)
+            [ItemIds.WorkTrousers] = new(ItemIds.WorkTrousers, 0.9, EquipmentSlotIds.Legs),
+            [ItemIds.DeluxeBunnySuitTop] = new(ItemIds.DeluxeBunnySuitTop, 0.8, EquipmentSlotIds.Torso),
+            [ItemIds.DeluxeBunnySuitLegs] = new(ItemIds.DeluxeBunnySuitLegs, 0.65, EquipmentSlotIds.Legs)
         };
 
     public static bool Contains(string? itemId) =>

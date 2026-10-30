@@ -42,6 +42,11 @@ internal static class PlayerWorkwearValidation
                 Require(character.IsClothingVisibleForTesting(ItemIds.WorkShirt)
                     && character.IsClothingVisibleForTesting(ItemIds.WorkTrousers),
                     $"{sex} starter outfit is not visible on the player model");
+                Require(player.Inventory.GetValueOrDefault(ItemIds.DeluxeBunnySuitTop) == 1
+                    && player.Inventory.GetValueOrDefault(ItemIds.DeluxeBunnySuitLegs) == 1
+                    && !character.IsClothingVisibleForTesting(ItemIds.DeluxeBunnySuitTop)
+                    && !character.IsClothingVisibleForTesting(ItemIds.DeluxeBunnySuitLegs),
+                    $"{sex} player does not start with the unequipped Deluxe Bunny outfit in inventory");
 
                 var movementSpeed = (float)speciesCatalog.GetRequired(player.SpeciesId).MovementSpeed;
                 character.SetPresentationMovementSpeedForTesting(movementSpeed * 0.5f);
@@ -159,9 +164,34 @@ internal static class PlayerWorkwearValidation
                 Require(character.IsClothingVisibleForTesting(ItemIds.WorkShirt)
                     && character.IsClothingVisibleForTesting(ItemIds.WorkTrousers),
                     $"{sex} saved equipped state was not reflected after loading");
+
+                var bunnyEquipment = new PlayerEquipmentService(reloadedSession.World);
+                Require(bunnyEquipment.Equip(ItemIds.DeluxeBunnySuitTop).Code == PlayerEquipmentResultCode.Equipped
+                    && bunnyEquipment.Equip(ItemIds.DeluxeBunnySuitLegs).Code == PlayerEquipmentResultCode.Equipped,
+                    $"{sex} Deluxe Bunny top and legs could not be equipped");
+                character.SetEquippedClothing(reloadedPlayer.EquippedItems);
+                Require(character.IsClothingVisibleForTesting(ItemIds.DeluxeBunnySuitTop)
+                    && character.IsClothingVisibleForTesting(ItemIds.DeluxeBunnySuitLegs)
+                    && !character.IsClothingVisibleForTesting(ItemIds.WorkShirt)
+                    && !character.IsClothingVisibleForTesting(ItemIds.WorkTrousers),
+                    $"{sex} equipped Deluxe Bunny outfit did not replace the workwear visuals");
+
+                var bunnySave = WorldSnapshotSerializer.Serialize(reloadedSession.World, 9.0);
+                var bunnySession = NewGameSession.Create(speciesCatalog, profile);
+                WorldSnapshotSerializer.Load(bunnySession.World, bunnySave, speciesCatalog);
+                var bunnyPlayer = bunnySession.World.Entities.Single(entity => entity.Id == player.Id);
+                character.BindPlayer(
+                    bunnyPlayer.Id,
+                    bunnySession.World.PlayerProfile!,
+                    (float)speciesCatalog.GetRequired(bunnyPlayer.SpeciesId).MovementSpeed);
+                character.SetEquippedClothing(bunnyPlayer.EquippedItems);
+                await main.ToSignal(main.GetTree(), SceneTree.SignalName.ProcessFrame);
+                Require(character.IsClothingVisibleForTesting(ItemIds.DeluxeBunnySuitTop)
+                    && character.IsClothingVisibleForTesting(ItemIds.DeluxeBunnySuitLegs),
+                    $"{sex} saved Deluxe Bunny outfit was not restored on its matching player model");
             }
 
-            GD.Print("PLAYER WORKWEAR VALIDATION PASSED: male/female Blender base selection, imported animations, outfit visibility, equipment swaps and save/load.");
+            GD.Print("PLAYER WORKWEAR VALIDATION PASSED: male/female Blender base selection, imported animations, workwear and Deluxe Bunny outfit visibility, equipment swaps and save/load.");
             main.GetTree().Quit();
         }
         catch (Exception exception)

@@ -21,6 +21,7 @@ FEMALE_BASE = GENERATED / "blender_female_base_source_v1.blend"
 FEMALE_RIG_SOURCE = GENERATED / "human_elf_adapted_rig_v1.blend"
 ASSET_ROOT = ROOT / "game/assets/humanoids/human"
 CLOTHING_ROOT = ROOT / "game/assets/items/clothing"
+BUNNY_BUILDER_PATH = ROOT / "art_source/reference/clothing/deluxe_bunny_suit/build_deluxe_bunny_suit_v1.py"
 
 spec = importlib.util.spec_from_file_location(
     "human_male_variant_builder", GENERATED / "build_human_male_variant.py"
@@ -39,6 +40,13 @@ if locomotion_spec is None or locomotion_spec.loader is None:
 locomotion = importlib.util.module_from_spec(locomotion_spec)
 sys.modules[locomotion_spec.name] = locomotion
 locomotion_spec.loader.exec_module(locomotion)
+
+bunny_spec = importlib.util.spec_from_file_location("deluxe_bunny_suit_v1", BUNNY_BUILDER_PATH)
+if bunny_spec is None or bunny_spec.loader is None:
+    raise RuntimeError("Could not load the measured Deluxe Bunny Suit clothing builder.")
+bunny = importlib.util.module_from_spec(bunny_spec)
+sys.modules[bunny_spec.name] = bunny
+bunny_spec.loader.exec_module(bunny)
 
 
 FEMALE_ANCHORS = {
@@ -359,6 +367,8 @@ def export_player_asset_set(sex, authoring_blend):
         ], export_animations=True)
         builder.validate_exported_anchors()
         builder.validate_exported_garment_shells()
+    bunny.validate_exported_clothing(temporary, sex)
+    temporary.unlink(missing_ok=True)
 
     for source_name, target_name in original_names.items():
         obj = bpy.data.objects.get(source_name)
@@ -379,17 +389,35 @@ def export_player_asset_set(sex, authoring_blend):
         "trousers_{}".format(sex): [
             "HumanWorkTrousers", "HumanWorkBelt", "HumanWorkBeltBuckle"
         ],
+        "deluxe_bunny_top_{}".format(sex): [
+            specification["runtime_name"]
+            for specification in bunny.GARMENTS.values()
+            if specification["group"] == "top"
+        ],
+        "deluxe_bunny_legs_{}".format(sex): [
+            specification["runtime_name"]
+            for specification in bunny.GARMENTS.values()
+            if specification["group"] == "legs"
+        ],
     }
     for variant, object_names in garment_variants.items():
-        garment_path = CLOTHING_ROOT / "workwear_{}.glb".format(variant)
+        asset_name = (
+            "deluxe_bunny_suit_{}".format(variant.removeprefix("deluxe_bunny_"))
+            if variant.startswith("deluxe_bunny_")
+            else "workwear_{}".format(variant)
+        )
+        garment_path = CLOTHING_ROOT / "{}.glb".format(asset_name)
         export_selected(garment_path, [
             armature, *(bpy.data.objects[name] for name in object_names)
         ], export_animations=False)
+        if variant.startswith("deluxe_bunny_"):
+            bunny.validate_exported_clothing(garment_path, sex, object_names)
 
     export_selected(body_path, [
         obj for obj in bpy.context.scene.objects
         if obj.type in {"ARMATURE", "MESH", "EMPTY"}
     ], export_animations=True)
+    bunny.validate_exported_clothing(body_path, sex)
 
     # Clothing-specific GLBs contain the same meshes as the named parts inside
     # the player model, allowing the first implementation to toggle them without
@@ -397,6 +425,38 @@ def export_player_asset_set(sex, authoring_blend):
     bpy.ops.wm.save_as_mainfile(filepath=str(authoring_blend))
     print("Player {} model written: {}".format(sex, body_path))
     print("Player {} source written: {}".format(sex, authoring_blend))
+
+
+def render_deluxe_bunny_preview(sex):
+    clothing_names = {
+        "HumanMaleShirt", "HumanMaleShirtButtons", "HumanTrousers",
+        "HumanMaleLeatherBelt", "HumanMaleBeltBuckle",
+        "HumanWorkShirt", "HumanWorkShirtDetails", "HumanWorkTrousers",
+        "HumanWorkBelt", "HumanWorkBeltBuckle",
+    }
+    for specification in bunny.GARMENTS.values():
+        clothing_names.add(specification["runtime_name"])
+    changed = []
+    for name in clothing_names:
+        obj = bpy.data.objects.get(name)
+        if obj is None:
+            continue
+        changed.append((obj, obj.hide_render))
+        obj.hide_render = name not in {spec["runtime_name"] for spec in bunny.GARMENTS.values()}
+    scene = bpy.context.scene
+    camera = scene.camera
+    previous_camera_transform = None
+    if camera is not None:
+        previous_camera_transform = (camera.location.copy(), camera.rotation_euler.copy())
+        target = Vector((0.0, 0.0, 0.90))
+        camera.location = Vector((0.0, -5.8, 1.75))
+        camera.rotation_euler = (target - camera.location).to_track_quat("-Z", "Y").to_euler()
+    scene.render.filepath = str(GENERATED / "player_human_{}_deluxe_bunny_suit_preview.png".format(sex))
+    bpy.ops.render.render(write_still=True)
+    if camera is not None and previous_camera_transform is not None:
+        camera.location, camera.rotation_euler = previous_camera_transform
+    for obj, previous in changed:
+        obj.hide_render = previous
 
 
 def rebuild_player_shirt_and_belt():
@@ -449,6 +509,10 @@ def build_male():
     bpy.context.scene.render.filepath = str(builder.OUT_PREVIEW)
     bpy.ops.render.render(write_still=True)
     builder.render_turntable_previews()
+    bunny.add_to_player_model("male", body, next(
+        obj for obj in bpy.context.scene.objects if obj.type == "ARMATURE"
+    ))
+    render_deluxe_bunny_preview("male")
     export_player_asset_set(
         "male", GENERATED / "player_human_male_humanoid_rig_v1.blend"
     )
@@ -473,6 +537,11 @@ def build_female():
     bpy.context.scene.render.filepath = str(builder.OUT_PREVIEW)
     bpy.ops.render.render(write_still=True)
     builder.render_turntable_previews()
+    body = bpy.data.objects["HumanBody"]
+    bunny.add_to_player_model("female", body, next(
+        obj for obj in bpy.context.scene.objects if obj.type == "ARMATURE"
+    ))
+    render_deluxe_bunny_preview("female")
     export_player_asset_set(
         "female", GENERATED / "player_human_female_humanoid_rig_v1.blend"
     )
@@ -481,3 +550,4 @@ def build_female():
 if __name__ == "__main__":
     build_male()
     build_female()
+    bunny.write_fit_profile()

@@ -34,7 +34,8 @@ public sealed class PlayerWorkstationServiceTests
 
         Assert.Equal(WorkstationActionResult.MissingCarriedItem, service.LoadOne(station.Id, ItemIds.Plant).Result);
         Assert.Equal(WorkstationActionResult.MissingInput, service.ApplyWork(station.Id).Result);
-        Assert.Empty(session.Player.Inventory);
+        Assert.Equal(2, session.Player.Inventory.Count);
+        Assert.DoesNotContain(ItemIds.Plant, session.Player.Inventory.Keys);
         Assert.Empty(station.InputStorage.Counts);
         Assert.Equal(0, station.CurrentRecipe!.WorkProgress);
 

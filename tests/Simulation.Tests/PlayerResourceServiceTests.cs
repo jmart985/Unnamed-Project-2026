@@ -36,7 +36,8 @@ public sealed class PlayerResourceServiceTests
         Assert.Equal(PlayerResourceResultCode.Missing, service.Collect(PlayerResourceKind.Food, "gone").Code);
         session.World.TrySetEntityPosition(session.Player.Id, session.Player.Position + new Vector3(10, 0, 0));
         Assert.Equal(PlayerResourceResultCode.OutOfRange, service.Collect(PlayerResourceKind.Food, "fixture").Code);
-        Assert.Equal(20, source.Counts[ItemIds.Food]); Assert.Empty(session.Player.Inventory);
+        Assert.Equal(20, source.Counts[ItemIds.Food]); Assert.Equal(2, session.Player.Inventory.Count);
+        Assert.DoesNotContain(ItemIds.Food, session.Player.Inventory.Keys);
         session.World.TrySetEntityPosition(session.Player.Id, session.World.FoodSources.Single(x => x.Id == "fixture").Position);
         session.Player.TryAddCarried(ItemIds.Food, 999);
         session.Player.TryAddCarried(ItemIds.Wood, 999);
@@ -51,7 +52,7 @@ public sealed class PlayerResourceServiceTests
         var (emptySession, emptyService, empty) = Setup();
         empty.TryRemove(ItemIds.Food, 20); empty.TryRemove(ItemIds.Wood, 20);
         Assert.Equal(PlayerResourceResultCode.Empty, emptyService.Collect(PlayerResourceKind.Food, "fixture").Code);
-        Assert.Empty(emptySession.Player.Inventory);
+        Assert.Equal(2, emptySession.Player.Inventory.Count);
     }
 
     [Fact]
@@ -63,7 +64,8 @@ public sealed class PlayerResourceServiceTests
         npc.Actions.TryStart(new("reserved", ActionKind.Eat));
         Assert.Equal(ReservationResult.Reserved, session.World.Reservations.TryReserveResource(npc.Id, "reserved", "fixture", source, ItemIds.Food, 20));
         Assert.Equal(PlayerResourceResultCode.Reserved, service.Collect(PlayerResourceKind.Food, "fixture").Code);
-        Assert.Equal(20, source.Counts[ItemIds.Food]); Assert.Empty(session.Player.Inventory);
+        Assert.Equal(20, source.Counts[ItemIds.Food]); Assert.Equal(2, session.Player.Inventory.Count);
+        Assert.DoesNotContain(ItemIds.Food, session.Player.Inventory.Keys);
         var wood = new ResourceContainer("wood", 5); wood.TryAdd(ItemIds.Wood, 2);
         session.World.AddResourcePile("wood-fixture", session.Player.Position, wood);
         Assert.Equal(PlayerResourceResultCode.Missing, service.Collect(PlayerResourceKind.Food, "wood-fixture").Code);

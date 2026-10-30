@@ -26,6 +26,8 @@ public partial class Main
 	private readonly Dictionary<(string Action, bool Controller), Button> _mappingButtons = [];
 	private Button _workShirtButton = null!;
 	private Button _workTrousersButton = null!;
+	private Button _deluxeBunnyTopButton = null!;
+	private Button _deluxeBunnyLegsButton = null!;
 	private (string Action, bool Controller)? _captureBinding;
 
 	private void ConfigurePlayerMenus()
@@ -79,6 +81,10 @@ public partial class Main
 			EquipmentSlotIds.Torso, ItemIds.WorkShirt));
 		_workTrousersButton = AddMenuButton(slots, "Legs\nWork trousers", () => TogglePlayerClothing(
 			EquipmentSlotIds.Legs, ItemIds.WorkTrousers));
+		_deluxeBunnyTopButton = AddMenuButton(slots, "Torso\nBunny top", () => TogglePlayerClothing(
+			EquipmentSlotIds.Torso, ItemIds.DeluxeBunnySuitTop));
+		_deluxeBunnyLegsButton = AddMenuButton(slots, "Legs\nBunny legs", () => TogglePlayerClothing(
+			EquipmentSlotIds.Legs, ItemIds.DeluxeBunnySuitLegs));
 		slots.AddChild(new Button { Text = "Feet\nPlanned", Disabled = true, CustomMinimumSize = new Vector2(170, 64) });
 		slots.AddChild(new Button { Text = "Accessories\nPlanned", Disabled = true, CustomMinimumSize = new Vector2(170, 64) });
 		var toolActions = new HBoxContainer { Name = "ToolActions" };
@@ -442,20 +448,37 @@ public partial class Main
 		_characterAttributes.Text = $"BASE ATTRIBUTES\n\nStrength: {stats.Strength:0.#}\nEndurance: {stats.Endurance:0.#}\nDefense: {stats.Defense:0.#}\nPerception: {stats.Perception:0.#}\nMovement speed: {stats.MovementSpeed:0.#}\nMaximum stamina: {stats.MaxStamina:0.#}";
 		var wornShirt = player.EquippedItems.GetValueOrDefault(EquipmentSlotIds.Torso);
 		var wornTrousers = player.EquippedItems.GetValueOrDefault(EquipmentSlotIds.Legs);
-		_workShirtButton.Text = $"Torso\n{(wornShirt is null ? "Equip work shirt" : "Unequip work shirt")}";
-		_workShirtButton.Disabled = wornShirt is null && player.Inventory.GetValueOrDefault(ItemIds.WorkShirt) == 0;
-		_workTrousersButton.Text = $"Legs\n{(wornTrousers is null ? "Equip work trousers" : "Unequip work trousers")}";
-		_workTrousersButton.Disabled = wornTrousers is null && player.Inventory.GetValueOrDefault(ItemIds.WorkTrousers) == 0;
-		_equipmentSummary.Text = $"EQUIPMENT\n\nTool: {(player.EquippedTool ?? "None")}\nTorso: {(wornShirt ?? "Empty")}\nLegs: {(wornTrousers ?? "Empty")}\nLeft hand: {(_playerCharacter.LeftShieldEquipped ? "Shield" : "Empty")}\nRight hand: {(_playerCharacter.RightShieldEquipped ? "Shield" : "Empty")}\n\nUnarmed attacks are available in empty hands.";
+		SetEquipmentButton(_workShirtButton, "Torso", "work shirt", ItemIds.WorkShirt, wornShirt, player.Inventory);
+		SetEquipmentButton(_deluxeBunnyTopButton, "Torso", "bunny suit top", ItemIds.DeluxeBunnySuitTop, wornShirt, player.Inventory);
+		SetEquipmentButton(_workTrousersButton, "Legs", "work trousers", ItemIds.WorkTrousers, wornTrousers, player.Inventory);
+		SetEquipmentButton(_deluxeBunnyLegsButton, "Legs", "bunny suit legs", ItemIds.DeluxeBunnySuitLegs, wornTrousers, player.Inventory);
+		_equipmentSummary.Text = $"EQUIPMENT\n\nTool: {(player.EquippedTool is null ? "None" : FormatItemName(player.EquippedTool))}\nTorso: {FormatItemName(wornShirt)}\nLegs: {FormatItemName(wornTrousers)}\nLeft hand: {(_playerCharacter.LeftShieldEquipped ? "Shield" : "Empty")}\nRight hand: {(_playerCharacter.RightShieldEquipped ? "Shield" : "Empty")}\n\nUnarmed attacks are available in empty hands.";
 		var items = player.Inventory.Where(item => _itemCategory.Selected switch
 		{
 			1 => ItemIds.IsEdibleFood(item.Key), 2 => item.Key == ItemIds.Wood, 3 => item.Key == ItemIds.Coin,
 			4 => ItemCatalog.IsWearable(item.Key), _ => true
 		}).OrderBy(item => item.Key, StringComparer.Ordinal).ToArray();
 		_carriedItems.Text = "CARRIED ITEMS\n" + (items.Length == 0 ? (player.Inventory.Count == 0 ? "Your inventory is empty." : "No items in this category.") :
-			string.Join("\n", items.Select(item => $"{char.ToUpperInvariant(item.Key[0])}{item.Key[1..]}   × {item.Value}"))) +
+			string.Join("\n", items.Select(item => $"{FormatItemName(item.Key)}   × {item.Value}"))) +
 			$"\n\nTotal units: {player.Inventory.Values.Sum(count => (long)count)}\nItems shown here are carried by your character. Ground and settlement stockpiles are separate.";
 		_otherCharacterInfo.Text = "SKILLS\n" + string.Join("\n", player.Skills.Skills.Select(skill => $"{skill.Definition.Id}: level {skill.Level} · XP {skill.Experience:0.#}")) +
 			$"\n\nWORLD\nPosition: {player.Position.X:0.0}, {player.Position.Z:0.0}\nFaction: {player.AllegianceFactionId ?? "None"}";
 	}
+
+	private static void SetEquipmentButton(
+		Button button,
+		string slotName,
+		string itemName,
+		string itemId,
+		string? equippedItemId,
+		IReadOnlyDictionary<string, int> inventory)
+	{
+		var isEquipped = string.Equals(equippedItemId, itemId, StringComparison.Ordinal);
+		button.Text = $"{slotName}\n{(isEquipped ? "Unequip" : "Equip")} {itemName}";
+		button.Disabled = !isEquipped && inventory.GetValueOrDefault(itemId) == 0;
+	}
+
+	private static string FormatItemName(string? itemId) => string.IsNullOrWhiteSpace(itemId)
+		? "Empty"
+		: string.Join(" ", itemId.Split('_').Select(part => char.ToUpperInvariant(part[0]) + part[1..]));
 }

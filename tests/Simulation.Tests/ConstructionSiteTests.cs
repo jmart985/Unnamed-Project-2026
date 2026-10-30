@@ -46,7 +46,9 @@ public sealed class ConstructionSiteTests
         for (var index = 0; index < SettlementConstruction.HutWood; index++)
             Assert.True(service.SupplyWood(player.Id, site.Id).Succeeded);
 
-        Assert.Empty(player.Inventory);
+        Assert.Equal(2, player.Inventory.Count);
+        Assert.Equal(1, player.Inventory[ItemIds.DeluxeBunnySuitTop]);
+        Assert.Equal(1, player.Inventory[ItemIds.DeluxeBunnySuitLegs]);
         Assert.False(service.SupplyWood(player.Id, site.Id).Succeeded);
         for (var index = 0; index < SettlementConstruction.HutWork; index++)
             Assert.True(service.ApplyWork(player.Id, site.Id).Succeeded);

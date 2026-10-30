@@ -33,7 +33,9 @@ public sealed class PlayerFarmServiceTests
         Assert.Equal(FarmActionResult.MissingSeed, service.Plant("farm-1", "farm-1-plot-1").Result);
         Assert.Equal(FarmActionResult.PlotEmpty, service.AdvanceGrowth("farm-1", "farm-1-plot-1").Result);
         Assert.Equal(FarmActionResult.PlotEmpty, service.Harvest("farm-1", "farm-1-plot-1").Result);
-        Assert.Empty(session.Player.Inventory);
+        Assert.Equal(1, session.Player.Inventory[ItemIds.DeluxeBunnySuitTop]);
+        Assert.Equal(1, session.Player.Inventory[ItemIds.DeluxeBunnySuitLegs]);
+        Assert.Equal(2, session.Player.Inventory.Count);
         Assert.False(session.World.Farms.Single().Plots.Single().IsPlanted);
 
         session.World.TrySetEntityPosition(session.PlayerEntityId, new Vector3(7.01f, 0, 5));

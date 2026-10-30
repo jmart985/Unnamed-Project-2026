@@ -12,6 +12,8 @@ public static class ItemIds
     public const string Coin = "coin";
     public const string WorkShirt = "work_shirt";
     public const string WorkTrousers = "work_trousers";
+    public const string DeluxeBunnySuitTop = "deluxe_bunny_suit_top";
+    public const string DeluxeBunnySuitLegs = "deluxe_bunny_suit_legs";
 
     public static bool IsKnown(string? itemId) => ItemCatalog.Contains(itemId);
 
