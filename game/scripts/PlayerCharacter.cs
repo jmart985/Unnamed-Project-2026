@@ -68,6 +68,8 @@ public partial class PlayerCharacter : CharacterBody3D
 	private Node3D? _trousersMesh;
 	private Node3D? _beltMesh;
 	private Node3D? _beltBuckleMesh;
+	private Node3D[] _deluxeBunnyTopMeshes = [];
+	private Node3D[] _deluxeBunnyLegsMeshes = [];
 	private Node3D? _toolAnchor;
 	private Node3D _axeView = null!;
 	private bool _axeEquipped;
@@ -149,6 +151,8 @@ public partial class PlayerCharacter : CharacterBody3D
 		_visualAnimationPlayer = null;
 		_upperBodyAttackAnimator = null;
 		_shirtMesh = _shirtDetailsMesh = _trousersMesh = _beltMesh = _beltBuckleMesh = _toolAnchor = null;
+		_deluxeBunnyTopMeshes = [];
+		_deluxeBunnyLegsMeshes = [];
 
 		var proportions = PlayerBodyProportions.From(profile);
 		if (!TryBuildImportedHumanoid(profile, proportions))
@@ -212,6 +216,9 @@ public partial class PlayerCharacter : CharacterBody3D
 		_trousersMesh = model.FindChild("HumanWorkTrousers", recursive: true, owned: false) as Node3D;
 		_beltMesh = model.FindChild("HumanWorkBelt", recursive: true, owned: false) as Node3D;
 		_beltBuckleMesh = model.FindChild("HumanWorkBeltBuckle", recursive: true, owned: false) as Node3D;
+		_deluxeBunnyTopMeshes = FindClothingMeshes(model,
+			"HumanDeluxeBunnySuitJacket", "HumanDeluxeBunnySuitVest", "HumanDeluxeBunnySuitEars");
+		_deluxeBunnyLegsMeshes = FindClothingMeshes(model, "HumanDeluxeBunnySuitStockings");
 		_toolAnchor = model.FindChild("anchor_hand_r", recursive: true, owned: false) as Node3D;
 		_modelAnimator.Bind(animationPlayer, "humanoid", false, MovementSpeed);
 		animationPlayer.Advance(0);
@@ -275,6 +282,8 @@ public partial class PlayerCharacter : CharacterBody3D
 	{
 		ItemIds.WorkShirt => _shirtMesh?.Visible == true,
 		ItemIds.WorkTrousers => _trousersMesh?.Visible == true,
+		ItemIds.DeluxeBunnySuitTop => AreClothingMeshesVisible(_deluxeBunnyTopMeshes, 3),
+		ItemIds.DeluxeBunnySuitLegs => AreClothingMeshesVisible(_deluxeBunnyLegsMeshes, 1),
 		_ => false
 	};
 
@@ -282,13 +291,32 @@ public partial class PlayerCharacter : CharacterBody3D
 
 	private void ApplyEquippedClothingVisibility()
 	{
-		var wearingShirt = _equippedClothing.GetValueOrDefault(EquipmentSlotIds.Torso) == ItemIds.WorkShirt;
-		var wearingTrousers = _equippedClothing.GetValueOrDefault(EquipmentSlotIds.Legs) == ItemIds.WorkTrousers;
+		var torso = _equippedClothing.GetValueOrDefault(EquipmentSlotIds.Torso);
+		var legs = _equippedClothing.GetValueOrDefault(EquipmentSlotIds.Legs);
+		var wearingShirt = torso == ItemIds.WorkShirt;
+		var wearingTrousers = legs == ItemIds.WorkTrousers;
 		if (_shirtMesh is not null) _shirtMesh.Visible = wearingShirt;
 		if (_shirtDetailsMesh is not null) _shirtDetailsMesh.Visible = wearingShirt;
 		if (_trousersMesh is not null) _trousersMesh.Visible = wearingTrousers;
 		if (_beltMesh is not null) _beltMesh.Visible = wearingTrousers;
 		if (_beltBuckleMesh is not null) _beltBuckleMesh.Visible = wearingTrousers;
+		SetClothingMeshesVisible(_deluxeBunnyTopMeshes, torso == ItemIds.DeluxeBunnySuitTop);
+		SetClothingMeshesVisible(_deluxeBunnyLegsMeshes, legs == ItemIds.DeluxeBunnySuitLegs);
+	}
+
+	private static Node3D[] FindClothingMeshes(Node root, params string[] names) => names
+		.Select(name => root.FindChild(name, recursive: true, owned: false) as Node3D)
+		.Where(node => node is not null)
+		.Cast<Node3D>()
+		.ToArray();
+
+	private static bool AreClothingMeshesVisible(IReadOnlyList<Node3D> meshes, int expectedCount) =>
+		meshes.Count == expectedCount && meshes.All(mesh => mesh.Visible);
+
+	private static void SetClothingMeshesVisible(IEnumerable<Node3D> meshes, bool visible)
+	{
+		foreach (var mesh in meshes)
+			mesh.Visible = visible;
 	}
 
 	// Walk drives hips, knees, shoulders, elbows, head and torso; an attack layer overrides the swinging arm

@@ -38,7 +38,9 @@ public sealed class NewGameSessionTests
         Assert.Equal(BiologicalSex.Female, player.Sex);
         Assert.All(session.World.Entities, entity => Assert.NotEqual(BiologicalSex.Unspecified, entity.Sex));
         Assert.Equal(NewGameSession.GetPlayerSpawnPosition(session.Seed), player.Position);
-        Assert.Empty(player.Inventory);
+        Assert.Equal(1, player.Inventory[ItemIds.DeluxeBunnySuitTop]);
+        Assert.Equal(1, player.Inventory[ItemIds.DeluxeBunnySuitLegs]);
+        Assert.Equal(2, player.Inventory.Count);
         Assert.Equal(60, player.Satiety);
         Assert.Equal(CharacterStats.Default, player.BaseStats);
         Assert.Equal(PlayerHeight.Medium, createdProfile.Height);

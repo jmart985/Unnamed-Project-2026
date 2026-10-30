@@ -19,9 +19,11 @@ public sealed class PlayerEquipmentServiceTests
 
         Assert.Equal(ItemIds.WorkShirt, player.EquippedItems[EquipmentSlotIds.Torso]);
         Assert.Equal(ItemIds.WorkTrousers, player.EquippedItems[EquipmentSlotIds.Legs]);
-        Assert.Empty(player.Inventory);
+        Assert.Equal(1, player.Inventory[ItemIds.DeluxeBunnySuitTop]);
+        Assert.Equal(1, player.Inventory[ItemIds.DeluxeBunnySuitLegs]);
         Assert.Equal(
-            ItemCatalog.GetWeightKg(ItemIds.WorkShirt) + ItemCatalog.GetWeightKg(ItemIds.WorkTrousers),
+            ItemCatalog.GetWeightKg(ItemIds.WorkShirt) + ItemCatalog.GetWeightKg(ItemIds.WorkTrousers)
+                + ItemCatalog.GetWeightKg(ItemIds.DeluxeBunnySuitTop) + ItemCatalog.GetWeightKg(ItemIds.DeluxeBunnySuitLegs),
             player.CarriedWeightKg);
 
         var unequipped = service.Unequip(EquipmentSlotIds.Torso);
@@ -29,13 +31,19 @@ public sealed class PlayerEquipmentServiceTests
         Assert.False(player.EquippedItems.ContainsKey(EquipmentSlotIds.Torso));
         Assert.Equal(1, player.Inventory[ItemIds.WorkShirt]);
         Assert.Equal(
-            ItemCatalog.GetWeightKg(ItemIds.WorkShirt) + ItemCatalog.GetWeightKg(ItemIds.WorkTrousers),
+            ItemCatalog.GetWeightKg(ItemIds.WorkShirt) + ItemCatalog.GetWeightKg(ItemIds.WorkTrousers)
+                + ItemCatalog.GetWeightKg(ItemIds.DeluxeBunnySuitTop) + ItemCatalog.GetWeightKg(ItemIds.DeluxeBunnySuitLegs),
             player.CarriedWeightKg);
 
         var equipped = service.Equip(ItemIds.WorkShirt);
         Assert.Equal(PlayerEquipmentResultCode.Equipped, equipped.Code);
         Assert.Equal(ItemIds.WorkShirt, player.EquippedItems[EquipmentSlotIds.Torso]);
         Assert.False(player.Inventory.ContainsKey(ItemIds.WorkShirt));
+
+        Assert.Equal(PlayerEquipmentResultCode.Equipped, service.Equip(ItemIds.DeluxeBunnySuitTop).Code);
+        Assert.Equal(ItemIds.DeluxeBunnySuitTop, player.EquippedItems[EquipmentSlotIds.Torso]);
+        Assert.Equal(1, player.Inventory[ItemIds.WorkShirt]);
+        Assert.False(player.Inventory.ContainsKey(ItemIds.DeluxeBunnySuitTop));
     }
 
     [Fact]
@@ -55,6 +63,8 @@ public sealed class PlayerEquipmentServiceTests
         Assert.Equal(ItemIds.WorkTrousers, player.EquippedItems[EquipmentSlotIds.Legs]);
         Assert.Equal(1, player.Inventory[ItemIds.WorkShirt]);
         Assert.Equal(1, player.Inventory[ItemIds.WorkTrousers]);
+        Assert.Equal(1, player.Inventory[ItemIds.DeluxeBunnySuitTop]);
+        Assert.Equal(1, player.Inventory[ItemIds.DeluxeBunnySuitLegs]);
     }
 
     [Fact]
@@ -62,14 +72,17 @@ public sealed class PlayerEquipmentServiceTests
     {
         var catalog = Catalog();
         var session = NewGameSession.Create(catalog, PlayerCharacterProfile.Create("Saver", sex: PlayerSex.Male));
-        new PlayerEquipmentService(session.World).Unequip(EquipmentSlotIds.Legs);
+        var equipment = new PlayerEquipmentService(session.World);
+        Assert.Equal(PlayerEquipmentResultCode.Equipped, equipment.Equip(ItemIds.DeluxeBunnySuitTop).Code);
+        Assert.Equal(PlayerEquipmentResultCode.Equipped, equipment.Equip(ItemIds.DeluxeBunnySuitLegs).Code);
         var json = WorldSnapshotSerializer.Serialize(session.World, 12);
         var loaded = NewGameSession.Create(catalog, PlayerCharacterProfile.Create("Temp")).World;
         WorldSnapshotSerializer.Load(loaded, json, catalog);
 
         var loadedPlayer = loaded.Entities.Single(entity => entity.Id == session.PlayerEntityId);
-        Assert.Equal(ItemIds.WorkShirt, loadedPlayer.EquippedItems[EquipmentSlotIds.Torso]);
-        Assert.False(loadedPlayer.EquippedItems.ContainsKey(EquipmentSlotIds.Legs));
+        Assert.Equal(ItemIds.DeluxeBunnySuitTop, loadedPlayer.EquippedItems[EquipmentSlotIds.Torso]);
+        Assert.Equal(ItemIds.DeluxeBunnySuitLegs, loadedPlayer.EquippedItems[EquipmentSlotIds.Legs]);
+        Assert.Equal(1, loadedPlayer.Inventory[ItemIds.WorkShirt]);
         Assert.Equal(1, loadedPlayer.Inventory[ItemIds.WorkTrousers]);
 
         var legacy = JsonNode.Parse(WorldSnapshotSerializer.Serialize(session.World, 13))!.AsObject();

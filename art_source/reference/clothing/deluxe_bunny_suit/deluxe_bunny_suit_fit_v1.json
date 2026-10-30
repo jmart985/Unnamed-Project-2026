@@ -1,0 +1,152 @@
+{
+  "profile_id": "deluxe_bunny_suit_fit_v1",
+  "status": "First playable outfit fitted to Humanoid Rig v1 male and female player bodies",
+  "source_asset": {
+    "pack": "RyanReos Deluxe Bunny Suit",
+    "archive": "Repo/Assets/Models/cloth/RyanReos_DeluxeBunnysuit.zip",
+    "source_scene": "Blender/DeluxeBunnySuit.blend",
+    "curated_scene": "deluxe_bunny_suit_source_v1.blend",
+    "measurement_units": "meters"
+  },
+  "fit_reference_profile_id": "human_humanoid_clothing_fit_v1",
+  "fit_method": "Use copies of the project-measured player shirt and trousers for the garment surfaces, preserving their verified outer fit and Humanoid Rig v1 weights. Adapt the source bunny ears to 1.75 m and attach them to the canonical head bone. The source jacket, collar, cuffs, vest, leotard, and stockings are retained in the reference scene but not used as runtime garment surfaces because their shapes do not fit both player base meshes cleanly.",
+  "runtime_garments": {
+    "player_HumanMaleShirt": {
+      "runtime_name": "HumanDeluxeBunnySuitJacket",
+      "group": "top",
+      "material": "Deluxe Bunny Plum Fabric",
+      "color": [
+        0.115,
+        0.027,
+        0.105,
+        1.0
+      ],
+      "roughness": 0.54,
+      "metallic": 0.0,
+      "source": "HumanMaleShirt",
+      "kind": "project-fit-mesh-copy"
+    },
+    "player_HumanMaleShirtButtons": {
+      "runtime_name": "HumanDeluxeBunnySuitVest",
+      "group": "top",
+      "material": "Deluxe Bunny Brass Details",
+      "color": [
+        0.48,
+        0.245,
+        0.055,
+        1.0
+      ],
+      "roughness": 0.34,
+      "metallic": 0.55,
+      "source": "HumanMaleShirtButtons",
+      "kind": "project-fit-mesh-copy"
+    },
+    "player_HumanTrousers": {
+      "runtime_name": "HumanDeluxeBunnySuitStockings",
+      "group": "legs",
+      "material": "Deluxe Bunny Charcoal Fabric",
+      "color": [
+        0.025,
+        0.021,
+        0.032,
+        1.0
+      ],
+      "roughness": 0.62,
+      "metallic": 0.0,
+      "source": "HumanTrousers",
+      "kind": "project-fit-mesh-copy"
+    },
+    "SourceBunnyEars": {
+      "runtime_name": "HumanDeluxeBunnySuitEars",
+      "group": "top",
+      "material": "Deluxe Bunny Ears",
+      "color": [
+        0.018,
+        0.012,
+        0.02,
+        1.0
+      ],
+      "roughness": 0.64,
+      "metallic": 0.0,
+      "rigid_bone": "head",
+      "source": "SourceBunnyEars",
+      "kind": "source-accessory"
+    }
+  },
+  "measurements_by_player_variant": {
+    "male": {
+      "target_body_mesh": "HumanBody",
+      "target_height_m": 1.750000238418579,
+      "fit_reference_profile_id": "human_humanoid_clothing_fit_v1",
+      "garments": [
+        {
+          "mesh": "HumanDeluxeBunnySuitJacket",
+          "source": "HumanMaleShirt",
+          "kind": "project-fit-mesh-copy",
+          "skinned": true
+        },
+        {
+          "mesh": "HumanDeluxeBunnySuitVest",
+          "source": "HumanMaleShirtButtons",
+          "kind": "project-fit-mesh-copy",
+          "skinned": true
+        },
+        {
+          "mesh": "HumanDeluxeBunnySuitStockings",
+          "source": "HumanTrousers",
+          "kind": "project-fit-mesh-copy",
+          "skinned": true
+        },
+        {
+          "mesh": "HumanDeluxeBunnySuitEars",
+          "source": "SourceBunnyEars",
+          "kind": "source-accessory",
+          "skinned": true
+        }
+      ],
+      "runtime_nodes": [
+        "HumanDeluxeBunnySuitJacket",
+        "HumanDeluxeBunnySuitVest",
+        "HumanDeluxeBunnySuitStockings",
+        "HumanDeluxeBunnySuitEars"
+      ]
+    },
+    "female": {
+      "target_body_mesh": "HumanBody",
+      "target_height_m": 1.750000238418579,
+      "fit_reference_profile_id": "human_humanoid_clothing_fit_v1",
+      "garments": [
+        {
+          "mesh": "HumanDeluxeBunnySuitJacket",
+          "source": "HumanMaleShirt",
+          "kind": "project-fit-mesh-copy",
+          "skinned": true
+        },
+        {
+          "mesh": "HumanDeluxeBunnySuitVest",
+          "source": "HumanMaleShirtButtons",
+          "kind": "project-fit-mesh-copy",
+          "skinned": true
+        },
+        {
+          "mesh": "HumanDeluxeBunnySuitStockings",
+          "source": "HumanTrousers",
+          "kind": "project-fit-mesh-copy",
+          "skinned": true
+        },
+        {
+          "mesh": "HumanDeluxeBunnySuitEars",
+          "source": "SourceBunnyEars",
+          "kind": "source-accessory",
+          "skinned": true
+        }
+      ],
+      "runtime_nodes": [
+        "HumanDeluxeBunnySuitJacket",
+        "HumanDeluxeBunnySuitVest",
+        "HumanDeluxeBunnySuitStockings",
+        "HumanDeluxeBunnySuitEars"
+      ]
+    }
+  }
+}

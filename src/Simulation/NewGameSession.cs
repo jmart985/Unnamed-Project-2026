@@ -174,6 +174,11 @@ public sealed class NewGameSession
         // duplicated in carried inventory. Unequipping returns it to inventory.
         player.SetEquippedItem(EquipmentSlotIds.Torso, ItemIds.WorkShirt);
         player.SetEquippedItem(EquipmentSlotIds.Legs, ItemIds.WorkTrousers);
+        foreach (var itemId in new[] { ItemIds.DeluxeBunnySuitTop, ItemIds.DeluxeBunnySuitLegs })
+        {
+            if (player.TryAddCarried(itemId, 1) != ResourceMutationResult.Success)
+                throw new InvalidOperationException($"Unable to seed player clothing item '{itemId}'.");
+        }
         AssignStarterNpcSchedulesAndHomes(world, humanNpcs);
         return new NewGameSession(world, seed, player.Id);
     }

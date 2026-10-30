@@ -114,3 +114,24 @@ player_female_humanoid_rig_v1.glb. Shirt and trouser fit variants are separate
 GLBs under game/assets/items/clothing/. The player validation scenario checks
 both presentations, equipment visibility, and save/load restoration. This
 player-only starter outfit does not change NPC models or NPC equipment.
+
+## Player clothing pack equipment
+
+Issue #524 adds a second torso and legs outfit from the owner-approved Deluxe
+Bunny clothing pack. Its stable simulation IDs use the existing `torso` and
+`legs` equipment slots, and the existing inventory/equipment snapshot fields
+save and restore the selected garments without a schema change. New players
+carry one outfit in inventory while wearing the starter workwear. The equipment
+menu can swap each piece independently; both pieces have matching male and
+female player-model visuals.
+
+The source bunny ears are adapted and weighted to the canonical `head` bone.
+The source pack's other garment meshes are retained in
+`art_source/reference/clothing/deluxe_bunny_suit/` but are not used as runtime
+surfaces because their fit did not remain clear against both player bodies.
+The playable shirt and leggings reuse the measured project-fit shirt and
+trouser meshes with an outfit-specific material palette. See that directory's
+README and `deluxe_bunny_suit_fit_v1.json` for the exact mesh mapping and rebuild
+steps. This is a first playable outfit adaptation, not a general automatic
+clothing-import pipeline; future body proportions and garments still need fit
+checks in idle and locomotion.
