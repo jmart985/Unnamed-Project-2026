@@ -88,6 +88,15 @@ public partial class PlayerCharacter : CharacterBody3D
 	public string? CurrentPresentationAnimation => _visualAnimationPlayer?.CurrentAnimation.ToString();
 	public string AimedBodyPart => CombatAim.PartForPitch(_headPitch, _swingLeft);
 	public bool MouseLookEnabled { get; set; } = true;
+	internal Quaternion? PresentationHeadPoseForTesting
+	{
+		get
+		{
+			if (_visualSkeleton is null) return null;
+			var headIndex = _visualSkeleton.FindBone("head");
+			return headIndex >= 0 ? _visualSkeleton.GetBonePoseRotation(headIndex) : null;
+		}
+	}
 
 	public bool StartAttackForTesting(bool left)
 	{
@@ -185,6 +194,9 @@ public partial class PlayerCharacter : CharacterBody3D
 		_visualModelRoot = adapter;
 		_visualSkeleton = skeleton;
 		_visualAnimationPlayer = animationPlayer;
+		// Evaluate imported animation before procedural look/attack poses. Otherwise
+		// idle processing runs after _PhysicsProcess and erases the head-look overlay.
+		animationPlayer.CallbackModeProcess = AnimationMixer.AnimationCallbackModeProcess.Manual;
 		PresentationModelAssetPath = assetPath;
 		_shirtMesh = model.FindChild("HumanWorkShirt", recursive: true, owned: false) as Node3D;
 		_shirtDetailsMesh = model.FindChild("HumanWorkShirtDetails", recursive: true, owned: false) as Node3D;
@@ -193,6 +205,7 @@ public partial class PlayerCharacter : CharacterBody3D
 		_beltBuckleMesh = model.FindChild("HumanWorkBeltBuckle", recursive: true, owned: false) as Node3D;
 		_toolAnchor = model.FindChild("anchor_hand_r", recursive: true, owned: false) as Node3D;
 		_modelAnimator.Bind(animationPlayer, "humanoid", false, MovementSpeed);
+		animationPlayer.Advance(0);
 		ApplyEquippedClothingVisibility();
 		return true;
 	}
@@ -255,7 +268,7 @@ public partial class PlayerCharacter : CharacterBody3D
 		_ => false
 	};
 
-	internal void SetPresentationMovementSpeedForTesting(float speed) => _modelAnimator.Update(speed);
+	internal void SetPresentationMovementSpeedForTesting(float speed) => AdvancePresentationForTesting(speed, 0);
 
 	private void ApplyEquippedClothingVisibility()
 	{
@@ -409,8 +422,7 @@ public partial class PlayerCharacter : CharacterBody3D
         {
             StrikeReleased?.Invoke(_swingLeft, CombatAim.PartForPitch(_headPitch, _swingLeft));
         }
-		if (_visualAnimationPlayer is not null)
-			_modelAnimator.Update(horizontalSpeed, physicsDelta);
+		AdvanceImportedPresentationAnimation(horizontalSpeed, physicsDelta);
 
 		ApplyAttackPose();
 		UpdateCameraPosition(physicsDelta);
@@ -424,6 +436,19 @@ public partial class PlayerCharacter : CharacterBody3D
 			GlobalPosition = _lastGroundedPosition + Vector3.Up * RespawnLift;
 			Velocity = Vector3.Zero;
 		}
+	}
+
+	private void AdvanceImportedPresentationAnimation(float horizontalSpeed, float delta)
+	{
+		if (_visualAnimationPlayer is null) return;
+		_modelAnimator.Update(horizontalSpeed, delta);
+		_visualAnimationPlayer.Advance(delta);
+	}
+
+	internal void AdvancePresentationForTesting(float horizontalSpeed, float delta)
+	{
+		AdvanceImportedPresentationAnimation(horizontalSpeed, delta);
+		ApplyAttackPose();
 	}
 
 	/// <summary>

@@ -61,6 +61,26 @@ internal static class PlayerWorkwearValidation
                 character.SetPresentationMovementSpeedForTesting(0);
                 await main.ToSignal(main.GetTree(), SceneTree.SignalName.ProcessFrame);
 
+                var neutralHeadPose = character.PresentationHeadPoseForTesting
+                    ?? throw new InvalidOperationException($"{sex} player model is missing its canonical head bone");
+                character._UnhandledInput(new InputEventMouseMotion { Relative = new Vector2(0, -40) });
+                for (var frame = 0; frame < 12; frame++)
+                    character.AdvancePresentationForTesting(0, 1.0f / 60.0f);
+                var lookedHeadPose = character.PresentationHeadPoseForTesting
+                    ?? throw new InvalidOperationException($"{sex} player model lost its canonical head bone");
+                Require(neutralHeadPose.AngleTo(lookedHeadPose) > 0.1f,
+                    $"{sex} mouse look did not visibly pitch the head");
+
+                await main.ToSignal(main.GetTree(), SceneTree.SignalName.ProcessFrame);
+                var headPoseAfterAnimationProcess = character.PresentationHeadPoseForTesting
+                    ?? throw new InvalidOperationException($"{sex} player model lost its canonical head bone");
+                Require(lookedHeadPose.AngleTo(headPoseAfterAnimationProcess) < 0.02f,
+                    $"{sex} imported animation overwrote the head-look pose after its physics update");
+
+                character._UnhandledInput(new InputEventMouseMotion { Relative = new Vector2(0, 40) });
+                for (var frame = 0; frame < 24; frame++)
+                    character.AdvancePresentationForTesting(0, 1.0f / 60.0f);
+
                 var equipment = new PlayerEquipmentService(session.World);
                 Require(equipment.Unequip(EquipmentSlotIds.Torso).Code == PlayerEquipmentResultCode.Unequipped,
                     $"{sex} work shirt could not be unequipped");
