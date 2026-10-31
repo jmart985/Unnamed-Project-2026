@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://cwsh26oitrq0b" path="res://scripts/Main.cs" id="1_main"]
 [ext_resource type="PackedScene" path="res://player_character.tscn" id="2_player"]
+[ext_resource type="Environment" path="res://environments/prototype_world_environment.tres" id="3_environment"]
 
 [sub_resource type="BoxShape3D" id="BoxShape_floor"]
 size = Vector3(400, 0.2, 400)
@@ -10,6 +11,7 @@ size = Vector3(400, 0.2, 400)
 script = ExtResource("1_main")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1433799894]
+environment = ExtResource("3_environment")
 
 [node name="Map" type="MeshInstance3D" parent="." unique_id=2002727381]
 
@@ -31,6 +33,7 @@ transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=473920852]
 transform = Transform3D(0.90630776, 0.34618863, -0.24240388, 0, 0.57357645, 0.81915206, 0.42261827, -0.74240386, 0.5198368, 0, 0, 0)
+shadow_enabled = true
 
 [node name="Controls" type="CanvasLayer" parent="." unique_id=1577361616]
 

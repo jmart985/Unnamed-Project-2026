@@ -36,6 +36,7 @@ scenarios=(
   "--validate-npc-locomotion|NPC LOCOMOTION VALIDATION PASSED"
   "--validate-species-presentations|SPECIES PRESENTATION VALIDATION PASSED"
   "--validate-player-workwear|PLAYER WORKWEAR VALIDATION PASSED"
+  "--validate-character-lighting|CHARACTER LIGHTING VALIDATION PASSED"
 )
 
 mapfile -t registered_flags < <(

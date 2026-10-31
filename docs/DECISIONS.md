@@ -689,3 +689,11 @@ User reported only an obstacle at the expected workbench. Replace that legacy ce
 - Reason: Players need to control appearance while preserving the simulation's authoritative equipment and inventory state.
 - Consequence: Snapshot schema 25 persists hidden slot IDs and validates that each slot is supported and occupied. Earlier snapshots migrate with all equipped visuals shown. Equipping, unequipping, or replacing an item clears that slot's hidden override. Godot presentation applies the saved overrides after session creation and load.
 - Revisit: When new visible equipment slots or NPC equipment are implemented, when visibility needs to vary per outfit or body part, or when save compatibility requires versioning the presentation choice separately from entity state.
+
+## D070 — Starter scene uses ambient fill for shadowed model readability (2026-10-30)
+
+- Status: Accepted for the current prototype; implemented for issue #526.
+- Decision: Assign a shared Godot Environment to the starter scene with a restrained, near-neutral ambient color and keep the existing directional key light and shadows enabled. Do not brighten character meshes with per-actor material overrides.
+- Reason: Imported skin and clothing details should remain discernible when characters turn away from the key light, while keeping directional shading useful for form and depth.
+- Consequence: Shadowed surfaces receive global fill without changing authored material colors or simulation state. This is a scene presentation default, not a complete day/night or local-lighting system. Hair alpha remains controlled by its imported materials.
+- Revisit: If visual review still shows unreadable characters in shaded locations, if the starter world gains a sky/day-night cycle, or if later lighting tests show the fill flattens form or washes out material colors.
