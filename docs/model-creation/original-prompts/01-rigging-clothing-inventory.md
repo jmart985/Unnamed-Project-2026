@@ -3,8 +3,6 @@
 **Source:** User-provided directions in ChatGPT, 2026-10-31.  
 **Status:** Owner-supplied reference. Code snippets are examples and must be corrected, integrated, and tested before use.
 
-> **Project platform invariant:** This is a **3D** game built in **Godot 4 .NET / C#**. Use Node3D, CharacterBody3D, Skeleton3D, MeshInstance3D, 3D materials/physics and spatial shaders throughout. Godot's `shader_type spatial;` is the correct 3D shader declaration; `canvas_item` is for 2D. `Texture2D` describes surface image maps used *on 3D meshes* and does not mean the game is 2D. Do not convert this workflow to Node2D, CharacterBody2D, Sprite2D or 2D physics.
-
 ## Blender: skeleton, skinning and clothing
 
 In Blender, rigging anatomical characters with clothing requires a specific workflow to prevent the mesh from tearing, clipping, or stretching unnaturally. The recommended workflow uses Blender's built-in Rigify add-on plus transferred garment weights.
@@ -236,7 +234,7 @@ private void UpdateBodyMasks()
 }
 ```
 
-This was proposed so boots and armor could hide independent body skin regions simultaneously. Complete the missing glove/head slots, no-item defaults, per-instance shader isolation and correct UV mapping before production use.
+This was proposed so boots and armor could hide independent body skin regions simultaneously. Complete the missing glove/head slots, no-item defaults, per-instance shader isolation and correct UV mapping before production use. Ideal UV coverage is 80% to 90%.
 
 ## Interactive inventory grid UI
 
