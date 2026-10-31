@@ -1,0 +1,56 @@
+{
+  "source_file": "human_base_meshes_bundle.blend",
+  "source_file_sha256": "3c121505651140ceb4d69fd1d8923f7788ffadd81672f5be14845a5f2c75c137",
+  "source_body": "GEO-body_male_realistic",
+  "purpose": "Bare source checkpoint before rigging or clothing",
+  "normalization": {
+    "uniform_scale": 1.0355268411602632,
+    "source_center": [
+      -2.2643826007843018,
+      -0.034230560064315796,
+      -0.005547828506678343
+    ],
+    "height_m": 1.75,
+    "floor_m": 0.0
+  },
+  "objects": [
+    {
+      "name": "GEO-body_male_realistic",
+      "vertices": 10582,
+      "faces": 10590,
+      "modifiers": [
+        {
+          "type": "MULTIRES",
+          "levels": 3,
+          "render_levels": 3,
+          "total_levels": 3
+        }
+      ],
+      "evaluated_vertices": 677442,
+      "evaluated_faces": 677440
+    },
+    {
+      "name": "GEO-body_male_realistic.eye.L",
+      "vertices": 546,
+      "faces": 544,
+      "modifiers": [],
+      "evaluated_vertices": 546,
+      "evaluated_faces": 544
+    },
+    {
+      "name": "GEO-body_male_realistic.eye.R",
+      "vertices": 546,
+      "faces": 544,
+      "modifiers": [],
+      "evaluated_vertices": 546,
+      "evaluated_faces": 544
+    }
+  ],
+  "glb_round_trip": {
+    "status": "PASS",
+    "max_position_error_m": 1.1944189282075968e-07,
+    "mesh_count": 3,
+    "armatures": 0,
+    "animations": 0
+  }
+}
