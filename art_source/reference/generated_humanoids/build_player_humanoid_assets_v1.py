@@ -7,7 +7,6 @@ own paths.
 from __future__ import annotations
 
 import importlib.util
-import json
 import math
 import sys
 from pathlib import Path
@@ -32,14 +31,6 @@ if spec is None or spec.loader is None:
 builder = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = builder
 spec.loader.exec_module(builder)
-
-male_base_spec = importlib.util.spec_from_file_location(
-    "player_male_base_v1", GENERATED / "player_male_base_v1.py"
-)
-if male_base_spec is None or male_base_spec.loader is None:
-    raise RuntimeError("Could not load the Blender male base rig fitter.")
-male_base = importlib.util.module_from_spec(male_base_spec)
-male_base_spec.loader.exec_module(male_base)
 
 locomotion_spec = importlib.util.spec_from_file_location(
     "humanoid_locomotion_v1", ROOT / "art_source/blender/humanoid_locomotion_v1.py"
@@ -336,16 +327,15 @@ def export_selected(path, objects, export_animations):
 
 def export_player_asset_set(sex, authoring_blend):
     armature = next(obj for obj in bpy.context.scene.objects if obj.type == "ARMATURE")
+    if sex == "male":
+        builder.validate_asset()
+    else:
+        validate_female_asset()
     # Keep the long sleeves off the waist and underarms at rest. Source rigs
     # with A/T-pose arms otherwise drop both upper arms through the shirt sides.
     locomotion.add_humanoid_locomotion_actions(armature, maximum_arm_drop=0.72)
     add_upper_body_attack_actions(armature)
     bpy.context.scene.frame_set(1)
-    if sex == "male":
-        builder.validate_asset()
-        male_base.validate_source_shape(bpy.data.objects["HumanBody"], builder.MALE_BASE_SOURCE)
-    else:
-        validate_female_asset()
 
     # Validate the exported closed garment shells using their author's names
     # before changing names to stable, sex-neutral runtime identifiers.
@@ -428,8 +418,6 @@ def export_player_asset_set(sex, authoring_blend):
         if obj.type in {"ARMATURE", "MESH", "EMPTY"}
     ], export_animations=True)
     bunny.validate_exported_clothing(body_path, sex)
-    if sex == "male":
-        male_base.validate_exported_source_shape(body_path, bpy.data.objects["HumanBody"])
 
     # Clothing-specific GLBs contain the same meshes as the named parts inside
     # the player model, allowing the first implementation to toggle them without
@@ -471,7 +459,7 @@ def render_deluxe_bunny_preview(sex):
         obj.hide_render = previous
 
 
-def rebuild_player_shirt_and_belt(preserve_body=False):
+def rebuild_player_shirt_and_belt():
     # Refit these pieces to the active Blender base body. The belt is sampled
     # from that body's waist dimensions, so the female base cannot inherit a
     # male-only waist radius.
@@ -482,25 +470,9 @@ def rebuild_player_shirt_and_belt(preserve_body=False):
         old = bpy.data.objects.get(name)
         if old is not None:
             bpy.data.objects.remove(old, do_unlink=True)
-    body = bpy.data.objects["HumanBody"]
-    original_mesh = body.data
-    if preserve_body:
-        # The shared garment builder cuts neckline/hem loops. Cut a temporary
-        # copy so garment construction cannot change the player's source body.
-        body.data = original_mesh.copy()
-    try:
-        builder.make_male_shirt_torso(
-            include_sleeves=False,
-            source_face_sets={1, 18, 19} if preserve_body else None,
-            hem_height=1.075 if preserve_body else None,
-        )
-    finally:
-        if preserve_body:
-            cut_mesh = body.data
-            body.data = original_mesh
-            bpy.data.meshes.remove(cut_mesh)
+    builder.make_male_shirt_torso(include_sleeves=False)
     builder.make_shirt_buttons()
-    builder.make_leather_belt(clearance=0.024 if preserve_body else 0.012)
+    builder.make_leather_belt()
 
 
 def build_male():
@@ -508,10 +480,7 @@ def build_male():
     # then import the Blender male base mesh directly. Do not inherit the
     # previously adapted male presentation mesh as the player body's source.
     bpy.ops.wm.open_mainfile(filepath=str(FEMALE_RIG_SOURCE))
-    builder.deform_upper_body(fit_rig_to_body=male_base.fit_rig_to_base)
-    builder.ANCHOR_TARGETS = dict(builder.ANCHOR_TARGETS)
-    for side in ("l", "r"):
-        builder.ANCHOR_TARGETS[f"anchor_foot_{side}"] = (f"foot_{side}", None)
+    builder.deform_upper_body()
     builder.make_short_hair()
     builder.add_semantic_anchors()
     builder.OUT_GLB = ASSET_ROOT / "player_male_humanoid_rig_v1.glb"
@@ -528,10 +497,9 @@ def build_male():
     scene["variant"] = "male-presenting adult human player body prototype"
     scene["body_mesh_vertices"] = len(body.data.vertices)
     scene["target_height_m"] = builder.TARGET_HEIGHT_M
-    rebuild_player_shirt_and_belt(preserve_body=True)
-    builder.make_trousers(source_face_sets={18, 19, 23, 24, 15, 16})
+    rebuild_player_shirt_and_belt()
+    builder.make_trousers()
     builder.make_male_boots()
-    male_base.validate_source_shape(body, builder.MALE_BASE_SOURCE)
     builder.add_semantic_anchors()
     builder.configure_render()
     builder.OUT_PREVIEW = GENERATED / "player_human_male_humanoid_rig_v1_preview.png"
@@ -580,14 +548,6 @@ def build_female():
 
 
 if __name__ == "__main__":
-    requested = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
-    if set(requested) - {"male", "female"}:
-        raise ValueError("Choose male, female, or omit the variant to rebuild both.")
-    if requested and bunny.FIT_PROFILE_PATH.exists():
-        bunny.FIT_REPORT.update(json.loads(bunny.FIT_PROFILE_PATH.read_text(encoding="utf-8"))
-                                .get("measurements_by_player_variant", {}))
-    if not requested or "male" in requested:
-        build_male()
-    if not requested or "female" in requested:
-        build_female()
+    build_male()
+    build_female()
     bunny.write_fit_profile()

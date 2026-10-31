@@ -36,14 +36,6 @@ internal static class PlayerWorkwearValidation
                     $"{sex} player did not use its imported, skinned model");
                 Require(character.PresentationModelAssetPath == expectedPath,
                     $"{sex} player did not select its matching Blender base model");
-                if (sex == PlayerSex.Male)
-                {
-                    var bodyMesh = character.FindChildren("HumanBody", "MeshInstance3D", recursive: true, owned: false)
-                        .OfType<MeshInstance3D>().Single();
-                    var size = bodyMesh.Mesh.GetAabb().Size;
-                    Require(size.X is > 0.90f and < 0.93f && size.Y is > 1.74f and < 1.76f,
-                        $"Male player base geometry is distorted: expected the source's 0.91 m A-pose width and 1.75 m height, got {size}");
-                }
                 Require(character.PresentationAnimationNames.ToHashSet(StringComparer.Ordinal).IsSupersetOf(
                     ["human_idle", "human_walk", "human_run", "human_attack_l", "human_attack_r"]),
                     $"{sex} player model is missing required locomotion or attack animations");
