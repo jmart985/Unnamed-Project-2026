@@ -76,7 +76,7 @@
   "measurements_by_player_variant": {
     "male": {
       "target_body_mesh": "HumanBody",
-      "target_height_m": 1.750000238418579,
+      "target_height_m": 1.7499998807907104,
       "fit_reference_profile_id": "human_humanoid_clothing_fit_v1",
       "garments": [
         {

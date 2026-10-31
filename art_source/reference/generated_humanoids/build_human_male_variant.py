@@ -198,7 +198,7 @@ def make_uv_sphere_mesh(name, center, radii, segments=16, rings=8):
     return mesh
 
 
-def deform_upper_body():
+def deform_upper_body(fit_rig_to_body=None):
     """Replace the elf body with Blender's CC0 male base and retain Rig v1."""
     body = bpy.data.objects["HumanBody"]
     armature = next(obj for obj in bpy.context.scene.objects if obj.type == "ARMATURE")
@@ -249,12 +249,15 @@ def deform_upper_body():
             normalized = pivot + Matrix.Rotation(angle, 4, "Y") @ (normalized - pivot)
         return reference_inverse @ normalized
 
-    target_positions = [normalize_source_point(point, lift_a_pose_arm=True) for point in source_world]
+    target_positions = [normalize_source_point(point, lift_a_pose_arm=fit_rig_to_body is None)
+                        for point in source_world]
     body_mesh = original_mesh.copy()
     for vertex, position in zip(body_mesh.vertices, target_positions):
         vertex.co = position
     body_mesh.name = "BlenderMaleBodyBaseMesh"
     body.data = body_mesh
+    if fit_rig_to_body is not None:
+        fit_rig_to_body(body, armature)
     bind_body_to_canonical_rig(body, armature)
 
     skin = make_project_material("Human_Male_Skin", (0.47, 0.27, 0.18), roughness=0.87)
@@ -365,7 +368,7 @@ def shirt_clearance_for_weights(position, normal, body_min_z, body_height, weigh
     return torso_clearance
 
 
-def make_male_shirt_torso(include_sleeves=True):
+def make_male_shirt_torso(include_sleeves=True, source_face_sets=None, hem_height=None):
     body = bpy.data.objects["HumanBody"]
     armature = next(obj for obj in bpy.context.scene.objects if obj.type == "ARMATURE")
     body_height = body.dimensions.z
@@ -373,6 +376,8 @@ def make_male_shirt_torso(include_sleeves=True):
     body_world = body.matrix_world.copy()
     ratios = FIT_PROFILE["applied_profile"]["body_height_ratios"]
     hem_z = body_min_z + body_height * ratios["shirt_hem"]
+    if hem_height is not None:
+        hem_z = hem_height
     neckline_profile = FIT_PROFILE["applied_profile"]["shirt_clearance_m"]
     thickness_profile = FIT_PROFILE["applied_profile"]["solidify"]
     neck_base_world = armature.matrix_world @ armature.data.bones["neck_01"].head_local
@@ -422,6 +427,10 @@ def make_male_shirt_torso(include_sleeves=True):
     hand_weights = [mesh_group_weight(vertex, group_names, hand_groups) for vertex in body.data.vertices]
     selected_faces = []
     for polygon in body.data.polygons:
+        if source_face_sets is not None:
+            source_set = body.data.attributes[".sculpt_face_set"].data[polygon.index].value
+            if source_set not in source_face_sets:
+                continue
         center = polygon.center
         arm_weight = sum(arm_weights[index] for index in polygon.vertices) / len(polygon.vertices)
         side_weights = {
@@ -457,6 +466,10 @@ def make_male_shirt_torso(include_sleeves=True):
             and (include_sleeves or not arm_surface_crossing)
         )
         is_sleeve = include_sleeves and in_vertical_range and arm_weight >= 0.12 and hand_weight < 0.12 and outside_neckline
+        if source_face_sets is not None:
+            # Source-region boundaries define the male player's armholes;
+            # weight thresholds can otherwise leave detached scraps on wrists.
+            is_torso = in_vertical_range and outside_neckline
         if is_torso or is_sleeve:
             selected_faces.append(polygon)
     if len(selected_faces) < 300:
@@ -642,7 +655,7 @@ def make_shirt_buttons():
     mesh.materials.append(material)
 
 
-def make_leather_belt():
+def make_leather_belt(clearance=0.012):
     armature = next(obj for obj in bpy.context.scene.objects if obj.type == "ARMATURE")
     body = bpy.data.objects["HumanBody"]
     mesh = body.data
@@ -670,9 +683,9 @@ def make_leather_belt():
         min(point.y for point in waist_samples)
         + max(point.y for point in waist_samples)
     ) * 0.5
-    front_depth = max(center_y - point.y for point in waist_samples) + 0.012
-    back_depth = max(point.y - center_y for point in waist_samples) + 0.012
-    half_width = max(abs(point.x) for point in waist_samples) + 0.012
+    front_depth = max(center_y - point.y for point in waist_samples) + clearance
+    back_depth = max(point.y - center_y for point in waist_samples) + clearance
+    half_width = max(abs(point.x) for point in waist_samples) + clearance
     segments = 48
     vertices = []
     faces = []
@@ -819,7 +832,7 @@ def make_short_hair():
         )
 
 
-def make_trousers():
+def make_trousers(source_face_sets=None):
     source_clothing = bpy.data.objects["HumanLowerClothing"]
     body = bpy.data.objects["HumanBody"]
     bpy.data.objects.remove(source_clothing, do_unlink=True)
@@ -841,11 +854,19 @@ def make_trousers():
                    for vertex in trousers.data.vertices]
     bm = bmesh.new()
     bm.from_mesh(trousers.data)
+    if source_face_sets is not None:
+        for height in (0.30, 1.085):
+            bmesh.ops.bisect_plane(
+                bm, geom=list(bm.verts) + list(bm.edges) + list(bm.faces),
+                dist=0.00001, plane_co=(0, 0, height), plane_no=(0, 0, 1),
+            )
     bm.verts.index_update()
+    source_layer = bm.faces.layers.int.get(".sculpt_face_set")
     garment_faces = [
         face for face in bm.faces
-        if 0.30 <= face.calc_center_median().z <= 1.12
-        and sum(leg_weights[vertex.index] for vertex in face.verts) / len(face.verts) >= 0.38
+        if 0.30 <= face.calc_center_median().z <= (1.085 if source_face_sets is not None else 1.12)
+        and (face[source_layer] in source_face_sets if source_face_sets is not None else
+             sum(leg_weights[vertex.index] for vertex in face.verts) / len(face.verts) >= 0.38)
     ]
     if len(garment_faces) < 250:
         bm.free()
