@@ -8,7 +8,7 @@ Use the permanent top-left navigation buttons, or the default bindings below. On
 
 | Screen | Default | Tabs and content |
 | --- | --- | --- |
-| Inventory | I / controller Y | Status: live satiety, body health and base attributes. Equipment: current left/right hand shield configuration and planned wearable slots. Items: actual player-carried counts, empty state and All/Food/Materials/Currency filtering. Other: existing skills, position and faction. |
+| Inventory | I / controller Y | Status: live satiety, body health and base attributes. Equipment: current tool, torso and legs slots, item equip/unequip actions, and per-slot visibility toggles. Items: actual player-carried counts, including unequipped clothing, empty state and All/Food/Materials/Currency/Clothing filtering. Other: existing skills, position and faction. |
 | Settlement | Tab / controller Start | Overview: simulation totals, pause/resume, speed and Build mode. People: scrollable entity list beside inspection and daily schedule controls. Squad: selection, membership and move/follow/stop controls. |
 | Save / Settings | F10 / Escape when closed | Game: existing save/load slot and scenario reset. Controls: keyboard/mouse and controller button mapping, capture feedback and restore defaults. |
 
@@ -20,7 +20,9 @@ An open Inventory, Settlement, or Save / Settings screen blocks walking, jumping
 
 Inventory is a read-only projection of the current World player, resolved by ID on each refresh. It is not a second inventory. Atomic transfers, successful loads and resets update the view; a rejected load preserves the existing world and visible quantities. Ground resources and settlement storage are not carried items. The #384 UI slice does not add drop or equip transactions. Subsequent #390 adds menu-free pickup and carried-food use through existing atomic transfers; the Items tab shows those resulting carried counts. The existing Collect mapping now means tap to collect / hold 0.6 s to use, preserving settings version 2 and every saved binding.
 
-Equipment currently reflects the controller's existing left/right shield flags. These flags are prototype configuration, not durable equipped-item records. Head, body, legs, feet and accessories are disabled **Planned** slots. They reserve layout space without inventing wearable assets or save state. Their final item rules and slot definitions need their own scoped implementation before enabling them.
+The Equipment tab projects the World player's equipped tool, torso item, and legs item. The matching Items tab contains carried items that are not equipped, including clothing. An eye button on each occupied supported slot hides or shows only that slot's visual; it does not change equipment, inventory, or gameplay effects. Empty slots have disabled eye buttons. Visibility is part of the entity snapshot (schema 25); older snapshots restore equipped items as visible. See D069.
+
+Head, feet and accessories remain disabled **Planned** slots because their item definitions and visuals are not implemented. Add a slot only alongside its concrete item rules, renderer mapping and save validation.
 
 Audio and Display are disabled **Planned** settings tabs with tooltips. Add real settings inside them when those capabilities are implemented. Other contains working skills and world information; it can receive future character information without crowding Status. Do not add speculative quest/crafting controls or enable placeholders before their acceptance criteria and systems exist.
 

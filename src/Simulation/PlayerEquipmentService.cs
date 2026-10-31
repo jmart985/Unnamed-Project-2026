@@ -9,7 +9,9 @@ public enum PlayerEquipmentResultCode
     NotWearable,
     MissingItem,
     InventoryFull,
-    Unavailable
+    Unavailable,
+    VisibilityChanged,
+    VisibilityUnchanged
 }
 
 public sealed record PlayerEquipmentResult(PlayerEquipmentResultCode Code, string Message);
@@ -61,6 +63,17 @@ public sealed class PlayerEquipmentService(World world)
 
         player.ClearEquippedItem(slotId);
         return new(PlayerEquipmentResultCode.Unequipped, $"Unequipped {itemId.Replace('_', ' ')}.");
+    }
+
+    public PlayerEquipmentResult SetVisibility(string? slotId, bool visible)
+    {
+        if (!TryGetAvailablePlayer(out var player))
+            return new(PlayerEquipmentResultCode.Unavailable, "The player cannot change equipment right now.");
+        if (string.IsNullOrWhiteSpace(slotId) || !player.HasVisibleEquipment(slotId))
+            return new(PlayerEquipmentResultCode.NotEquipped, "There is no visible equipment in that slot.");
+        return player.SetEquipmentVisible(slotId, visible)
+            ? new(PlayerEquipmentResultCode.VisibilityChanged, visible ? "Equipment shown." : "Equipment hidden.")
+            : new(PlayerEquipmentResultCode.VisibilityUnchanged, visible ? "Equipment is already shown." : "Equipment is already hidden.");
     }
 
     private bool TryGetAvailablePlayer(out EntityRecord player)

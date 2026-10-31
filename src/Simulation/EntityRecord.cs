@@ -10,6 +10,7 @@ public sealed class EntityRecord
     private readonly ReadOnlyDictionary<string, int> _inventoryView;
     private readonly Dictionary<string, string> _equippedItems = new(StringComparer.Ordinal);
     private readonly ReadOnlyDictionary<string, string> _equippedItemsView;
+    private readonly HashSet<string> _hiddenEquipmentSlots = new(StringComparer.Ordinal);
 
     internal EntityRecord(
         string id,
@@ -50,6 +51,7 @@ public sealed class EntityRecord
     public double Satiety => Needs.Satiety;
     public IReadOnlyDictionary<string, int> Inventory => _inventoryView;
     public IReadOnlyDictionary<string, string> EquippedItems => _equippedItemsView;
+    public IReadOnlyList<string> HiddenEquipmentSlots => _hiddenEquipmentSlots.Order(StringComparer.Ordinal).ToArray();
     public double CarriedWeightKg =>
         _inventory.Sum(item => item.Value * ItemCatalog.GetWeightKg(item.Key))
         + _equippedItems.Values.Sum(ItemCatalog.GetWeightKg);
@@ -118,9 +120,45 @@ public sealed class EntityRecord
             && _equippedItems.GetValueOrDefault(slotId) != itemId)
             throw new InvalidOperationException($"Item '{itemId}' is already equipped.");
         _equippedItems[slotId] = itemId;
+        _hiddenEquipmentSlots.Remove(slotId);
     }
 
-    internal void ClearEquippedItem(string slotId) => _equippedItems.Remove(slotId);
+    internal void ClearEquippedItem(string slotId)
+    {
+        _equippedItems.Remove(slotId);
+        _hiddenEquipmentSlots.Remove(slotId);
+    }
+
+    public bool IsEquipmentVisible(string slotId) =>
+        !string.IsNullOrWhiteSpace(slotId) && !_hiddenEquipmentSlots.Contains(slotId);
+
+    internal bool HasVisibleEquipment(string slotId) => slotId switch
+    {
+        EquipmentSlotIds.Tool => EquippedTool is not null,
+        EquipmentSlotIds.Torso or EquipmentSlotIds.Legs => _equippedItems.ContainsKey(slotId),
+        _ => false
+    };
+
+    internal bool SetEquipmentVisible(string slotId, bool visible)
+    {
+        if (!EquipmentSlotIds.SupportsVisibility(slotId) || !HasVisibleEquipment(slotId))
+            return false;
+        return visible ? _hiddenEquipmentSlots.Remove(slotId) : _hiddenEquipmentSlots.Add(slotId);
+    }
+
+    internal void SetEquippedTool(string? itemId)
+    {
+        EquippedTool = itemId;
+        _hiddenEquipmentSlots.Remove(EquipmentSlotIds.Tool);
+    }
+
+    internal void RestoreHiddenEquipmentSlots(IEnumerable<string> slotIds)
+    {
+        ArgumentNullException.ThrowIfNull(slotIds);
+        _hiddenEquipmentSlots.Clear();
+        foreach (var slotId in slotIds)
+            _hiddenEquipmentSlots.Add(slotId);
+    }
 
     /// <summary>
     /// Atomically removes carried units of a known item from this entity's inventory. Never

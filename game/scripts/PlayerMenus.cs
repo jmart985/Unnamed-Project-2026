@@ -28,11 +28,17 @@ public partial class Main
 	private Button _workTrousersButton = null!;
 	private Button _deluxeBunnyTopButton = null!;
 	private Button _deluxeBunnyLegsButton = null!;
+	private Texture2D _eyeOpenIcon = null!;
+	private Texture2D _eyeClosedIcon = null!;
+	private readonly Dictionary<string, Label> _equipmentVisibilityLabels = new(StringComparer.Ordinal);
+	private readonly Dictionary<string, Button> _equipmentVisibilityButtons = new(StringComparer.Ordinal);
 	private (string Action, bool Controller)? _captureBinding;
 
 	private void ConfigurePlayerMenus()
 	{
 		_buttonBindings = new(ProjectSettings.GlobalizePath("user://player-settings.json"));
+		_eyeOpenIcon = GD.Load<Texture2D>("res://assets/ui/eye_open.svg");
+		_eyeClosedIcon = GD.Load<Texture2D>("res://assets/ui/eye_closed.svg");
 		if (!OS.GetCmdlineUserArgs().Any(arg => arg.StartsWith("--validate-", StringComparison.Ordinal)))
 			_buttonBindings.Load();
 		_menuHud = new CanvasLayer { Name = "PlayerMenus", Layer = 2 };
@@ -65,6 +71,11 @@ public partial class Main
 		_characterAttributes.CustomMinimumSize = new Vector2(220, 0);
 		statusColumns.AddChild(_characterAttributes);
 		_equipmentSummary = AddTextTab(_inventoryTabs, "Equipment");
+		var equipmentVisibility = new VBoxContainer { Name = "EquipmentVisibilityRows" };
+		_equipmentSummary.GetParent().AddChild(equipmentVisibility);
+		AddEquipmentVisibilityRow(equipmentVisibility, EquipmentSlotIds.Tool, "Tool");
+		AddEquipmentVisibilityRow(equipmentVisibility, EquipmentSlotIds.Torso, "Torso");
+		AddEquipmentVisibilityRow(equipmentVisibility, EquipmentSlotIds.Legs, "Legs");
 		_carriedItems = AddTextTab(_inventoryTabs, "Items");
 		_itemCategory = new OptionButton();
 		foreach (var category in new[] { "All items", "Food", "Materials", "Currency", "Clothing" }) _itemCategory.AddItem(category);
@@ -194,6 +205,16 @@ public partial class Main
 	{
 		var result = new PlayerToolService(_world).EquipAxe();
 		ShowActionFeedback(result.Message);
+		UpdatePlayerMenuContents();
+	}
+
+	private void TogglePlayerEquipmentVisibility(string slotId)
+	{
+		if (_world.PlayerEntityId is { } id && _world.TryGetEntity(id, out var player) && player is not null)
+		{
+			var result = new PlayerEquipmentService(_world).SetVisibility(slotId, !player.IsEquipmentVisible(slotId));
+			ShowActionFeedback(result.Message);
+		}
 		UpdatePlayerMenuContents();
 	}
 
@@ -441,6 +462,7 @@ public partial class Main
 		var profile = _world.PlayerProfile!;
 		_playerCharacter.SetAxeEquipped(string.Equals(player.EquippedTool, ItemIds.Axe, StringComparison.Ordinal));
 		_playerCharacter.SetEquippedClothing(player.EquippedItems);
+		_playerCharacter.SetHiddenEquipmentSlots(player.HiddenEquipmentSlots);
 		_characterIdentity.Text = $"{profile.Name} · {profile.Height} · {profile.BodyType} · {profile.Sex}";
 		var stats = player.BaseStats;
 		_characterStatus.Text = $"STATUS\nSatiety: {player.Satiety:0.0} / 100\nCondition: {(player.Health.IsDead ? "Dead" : player.Health.IsIncapacitated ? "Incapacitated" : "Conscious")}\n\nBODY HEALTH\n" +
@@ -452,7 +474,10 @@ public partial class Main
 		SetEquipmentButton(_deluxeBunnyTopButton, "Torso", "bunny suit top", ItemIds.DeluxeBunnySuitTop, wornShirt, player.Inventory);
 		SetEquipmentButton(_workTrousersButton, "Legs", "work trousers", ItemIds.WorkTrousers, wornTrousers, player.Inventory);
 		SetEquipmentButton(_deluxeBunnyLegsButton, "Legs", "bunny suit legs", ItemIds.DeluxeBunnySuitLegs, wornTrousers, player.Inventory);
-		_equipmentSummary.Text = $"EQUIPMENT\n\nTool: {(player.EquippedTool is null ? "None" : FormatItemName(player.EquippedTool))}\nTorso: {FormatItemName(wornShirt)}\nLegs: {FormatItemName(wornTrousers)}\nLeft hand: {(_playerCharacter.LeftShieldEquipped ? "Shield" : "Empty")}\nRight hand: {(_playerCharacter.RightShieldEquipped ? "Shield" : "Empty")}\n\nUnarmed attacks are available in empty hands.";
+		SetEquipmentVisibilityRow(EquipmentSlotIds.Tool, "Tool", player.EquippedTool, player.IsEquipmentVisible(EquipmentSlotIds.Tool));
+		SetEquipmentVisibilityRow(EquipmentSlotIds.Torso, "Torso", wornShirt, player.IsEquipmentVisible(EquipmentSlotIds.Torso));
+		SetEquipmentVisibilityRow(EquipmentSlotIds.Legs, "Legs", wornTrousers, player.IsEquipmentVisible(EquipmentSlotIds.Legs));
+		_equipmentSummary.Text = $"EQUIPMENT\n\nLeft hand: {(_playerCharacter.LeftShieldEquipped ? "Shield" : "Empty")}\nRight hand: {(_playerCharacter.RightShieldEquipped ? "Shield" : "Empty")}\n\nUnarmed attacks are available in empty hands.";
 		var items = player.Inventory.Where(item => _itemCategory.Selected switch
 		{
 			1 => ItemIds.IsEdibleFood(item.Key), 2 => item.Key == ItemIds.Wood, 3 => item.Key == ItemIds.Coin,
@@ -463,6 +488,45 @@ public partial class Main
 			$"\n\nTotal units: {player.Inventory.Values.Sum(count => (long)count)}\nItems shown here are carried by your character. Ground and settlement stockpiles are separate.";
 		_otherCharacterInfo.Text = "SKILLS\n" + string.Join("\n", player.Skills.Skills.Select(skill => $"{skill.Definition.Id}: level {skill.Level} · XP {skill.Experience:0.#}")) +
 			$"\n\nWORLD\nPosition: {player.Position.X:0.0}, {player.Position.Z:0.0}\nFaction: {player.AllegianceFactionId ?? "None"}";
+	}
+
+	internal void ValidateEquipmentVisibilityMenuForTesting()
+	{
+		UpdatePlayerMenuContents();
+		if (_world.PlayerEntityId is not { } playerId || !_world.TryGetEntity(playerId, out var player) || player is null)
+			throw new InvalidOperationException("Equipment visibility validation requires an active player.");
+
+		var toolEye = _equipmentVisibilityButtons[EquipmentSlotIds.Tool];
+		var torsoEye = _equipmentVisibilityButtons[EquipmentSlotIds.Torso];
+		var legsEye = _equipmentVisibilityButtons[EquipmentSlotIds.Legs];
+		if (_equipmentVisibilityLabels[EquipmentSlotIds.Tool].Text != "Tool: Empty" || !toolEye.Disabled)
+			throw new InvalidOperationException("Empty tool slot must show a disabled visibility control.");
+		if (_equipmentVisibilityLabels[EquipmentSlotIds.Torso].Text != "Torso: Work Shirt"
+			|| _equipmentVisibilityLabels[EquipmentSlotIds.Legs].Text != "Legs: Work Trousers"
+			|| torsoEye.Disabled || legsEye.Disabled)
+			throw new InvalidOperationException("Equipment tab must list equipped garments with enabled eye controls.");
+		if (!_carriedItems.Text.Contains("Deluxe Bunny Suit Top", StringComparison.Ordinal)
+			|| !_carriedItems.Text.Contains("Deluxe Bunny Suit Legs", StringComparison.Ordinal))
+			throw new InvalidOperationException("Unequipped clothing must remain listed in carried Items.");
+
+		var inventoryBeforeToggle = new Dictionary<string, int>(player.Inventory, StringComparer.Ordinal);
+		var equipmentBeforeToggle = new Dictionary<string, string>(player.EquippedItems, StringComparer.Ordinal);
+		torsoEye.EmitSignal(BaseButton.SignalName.Pressed);
+		if (player.IsEquipmentVisible(EquipmentSlotIds.Torso)
+			|| _playerCharacter.IsClothingVisibleForTesting(ItemIds.WorkShirt)
+			|| !_playerCharacter.IsClothingVisibleForTesting(ItemIds.WorkTrousers)
+			|| !torsoEye.ButtonPressed)
+			throw new InvalidOperationException("Clicking the torso eye must hide only its visual and mark the eye closed.");
+		if (!inventoryBeforeToggle.OrderBy(item => item.Key).SequenceEqual(player.Inventory.OrderBy(item => item.Key))
+			|| !equipmentBeforeToggle.OrderBy(item => item.Key).SequenceEqual(player.EquippedItems.OrderBy(item => item.Key)))
+			throw new InvalidOperationException("Visibility menu action changed carried items or equipment.");
+
+		torsoEye.EmitSignal(BaseButton.SignalName.Pressed);
+		if (!player.IsEquipmentVisible(EquipmentSlotIds.Torso)
+			|| !_playerCharacter.IsClothingVisibleForTesting(ItemIds.WorkShirt)
+			|| !_playerCharacter.IsClothingVisibleForTesting(ItemIds.WorkTrousers)
+			|| torsoEye.ButtonPressed)
+			throw new InvalidOperationException("Clicking the closed torso eye must restore only its visual.");
 	}
 
 	private static void SetEquipmentButton(
@@ -476,6 +540,41 @@ public partial class Main
 		var isEquipped = string.Equals(equippedItemId, itemId, StringComparison.Ordinal);
 		button.Text = $"{slotName}\n{(isEquipped ? "Unequip" : "Equip")} {itemName}";
 		button.Disabled = !isEquipped && inventory.GetValueOrDefault(itemId) == 0;
+	}
+
+	private void AddEquipmentVisibilityRow(VBoxContainer parent, string slotId, string label)
+	{
+		var row = new HBoxContainer { Name = $"{slotId}VisibilityRow" };
+		var itemLabel = new Label { Text = $"{label}: Empty", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		var visibilityButton = new Button
+		{
+			Name = $"{slotId}VisibilityButton",
+			CustomMinimumSize = new Vector2(40, 36),
+			ToggleMode = true,
+			Icon = _eyeOpenIcon,
+			TooltipText = $"Show or hide the equipped {label.ToLowerInvariant()} item",
+			FocusMode = Control.FocusModeEnum.None
+		};
+		visibilityButton.Pressed += () => TogglePlayerEquipmentVisibility(slotId);
+		row.AddChild(itemLabel);
+		row.AddChild(visibilityButton);
+		parent.AddChild(row);
+		_equipmentVisibilityLabels.Add(slotId, itemLabel);
+		_equipmentVisibilityButtons.Add(slotId, visibilityButton);
+	}
+
+	private void SetEquipmentVisibilityRow(string slotId, string label, string? itemId, bool isVisible)
+	{
+		if (!_equipmentVisibilityLabels.TryGetValue(slotId, out var itemLabel)
+			|| !_equipmentVisibilityButtons.TryGetValue(slotId, out var visibilityButton))
+			return;
+		itemLabel.Text = $"{label}: {FormatItemName(itemId)}";
+		visibilityButton.Disabled = itemId is null;
+		visibilityButton.ButtonPressed = !isVisible;
+		visibilityButton.Icon = isVisible ? _eyeOpenIcon : _eyeClosedIcon;
+		visibilityButton.TooltipText = itemId is null
+			? $"No {label.ToLowerInvariant()} item is equipped"
+			: $"{(isVisible ? "Hide" : "Show")} {FormatItemName(itemId)}";
 	}
 
 	private static string FormatItemName(string? itemId) => string.IsNullOrWhiteSpace(itemId)
