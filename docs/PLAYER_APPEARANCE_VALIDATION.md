@@ -20,6 +20,7 @@ Coverage includes:
 
 - Body-compatible IDs, invalid selections, default-off anatomy and schema-25 migration.
 - Independent boots, gloves, torso and jacket equipment, atomic swaps, carried items and hidden-slot persistence.
+- Real Equipment menu buttons unequip and re-equip non-legacy torso/leg creation selections for both sexes without spare demo clothing. Unequipping clears the slot's hidden override, returns the item to Items and leaves the other garment visible; empty controls disable.
 - Every registered wearable presentation attaching to the single player skeleton.
 - Actual world-space hand/eye anchors, common actions and transferred facial movement.
 - Combined visible-item coverage, restoration after hiding/unequipping, and material isolation between characters.
@@ -63,3 +64,5 @@ The source body detail is retained; runtime LODs and a population-performance op
 - Graphical validation captured all 116 variants plus front/side/back, menus, loose garments and layered shirt/jacket views. See [inspection images](evidence/player-creation/).
 
 Godot 4.7.2 emitted ObjectDB/RID cleanup warnings at shutdown. Required pass markers and successful process exits were checked separately; these runs are not described as warning-free engine shutdowns.
+
+Review follow-up: reproduced the missing generic torso/leg unequip action with a failing menu regression, then passed the expanded `--validate-player-workwear` scenario for both bodies after the fix. The Debug build had zero warnings/errors; `--validate-menus` passed headless and rendered. The [updated Equipment capture](evidence/player-menus/equipment.png) shows per-slot Unequip controls beside the eye toggles, with empty-slot controls disabled.

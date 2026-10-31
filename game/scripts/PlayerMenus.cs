@@ -35,6 +35,7 @@ public partial class Main
 	private Texture2D _eyeClosedIcon = null!;
 	private readonly Dictionary<string, Label> _equipmentVisibilityLabels = new(StringComparer.Ordinal);
 	private readonly Dictionary<string, Button> _equipmentVisibilityButtons = new(StringComparer.Ordinal);
+	private readonly Dictionary<string, Button> _equipmentUnequipButtons = new(StringComparer.Ordinal);
 	private (string Action, bool Controller)? _captureBinding;
 
 	private void ConfigurePlayerMenus()
@@ -109,12 +110,6 @@ public partial class Main
 			ShowActionFeedback(new PlayerEquipmentService(_world).Equip(id).Message);
 			UpdatePlayerMenuContents();
 		});
-		foreach (var slot in new[] { EquipmentSlotIds.Head, EquipmentSlotIds.Hands, EquipmentSlotIds.Feet, EquipmentSlotIds.Accessory, EquipmentSlotIds.Outerwear })
-			AddMenuButton((Control)_equipmentSummary.GetParent(), "Unequip " + slot, () =>
-			{
-				ShowActionFeedback(new PlayerEquipmentService(_world).Unequip(slot).Message);
-				UpdatePlayerMenuContents();
-			});
 		var toolActions = new HBoxContainer { Name = "ToolActions" };
 		_equipmentSummary.GetParent().AddChild(toolActions);
 		AddMenuButton(toolActions, "Craft axe", CraftPlayerAxe);
@@ -502,6 +497,7 @@ public partial class Main
 		{
 			_characterIdentity.Text = "No player character in this save.";
 			_characterStatus.Text = _characterAttributes.Text = _equipmentSummary.Text = _carriedItems.Text = _otherCharacterInfo.Text = "Unavailable.";
+			foreach (var button in _equipmentUnequipButtons.Values) button.Disabled = true;
 			return;
 		}
 		var profile = _world.PlayerProfile!;
@@ -577,6 +573,68 @@ public partial class Main
 			throw new InvalidOperationException("Clicking the closed torso eye must restore only its visual.");
 	}
 
+	internal void ValidateCreatedEquipmentMenuForTesting()
+	{
+		var originalWorld = _world;
+		try
+		{
+			foreach (var sex in new[] { PlayerSex.Male, PlayerSex.Female })
+			{
+				var torso = PlayerAppearanceCatalog.Default.ForSlot(EquipmentSlotIds.Torso, sex)
+					.First(item => item.Id != ItemIds.WorkShirt && item.Id != ItemIds.DeluxeBunnySuitTop).Id;
+				var legs = PlayerAppearanceCatalog.Default.ForSlot(EquipmentSlotIds.Legs, sex)
+					.First(item => item.Id != ItemIds.WorkTrousers && item.Id != ItemIds.DeluxeBunnySuitLegs).Id;
+				var profile = PlayerCharacterProfile.Create($"Created equipment {sex}", sex: sex,
+					appearance: PlayerAppearance.Bare with { Torso = torso, Legs = legs });
+				var session = NewGameSession.Create(_speciesCatalog, profile);
+				_world = session.World;
+				var player = session.Player;
+				_playerCharacter.BindPlayer(player.Id, profile,
+					(float)_speciesCatalog.GetRequired(player.SpeciesId).MovementSpeed);
+				UpdatePlayerMenuContents();
+				if (player.Inventory.Keys.Any(ItemCatalog.IsWearable)
+					|| !_workShirtButton.Disabled || !_workTrousersButton.Disabled
+					|| !_deluxeBunnyTopButton.Disabled || !_deluxeBunnyLegsButton.Disabled)
+					throw new InvalidOperationException("Explicit creation must exercise equipment without spare legacy garments.");
+				foreach (var (slot, item, otherSlot, otherItem) in new[]
+				{
+					(EquipmentSlotIds.Torso, torso, EquipmentSlotIds.Legs, legs),
+					(EquipmentSlotIds.Legs, legs, EquipmentSlotIds.Torso, torso)
+				})
+				{
+					if (!_equipmentUnequipButtons.TryGetValue(slot, out var unequip) || unequip.Disabled)
+						throw new InvalidOperationException($"Created {sex} {slot} has no usable generic unequip control.");
+					_equipmentVisibilityButtons[slot].EmitSignal(BaseButton.SignalName.Pressed);
+					unequip.EmitSignal(BaseButton.SignalName.Pressed);
+					if (player.EquippedItems.ContainsKey(slot) || player.HiddenEquipmentSlots.Contains(slot)
+						|| player.Inventory.GetValueOrDefault(item) != 1 || !unequip.Disabled
+						|| !_equipmentVisibilityButtons[slot].Disabled
+						|| !_carriedItems.Text.Contains(FormatItemName(item), StringComparison.Ordinal)
+						|| _playerCharacter.IsClothingVisibleForTesting(item)
+						|| player.EquippedItems.GetValueOrDefault(otherSlot) != otherItem
+						|| !_playerCharacter.IsClothingVisibleForTesting(otherItem))
+						throw new InvalidOperationException($"Unequipping created {sex} {slot} lost an item or affected the other slot.");
+					var index = Enumerable.Range(0, _carriedWardrobeChoice.ItemCount)
+						.Single(i => _carriedWardrobeChoice.GetItemMetadata(i).AsString() == item);
+					_carriedWardrobeChoice.Select(index);
+					_equipCarriedWardrobe.EmitSignal(BaseButton.SignalName.Pressed);
+					if (player.EquippedItems.GetValueOrDefault(slot) != item
+						|| player.Inventory.GetValueOrDefault(item) != 0 || unequip.Disabled
+						|| !player.IsEquipmentVisible(slot) || !_playerCharacter.IsClothingVisibleForTesting(item))
+						throw new InvalidOperationException($"Created {sex} {slot} could not be re-equipped from carried Items.");
+				}
+			}
+		}
+		finally
+		{
+			_world = originalWorld;
+			var player = _world.Entities.Single(entity => entity.Id == _world.PlayerEntityId);
+			_playerCharacter.BindPlayer(player.Id, _world.PlayerProfile!,
+				(float)_speciesCatalog.GetRequired(player.SpeciesId).MovementSpeed);
+			UpdatePlayerMenuContents();
+		}
+	}
+
 	private static void SetEquipmentButton(
 		Button button,
 		string slotName,
@@ -606,6 +664,17 @@ public partial class Main
 		visibilityButton.Pressed += () => TogglePlayerEquipmentVisibility(slotId);
 		row.AddChild(itemLabel);
 		row.AddChild(visibilityButton);
+		if (slotId != EquipmentSlotIds.Tool)
+		{
+			var unequipButton = AddMenuButton(row, "Unequip", () =>
+			{
+				ShowActionFeedback(new PlayerEquipmentService(_world).Unequip(slotId).Message);
+				UpdatePlayerMenuContents();
+			});
+			unequipButton.Name = $"{slotId}UnequipButton";
+			unequipButton.TooltipText = $"Return the equipped {label.ToLowerInvariant()} item to carried Items";
+			_equipmentUnequipButtons.Add(slotId, unequipButton);
+		}
 		parent.AddChild(row);
 		_equipmentVisibilityLabels.Add(slotId, itemLabel);
 		_equipmentVisibilityButtons.Add(slotId, visibilityButton);
@@ -618,6 +687,8 @@ public partial class Main
 			return;
 		itemLabel.Text = $"{label}: {FormatItemName(itemId)}";
 		visibilityButton.Disabled = itemId is null;
+		if (_equipmentUnequipButtons.TryGetValue(slotId, out var unequipButton))
+			unequipButton.Disabled = itemId is null;
 		visibilityButton.ButtonPressed = !isVisible;
 		visibilityButton.Icon = isVisible ? _eyeOpenIcon : _eyeClosedIcon;
 		visibilityButton.TooltipText = itemId is null

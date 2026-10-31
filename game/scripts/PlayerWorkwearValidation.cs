@@ -15,6 +15,7 @@ internal static class PlayerWorkwearValidation
             character.SetPhysicsProcess(false);
             character.SetProcessUnhandledInput(false);
             main.ValidateEquipmentVisibilityMenuForTesting();
+            main.ValidateCreatedEquipmentMenuForTesting();
 
             foreach (var (sex, expectedPath) in new[]
             {
@@ -222,7 +223,7 @@ internal static class PlayerWorkwearValidation
 
             foreach (var sex in new[] { PlayerSex.Male, PlayerSex.Female })
                 await ValidateIndependentEquipment(main, character, speciesCatalog, sex);
-            GD.Print("PLAYER WORKWEAR VALIDATION PASSED: male/female Blender bases, imported animations, independent boots/gloves/jackets, workwear and Deluxe Bunny outfit visibility, equipment swaps and save/load.");
+            GD.Print("PLAYER WORKWEAR VALIDATION PASSED: male/female Blender bases, imported animations, creation-item menu unequip/re-equip, independent boots/gloves/jackets, workwear and Deluxe Bunny outfit visibility, equipment swaps and save/load.");
             main.GetTree().Quit();
         }
         catch (Exception exception)
