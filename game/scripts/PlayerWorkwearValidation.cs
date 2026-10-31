@@ -14,6 +14,8 @@ internal static class PlayerWorkwearValidation
         {
             character.SetPhysicsProcess(false);
             character.SetProcessUnhandledInput(false);
+            main.ValidateEquipmentVisibilityMenuForTesting();
+
             foreach (var (sex, expectedPath) in new[]
             {
                 (PlayerSex.Male, "res://assets/humanoids/human/player_male_humanoid_rig_v1.glb"),
@@ -47,6 +49,23 @@ internal static class PlayerWorkwearValidation
                     && !character.IsClothingVisibleForTesting(ItemIds.DeluxeBunnySuitTop)
                     && !character.IsClothingVisibleForTesting(ItemIds.DeluxeBunnySuitLegs),
                     $"{sex} player does not start with the unequipped Deluxe Bunny outfit in inventory");
+
+                var equipment = new PlayerEquipmentService(session.World);
+                Require(equipment.SetVisibility(EquipmentSlotIds.Torso, visible: false).Code
+                    == PlayerEquipmentResultCode.VisibilityChanged,
+                    $"{sex} equipped torso could not be hidden");
+                character.SetHiddenEquipmentSlots(player.HiddenEquipmentSlots);
+                Require(!character.IsClothingVisibleForTesting(ItemIds.WorkShirt)
+                    && character.IsClothingVisibleForTesting(ItemIds.WorkTrousers)
+                    && player.EquippedItems[EquipmentSlotIds.Torso] == ItemIds.WorkShirt,
+                    $"{sex} hiding torso changed the wrong presentation or unequipped the work shirt");
+                Require(equipment.SetVisibility(EquipmentSlotIds.Torso, visible: true).Code
+                    == PlayerEquipmentResultCode.VisibilityChanged,
+                    $"{sex} equipped torso could not be shown again");
+                character.SetHiddenEquipmentSlots(player.HiddenEquipmentSlots);
+                Require(character.IsClothingVisibleForTesting(ItemIds.WorkShirt)
+                    && character.IsClothingVisibleForTesting(ItemIds.WorkTrousers),
+                    $"{sex} showing torso did not restore only the equipped clothing visuals");
 
                 var movementSpeed = (float)speciesCatalog.GetRequired(player.SpeciesId).MovementSpeed;
                 character.SetPresentationMovementSpeedForTesting(movementSpeed * 0.5f);
@@ -114,7 +133,6 @@ internal static class PlayerWorkwearValidation
                 for (var frame = 0; frame < 24; frame++)
                     character.AdvancePresentationForTesting(0, 0);
 
-                var equipment = new PlayerEquipmentService(session.World);
                 Require(equipment.Unequip(EquipmentSlotIds.Torso).Code == PlayerEquipmentResultCode.Unequipped,
                     $"{sex} work shirt could not be unequipped");
                 Require(equipment.Unequip(EquipmentSlotIds.Legs).Code == PlayerEquipmentResultCode.Unequipped,
@@ -128,6 +146,9 @@ internal static class PlayerWorkwearValidation
                 var loadedSession = NewGameSession.Create(speciesCatalog, profile);
                 WorldSnapshotSerializer.Load(loadedSession.World, unequippedSave, speciesCatalog);
                 var loadedPlayer = loadedSession.World.Entities.Single(entity => entity.Id == player.Id);
+                Require(loadedPlayer.IsEquipmentVisible(EquipmentSlotIds.Torso)
+                    && loadedPlayer.IsEquipmentVisible(EquipmentSlotIds.Legs),
+                    $"{sex} unequipping clothing left a hidden-slot override behind");
                 character.BindPlayer(
                     loadedPlayer.Id,
                     loadedSession.World.PlayerProfile!,
@@ -176,6 +197,13 @@ internal static class PlayerWorkwearValidation
                     && !character.IsClothingVisibleForTesting(ItemIds.WorkTrousers),
                     $"{sex} equipped Deluxe Bunny outfit did not replace the workwear visuals");
 
+                Require(bunnyEquipment.SetVisibility(EquipmentSlotIds.Torso, visible: false).Code
+                    == PlayerEquipmentResultCode.VisibilityChanged,
+                    $"{sex} Deluxe Bunny top could not be hidden before saving");
+                character.SetHiddenEquipmentSlots(reloadedPlayer.HiddenEquipmentSlots);
+                Require(!character.IsClothingVisibleForTesting(ItemIds.DeluxeBunnySuitTop)
+                    && character.IsClothingVisibleForTesting(ItemIds.DeluxeBunnySuitLegs),
+                    $"{sex} hiding the Deluxe Bunny top also hid the leg item");
                 var bunnySave = WorldSnapshotSerializer.Serialize(reloadedSession.World, 9.0);
                 var bunnySession = NewGameSession.Create(speciesCatalog, profile);
                 WorldSnapshotSerializer.Load(bunnySession.World, bunnySave, speciesCatalog);
@@ -185,10 +213,11 @@ internal static class PlayerWorkwearValidation
                     bunnySession.World.PlayerProfile!,
                     (float)speciesCatalog.GetRequired(bunnyPlayer.SpeciesId).MovementSpeed);
                 character.SetEquippedClothing(bunnyPlayer.EquippedItems);
+                character.SetHiddenEquipmentSlots(bunnyPlayer.HiddenEquipmentSlots);
                 await main.ToSignal(main.GetTree(), SceneTree.SignalName.ProcessFrame);
-                Require(character.IsClothingVisibleForTesting(ItemIds.DeluxeBunnySuitTop)
+                Require(!character.IsClothingVisibleForTesting(ItemIds.DeluxeBunnySuitTop)
                     && character.IsClothingVisibleForTesting(ItemIds.DeluxeBunnySuitLegs),
-                    $"{sex} saved Deluxe Bunny outfit was not restored on its matching player model");
+                    $"{sex} saved equipment visibility was not restored independently on its matching player model");
             }
 
             GD.Print("PLAYER WORKWEAR VALIDATION PASSED: male/female Blender base selection, imported animations, workwear and Deluxe Bunny outfit visibility, equipment swaps and save/load.");

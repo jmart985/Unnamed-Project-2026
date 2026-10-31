@@ -541,7 +541,9 @@ public partial class Main : Node3D
 			player.Id,
 			profile,
 			(float)_speciesCatalog.GetRequired(player.SpeciesId).MovementSpeed);
+		_playerCharacter.SetAxeEquipped(string.Equals(player.EquippedTool, ItemIds.Axe, StringComparison.Ordinal));
 		_playerCharacter.SetEquippedClothing(player.EquippedItems);
+		_playerCharacter.SetHiddenEquipmentSlots(player.HiddenEquipmentSlots);
 		_playerCharacter.Visible = true;
 		_playerCharacter.SetProcessUnhandledInput(true);
 		_playerCharacter.SetPhysicsProcess(true);
@@ -1315,7 +1317,9 @@ public partial class Main : Node3D
 				player.Id,
 				profile,
 				(float)_speciesCatalog.GetRequired(player.SpeciesId).MovementSpeed);
+			_playerCharacter.SetAxeEquipped(string.Equals(player.EquippedTool, ItemIds.Axe, StringComparison.Ordinal));
 			_playerCharacter.SetEquippedClothing(player.EquippedItems);
+			_playerCharacter.SetHiddenEquipmentSlots(player.HiddenEquipmentSlots);
 			var facing = new Vector3(_world.PlayerFacing.X, 0, _world.PlayerFacing.Z);
 			if (facing.LengthSquared() > 0.0001f)
 				_playerCharacter.Rotation = new Vector3(0, Mathf.Atan2(-facing.X, -facing.Z), 0);

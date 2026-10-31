@@ -124,7 +124,8 @@ public sealed record EntitySnapshot(
     bool IsDead = false,
     EntityOrder? OrderIntent = null,
     BiologicalSex? Sex = null,
-    IReadOnlyDictionary<string, string>? EquippedItems = null);
+    IReadOnlyDictionary<string, string>? EquippedItems = null,
+    IReadOnlyList<string>? HiddenEquipmentSlots = null);
 
 public sealed record FoodSourceSnapshot(
     string Id,
@@ -170,7 +171,8 @@ public static class WorldSnapshotSerializer
     private const int IndividualOrdersSchemaVersion = 22;
     private const int BiologicalSexSchemaVersion = 23;
     private const int ClothingEquipmentSchemaVersion = 24;
-    public const int CurrentSchemaVersion = ClothingEquipmentSchemaVersion;
+    private const int EquipmentVisibilitySchemaVersion = 25;
+    public const int CurrentSchemaVersion = EquipmentVisibilitySchemaVersion;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -205,7 +207,8 @@ public static class WorldSnapshotSerializer
                 entity.Health.IsDead,
                 entity.OrderIntent,
                 entity.Sex,
-                new Dictionary<string, string>(entity.EquippedItems, StringComparer.Ordinal)))
+                new Dictionary<string, string>(entity.EquippedItems, StringComparer.Ordinal),
+                entity.HiddenEquipmentSlots))
             .ToArray();
         var foodSources = world.FoodSources
             .Select(source => new FoodSourceSnapshot(
@@ -387,6 +390,18 @@ public static class WorldSnapshotSerializer
             };
         }
 
+        // Equipment visuals are visible by default in saves created before visibility toggles.
+        // Keep hidden slot state independent from equipped item identity and inventory counts.
+        if (snapshot.SchemaVersion < EquipmentVisibilitySchemaVersion && snapshot.Entities is not null)
+        {
+            snapshot = snapshot with
+            {
+                Entities = snapshot.Entities.Select(entity => entity is null
+                    ? null!
+                    : entity with { HiddenEquipmentSlots = Array.Empty<string>() }).ToArray()
+            };
+        }
+
         // The starter workbench moved off the central crossroads. Preserve its
         // inventory/recipe state while relocating only the original fixed instance.
         if (snapshot.SchemaVersion >= WorkstationSchemaVersion
@@ -484,6 +499,9 @@ public static class WorldSnapshotSerializer
             return snapshot with { SchemaVersion = CurrentSchemaVersion };
 
         if (snapshot.SchemaVersion == BiologicalSexSchemaVersion)
+            return snapshot with { SchemaVersion = CurrentSchemaVersion };
+
+        if (snapshot.SchemaVersion == ClothingEquipmentSchemaVersion)
             return snapshot with { SchemaVersion = CurrentSchemaVersion };
 
         if (snapshot.SchemaVersion != CurrentSchemaVersion)
@@ -651,6 +669,7 @@ public static class WorldSnapshotSerializer
 
             ValidateInventory(entity.Inventory, entity.Id);
             ValidateEquippedItems(entity.EquippedItems, entity.Id);
+            ValidateHiddenEquipmentSlots(entity.HiddenEquipmentSlots, entity.EquippedTool, entity.EquippedItems, entity.Id);
             ValidateOrder(entity.OrderIntent, entity.Id);
             highestEntityId = Math.Max(highestEntityId, ParseEntityId(entity.Id));
         }
@@ -1136,6 +1155,33 @@ public static class WorldSnapshotSerializer
                 || !seenItems.Add(itemId))
                 throw new InvalidDataException(
                     $"Snapshot entity '{entityId}' contains invalid or duplicate equipment in slot '{slot}'.");
+        }
+    }
+
+    private static void ValidateHiddenEquipmentSlots(
+        IReadOnlyList<string>? hiddenEquipmentSlots,
+        string? equippedTool,
+        IReadOnlyDictionary<string, string>? equippedItems,
+        string entityId)
+    {
+        if (hiddenEquipmentSlots is null)
+            throw new InvalidDataException($"Snapshot entity '{entityId}' hidden equipment slots are required.");
+
+        var seenSlots = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var slotId in hiddenEquipmentSlots)
+        {
+            var hasEquipment = slotId switch
+            {
+                EquipmentSlotIds.Tool => equippedTool is not null,
+                EquipmentSlotIds.Torso or EquipmentSlotIds.Legs => equippedItems?.ContainsKey(slotId) == true,
+                _ => false
+            };
+            if (string.IsNullOrWhiteSpace(slotId)
+                || !EquipmentSlotIds.SupportsVisibility(slotId)
+                || !seenSlots.Add(slotId)
+                || !hasEquipment)
+                throw new InvalidDataException(
+                    $"Snapshot entity '{entityId}' contains invalid hidden equipment slot '{slotId}'.");
         }
     }
 

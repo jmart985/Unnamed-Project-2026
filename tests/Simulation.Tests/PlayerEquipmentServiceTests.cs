@@ -98,6 +98,105 @@ public sealed class PlayerEquipmentServiceTests
     }
 
     [Fact]
+    public void EquipmentVisibilityIsIndependentPerSlotAndDoesNotChangeEquipmentOrInventory()
+    {
+        var session = NewGameSession.Create(Catalog(), PlayerCharacterProfile.Create("Wearer"));
+        var player = session.Player;
+        var service = new PlayerEquipmentService(session.World);
+        var carriedBefore = new Dictionary<string, int>(player.Inventory, StringComparer.Ordinal);
+
+        Assert.Equal(PlayerEquipmentResultCode.VisibilityChanged,
+            service.SetVisibility(EquipmentSlotIds.Torso, visible: false).Code);
+
+        Assert.False(player.IsEquipmentVisible(EquipmentSlotIds.Torso));
+        Assert.True(player.IsEquipmentVisible(EquipmentSlotIds.Legs));
+        Assert.Equal(ItemIds.WorkShirt, player.EquippedItems[EquipmentSlotIds.Torso]);
+        Assert.Equal(ItemIds.WorkTrousers, player.EquippedItems[EquipmentSlotIds.Legs]);
+        Assert.Equal(carriedBefore.OrderBy(pair => pair.Key), player.Inventory.OrderBy(pair => pair.Key));
+        Assert.Equal(PlayerEquipmentResultCode.VisibilityUnchanged,
+            service.SetVisibility(EquipmentSlotIds.Torso, visible: false).Code);
+
+        Assert.Equal(PlayerEquipmentResultCode.VisibilityChanged,
+            service.SetVisibility(EquipmentSlotIds.Torso, visible: true).Code);
+        Assert.True(player.IsEquipmentVisible(EquipmentSlotIds.Torso));
+        Assert.Equal(carriedBefore.OrderBy(pair => pair.Key), player.Inventory.OrderBy(pair => pair.Key));
+
+        Assert.Equal(PlayerEquipmentResultCode.NotEquipped,
+            service.SetVisibility("head", visible: false).Code);
+    }
+
+    [Fact]
+    public void ToolVisibilityRequiresAnEquippedToolAndPersistsAcrossSaveLoad()
+    {
+        var catalog = Catalog();
+        var session = NewGameSession.Create(catalog, PlayerCharacterProfile.Create("Tool wearer"));
+        var equipment = new PlayerEquipmentService(session.World);
+
+        Assert.Equal(PlayerEquipmentResultCode.NotEquipped,
+            equipment.SetVisibility(EquipmentSlotIds.Tool, visible: false).Code);
+
+        Assert.Equal(ResourceMutationResult.Success, session.Player.TryAddCarried(ItemIds.Axe, 1));
+        Assert.Equal(ToolCraftResultCode.Crafted, new PlayerToolService(session.World).EquipAxe().Code);
+        Assert.Equal(PlayerEquipmentResultCode.VisibilityChanged,
+            equipment.SetVisibility(EquipmentSlotIds.Tool, visible: false).Code);
+
+        var json = WorldSnapshotSerializer.Serialize(session.World, 12);
+        var loaded = NewGameSession.Create(catalog, PlayerCharacterProfile.Create("Temp")).World;
+        WorldSnapshotSerializer.Load(loaded, json, catalog);
+        var loadedPlayer = loaded.Entities.Single(entity => entity.Id == session.PlayerEntityId);
+
+        Assert.Equal(ItemIds.Axe, loadedPlayer.EquippedTool);
+        Assert.False(loadedPlayer.IsEquipmentVisible(EquipmentSlotIds.Tool));
+        Assert.True(loadedPlayer.IsEquipmentVisible(EquipmentSlotIds.Torso));
+        Assert.True(loadedPlayer.IsEquipmentVisible(EquipmentSlotIds.Legs));
+    }
+
+    [Fact]
+    public void SaveLoadPreservesHiddenSlotsAndOldSnapshotsDefaultToVisible()
+    {
+        var catalog = Catalog();
+        var session = NewGameSession.Create(catalog, PlayerCharacterProfile.Create("Wearer"));
+        var equipment = new PlayerEquipmentService(session.World);
+        Assert.Equal(PlayerEquipmentResultCode.VisibilityChanged,
+            equipment.SetVisibility(EquipmentSlotIds.Legs, visible: false).Code);
+
+        var json = WorldSnapshotSerializer.Serialize(session.World, 12);
+        var loaded = NewGameSession.Create(catalog, PlayerCharacterProfile.Create("Temp")).World;
+        WorldSnapshotSerializer.Load(loaded, json, catalog);
+        var loadedPlayer = loaded.Entities.Single(entity => entity.Id == session.PlayerEntityId);
+        Assert.False(loadedPlayer.IsEquipmentVisible(EquipmentSlotIds.Legs));
+        Assert.True(loadedPlayer.IsEquipmentVisible(EquipmentSlotIds.Torso));
+        Assert.Equal(ItemIds.WorkTrousers, loadedPlayer.EquippedItems[EquipmentSlotIds.Legs]);
+
+        var legacy = JsonNode.Parse(json)!.AsObject();
+        legacy["SchemaVersion"] = 24;
+        foreach (var entity in legacy["Entities"]!.AsArray())
+            entity!.AsObject().Remove("HiddenEquipmentSlots");
+        WorldSnapshotSerializer.Load(loaded, legacy.ToJsonString(), catalog);
+        loadedPlayer = loaded.Entities.Single(entity => entity.Id == session.PlayerEntityId);
+        Assert.True(loadedPlayer.IsEquipmentVisible(EquipmentSlotIds.Torso));
+        Assert.True(loadedPlayer.IsEquipmentVisible(EquipmentSlotIds.Legs));
+    }
+
+    [Fact]
+    public void SnapshotRejectsHiddenSlotsWithoutEquipmentAndUnsupportedSlots()
+    {
+        var catalog = Catalog();
+        var session = NewGameSession.Create(catalog, PlayerCharacterProfile.Create("Wearer"));
+        var snapshot = JsonNode.Parse(WorldSnapshotSerializer.Serialize(session.World, 1))!.AsObject();
+        var player = snapshot["Entities"]!.AsArray().Single(entity =>
+            entity!["Id"]!.GetValue<string>() == session.PlayerEntityId)!.AsObject();
+        player["HiddenEquipmentSlots"] = new JsonArray("head");
+
+        Assert.Throws<InvalidDataException>(() => WorldSnapshotSerializer.Load(
+            session.World, snapshot.ToJsonString(), catalog));
+
+        player["HiddenEquipmentSlots"] = new JsonArray(EquipmentSlotIds.Tool);
+        Assert.Throws<InvalidDataException>(() => WorldSnapshotSerializer.Load(
+            session.World, snapshot.ToJsonString(), catalog));
+    }
+
+    [Fact]
     public void SnapshotRejectsEquipmentInTheWrongSlotAndRepeatedItems()
     {
         var catalog = Catalog();

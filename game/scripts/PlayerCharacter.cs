@@ -74,6 +74,7 @@ public partial class PlayerCharacter : CharacterBody3D
 	private Node3D _axeView = null!;
 	private bool _axeEquipped;
 	private readonly Dictionary<string, string> _equippedClothing = new(StringComparer.Ordinal);
+	private readonly HashSet<string> _hiddenEquipmentSlots = new(StringComparer.Ordinal);
 	private readonly NpcLocomotionAnimator _modelAnimator = new();
 	private PlayerCharacterProfile _profile = PlayerCharacterProfile.Create("Player");
 	private readonly ProceduralGait _gait = new() { ReferenceSpeed = 5.0f, BobHeight = 0.03f };
@@ -266,7 +267,7 @@ public partial class PlayerCharacter : CharacterBody3D
 	public void SetAxeEquipped(bool equipped)
 	{
 		_axeEquipped = equipped;
-		if (_axeView is not null) _axeView.Visible = equipped;
+		ApplyAxeVisibility();
 	}
 
 	public void SetEquippedClothing(IReadOnlyDictionary<string, string> equippedItems)
@@ -276,6 +277,16 @@ public partial class PlayerCharacter : CharacterBody3D
 		foreach (var (slot, itemId) in equippedItems)
 			_equippedClothing[slot] = itemId;
 		ApplyEquippedClothingVisibility();
+	}
+
+	public void SetHiddenEquipmentSlots(IEnumerable<string> hiddenEquipmentSlots)
+	{
+		ArgumentNullException.ThrowIfNull(hiddenEquipmentSlots);
+		_hiddenEquipmentSlots.Clear();
+		foreach (var slotId in hiddenEquipmentSlots)
+			_hiddenEquipmentSlots.Add(slotId);
+		ApplyEquippedClothingVisibility();
+		ApplyAxeVisibility();
 	}
 
 	public bool IsClothingVisibleForTesting(string itemId) => itemId switch
@@ -293,15 +304,23 @@ public partial class PlayerCharacter : CharacterBody3D
 	{
 		var torso = _equippedClothing.GetValueOrDefault(EquipmentSlotIds.Torso);
 		var legs = _equippedClothing.GetValueOrDefault(EquipmentSlotIds.Legs);
-		var wearingShirt = torso == ItemIds.WorkShirt;
-		var wearingTrousers = legs == ItemIds.WorkTrousers;
+		var torsoVisible = !_hiddenEquipmentSlots.Contains(EquipmentSlotIds.Torso);
+		var legsVisible = !_hiddenEquipmentSlots.Contains(EquipmentSlotIds.Legs);
+		var wearingShirt = torsoVisible && torso == ItemIds.WorkShirt;
+		var wearingTrousers = legsVisible && legs == ItemIds.WorkTrousers;
 		if (_shirtMesh is not null) _shirtMesh.Visible = wearingShirt;
 		if (_shirtDetailsMesh is not null) _shirtDetailsMesh.Visible = wearingShirt;
 		if (_trousersMesh is not null) _trousersMesh.Visible = wearingTrousers;
 		if (_beltMesh is not null) _beltMesh.Visible = wearingTrousers;
 		if (_beltBuckleMesh is not null) _beltBuckleMesh.Visible = wearingTrousers;
-		SetClothingMeshesVisible(_deluxeBunnyTopMeshes, torso == ItemIds.DeluxeBunnySuitTop);
-		SetClothingMeshesVisible(_deluxeBunnyLegsMeshes, legs == ItemIds.DeluxeBunnySuitLegs);
+		SetClothingMeshesVisible(_deluxeBunnyTopMeshes, torsoVisible && torso == ItemIds.DeluxeBunnySuitTop);
+		SetClothingMeshesVisible(_deluxeBunnyLegsMeshes, legsVisible && legs == ItemIds.DeluxeBunnySuitLegs);
+	}
+
+	private void ApplyAxeVisibility()
+	{
+		if (_axeView is not null)
+			_axeView.Visible = _axeEquipped && !_hiddenEquipmentSlots.Contains(EquipmentSlotIds.Tool);
 	}
 
 	private static Node3D[] FindClothingMeshes(Node root, params string[] names) => names
@@ -363,6 +382,7 @@ public partial class PlayerCharacter : CharacterBody3D
 		}
 
 		EntityId = entityId;
+		_hiddenEquipmentSlots.Clear();
 		MovementSpeed = movementSpeed;
 		_lastGroundedPosition = GlobalPosition;
 		RebuildBody(profile);

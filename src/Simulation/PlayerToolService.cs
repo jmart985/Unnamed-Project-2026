@@ -11,7 +11,7 @@ public sealed class PlayerToolService(World world)
             return new(ToolCraftResultCode.Unavailable, "The player cannot equip tools while incapacitated.");
         if (player.Inventory.GetValueOrDefault(ItemIds.Axe) < 1)
             return new(ToolCraftResultCode.MissingMaterials, "Craft an axe before equipping it.");
-        player.EquippedTool = ItemIds.Axe;
+        player.SetEquippedTool(ItemIds.Axe);
         return new(ToolCraftResultCode.Crafted, "Equipped the axe.");
     }
 

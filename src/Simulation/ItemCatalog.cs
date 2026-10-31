@@ -4,8 +4,11 @@ public sealed record ItemDefinition(string Id, double WeightKg, string? Equipmen
 
 public static class EquipmentSlotIds
 {
+    public const string Tool = "tool";
     public const string Torso = "torso";
     public const string Legs = "legs";
+
+    public static bool SupportsVisibility(string? slotId) => slotId is Tool or Torso or Legs;
 }
 
 /// <summary>Simulation-facing physical properties for item types.</summary>
