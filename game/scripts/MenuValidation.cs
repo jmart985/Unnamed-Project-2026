@@ -29,7 +29,9 @@ public partial class Main
             Require(_menuState.ActiveMenu is null && !_controls.Visible && !_inventoryPanel.Visible && !_settingsPanel.Visible, "session starts closed");
             SendMenuKey(Key.I);
             Require(_menuState.ActiveMenu == PlayerMenu.Inventory && _inventoryPanel.Visible && !_controls.Visible, "I opens inventory");
-            Require(_carriedItems.Text.Contains("Your inventory is empty") && _characterIdentity.Text.Contains("Menu validation"), "empty inventory and identity");
+            Require(_carriedItems.Text.Contains("Deluxe Bunny Suit Top   × 1")
+                && _carriedItems.Text.Contains("Deluxe Bunny Suit Legs   × 1")
+                && _characterIdentity.Text.Contains("Menu validation"), "starter clothing and player identity");
             SendMenuKey(Key.I);
             Require(_menuState.ActiveMenu is null && !_inventoryPanel.Visible, "same key closes inventory");
             SendMenuKey(Key.Tab);
@@ -184,7 +186,11 @@ public partial class Main
                 Require(GetViewport().GetTexture().GetImage().SavePng(System.IO.Path.Combine(directory, "status-960.png")) == Error.Ok, "narrow status screenshot");
             }
             ResetScenario();
-            Require(_menuState.ActiveMenu is null && !_inventoryPanel.Visible && _world.Entities.Single(entity => entity.Id == _world.PlayerEntityId).Inventory.Count == 0, "reset clears stale character display");
+            var resetPlayer = _world.Entities.Single(entity => entity.Id == _world.PlayerEntityId);
+            Require(_menuState.ActiveMenu is null && !_inventoryPanel.Visible
+                && resetPlayer.Inventory.GetValueOrDefault(ItemIds.DeluxeBunnySuitTop) == 1
+                && resetPlayer.Inventory.GetValueOrDefault(ItemIds.DeluxeBunnySuitLegs) == 1,
+                "reset restores starter clothing inventory");
             GD.Print("MENU VALIDATION PASSED: distinct screens, tabs, live inventory, input isolation, persistence recovery and button mapping.");
             GetTree().Quit();
         }
