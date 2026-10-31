@@ -9,6 +9,12 @@ public partial class Main
     {
         try
         {
+            var previewViewport = GetNode<SubViewport>(
+                "CharacterCreation/Panel/Form/PreviewViewport/SubViewport");
+            Require(previewViewport.OwnWorld3D
+                && previewViewport.World3D != GetViewport().World3D,
+                "character creation preview renders in an isolated 3D world");
+
             _playerNameInput.Text = "Survival profile";
             _sexChoice.Select((int)PlayerSex.Male);
             GetNode<Button>("CharacterCreation/Panel/Form/Start")
