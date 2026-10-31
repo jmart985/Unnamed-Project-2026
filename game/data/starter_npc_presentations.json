@@ -1,15 +1,15 @@
 {
   "schemaVersion": 1,
   "models": [
-    { "entityId": "entity-000001", "displayName": "Dwight", "sex": "Male", "assetPath": "res://assets/humanoids/human/npc/dwight.glb" },
-    { "entityId": "entity-000002", "displayName": "Aerith", "sex": "Female", "assetPath": "res://assets/humanoids/human/npc/aerith.glb" },
-    { "entityId": "entity-000003", "displayName": "Omni-Man", "sex": "Male", "assetPath": "res://assets/humanoids/human/npc/omni.glb" },
-    { "entityId": "entity-000004", "displayName": "Aloy", "sex": "Female", "assetPath": "res://assets/humanoids/human/npc/aloy.glb" },
-    { "entityId": "entity-000005", "displayName": "Quentin", "sex": "Male", "assetPath": "res://assets/humanoids/human/npc/quentin.glb" },
-    { "entityId": "entity-000006", "displayName": "Jill", "sex": "Female", "assetPath": "res://assets/humanoids/human/npc/jill.glb" },
-    { "entityId": "entity-000007", "displayName": "Vincent", "sex": "Male", "assetPath": "res://assets/humanoids/human/npc/vincent.glb" },
-    { "entityId": "entity-000008", "displayName": "Serena", "sex": "Female", "assetPath": "res://assets/humanoids/human/npc/serena.glb" },
-    { "entityId": "entity-000009", "displayName": "Undead F", "sex": "Female", "assetPath": "res://assets/humanoids/human/npc/undeadf.glb" },
-    { "entityId": "entity-000010", "displayName": "Yuffie", "sex": "Female", "assetPath": "res://assets/humanoids/human/npc/yuffie.glb" }
+    { "entityId": "entity-000001", "displayName": "Dwight", "sex": "Male", "assetPath": "res://assets/humanoids/human/npc/dwight.glb", "forwardCorrectionDegrees": 0 },
+    { "entityId": "entity-000002", "displayName": "Aerith", "sex": "Female", "assetPath": "res://assets/humanoids/human/npc/aerith.glb", "forwardCorrectionDegrees": 0 },
+    { "entityId": "entity-000003", "displayName": "Omni-Man", "sex": "Male", "assetPath": "res://assets/humanoids/human/npc/omni.glb", "forwardCorrectionDegrees": 0 },
+    { "entityId": "entity-000004", "displayName": "Aloy", "sex": "Female", "assetPath": "res://assets/humanoids/human/npc/aloy.glb", "forwardCorrectionDegrees": 0 },
+    { "entityId": "entity-000005", "displayName": "Quentin", "sex": "Male", "assetPath": "res://assets/humanoids/human/npc/quentin.glb", "forwardCorrectionDegrees": 0 },
+    { "entityId": "entity-000006", "displayName": "Jill", "sex": "Female", "assetPath": "res://assets/humanoids/human/npc/jill.glb", "forwardCorrectionDegrees": 0 },
+    { "entityId": "entity-000007", "displayName": "Vincent", "sex": "Male", "assetPath": "res://assets/humanoids/human/npc/vincent.glb", "forwardCorrectionDegrees": 0 },
+    { "entityId": "entity-000008", "displayName": "Serena", "sex": "Female", "assetPath": "res://assets/humanoids/human/npc/serena.glb", "forwardCorrectionDegrees": 0 },
+    { "entityId": "entity-000009", "displayName": "Undead F", "sex": "Female", "assetPath": "res://assets/humanoids/human/npc/undeadf.glb", "forwardCorrectionDegrees": 0 },
+    { "entityId": "entity-000010", "displayName": "Yuffie", "sex": "Female", "assetPath": "res://assets/humanoids/human/npc/yuffie.glb", "forwardCorrectionDegrees": 180 }
   ]
 }

@@ -20,7 +20,7 @@ public partial class EntityView : CharacterBody3D
     private EntityPresentationCatalog.EntityPresentationDefinition _presentation =
         EntityPresentationCatalog.EntityPresentationDefinition.CreateFallback(CreatureBodyPlan.Humanoid, isCreature: false);
     private Node3D? _rig;
-    private Node3D? _visualModelRoot;
+    private Node3D? _importedModelRoot;
     private ProceduralGait? _gait;
     private readonly NpcLocomotionAnimator _npcLocomotionAnimator = new();
     private Vector3 _lastPosition;
@@ -47,11 +47,11 @@ public partial class EntityView : CharacterBody3D
     public void SetAnimationTestMovementMultiplier(float multiplier)
         => _animationTestMovementMultiplier = Mathf.Clamp(multiplier, 0.2f, 1.2f);
 
-    // Imported Blender rigs in this prototype use +Z as their source forward;
-    // normalize them at the asset boundary so every actor uses the same -Z rule.
-    public Vector3 VisualForward => _visualModelRoot is null
+    // Read the asset's orientation node when present and remove model scale so
+    // callers always receive a unit direction for gameplay-facing checks.
+    public Vector3 VisualForward => (_importedModelRoot is null
         ? (_rig is null ? -GlobalBasis.Z : -_rig.GlobalBasis.Z)
-        : _visualModelRoot.GlobalBasis.Z;
+        : _importedModelRoot.GlobalBasis.Z).Normalized();
 
     public void AcknowledgeGreeting(Func<Vector3?> greeterPosition)
     {
@@ -229,7 +229,8 @@ public partial class EntityView : CharacterBody3D
             : assetPath == selectedPath || assetPath == catalogAssetPath
                 ? _presentation.GetDisplayName(_sex)
                 : _presentation.DisplayName;
-        var model = AddImportedModel(packed, displayName);
+        var model = AddImportedModel(packed, displayName,
+            starterPresentation?.ForwardCorrectionDegrees ?? 180f);
         PresentationModelAssetPath = assetPath;
         AddCollision(_presentation.ModelHeight, _presentation.ModelCollisionRadius);
 
@@ -242,19 +243,21 @@ public partial class EntityView : CharacterBody3D
     private static PackedScene? LoadPresentationModel(string path) =>
         ResourceLoader.Exists(path) ? GD.Load<PackedScene>(path) : null;
 
-    private Node3D AddImportedModel(PackedScene packed, string displayName)
+    private Node3D AddImportedModel(PackedScene packed, string displayName, float forwardCorrectionDegrees = 180f)
     {
-        // Keep source-forward correction on a wrapper so imported idle animations
-        // cannot overwrite the project's canonical -Z orientation.
-        _visualModelRoot = new Node3D
+        // Keep source-forward correction on a wrapper so imported animations do
+        // not overwrite it. Some assets already normalize forward in their own root.
+        var adapter = new Node3D
         {
             Name = $"{displayName}ForwardAdapter",
-            Rotation = Vector3.Up * Mathf.Pi
+            Rotation = Vector3.Up * Mathf.DegToRad(forwardCorrectionDegrees)
         };
-        _rig!.AddChild(_visualModelRoot);
+        _rig!.AddChild(adapter);
         var model = packed.Instantiate<Node3D>();
+        var assetOrientationRoot = model.FindChild("NPC_ModelRoot", recursive: true, owned: false) as Node3D;
         model.Name = displayName;
-        _visualModelRoot.AddChild(model);
+        adapter.AddChild(model);
+        _importedModelRoot = assetOrientationRoot ?? model;
         return model;
     }
 
