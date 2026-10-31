@@ -2,6 +2,10 @@
 
 > **Provenance:** Reconstructed on 2026-10-31 from the repository's specifications, issues and earlier project discussions. These are **not authenticated verbatim copies** of the user's four original Codex messages. Preserve original prompts separately if recovered.
 
+## Owner-provided detailed instruction set
+
+- [Rigify, skin-weight transfer, Godot garment physics, modular equipment, body masks, and inventory grid](model-creation/original-prompts/01-rigging-clothing-inventory.md) (2026-10-31). This is an organized technical transcription of the owner's supplied directions with source-code corrections and implementation cautions; it is **not a character-for-character verbatim archive**. Preserve the owner's original message separately if exact text is required.
+
 ## Direction Set 1: Source assets and model intake
 - Use the supplied Blender human, elf, creature and wearable meshes as actual source geometry, preserving original detail rather than replacing them with approximate procedural stand-ins.
 - Record source names, license, provenance and reference-only/production status. Never assume downloaded assets are redistributable.
