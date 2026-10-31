@@ -682,7 +682,15 @@ User reported only an obstacle at the expected workbench. Replace that legacy ce
 - Consequence: Existing equipment and inventory snapshot fields save and restore the top and legs; no save-schema migration is required. The work shirt and trousers remain equipped in new games and are returned to inventory when replaced. This establishes one playable outfit adaptation only; it does not establish a general auto-fit pipeline or extend NPC clothing.
 - Revisit: When another player body profile or animation reveals fit problems, the source pack garments are successfully adapted to both body variants, or the equipment/save contract changes.
 
-## D069 — Starter scene uses ambient fill for shadowed model readability (2026-10-30)
+## D069 — Equipment visibility is a durable presentation override (2026-10-30)
+
+- Status: Accepted and implemented for issue #532.
+- Decision: Store hidden equipment as a set of supported slot IDs on the entity, separate from the equipped item and inventory records. The Equipment menu exposes an eye toggle for each occupied visible slot currently supported by the player presentation: tool, torso, and legs. Toggling affects only the corresponding model visual; it does not unequip the item, change its carried count, or alter gameplay effects. Empty or unsupported slots cannot be hidden.
+- Reason: Players need to control appearance while preserving the simulation's authoritative equipment and inventory state.
+- Consequence: Snapshot schema 25 persists hidden slot IDs and validates that each slot is supported and occupied. Earlier snapshots migrate with all equipped visuals shown. Equipping, unequipping, or replacing an item clears that slot's hidden override. Godot presentation applies the saved overrides after session creation and load.
+- Revisit: When new visible equipment slots or NPC equipment are implemented, when visibility needs to vary per outfit or body part, or when save compatibility requires versioning the presentation choice separately from entity state.
+
+## D070 — Starter scene uses ambient fill for shadowed model readability (2026-10-30)
 
 - Status: Accepted for the current prototype; implemented for issue #526.
 - Decision: Assign a shared Godot Environment to the starter scene with a restrained, near-neutral ambient color and keep the existing directional key light and shadows enabled. Do not brighten character meshes with per-actor material overrides.

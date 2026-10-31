@@ -958,9 +958,10 @@ public sealed class World
             restored.Parent1Id = entity.Parent1Id;
             restored.Parent2Id = entity.Parent2Id;
             restored.SetSleepState(entity.SleepState, entity.BedId);
-            restored.EquippedTool = entity.EquippedTool;
+            restored.SetEquippedTool(entity.EquippedTool);
             foreach (var (slot, itemId) in entity.EquippedItems ?? new Dictionary<string, string>())
                 restored.SetEquippedItem(slot, itemId);
+            restored.RestoreHiddenEquipmentSlots(entity.HiddenEquipmentSlots ?? Array.Empty<string>());
             foreach (var item in entity.Inventory)
             {
                 restored.TryAddCarried(item.Key, item.Value);
