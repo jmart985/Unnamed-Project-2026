@@ -1,0 +1,3427 @@
+[
+  {
+    "id": "bladedancer_bladedancermercenary_veil",
+    "sex": "female",
+    "source": "BladedancerMercenary.blend",
+    "mesh": "BladeDancerMercenary_Veil",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 484,
+    "clearanceAdjustedVertices": 66,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "Veil",
+        "images": [
+          "Veil_AO.tga.001",
+          "Veil_Metallic.tga.001",
+          "Veil_Roughness.tga.001",
+          "Veil_Normal.tga.001",
+          "Veil_BaseColor.tga.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "bladedancer_bladedancermercenary_panties",
+    "sex": "female",
+    "source": "BladedancerMercenary.blend",
+    "mesh": "BladeDancerMercenary_Panties",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 1572,
+    "clearanceAdjustedVertices": 1572,
+    "maskedBodyFaces": 588,
+    "drape": null,
+    "materials": [
+      {
+        "material": "Chest",
+        "images": [
+          "Chest_BaseColor.tga.001",
+          "Chest_AO.tga.001",
+          "Chest_Normal.tga.001",
+          "Chest_Roughness.tga.001",
+          "Chest_Metallic.001"
+        ],
+        "method": "material-local PBR conversion"
+      },
+      {
+        "material": "Belt",
+        "images": [
+          "Belt_BaseColor.tga.001",
+          "Belt_AO.tga.001",
+          "Belt_Normal.tga.001",
+          "Belt_Roughness.tga.001",
+          "Belt_Metallic.tga.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "bladedancer_bladedancermercenary_earrings",
+    "sex": "female",
+    "source": "BladedancerMercenary.blend",
+    "mesh": "BladeDancerMercenary_Earrings",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 354,
+    "clearanceAdjustedVertices": 165,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "Veil",
+        "images": [
+          "Veil_AO.tga.001",
+          "Veil_Metallic.tga.001",
+          "Veil_Roughness.tga.001",
+          "Veil_Normal.tga.001",
+          "Veil_BaseColor.tga.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "bladedancer_bladedancermercenary_chest",
+    "sex": "female",
+    "source": "BladedancerMercenary.blend",
+    "mesh": "BladeDancerMercenary_Chest",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 5896,
+    "clearanceAdjustedVertices": 5668,
+    "maskedBodyFaces": 2304,
+    "drape": null,
+    "materials": [
+      {
+        "material": "Chest",
+        "images": [
+          "Chest_BaseColor.tga.001",
+          "Chest_AO.tga.001",
+          "Chest_Normal.tga.001",
+          "Chest_Roughness.tga.001",
+          "Chest_Metallic.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "bladedancer_bladedancermercenary_chain",
+    "sex": "female",
+    "source": "BladedancerMercenary.blend",
+    "mesh": "BladeDancerMercenary_Chain",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 2224,
+    "clearanceAdjustedVertices": 2224,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "Chain",
+        "images": [
+          "Chain_Normal",
+          "Chain_BaseColor",
+          "Chain_AO",
+          "Chain_Metallic",
+          "Chain_Roughness"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "bladedancer_bladedancermercenary_bra",
+    "sex": "female",
+    "source": "BladedancerMercenary.blend",
+    "mesh": "BladeDancerMercenary_Bra",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 7012,
+    "clearanceAdjustedVertices": 4988,
+    "maskedBodyFaces": 701,
+    "drape": null,
+    "materials": [
+      {
+        "material": "Chest",
+        "images": [
+          "Chest_BaseColor.tga.001",
+          "Chest_AO.tga.001",
+          "Chest_Normal.tga.001",
+          "Chest_Roughness.tga.001",
+          "Chest_Metallic.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "bladedancer_bladedancermercenary_boots",
+    "sex": "female",
+    "source": "BladedancerMercenary.blend",
+    "mesh": "BladeDancerMercenary_Boots",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 3294,
+    "clearanceAdjustedVertices": 848,
+    "maskedBodyFaces": 9539,
+    "drape": null,
+    "materials": [
+      {
+        "material": "Boots",
+        "images": [
+          "Boots_Normal.tga.001",
+          "Boots_AO.tga.001",
+          "Boots_Metallic.tga.001",
+          "Boots_BaseColor.tga.001",
+          "Boots_Roughness.tga.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "bladedancer_bladedancermercenary_belt",
+    "sex": "female",
+    "source": "BladedancerMercenary.blend",
+    "mesh": "BladeDancerMercenary_Belt",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 3013,
+    "clearanceAdjustedVertices": 2402,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "Belt",
+        "images": [
+          "Belt_BaseColor.tga.001",
+          "Belt_AO.tga.001",
+          "Belt_Normal.tga.001",
+          "Belt_Roughness.tga.001",
+          "Belt_Metallic.tga.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "bladedancer_bladedancermercenary_arms",
+    "sex": "female",
+    "source": "BladedancerMercenary.blend",
+    "mesh": "BladeDancerMercenary_Arms",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 2840,
+    "clearanceAdjustedVertices": 1396,
+    "maskedBodyFaces": 4111,
+    "drape": null,
+    "materials": [
+      {
+        "material": "Arms",
+        "images": [
+          "Arms_Normals.001",
+          "Arms_Metallic.001",
+          "Arms_Roughness.001",
+          "Arms_BaseColor.001",
+          "Arms_AO.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "bunny_akali_physiccage_veil",
+    "sex": "female",
+    "source": "BunnyAkali_ARP_Walk_Animation.blend",
+    "mesh": "PhysicCage_Veil",
+    "normalizationReference": "BunnyAkali_Body",
+    "unresolvedSourceImages": [
+      "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga: //..\\..\\..\\..\\..\\AssetInspection\\CreationPacks\\RyanReos_BunnyAkali\\Assets\\Textures\\Variations\\PrestigiousWhite\\BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga"
+    ],
+    "vertices": 423,
+    "clearanceAdjustedVertices": 352,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [],
+    "status": "converted"
+  },
+  {
+    "id": "bunny_akali_choker",
+    "sex": "female",
+    "source": "BunnyAkali_ARP_Walk_Animation.blend",
+    "mesh": "choker",
+    "normalizationReference": "BunnyAkali_Body",
+    "unresolvedSourceImages": [
+      "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga: //..\\..\\..\\..\\..\\AssetInspection\\CreationPacks\\RyanReos_BunnyAkali\\Assets\\Textures\\Variations\\PrestigiousWhite\\BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga"
+    ],
+    "vertices": 12,
+    "clearanceAdjustedVertices": 0,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [],
+    "status": "converted"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_weapon_sickle_001",
+    "sex": "female",
+    "source": "BunnyAkali_ARP_Walk_Animation.blend",
+    "mesh": "BunnyAkali_Weapon_Sickle.001",
+    "normalizationReference": "BunnyAkali_Body",
+    "unresolvedSourceImages": [
+      "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga: //..\\..\\..\\..\\..\\AssetInspection\\CreationPacks\\RyanReos_BunnyAkali\\Assets\\Textures\\Variations\\PrestigiousWhite\\BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga"
+    ],
+    "vertices": 1351,
+    "clearanceAdjustedVertices": 302,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "BunnyAkali_Weapon",
+        "images": [
+          "BunnyAkali_Weapon_AO.tga.001",
+          "BunnyAkali_Weapon_Roughness.tga.001",
+          "BunnyAkali_Weapon_Metallic.tga.001",
+          "BunnyAkali_Weapon_Metallic_Ruined.tga.001",
+          "BunnyAkali_Weapon_Normal.tga.001",
+          "BunnyAkali_Weapon_Emissive_DeluxeBlack.tga.001",
+          "BunnyAkali_Weapon_Emissive_PrestigiousWhite.tga.001",
+          "BunnyAkali_Weapon_Emissive_Ruined.tga.001",
+          "BunnyAkali_Weapon_Emissive.tga.001",
+          "BunnyAkali_Weapon_BaseColor_RuinedPurple.tga.001",
+          "BunnyAkali_Weapon_BaseColor_PrestigiousWhite.tga.001",
+          "BunnyAkali_Weapon_BaseColor_RuinedPurple.tga.001",
+          "BunnyAkali_Weapon_BaseColor_Ruined.tga.001",
+          "BunnyAkali_Weapon_BaseColor.tga.001",
+          "BunnyAkali_Weapon_BaseColor_DeluxeBlack.tga.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_weapon_sickle",
+    "sex": "female",
+    "source": "BunnyAkali_ARP_Walk_Animation.blend",
+    "mesh": "BunnyAkali_Weapon_Sickle",
+    "normalizationReference": "BunnyAkali_Body",
+    "unresolvedSourceImages": [
+      "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga: //..\\..\\..\\..\\..\\AssetInspection\\CreationPacks\\RyanReos_BunnyAkali\\Assets\\Textures\\Variations\\PrestigiousWhite\\BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga"
+    ],
+    "vertices": 1351,
+    "clearanceAdjustedVertices": 306,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "BunnyAkali_Weapon",
+        "images": [
+          "BunnyAkali_Weapon_AO.tga.001",
+          "BunnyAkali_Weapon_Roughness.tga.001",
+          "BunnyAkali_Weapon_Metallic.tga.001",
+          "BunnyAkali_Weapon_Metallic_Ruined.tga.001",
+          "BunnyAkali_Weapon_Normal.tga.001",
+          "BunnyAkali_Weapon_Emissive_DeluxeBlack.tga.001",
+          "BunnyAkali_Weapon_Emissive_PrestigiousWhite.tga.001",
+          "BunnyAkali_Weapon_Emissive_Ruined.tga.001",
+          "BunnyAkali_Weapon_Emissive.tga.001",
+          "BunnyAkali_Weapon_BaseColor_RuinedPurple.tga.001",
+          "BunnyAkali_Weapon_BaseColor_PrestigiousWhite.tga.001",
+          "BunnyAkali_Weapon_BaseColor_RuinedPurple.tga.001",
+          "BunnyAkali_Weapon_BaseColor_Ruined.tga.001",
+          "BunnyAkali_Weapon_BaseColor.tga.001",
+          "BunnyAkali_Weapon_BaseColor_DeluxeBlack.tga.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_weapon_kunai_001",
+    "sex": "female",
+    "source": "BunnyAkali_ARP_Walk_Animation.blend",
+    "mesh": "BunnyAkali_Weapon_Kunai.001",
+    "normalizationReference": "BunnyAkali_Body",
+    "unresolvedSourceImages": [
+      "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga: //..\\..\\..\\..\\..\\AssetInspection\\CreationPacks\\RyanReos_BunnyAkali\\Assets\\Textures\\Variations\\PrestigiousWhite\\BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga"
+    ],
+    "vertices": 610,
+    "clearanceAdjustedVertices": 0,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "BunnyAkali_Weapon",
+        "images": [
+          "BunnyAkali_Weapon_AO.tga.001",
+          "BunnyAkali_Weapon_Roughness.tga.001",
+          "BunnyAkali_Weapon_Metallic.tga.001",
+          "BunnyAkali_Weapon_Metallic_Ruined.tga.001",
+          "BunnyAkali_Weapon_Normal.tga.001",
+          "BunnyAkali_Weapon_Emissive_DeluxeBlack.tga.001",
+          "BunnyAkali_Weapon_Emissive_PrestigiousWhite.tga.001",
+          "BunnyAkali_Weapon_Emissive_Ruined.tga.001",
+          "BunnyAkali_Weapon_Emissive.tga.001",
+          "BunnyAkali_Weapon_BaseColor_RuinedPurple.tga.001",
+          "BunnyAkali_Weapon_BaseColor_PrestigiousWhite.tga.001",
+          "BunnyAkali_Weapon_BaseColor_RuinedPurple.tga.001",
+          "BunnyAkali_Weapon_BaseColor_Ruined.tga.001",
+          "BunnyAkali_Weapon_BaseColor.tga.001",
+          "BunnyAkali_Weapon_BaseColor_DeluxeBlack.tga.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_weapon_kunai",
+    "sex": "female",
+    "source": "BunnyAkali_ARP_Walk_Animation.blend",
+    "mesh": "BunnyAkali_Weapon_Kunai",
+    "normalizationReference": "BunnyAkali_Body",
+    "unresolvedSourceImages": [
+      "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga: //..\\..\\..\\..\\..\\AssetInspection\\CreationPacks\\RyanReos_BunnyAkali\\Assets\\Textures\\Variations\\PrestigiousWhite\\BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga"
+    ],
+    "vertices": 610,
+    "clearanceAdjustedVertices": 0,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "BunnyAkali_Weapon",
+        "images": [
+          "BunnyAkali_Weapon_AO.tga.001",
+          "BunnyAkali_Weapon_Roughness.tga.001",
+          "BunnyAkali_Weapon_Metallic.tga.001",
+          "BunnyAkali_Weapon_Metallic_Ruined.tga.001",
+          "BunnyAkali_Weapon_Normal.tga.001",
+          "BunnyAkali_Weapon_Emissive_DeluxeBlack.tga.001",
+          "BunnyAkali_Weapon_Emissive_PrestigiousWhite.tga.001",
+          "BunnyAkali_Weapon_Emissive_Ruined.tga.001",
+          "BunnyAkali_Weapon_Emissive.tga.001",
+          "BunnyAkali_Weapon_BaseColor_RuinedPurple.tga.001",
+          "BunnyAkali_Weapon_BaseColor_PrestigiousWhite.tga.001",
+          "BunnyAkali_Weapon_BaseColor_RuinedPurple.tga.001",
+          "BunnyAkali_Weapon_BaseColor_Ruined.tga.001",
+          "BunnyAkali_Weapon_BaseColor.tga.001",
+          "BunnyAkali_Weapon_BaseColor_DeluxeBlack.tga.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_stockings_003",
+    "sex": "female",
+    "source": "BunnyAkali_ARP_Walk_Animation.blend",
+    "mesh": "BunnyAkali_Stockings.003",
+    "normalizationReference": "BunnyAkali_Body",
+    "unresolvedSourceImages": [
+      "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga: //..\\..\\..\\..\\..\\AssetInspection\\CreationPacks\\RyanReos_BunnyAkali\\Assets\\Textures\\Variations\\PrestigiousWhite\\BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga"
+    ],
+    "vertices": 3994,
+    "clearanceAdjustedVertices": 3907,
+    "maskedBodyFaces": 2918,
+    "drape": null,
+    "materials": [
+      {
+        "material": "BunnyAkali_Stockings",
+        "images": [
+          "BunnyAkali_Stockings_AO.001",
+          "BunnyAkali_Stockings_Metallic.tga.001",
+          "BunnyAkali_Stockings_Metallic_Variation.tga.001",
+          "BunnyAkali_Stockings_Roughness.tga.001",
+          "BunnyAkali_Stockings_Fishnet_Normal.tga.001",
+          "BunnyAkali_Stockings_Normal.tga.001",
+          "BunnyAkali_Stockings_Opacity.tga.002",
+          "BunnyAkali_Stockings_Opacity.tga.003",
+          "BunnyAkali_Stockings_BaseColor.001",
+          "BunnyAkali_Stockings_BaseColor_DeluxeBlack.tga.001",
+          "BunnyAkali_Stockings_BaseColor_Ruined.tga.001",
+          "BunnyAkali_Stockings_BaseColor_RuinedPurple.tga.001",
+          "BunnyAkali_Stockings_BaseColor_PrestigiousWhite.tga.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_stockings",
+    "sex": "female",
+    "source": "BunnyAkali_ARP_Walk_Animation.blend",
+    "mesh": "BunnyAkali_Stockings",
+    "normalizationReference": "BunnyAkali_Body",
+    "unresolvedSourceImages": [
+      "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga: //..\\..\\..\\..\\..\\AssetInspection\\CreationPacks\\RyanReos_BunnyAkali\\Assets\\Textures\\Variations\\PrestigiousWhite\\BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga"
+    ],
+    "vertices": 3994,
+    "clearanceAdjustedVertices": 3907,
+    "maskedBodyFaces": 3056,
+    "drape": null,
+    "materials": [
+      {
+        "material": "BunnyAkali_Stockings",
+        "images": [
+          "BunnyAkali_Stockings_AO.001",
+          "BunnyAkali_Stockings_Metallic.tga.001",
+          "BunnyAkali_Stockings_Metallic_Variation.tga.001",
+          "BunnyAkali_Stockings_Roughness.tga.001",
+          "BunnyAkali_Stockings_Fishnet_Normal.tga.001",
+          "BunnyAkali_Stockings_Normal.tga.001",
+          "BunnyAkali_Stockings_Opacity.tga.002",
+          "BunnyAkali_Stockings_Opacity.tga.003",
+          "BunnyAkali_Stockings_BaseColor.001",
+          "BunnyAkali_Stockings_BaseColor_DeluxeBlack.tga.001",
+          "BunnyAkali_Stockings_BaseColor_Ruined.tga.001",
+          "BunnyAkali_Stockings_BaseColor_RuinedPurple.tga.001",
+          "BunnyAkali_Stockings_BaseColor_PrestigiousWhite.tga.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_leotard_001",
+    "sex": "female",
+    "source": "BunnyAkali_ARP_Walk_Animation.blend",
+    "mesh": "BunnyAkali_Leotard.001",
+    "normalizationReference": "BunnyAkali_Body",
+    "unresolvedSourceImages": [
+      "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga: //..\\..\\..\\..\\..\\AssetInspection\\CreationPacks\\RyanReos_BunnyAkali\\Assets\\Textures\\Variations\\PrestigiousWhite\\BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga"
+    ],
+    "vertices": 21167,
+    "clearanceAdjustedVertices": 20262,
+    "maskedBodyFaces": 32222,
+    "drape": null,
+    "materials": [
+      {
+        "material": "BunnyAkali_Suit",
+        "images": [
+          "BunnyAkali_Suit_Normal.001",
+          "BunnyAkali_Suit_Roughness.001",
+          "BunnyAkali_Suit_AO.001",
+          "BunnyAkali_Suit_Metallic.001",
+          "BunnyAkali_Suit_Metallic_Variation.tga.001",
+          "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga",
+          "BunnyAkali_Suit_BaseColor_RuinedPurple.tga.001",
+          "BunnyAkali_Suit_BaseColor_Ruined.tga.001",
+          "BunnyAkali_Suit_BaseColor_DeluxeBlack.tga.001",
+          "BunnyAkali_Suit_BaseColor.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_leotard",
+    "sex": "female",
+    "source": "BunnyAkali_ARP_Walk_Animation.blend",
+    "mesh": "BunnyAkali_Leotard",
+    "normalizationReference": "BunnyAkali_Body",
+    "unresolvedSourceImages": [
+      "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga: //..\\..\\..\\..\\..\\AssetInspection\\CreationPacks\\RyanReos_BunnyAkali\\Assets\\Textures\\Variations\\PrestigiousWhite\\BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga"
+    ],
+    "vertices": 21167,
+    "clearanceAdjustedVertices": 20498,
+    "maskedBodyFaces": 31653,
+    "drape": null,
+    "materials": [
+      {
+        "material": "BunnyAkali_Suit",
+        "images": [
+          "BunnyAkali_Suit_Normal.001",
+          "BunnyAkali_Suit_Roughness.001",
+          "BunnyAkali_Suit_AO.001",
+          "BunnyAkali_Suit_Metallic.001",
+          "BunnyAkali_Suit_Metallic_Variation.tga.001",
+          "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga",
+          "BunnyAkali_Suit_BaseColor_RuinedPurple.tga.001",
+          "BunnyAkali_Suit_BaseColor_Ruined.tga.001",
+          "BunnyAkali_Suit_BaseColor_DeluxeBlack.tga.001",
+          "BunnyAkali_Suit_BaseColor.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_heels_003",
+    "sex": "female",
+    "source": "BunnyAkali_ARP_Walk_Animation.blend",
+    "mesh": "BunnyAkali_Heels.003",
+    "normalizationReference": "BunnyAkali_Body",
+    "unresolvedSourceImages": [
+      "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga: //..\\..\\..\\..\\..\\AssetInspection\\CreationPacks\\RyanReos_BunnyAkali\\Assets\\Textures\\Variations\\PrestigiousWhite\\BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga"
+    ],
+    "vertices": 4804,
+    "clearanceAdjustedVertices": 2729,
+    "maskedBodyFaces": 20163,
+    "drape": null,
+    "materials": [
+      {
+        "material": "BunnyAkali_Stockings",
+        "images": [
+          "BunnyAkali_Stockings_AO.001",
+          "BunnyAkali_Stockings_Metallic.tga.001",
+          "BunnyAkali_Stockings_Metallic_Variation.tga.001",
+          "BunnyAkali_Stockings_Roughness.tga.001",
+          "BunnyAkali_Stockings_Fishnet_Normal.tga.001",
+          "BunnyAkali_Stockings_Normal.tga.001",
+          "BunnyAkali_Stockings_Opacity.tga.002",
+          "BunnyAkali_Stockings_Opacity.tga.003",
+          "BunnyAkali_Stockings_BaseColor.001",
+          "BunnyAkali_Stockings_BaseColor_DeluxeBlack.tga.001",
+          "BunnyAkali_Stockings_BaseColor_Ruined.tga.001",
+          "BunnyAkali_Stockings_BaseColor_RuinedPurple.tga.001",
+          "BunnyAkali_Stockings_BaseColor_PrestigiousWhite.tga.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_heels",
+    "sex": "female",
+    "source": "BunnyAkali_ARP_Walk_Animation.blend",
+    "mesh": "BunnyAkali_Heels",
+    "normalizationReference": "BunnyAkali_Body",
+    "unresolvedSourceImages": [
+      "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga: //..\\..\\..\\..\\..\\AssetInspection\\CreationPacks\\RyanReos_BunnyAkali\\Assets\\Textures\\Variations\\PrestigiousWhite\\BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga"
+    ],
+    "vertices": 4804,
+    "clearanceAdjustedVertices": 2664,
+    "maskedBodyFaces": 19917,
+    "drape": null,
+    "materials": [
+      {
+        "material": "BunnyAkali_Stockings",
+        "images": [
+          "BunnyAkali_Stockings_AO.001",
+          "BunnyAkali_Stockings_Metallic.tga.001",
+          "BunnyAkali_Stockings_Metallic_Variation.tga.001",
+          "BunnyAkali_Stockings_Roughness.tga.001",
+          "BunnyAkali_Stockings_Fishnet_Normal.tga.001",
+          "BunnyAkali_Stockings_Normal.tga.001",
+          "BunnyAkali_Stockings_Opacity.tga.002",
+          "BunnyAkali_Stockings_Opacity.tga.003",
+          "BunnyAkali_Stockings_BaseColor.001",
+          "BunnyAkali_Stockings_BaseColor_DeluxeBlack.tga.001",
+          "BunnyAkali_Stockings_BaseColor_Ruined.tga.001",
+          "BunnyAkali_Stockings_BaseColor_RuinedPurple.tga.001",
+          "BunnyAkali_Stockings_BaseColor_PrestigiousWhite.tga.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_headwear_veil",
+    "sex": "female",
+    "source": "BunnyAkali_ARP_Walk_Animation.blend",
+    "mesh": "BunnyAkali_Headwear_Veil",
+    "normalizationReference": "BunnyAkali_Body",
+    "unresolvedSourceImages": [
+      "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga: //..\\..\\..\\..\\..\\AssetInspection\\CreationPacks\\RyanReos_BunnyAkali\\Assets\\Textures\\Variations\\PrestigiousWhite\\BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga"
+    ],
+    "vertices": 423,
+    "clearanceAdjustedVertices": 349,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "BunnyAkali_Headwear",
+        "images": [
+          "BunnyAkali_Headwear_Metallic.tga.001",
+          "BunnyAkali_Headwear_Metallic_Variation.tga.001",
+          "BunnyAkali_Headwear_Normal.tga.001",
+          "BunnyAkali_Headwear_Opacity.tga.001",
+          "BunnyAkali_Headwear_AO.tga.001",
+          "BunnyAkali_Headwear_Roughness.tga.001",
+          "BunnyAkali_Headwear_BaseColor.tga.001",
+          "BunnyAkali_Headwear_BaseColor_DeluxeBlack.tga.001",
+          "BunnyAkali_Headwear_BaseColor_Ruined.tga.001",
+          "BunnyAkali_Headwear_BaseColor_PrestigiousWhite.tga.001",
+          "BunnyAkali_Headwear_BaseColor_RuinedPurple.tga.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_headwear_bunnyears",
+    "sex": "female",
+    "source": "BunnyAkali_ARP_Walk_Animation.blend",
+    "mesh": "BunnyAkali_Headwear_BunnyEars",
+    "normalizationReference": "BunnyAkali_Body",
+    "unresolvedSourceImages": [
+      "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga: //..\\..\\..\\..\\..\\AssetInspection\\CreationPacks\\RyanReos_BunnyAkali\\Assets\\Textures\\Variations\\PrestigiousWhite\\BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga"
+    ],
+    "vertices": 866,
+    "clearanceAdjustedVertices": 448,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "BunnyAkali_Headwear",
+        "images": [
+          "BunnyAkali_Headwear_Metallic.tga.001",
+          "BunnyAkali_Headwear_Metallic_Variation.tga.001",
+          "BunnyAkali_Headwear_Normal.tga.001",
+          "BunnyAkali_Headwear_Opacity.tga.001",
+          "BunnyAkali_Headwear_AO.tga.001",
+          "BunnyAkali_Headwear_Roughness.tga.001",
+          "BunnyAkali_Headwear_BaseColor.tga.001",
+          "BunnyAkali_Headwear_BaseColor_DeluxeBlack.tga.001",
+          "BunnyAkali_Headwear_BaseColor_Ruined.tga.001",
+          "BunnyAkali_Headwear_BaseColor_PrestigiousWhite.tga.001",
+          "BunnyAkali_Headwear_BaseColor_RuinedPurple.tga.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_hairtie_003",
+    "sex": "female",
+    "source": "BunnyAkali_ARP_Walk_Animation.blend",
+    "mesh": "BunnyAkali_HairTie.003",
+    "normalizationReference": "BunnyAkali_Body",
+    "unresolvedSourceImages": [
+      "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga: //..\\..\\..\\..\\..\\AssetInspection\\CreationPacks\\RyanReos_BunnyAkali\\Assets\\Textures\\Variations\\PrestigiousWhite\\BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga"
+    ],
+    "vertices": 3805,
+    "clearanceAdjustedVertices": 1645,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "BunnyAkali_Headwear",
+        "images": [
+          "BunnyAkali_Headwear_Metallic.tga.001",
+          "BunnyAkali_Headwear_Metallic_Variation.tga.001",
+          "BunnyAkali_Headwear_Normal.tga.001",
+          "BunnyAkali_Headwear_Opacity.tga.001",
+          "BunnyAkali_Headwear_AO.tga.001",
+          "BunnyAkali_Headwear_Roughness.tga.001",
+          "BunnyAkali_Headwear_BaseColor.tga.001",
+          "BunnyAkali_Headwear_BaseColor_DeluxeBlack.tga.001",
+          "BunnyAkali_Headwear_BaseColor_Ruined.tga.001",
+          "BunnyAkali_Headwear_BaseColor_PrestigiousWhite.tga.001",
+          "BunnyAkali_Headwear_BaseColor_RuinedPurple.tga.001"
+        ],
+        "method": "material-local PBR conversion"
+      },
+      {
+        "material": "BunnyAkali_Suit",
+        "images": [
+          "BunnyAkali_Suit_Normal.001",
+          "BunnyAkali_Suit_Roughness.001",
+          "BunnyAkali_Suit_AO.001",
+          "BunnyAkali_Suit_Metallic.001",
+          "BunnyAkali_Suit_Metallic_Variation.tga.001",
+          "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga",
+          "BunnyAkali_Suit_BaseColor_RuinedPurple.tga.001",
+          "BunnyAkali_Suit_BaseColor_Ruined.tga.001",
+          "BunnyAkali_Suit_BaseColor_DeluxeBlack.tga.001",
+          "BunnyAkali_Suit_BaseColor.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_hairtie",
+    "sex": "female",
+    "source": "BunnyAkali_ARP_Walk_Animation.blend",
+    "mesh": "BunnyAkali_HairTie",
+    "normalizationReference": "BunnyAkali_Body",
+    "unresolvedSourceImages": [
+      "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga: //..\\..\\..\\..\\..\\AssetInspection\\CreationPacks\\RyanReos_BunnyAkali\\Assets\\Textures\\Variations\\PrestigiousWhite\\BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga"
+    ],
+    "vertices": 1638,
+    "clearanceAdjustedVertices": 0,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "BunnyAkali_Headwear",
+        "images": [
+          "BunnyAkali_Headwear_Metallic.tga.001",
+          "BunnyAkali_Headwear_Metallic_Variation.tga.001",
+          "BunnyAkali_Headwear_Normal.tga.001",
+          "BunnyAkali_Headwear_Opacity.tga.001",
+          "BunnyAkali_Headwear_AO.tga.001",
+          "BunnyAkali_Headwear_Roughness.tga.001",
+          "BunnyAkali_Headwear_BaseColor.tga.001",
+          "BunnyAkali_Headwear_BaseColor_DeluxeBlack.tga.001",
+          "BunnyAkali_Headwear_BaseColor_Ruined.tga.001",
+          "BunnyAkali_Headwear_BaseColor_PrestigiousWhite.tga.001",
+          "BunnyAkali_Headwear_BaseColor_RuinedPurple.tga.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_hair",
+    "sex": "female",
+    "source": "BunnyAkali_ARP_Walk_Animation.blend",
+    "mesh": "BunnyAkali_Hair",
+    "normalizationReference": "BunnyAkali_Body",
+    "unresolvedSourceImages": [
+      "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga: //..\\..\\..\\..\\..\\AssetInspection\\CreationPacks\\RyanReos_BunnyAkali\\Assets\\Textures\\Variations\\PrestigiousWhite\\BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga"
+    ],
+    "vertices": 35217,
+    "clearanceAdjustedVertices": 13901,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "BunnyAkali_Hair",
+        "images": [
+          "BunnyAkali_Hair_specular.tga.001",
+          "BunnyAkali_Hair_normal.tga.001",
+          "BunnyAkali_Hair_basecolor_White.tga.001",
+          "BunnyAkali_Hair_basecolor_DarkRed.tga.001",
+          "BunnyAkali_Hair_basecolor_Ruined.tga.001",
+          "BunnyAkali_Hair_basecolor_RuinedPurple.tga.001",
+          "BunnyAkali_Hair_basecolor.tga.001",
+          "BunnyAkali_Hair_AO.tga.001",
+          "BunnyAkali_Hair_opacity.tga.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_gloves_hands_001",
+    "sex": "female",
+    "source": "BunnyAkali_ARP_Walk_Animation.blend",
+    "mesh": "BunnyAkali_Gloves_Hands.001",
+    "normalizationReference": "BunnyAkali_Body",
+    "unresolvedSourceImages": [
+      "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga: //..\\..\\..\\..\\..\\AssetInspection\\CreationPacks\\RyanReos_BunnyAkali\\Assets\\Textures\\Variations\\PrestigiousWhite\\BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga"
+    ],
+    "vertices": 4424,
+    "clearanceAdjustedVertices": 3837,
+    "maskedBodyFaces": 33468,
+    "drape": null,
+    "materials": [
+      {
+        "material": "BunnyAkali_Suit",
+        "images": [
+          "BunnyAkali_Suit_Normal.001",
+          "BunnyAkali_Suit_Roughness.001",
+          "BunnyAkali_Suit_AO.001",
+          "BunnyAkali_Suit_Metallic.001",
+          "BunnyAkali_Suit_Metallic_Variation.tga.001",
+          "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga",
+          "BunnyAkali_Suit_BaseColor_RuinedPurple.tga.001",
+          "BunnyAkali_Suit_BaseColor_Ruined.tga.001",
+          "BunnyAkali_Suit_BaseColor_DeluxeBlack.tga.001",
+          "BunnyAkali_Suit_BaseColor.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_gloves_hands",
+    "sex": "female",
+    "source": "BunnyAkali_ARP_Walk_Animation.blend",
+    "mesh": "BunnyAkali_Gloves_Hands",
+    "normalizationReference": "BunnyAkali_Body",
+    "unresolvedSourceImages": [
+      "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga: //..\\..\\..\\..\\..\\AssetInspection\\CreationPacks\\RyanReos_BunnyAkali\\Assets\\Textures\\Variations\\PrestigiousWhite\\BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga"
+    ],
+    "vertices": 558,
+    "clearanceAdjustedVertices": 369,
+    "maskedBodyFaces": 4339,
+    "drape": null,
+    "materials": [
+      {
+        "material": "BunnyAkali_Suit",
+        "images": [
+          "BunnyAkali_Suit_Normal.001",
+          "BunnyAkali_Suit_Roughness.001",
+          "BunnyAkali_Suit_AO.001",
+          "BunnyAkali_Suit_Metallic.001",
+          "BunnyAkali_Suit_Metallic_Variation.tga.001",
+          "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga",
+          "BunnyAkali_Suit_BaseColor_RuinedPurple.tga.001",
+          "BunnyAkali_Suit_BaseColor_Ruined.tga.001",
+          "BunnyAkali_Suit_BaseColor_DeluxeBlack.tga.001",
+          "BunnyAkali_Suit_BaseColor.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_gloves_fans",
+    "sex": "female",
+    "source": "BunnyAkali_ARP_Walk_Animation.blend",
+    "mesh": "BunnyAkali_Gloves_Fans",
+    "normalizationReference": "BunnyAkali_Body",
+    "unresolvedSourceImages": [
+      "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga: //..\\..\\..\\..\\..\\AssetInspection\\CreationPacks\\RyanReos_BunnyAkali\\Assets\\Textures\\Variations\\PrestigiousWhite\\BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga"
+    ],
+    "vertices": 1344,
+    "clearanceAdjustedVertices": 13,
+    "maskedBodyFaces": 6025,
+    "drape": null,
+    "materials": [
+      {
+        "material": "BunnyAkali_Suit",
+        "images": [
+          "BunnyAkali_Suit_Normal.001",
+          "BunnyAkali_Suit_Roughness.001",
+          "BunnyAkali_Suit_AO.001",
+          "BunnyAkali_Suit_Metallic.001",
+          "BunnyAkali_Suit_Metallic_Variation.tga.001",
+          "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga",
+          "BunnyAkali_Suit_BaseColor_RuinedPurple.tga.001",
+          "BunnyAkali_Suit_BaseColor_Ruined.tga.001",
+          "BunnyAkali_Suit_BaseColor_DeluxeBlack.tga.001",
+          "BunnyAkali_Suit_BaseColor.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_gloves_arms",
+    "sex": "female",
+    "source": "BunnyAkali_ARP_Walk_Animation.blend",
+    "mesh": "BunnyAkali_Gloves_Arms",
+    "normalizationReference": "BunnyAkali_Body",
+    "unresolvedSourceImages": [
+      "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga: //..\\..\\..\\..\\..\\AssetInspection\\CreationPacks\\RyanReos_BunnyAkali\\Assets\\Textures\\Variations\\PrestigiousWhite\\BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga"
+    ],
+    "vertices": 2522,
+    "clearanceAdjustedVertices": 2219,
+    "maskedBodyFaces": 13012,
+    "drape": null,
+    "materials": [
+      {
+        "material": "BunnyAkali_Suit",
+        "images": [
+          "BunnyAkali_Suit_Normal.001",
+          "BunnyAkali_Suit_Roughness.001",
+          "BunnyAkali_Suit_AO.001",
+          "BunnyAkali_Suit_Metallic.001",
+          "BunnyAkali_Suit_Metallic_Variation.tga.001",
+          "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga",
+          "BunnyAkali_Suit_BaseColor_RuinedPurple.tga.001",
+          "BunnyAkali_Suit_BaseColor_Ruined.tga.001",
+          "BunnyAkali_Suit_BaseColor_DeluxeBlack.tga.001",
+          "BunnyAkali_Suit_BaseColor.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_choker",
+    "sex": "female",
+    "source": "BunnyAkali_ARP_Walk_Animation.blend",
+    "mesh": "BunnyAkali_Choker",
+    "normalizationReference": "BunnyAkali_Body",
+    "unresolvedSourceImages": [
+      "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga: //..\\..\\..\\..\\..\\AssetInspection\\CreationPacks\\RyanReos_BunnyAkali\\Assets\\Textures\\Variations\\PrestigiousWhite\\BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga"
+    ],
+    "vertices": 878,
+    "clearanceAdjustedVertices": 876,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "BunnyAkali_Suit",
+        "images": [
+          "BunnyAkali_Suit_Normal.001",
+          "BunnyAkali_Suit_Roughness.001",
+          "BunnyAkali_Suit_AO.001",
+          "BunnyAkali_Suit_Metallic.001",
+          "BunnyAkali_Suit_Metallic_Variation.tga.001",
+          "BunnyAkali_Stockings_Fishnet_Normal_PrestigiousWhite.tga",
+          "BunnyAkali_Suit_BaseColor_RuinedPurple.tga.001",
+          "BunnyAkali_Suit_BaseColor_Ruined.tga.001",
+          "BunnyAkali_Suit_BaseColor_DeluxeBlack.tga.001",
+          "BunnyAkali_Suit_BaseColor.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "gris_grisswimsuit_thighstrap",
+    "sex": "female",
+    "source": "GrisSwimsuit.blend",
+    "mesh": "GrisSwimsuit_ThighStrap",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 402,
+    "clearanceAdjustedVertices": 399,
+    "maskedBodyFaces": 275,
+    "drape": null,
+    "materials": [
+      {
+        "material": "GrisSwimsuit",
+        "images": [
+          "Map #666.001",
+          "GrisSwimsuit_Normal.001",
+          "GrisSwimsuit_Roughness.001",
+          "GrisSwimsuit_BaseColor.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "gris_grisswimsuit_main",
+    "sex": "female",
+    "source": "GrisSwimsuit.blend",
+    "mesh": "GrisSwimsuit_Main",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 7847,
+    "clearanceAdjustedVertices": 6034,
+    "maskedBodyFaces": 3927,
+    "drape": null,
+    "materials": [
+      {
+        "material": "GrisSwimsuit",
+        "images": [
+          "Map #666.001",
+          "GrisSwimsuit_Normal.001",
+          "GrisSwimsuit_Roughness.001",
+          "GrisSwimsuit_BaseColor.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "gris_grisswimsuit_choker",
+    "sex": "female",
+    "source": "GrisSwimsuit.blend",
+    "mesh": "GrisSwimsuit_Choker",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 242,
+    "clearanceAdjustedVertices": 189,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "GrisSwimsuit",
+        "images": [
+          "Map #666.001",
+          "GrisSwimsuit_Normal.001",
+          "GrisSwimsuit_Roughness.001",
+          "GrisSwimsuit_BaseColor.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "deluxe_bunny_sourcevest",
+    "sex": "female",
+    "source": "deluxe_bunny_suit_source_v1.blend",
+    "mesh": "SourceVest",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 12588,
+    "clearanceAdjustedVertices": 10814,
+    "maskedBodyFaces": 2253,
+    "drape": null,
+    "materials": [
+      {
+        "material": "DeluxeBunnysuit",
+        "images": [
+          "DeluxeBunnySuit_AO.png",
+          "DeluxeBunnySuit_Normal.png.001",
+          "DeluxeBunnySuit_Roughness.png",
+          "DeluxeBunnySuit_Metallic.png",
+          "DeluxeBunnySuit_BaseColor.png.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "deluxe_bunny_sourcestockings",
+    "sex": "female",
+    "source": "deluxe_bunny_suit_source_v1.blend",
+    "mesh": "SourceStockings",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 2444,
+    "clearanceAdjustedVertices": 1531,
+    "maskedBodyFaces": 18955,
+    "drape": null,
+    "materials": [
+      {
+        "material": "DeluxeBunnysuit_Stockings",
+        "images": [
+          "DeluxeBunnySuit_Stockings_Roughness.png",
+          "DeluxeBunnySuit_Stockings_AO.png",
+          "DeluxeBunnySuit_Stockings_Normal.png.001",
+          "DeluxeBunnySuit_Stockings_BaseColor.png.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "deluxe_bunny_sourceleotard",
+    "sex": "female",
+    "source": "deluxe_bunny_suit_source_v1.blend",
+    "mesh": "SourceLeotard",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 6875,
+    "clearanceAdjustedVertices": 5211,
+    "maskedBodyFaces": 2426,
+    "drape": null,
+    "materials": [
+      {
+        "material": "DeluxeBunnysuit",
+        "images": [
+          "DeluxeBunnySuit_AO.png",
+          "DeluxeBunnySuit_Normal.png.001",
+          "DeluxeBunnySuit_Roughness.png",
+          "DeluxeBunnySuit_Metallic.png",
+          "DeluxeBunnySuit_BaseColor.png.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "deluxe_bunny_sourcejacket",
+    "sex": "female",
+    "source": "deluxe_bunny_suit_source_v1.blend",
+    "mesh": "SourceJacket",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 31681,
+    "clearanceAdjustedVertices": 20639,
+    "maskedBodyFaces": 7734,
+    "drape": null,
+    "materials": [
+      {
+        "material": "DeluxeBunnysuit",
+        "images": [
+          "DeluxeBunnySuit_AO.png",
+          "DeluxeBunnySuit_Normal.png.001",
+          "DeluxeBunnySuit_Roughness.png",
+          "DeluxeBunnySuit_Metallic.png",
+          "DeluxeBunnySuit_BaseColor.png.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "deluxe_bunny_sourcebunnyears",
+    "sex": "female",
+    "source": "deluxe_bunny_suit_source_v1.blend",
+    "mesh": "SourceBunnyEars",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 633,
+    "clearanceAdjustedVertices": 380,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "DeluxeBunnysuit",
+        "images": [
+          "DeluxeBunnySuit_AO.png",
+          "DeluxeBunnySuit_Normal.png.001",
+          "DeluxeBunnySuit_Roughness.png",
+          "DeluxeBunnySuit_Metallic.png",
+          "DeluxeBunnySuit_BaseColor.png.001"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "radagon_male_radagon_hair_default",
+    "sex": "male",
+    "source": "radagon_male_humanoid_rig_v1.blend",
+    "mesh": "Radagon Hair - Default",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 34959,
+    "clearanceAdjustedVertices": 10068,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "Radagon_Clothes.001",
+        "images": [
+          "Radagon_Clothes_BaseColor",
+          "Radagon_Clothes_Roughness",
+          "Radagon_Clothes_Metallic",
+          "Radagon_Clothes_Normal"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "Radagon_Hair.001",
+        "images": [
+          "Radagon_Hair_BaseColor",
+          "Radagon_Hair_normal",
+          "Radagon_Hair_opacity"
+        ],
+        "method": "material-local PBR conversion"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "radagon_male_radagon_default_pants",
+    "sex": "male",
+    "source": "radagon_male_humanoid_rig_v1.blend",
+    "mesh": "Radagon Default - Pants",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 2754,
+    "clearanceAdjustedVertices": 996,
+    "maskedBodyFaces": 10310,
+    "drape": null,
+    "materials": [
+      {
+        "material": "Radagon_Clothes.001",
+        "images": [
+          "Radagon_Clothes_BaseColor",
+          "Radagon_Clothes_Roughness",
+          "Radagon_Clothes_Metallic",
+          "Radagon_Clothes_Normal"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "radagon_male_radagon_default_dress",
+    "sex": "male",
+    "source": "radagon_male_humanoid_rig_v1.blend",
+    "mesh": "Radagon Default - Dress",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 18311,
+    "clearanceAdjustedVertices": 4259,
+    "maskedBodyFaces": 15100,
+    "drape": "skirt",
+    "materials": [
+      {
+        "material": "Radagon_Clothes.001",
+        "images": [
+          "Radagon_Clothes_BaseColor",
+          "Radagon_Clothes_Roughness",
+          "Radagon_Clothes_Metallic",
+          "Radagon_Clothes_Normal"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "elf_swordmaster_hair",
+    "sex": "female",
+    "source": "elf_swordmaster_humanoid_rig_v1.blend",
+    "mesh": "Hair",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 9883,
+    "clearanceAdjustedVertices": 3824,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "UP_Elf_Elfswordmaster_Hair",
+        "images": [
+          "ElfSwordmaster_Hair_BaseColor",
+          "ElfSwordmaster_Hair_Normal.tga",
+          "ElfSwordmaster_Hair_Roughness.tga"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Elfswordmaster_Hair",
+        "images": [
+          "ElfSwordmaster_Hair_BaseColor",
+          "ElfSwordmaster_Hair_Normal.tga",
+          "ElfSwordmaster_Hair_Roughness.tga"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Elfswordmaster_Hair",
+        "images": [
+          "ElfSwordmaster_Hair_BaseColor",
+          "ElfSwordmaster_Hair_Normal.tga",
+          "ElfSwordmaster_Hair_Roughness.tga"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Elfswordmaster_Hair",
+        "images": [
+          "ElfSwordmaster_Hair_BaseColor",
+          "ElfSwordmaster_Hair_Normal.tga",
+          "ElfSwordmaster_Hair_Roughness.tga"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "elf_swordmaster_armor_pauldron_r",
+    "sex": "female",
+    "source": "elf_swordmaster_humanoid_rig_v1.blend",
+    "mesh": "Armor_Pauldron_R",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 691,
+    "clearanceAdjustedVertices": 0,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "UP_Elf_Armor_Arms",
+        "images": [
+          "ElfSwordmaster_Armor_Arms_BaseColor",
+          "ElfSwordmaster_Armor_Arms_Normal.tga",
+          "ElfSwordmaster_Armor_Arms_Roughness.tga",
+          "ElfSwordmaster_Armor_Arms_Metallic.tga"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Armor_Arms",
+        "images": [
+          "ElfSwordmaster_Armor_Arms_BaseColor",
+          "ElfSwordmaster_Armor_Arms_Normal.tga",
+          "ElfSwordmaster_Armor_Arms_Roughness.tga",
+          "ElfSwordmaster_Armor_Arms_Metallic.tga"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Armor_Arms",
+        "images": [
+          "ElfSwordmaster_Armor_Arms_BaseColor",
+          "ElfSwordmaster_Armor_Arms_Normal.tga",
+          "ElfSwordmaster_Armor_Arms_Roughness.tga",
+          "ElfSwordmaster_Armor_Arms_Metallic.tga"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "elf_swordmaster_armor_pauldron_l",
+    "sex": "female",
+    "source": "elf_swordmaster_humanoid_rig_v1.blend",
+    "mesh": "Armor_Pauldron_L",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 691,
+    "clearanceAdjustedVertices": 0,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "UP_Elf_Armor_Arms",
+        "images": [
+          "ElfSwordmaster_Armor_Arms_BaseColor",
+          "ElfSwordmaster_Armor_Arms_Normal.tga",
+          "ElfSwordmaster_Armor_Arms_Roughness.tga",
+          "ElfSwordmaster_Armor_Arms_Metallic.tga"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Armor_Arms",
+        "images": [
+          "ElfSwordmaster_Armor_Arms_BaseColor",
+          "ElfSwordmaster_Armor_Arms_Normal.tga",
+          "ElfSwordmaster_Armor_Arms_Roughness.tga",
+          "ElfSwordmaster_Armor_Arms_Metallic.tga"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Armor_Arms",
+        "images": [
+          "ElfSwordmaster_Armor_Arms_BaseColor",
+          "ElfSwordmaster_Armor_Arms_Normal.tga",
+          "ElfSwordmaster_Armor_Arms_Roughness.tga",
+          "ElfSwordmaster_Armor_Arms_Metallic.tga"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "elf_swordmaster_armor_liner",
+    "sex": "female",
+    "source": "elf_swordmaster_humanoid_rig_v1.blend",
+    "mesh": "Armor_Liner",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 3067,
+    "clearanceAdjustedVertices": 2924,
+    "maskedBodyFaces": 767,
+    "drape": null,
+    "materials": [
+      {
+        "material": "UP_Elf_Armor_Chest",
+        "images": [
+          "ElfSwordmaster_Armor_Chest_BaseColor",
+          "ElfSwordmaster_Armor_Chest_Normal.tga",
+          "ElfSwordmaster_Armor_Arms_Roughness.tga",
+          "ElfSwordmaster_Armor_Chest_Metallic.tga"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "elf_swordmaster_armor_leg_r",
+    "sex": "female",
+    "source": "elf_swordmaster_humanoid_rig_v1.blend",
+    "mesh": "Armor_Leg_R",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 2151,
+    "clearanceAdjustedVertices": 1128,
+    "maskedBodyFaces": 11468,
+    "drape": null,
+    "materials": [
+      {
+        "material": "UP_Elf_Armor_Legs",
+        "images": [
+          "ElfSwordmaster_Armor_Legs",
+          "ElfSwordmaster_Armor_Legs_Normal.tga",
+          "ElfSwordmaster_Armor_Legs_Roughness.tga",
+          "ElfSwordmaster_Armor_Legs_Metallic.tga.001"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "elf_swordmaster_armor_leg_l",
+    "sex": "female",
+    "source": "elf_swordmaster_humanoid_rig_v1.blend",
+    "mesh": "Armor_Leg_L",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 2151,
+    "clearanceAdjustedVertices": 1137,
+    "maskedBodyFaces": 12507,
+    "drape": null,
+    "materials": [
+      {
+        "material": "UP_Elf_Armor_Legs",
+        "images": [
+          "ElfSwordmaster_Armor_Legs",
+          "ElfSwordmaster_Armor_Legs_Normal.tga",
+          "ElfSwordmaster_Armor_Legs_Roughness.tga",
+          "ElfSwordmaster_Armor_Legs_Metallic.tga.001"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "elf_swordmaster_armor_knee_top_r",
+    "sex": "female",
+    "source": "elf_swordmaster_humanoid_rig_v1.blend",
+    "mesh": "Armor_Knee_Top_R",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 222,
+    "clearanceAdjustedVertices": 73,
+    "maskedBodyFaces": 497,
+    "drape": null,
+    "materials": [
+      {
+        "material": "UP_Elf_Armor_Legs",
+        "images": [
+          "ElfSwordmaster_Armor_Legs",
+          "ElfSwordmaster_Armor_Legs_Normal.tga",
+          "ElfSwordmaster_Armor_Legs_Roughness.tga",
+          "ElfSwordmaster_Armor_Legs_Metallic.tga.001"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Armor_Legs",
+        "images": [
+          "ElfSwordmaster_Armor_Legs",
+          "ElfSwordmaster_Armor_Legs_Normal.tga",
+          "ElfSwordmaster_Armor_Legs_Roughness.tga",
+          "ElfSwordmaster_Armor_Legs_Metallic.tga.001"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Armor_Legs",
+        "images": [
+          "ElfSwordmaster_Armor_Legs",
+          "ElfSwordmaster_Armor_Legs_Normal.tga",
+          "ElfSwordmaster_Armor_Legs_Roughness.tga",
+          "ElfSwordmaster_Armor_Legs_Metallic.tga.001"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "elf_swordmaster_armor_knee_top_l",
+    "sex": "female",
+    "source": "elf_swordmaster_humanoid_rig_v1.blend",
+    "mesh": "Armor_Knee_Top_L",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 222,
+    "clearanceAdjustedVertices": 75,
+    "maskedBodyFaces": 550,
+    "drape": null,
+    "materials": [
+      {
+        "material": "UP_Elf_Armor_Legs",
+        "images": [
+          "ElfSwordmaster_Armor_Legs",
+          "ElfSwordmaster_Armor_Legs_Normal.tga",
+          "ElfSwordmaster_Armor_Legs_Roughness.tga",
+          "ElfSwordmaster_Armor_Legs_Metallic.tga.001"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Armor_Legs",
+        "images": [
+          "ElfSwordmaster_Armor_Legs",
+          "ElfSwordmaster_Armor_Legs_Normal.tga",
+          "ElfSwordmaster_Armor_Legs_Roughness.tga",
+          "ElfSwordmaster_Armor_Legs_Metallic.tga.001"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Armor_Legs",
+        "images": [
+          "ElfSwordmaster_Armor_Legs",
+          "ElfSwordmaster_Armor_Legs_Normal.tga",
+          "ElfSwordmaster_Armor_Legs_Roughness.tga",
+          "ElfSwordmaster_Armor_Legs_Metallic.tga.001"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "elf_swordmaster_armor_knee_bottom_r",
+    "sex": "female",
+    "source": "elf_swordmaster_humanoid_rig_v1.blend",
+    "mesh": "Armor_Knee_Bottom_R",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 106,
+    "clearanceAdjustedVertices": 106,
+    "maskedBodyFaces": 352,
+    "drape": null,
+    "materials": [
+      {
+        "material": "UP_Elf_Armor_Legs",
+        "images": [
+          "ElfSwordmaster_Armor_Legs",
+          "ElfSwordmaster_Armor_Legs_Normal.tga",
+          "ElfSwordmaster_Armor_Legs_Roughness.tga",
+          "ElfSwordmaster_Armor_Legs_Metallic.tga.001"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Armor_Legs",
+        "images": [
+          "ElfSwordmaster_Armor_Legs",
+          "ElfSwordmaster_Armor_Legs_Normal.tga",
+          "ElfSwordmaster_Armor_Legs_Roughness.tga",
+          "ElfSwordmaster_Armor_Legs_Metallic.tga.001"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Armor_Legs",
+        "images": [
+          "ElfSwordmaster_Armor_Legs",
+          "ElfSwordmaster_Armor_Legs_Normal.tga",
+          "ElfSwordmaster_Armor_Legs_Roughness.tga",
+          "ElfSwordmaster_Armor_Legs_Metallic.tga.001"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "elf_swordmaster_armor_knee_bottom_l",
+    "sex": "female",
+    "source": "elf_swordmaster_humanoid_rig_v1.blend",
+    "mesh": "Armor_Knee_Bottom_L",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 106,
+    "clearanceAdjustedVertices": 106,
+    "maskedBodyFaces": 339,
+    "drape": null,
+    "materials": [
+      {
+        "material": "UP_Elf_Armor_Legs",
+        "images": [
+          "ElfSwordmaster_Armor_Legs",
+          "ElfSwordmaster_Armor_Legs_Normal.tga",
+          "ElfSwordmaster_Armor_Legs_Roughness.tga",
+          "ElfSwordmaster_Armor_Legs_Metallic.tga.001"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Armor_Legs",
+        "images": [
+          "ElfSwordmaster_Armor_Legs",
+          "ElfSwordmaster_Armor_Legs_Normal.tga",
+          "ElfSwordmaster_Armor_Legs_Roughness.tga",
+          "ElfSwordmaster_Armor_Legs_Metallic.tga.001"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Armor_Legs",
+        "images": [
+          "ElfSwordmaster_Armor_Legs",
+          "ElfSwordmaster_Armor_Legs_Normal.tga",
+          "ElfSwordmaster_Armor_Legs_Roughness.tga",
+          "ElfSwordmaster_Armor_Legs_Metallic.tga.001"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "elf_swordmaster_armor_hips",
+    "sex": "female",
+    "source": "elf_swordmaster_humanoid_rig_v1.blend",
+    "mesh": "Armor_Hips",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 1018,
+    "clearanceAdjustedVertices": 740,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "UP_Elf_Armor_Chest",
+        "images": [
+          "ElfSwordmaster_Armor_Chest_BaseColor",
+          "ElfSwordmaster_Armor_Chest_Normal.tga",
+          "ElfSwordmaster_Armor_Arms_Roughness.tga",
+          "ElfSwordmaster_Armor_Chest_Metallic.tga"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Armor_Arms.002",
+        "images": [
+          "ElfSwordmaster_Armor_Arms_BaseColor",
+          "ElfSwordmaster_Armor_Arms_Normal.tga",
+          "ElfSwordmaster_Armor_Arms_Roughness.tga",
+          "ElfSwordmaster_Armor_Arms_Metallic.tga"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Armor_Legs.002",
+        "images": [
+          "ElfSwordmaster_Armor_Legs",
+          "ElfSwordmaster_Armor_Legs_Normal.tga",
+          "ElfSwordmaster_Armor_Legs_Roughness.tga",
+          "ElfSwordmaster_Armor_Legs_Metallic.tga.001"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "elf_swordmaster_armor_elbow_r",
+    "sex": "female",
+    "source": "elf_swordmaster_humanoid_rig_v1.blend",
+    "mesh": "Armor_Elbow_R",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 598,
+    "clearanceAdjustedVertices": 3,
+    "maskedBodyFaces": 260,
+    "drape": null,
+    "materials": [
+      {
+        "material": "UP_Elf_Armor_Arms",
+        "images": [
+          "ElfSwordmaster_Armor_Arms_BaseColor",
+          "ElfSwordmaster_Armor_Arms_Normal.tga",
+          "ElfSwordmaster_Armor_Arms_Roughness.tga",
+          "ElfSwordmaster_Armor_Arms_Metallic.tga"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Armor_Arms",
+        "images": [
+          "ElfSwordmaster_Armor_Arms_BaseColor",
+          "ElfSwordmaster_Armor_Arms_Normal.tga",
+          "ElfSwordmaster_Armor_Arms_Roughness.tga",
+          "ElfSwordmaster_Armor_Arms_Metallic.tga"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Armor_Arms",
+        "images": [
+          "ElfSwordmaster_Armor_Arms_BaseColor",
+          "ElfSwordmaster_Armor_Arms_Normal.tga",
+          "ElfSwordmaster_Armor_Arms_Roughness.tga",
+          "ElfSwordmaster_Armor_Arms_Metallic.tga"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "elf_swordmaster_armor_elbow_l",
+    "sex": "female",
+    "source": "elf_swordmaster_humanoid_rig_v1.blend",
+    "mesh": "Armor_Elbow_L",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 598,
+    "clearanceAdjustedVertices": 3,
+    "maskedBodyFaces": 220,
+    "drape": null,
+    "materials": [
+      {
+        "material": "UP_Elf_Armor_Arms",
+        "images": [
+          "ElfSwordmaster_Armor_Arms_BaseColor",
+          "ElfSwordmaster_Armor_Arms_Normal.tga",
+          "ElfSwordmaster_Armor_Arms_Roughness.tga",
+          "ElfSwordmaster_Armor_Arms_Metallic.tga"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Armor_Arms",
+        "images": [
+          "ElfSwordmaster_Armor_Arms_BaseColor",
+          "ElfSwordmaster_Armor_Arms_Normal.tga",
+          "ElfSwordmaster_Armor_Arms_Roughness.tga",
+          "ElfSwordmaster_Armor_Arms_Metallic.tga"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Armor_Arms",
+        "images": [
+          "ElfSwordmaster_Armor_Arms_BaseColor",
+          "ElfSwordmaster_Armor_Arms_Normal.tga",
+          "ElfSwordmaster_Armor_Arms_Roughness.tga",
+          "ElfSwordmaster_Armor_Arms_Metallic.tga"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "elf_swordmaster_armor_earrings",
+    "sex": "female",
+    "source": "elf_swordmaster_humanoid_rig_v1.blend",
+    "mesh": "Armor_Earrings",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 164,
+    "clearanceAdjustedVertices": 130,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "UP_Elf_Armor_Chest",
+        "images": [
+          "ElfSwordmaster_Armor_Chest_BaseColor",
+          "ElfSwordmaster_Armor_Chest_Normal.tga",
+          "ElfSwordmaster_Armor_Arms_Roughness.tga",
+          "ElfSwordmaster_Armor_Chest_Metallic.tga"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Armor_Chest",
+        "images": [
+          "ElfSwordmaster_Armor_Chest_BaseColor",
+          "ElfSwordmaster_Armor_Chest_Normal.tga",
+          "ElfSwordmaster_Armor_Arms_Roughness.tga",
+          "ElfSwordmaster_Armor_Chest_Metallic.tga"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Armor_Chest",
+        "images": [
+          "ElfSwordmaster_Armor_Chest_BaseColor",
+          "ElfSwordmaster_Armor_Chest_Normal.tga",
+          "ElfSwordmaster_Armor_Arms_Roughness.tga",
+          "ElfSwordmaster_Armor_Chest_Metallic.tga"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "elf_swordmaster_armor_cloth_front",
+    "sex": "female",
+    "source": "elf_swordmaster_humanoid_rig_v1.blend",
+    "mesh": "Armor_Cloth_Front",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 286,
+    "clearanceAdjustedVertices": 0,
+    "maskedBodyFaces": 0,
+    "drape": "skirt",
+    "materials": [
+      {
+        "material": "UP_Elf_Armor_Chest",
+        "images": [
+          "ElfSwordmaster_Armor_Chest_BaseColor",
+          "ElfSwordmaster_Armor_Chest_Normal.tga",
+          "ElfSwordmaster_Armor_Arms_Roughness.tga",
+          "ElfSwordmaster_Armor_Chest_Metallic.tga"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Armor_Arms.002",
+        "images": [
+          "ElfSwordmaster_Armor_Arms_BaseColor",
+          "ElfSwordmaster_Armor_Arms_Normal.tga",
+          "ElfSwordmaster_Armor_Arms_Roughness.tga",
+          "ElfSwordmaster_Armor_Arms_Metallic.tga"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Armor_Legs.002",
+        "images": [
+          "ElfSwordmaster_Armor_Legs",
+          "ElfSwordmaster_Armor_Legs_Normal.tga",
+          "ElfSwordmaster_Armor_Legs_Roughness.tga",
+          "ElfSwordmaster_Armor_Legs_Metallic.tga.001"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "elf_swordmaster_armor_cloth_back",
+    "sex": "female",
+    "source": "elf_swordmaster_humanoid_rig_v1.blend",
+    "mesh": "Armor_Cloth_Back",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 243,
+    "clearanceAdjustedVertices": 49,
+    "maskedBodyFaces": 0,
+    "drape": "skirt",
+    "materials": [
+      {
+        "material": "UP_Elf_Armor_Chest",
+        "images": [
+          "ElfSwordmaster_Armor_Chest_BaseColor",
+          "ElfSwordmaster_Armor_Chest_Normal.tga",
+          "ElfSwordmaster_Armor_Arms_Roughness.tga",
+          "ElfSwordmaster_Armor_Chest_Metallic.tga"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Armor_Arms.002",
+        "images": [
+          "ElfSwordmaster_Armor_Arms_BaseColor",
+          "ElfSwordmaster_Armor_Arms_Normal.tga",
+          "ElfSwordmaster_Armor_Arms_Roughness.tga",
+          "ElfSwordmaster_Armor_Arms_Metallic.tga"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Armor_Legs.002",
+        "images": [
+          "ElfSwordmaster_Armor_Legs",
+          "ElfSwordmaster_Armor_Legs_Normal.tga",
+          "ElfSwordmaster_Armor_Legs_Roughness.tga",
+          "ElfSwordmaster_Armor_Legs_Metallic.tga.001"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "elf_swordmaster_armor_chest",
+    "sex": "female",
+    "source": "elf_swordmaster_humanoid_rig_v1.blend",
+    "mesh": "Armor_Chest",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 6522,
+    "clearanceAdjustedVertices": 4605,
+    "maskedBodyFaces": 8066,
+    "drape": null,
+    "materials": [
+      {
+        "material": "UP_Elf_Armor_Chest",
+        "images": [
+          "ElfSwordmaster_Armor_Chest_BaseColor",
+          "ElfSwordmaster_Armor_Chest_Normal.tga",
+          "ElfSwordmaster_Armor_Arms_Roughness.tga",
+          "ElfSwordmaster_Armor_Chest_Metallic.tga"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Armor_Chest",
+        "images": [
+          "ElfSwordmaster_Armor_Chest_BaseColor",
+          "ElfSwordmaster_Armor_Chest_Normal.tga",
+          "ElfSwordmaster_Armor_Arms_Roughness.tga",
+          "ElfSwordmaster_Armor_Chest_Metallic.tga"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Armor_Chest",
+        "images": [
+          "ElfSwordmaster_Armor_Chest_BaseColor",
+          "ElfSwordmaster_Armor_Chest_Normal.tga",
+          "ElfSwordmaster_Armor_Arms_Roughness.tga",
+          "ElfSwordmaster_Armor_Chest_Metallic.tga"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "elf_swordmaster_armor_arms",
+    "sex": "female",
+    "source": "elf_swordmaster_humanoid_rig_v1.blend",
+    "mesh": "Armor_Arms",
+    "normalizationReference": "declared metre-scale source",
+    "unresolvedSourceImages": [],
+    "vertices": 2656,
+    "clearanceAdjustedVertices": 858,
+    "maskedBodyFaces": 11366,
+    "drape": null,
+    "materials": [
+      {
+        "material": "UP_Elf_Armor_Arms",
+        "images": [
+          "ElfSwordmaster_Armor_Arms_BaseColor",
+          "ElfSwordmaster_Armor_Arms_Normal.tga",
+          "ElfSwordmaster_Armor_Arms_Roughness.tga",
+          "ElfSwordmaster_Armor_Arms_Metallic.tga"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Armor_Arms",
+        "images": [
+          "ElfSwordmaster_Armor_Arms_BaseColor",
+          "ElfSwordmaster_Armor_Arms_Normal.tga",
+          "ElfSwordmaster_Armor_Arms_Roughness.tga",
+          "ElfSwordmaster_Armor_Arms_Metallic.tga"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "UP_Elf_Armor_Arms",
+        "images": [
+          "ElfSwordmaster_Armor_Arms_BaseColor",
+          "ElfSwordmaster_Armor_Arms_Normal.tga",
+          "ElfSwordmaster_Armor_Arms_Roughness.tga",
+          "ElfSwordmaster_Armor_Arms_Metallic.tga"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "legacy_male_humanhair",
+    "sex": "male",
+    "source": "player_male_humanoid_rig_v1.glb",
+    "mesh": "HumanHair",
+    "normalizationReference": "HumanBody.001",
+    "unresolvedSourceImages": [],
+    "vertices": 433,
+    "clearanceAdjustedVertices": 86,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "Human_Male_Hair",
+        "images": [],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "legacy_female_humanhair",
+    "sex": "female",
+    "source": "player_female_humanoid_rig_v1.glb",
+    "mesh": "HumanHair",
+    "normalizationReference": "HumanBody.001",
+    "unresolvedSourceImages": [],
+    "vertices": 433,
+    "clearanceAdjustedVertices": 27,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "Human_Male_Hair",
+        "images": [],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "dwight_bracelets",
+    "sex": "male",
+    "source": "dwight.glb",
+    "mesh": "Bracelets",
+    "normalizationReference": "Reference_Dwight Fairfield",
+    "sourceFrameErrorM": 1.02436406133255e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 570,
+    "clearanceAdjustedVertices": 538,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "dwight_Bracelets_1_MI_DFTorso01",
+        "images": [
+          "texture_041_T_DFTorso01_Next_BC.png",
+          "texture_042_T_DFTorso01_Next_N.png"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "dwight_pants",
+    "sex": "male",
+    "source": "dwight.glb",
+    "mesh": "Pants",
+    "normalizationReference": "Reference_Dwight Fairfield",
+    "sourceFrameErrorM": 1.02436406133255e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 2527,
+    "clearanceAdjustedVertices": 2037,
+    "maskedBodyFaces": 26731,
+    "drape": null,
+    "materials": [
+      {
+        "material": "dwight_Pants_0_MI_DFLegs01",
+        "images": [
+          "texture_038_T_DFLegs01_Next_BC.png",
+          "texture_039_T_DFLegs01_Next_N.png"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "dwight_shirt",
+    "sex": "male",
+    "source": "dwight.glb",
+    "mesh": "Shirt",
+    "normalizationReference": "Reference_Dwight Fairfield",
+    "sourceFrameErrorM": 1.02436406133255e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 9216,
+    "clearanceAdjustedVertices": 8303,
+    "maskedBodyFaces": 15489,
+    "drape": null,
+    "materials": [
+      {
+        "material": "dwight_Shirt_1_MI_DFTorso01",
+        "images": [
+          "texture_041_T_DFTorso01_Next_BC.png",
+          "texture_042_T_DFTorso01_Next_N.png"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "dwight_watch",
+    "sex": "male",
+    "source": "dwight.glb",
+    "mesh": "Watch",
+    "normalizationReference": "Reference_Dwight Fairfield",
+    "sourceFrameErrorM": 1.02436406133255e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 314,
+    "clearanceAdjustedVertices": 258,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "dwight_Watch_1_MI_DFTorso01",
+        "images": [
+          "texture_041_T_DFTorso01_Next_BC.png",
+          "texture_042_T_DFTorso01_Next_N.png"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "dwight_glasses",
+    "sex": "male",
+    "source": "dwight.glb",
+    "mesh": "Glasses",
+    "normalizationReference": "Reference_Dwight Fairfield",
+    "sourceFrameErrorM": 1.02436406133255e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 789,
+    "clearanceAdjustedVertices": 470,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "dwight_Glasses_0_MI_DFGlass00",
+        "images": [
+          "NPC_dwight_Glasses_0_BaseColor"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "dwight_Glasses_1_MI_DFGlasses00",
+        "images": [
+          "texture_035_T_DFGlasses01_BC.png",
+          "texture_036_T_DFGlasses01_N.png"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "dwight_hair",
+    "sex": "male",
+    "source": "dwight.glb",
+    "mesh": "Hair",
+    "normalizationReference": "Reference_Dwight Fairfield",
+    "sourceFrameErrorM": 1.02436406133255e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 8883,
+    "clearanceAdjustedVertices": 3813,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "dwight_Hair_0_MI_DFHair01_TAA",
+        "images": [
+          "NPC_dwight_Hair_0_BaseColor"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "aerith_aerith_hair_default",
+    "sex": "female",
+    "source": "aerith.glb",
+    "mesh": "Aerith Hair Default",
+    "normalizationReference": "Reference_Aerith Body",
+    "sourceFrameErrorM": 7.440624671139808e-07,
+    "unresolvedSourceImages": [],
+    "vertices": 63162,
+    "clearanceAdjustedVertices": 32250,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "aerith_Aerith Hair Default_0_Aerith Hair",
+        "images": [
+          "StandardPC0003_00_Hair_C.jpg.001",
+          "StandardAlphaPC0003_00_Hair_A.jpg.001"
+        ],
+        "method": "source diffuse/opacity recovery",
+        "recovery": {
+          "diffuse": "StandardPC0003_00_Hair_C.jpg",
+          "opacity": "StandardAlphaPC0003_00_Hair_A.jpg",
+          "reason": "source NPC GLB contains an entirely transparent hair bake"
+        }
+      },
+      {
+        "material": "aerith_Aerith Hair Default_1_Ribbon",
+        "images": [
+          "texture_066_Aerith_BodyB_D_Dirty.tga"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "aerith_Aerith Hair Default_2_Aerith CC Dress",
+        "images": [
+          "texture_074_T_CH_aerith_body_BC.png"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "aerith_aerith_pink_dress_boots",
+    "sex": "female",
+    "source": "aerith.glb",
+    "mesh": "Aerith Pink Dress - Boots",
+    "normalizationReference": "Reference_Aerith Body",
+    "sourceFrameErrorM": 7.440624671139808e-07,
+    "unresolvedSourceImages": [],
+    "vertices": 3400,
+    "clearanceAdjustedVertices": 396,
+    "maskedBodyFaces": 20435,
+    "drape": null,
+    "materials": [
+      {
+        "material": "aerith_Aerith Pink Dress - Boots_0_Aerith Jacket",
+        "images": [
+          "texture_078_Aerith_BodyB_D_Dirty.tga.001"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "aerith_aerith_pink_dress_bracelet",
+    "sex": "female",
+    "source": "aerith.glb",
+    "mesh": "Aerith Pink Dress - Bracelet",
+    "normalizationReference": "Reference_Aerith Body",
+    "sourceFrameErrorM": 7.440624671139808e-07,
+    "unresolvedSourceImages": [],
+    "vertices": 1500,
+    "clearanceAdjustedVertices": 689,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "aerith_Aerith Pink Dress - Bracelet_0_Aerith Pink Dress - Wristbands",
+        "images": [
+          "texture_086_Aerith_BodyA_D_Dirty.tga"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "aerith_aerith_pink_dress_dress",
+    "sex": "female",
+    "source": "aerith.glb",
+    "mesh": "Aerith Pink Dress - Dress",
+    "normalizationReference": "Reference_Aerith Body",
+    "sourceFrameErrorM": 7.440624671139808e-07,
+    "unresolvedSourceImages": [],
+    "vertices": 71147,
+    "clearanceAdjustedVertices": 22058,
+    "maskedBodyFaces": 10266,
+    "drape": "skirt",
+    "materials": [
+      {
+        "material": "aerith_Aerith Pink Dress - Dress_0_Aerith Pink Dress - Dress",
+        "images": [
+          "texture_086_Aerith_BodyA_D_Dirty.tga"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "aerith_Aerith Pink Dress - Dress_1_Alpha Detail",
+        "images": [
+          "texture_086_Aerith_BodyA_D_Dirty.tga"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "aerith_Aerith Pink Dress - Dress_2_Aerith Pink Dress Accs",
+        "images": [
+          "texture_086_Aerith_BodyA_D_Dirty.tga"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "aerith_aerith_pink_dress_jacket",
+    "sex": "female",
+    "source": "aerith.glb",
+    "mesh": "Aerith Pink Dress - Jacket",
+    "normalizationReference": "Reference_Aerith Body",
+    "sourceFrameErrorM": 7.440624671139808e-07,
+    "unresolvedSourceImages": [],
+    "vertices": 58419,
+    "clearanceAdjustedVertices": 54351,
+    "maskedBodyFaces": 12414,
+    "drape": null,
+    "materials": [
+      {
+        "material": "aerith_Aerith Pink Dress - Jacket_0_Aerith Pink Dress Accs",
+        "images": [
+          "texture_086_Aerith_BodyA_D_Dirty.tga"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "aerith_Aerith Pink Dress - Jacket_1_Aerith Jacket Leather",
+        "images": [
+          "texture_086_Aerith_BodyA_D_Dirty.tga"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "aerith_Aerith Pink Dress - Jacket_2_Aerith Jacket",
+        "images": [
+          "texture_078_Aerith_BodyB_D_Dirty.tga.001"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "aerith_aerith_pink_dress_necklace",
+    "sex": "female",
+    "source": "aerith.glb",
+    "mesh": "Aerith Pink Dress - Necklace",
+    "normalizationReference": "Reference_Aerith Body",
+    "sourceFrameErrorM": 7.440624671139808e-07,
+    "unresolvedSourceImages": [],
+    "vertices": 3669,
+    "clearanceAdjustedVertices": 576,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "aerith_Aerith Pink Dress - Necklace_0_Aerith Pink Dress Accs",
+        "images": [
+          "texture_086_Aerith_BodyA_D_Dirty.tga"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "aerith_Aerith Pink Dress - Necklace_1_Aerith Pink Dress Necklace Leather.001",
+        "images": [
+          "texture_098_Aerith_BodyA_D_Dirty.tga.001"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "aerith_Aerith Pink Dress - Necklace_2_Aerith Pink Dress Necklace Gold",
+        "images": [
+          "texture_098_Aerith_BodyA_D_Dirty.tga.001"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "omni_omni_man_bodysuit",
+    "sex": "male",
+    "source": "omni.glb",
+    "mesh": "Omni Man Bodysuit",
+    "normalizationReference": "Reference_Omni Man Body",
+    "sourceFrameErrorM": 2.4882957903663398e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 59419,
+    "clearanceAdjustedVertices": 48675,
+    "maskedBodyFaces": 37146,
+    "drape": null,
+    "materials": [
+      {
+        "material": "Cloth-1.001",
+        "images": [
+          "texture_039_MK1_Omni_Man_Clothing_D.001",
+          "texture_040_Clothing_Cloth_B.001"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "Default-5.001",
+        "images": [
+          "texture_039_MK1_Omni_Man_Clothing_D.001",
+          "Leather 1 B"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "omni_omni_man_gloves",
+    "sex": "male",
+    "source": "omni.glb",
+    "mesh": "Omni Man Gloves ",
+    "normalizationReference": "Reference_Omni Man Body",
+    "sourceFrameErrorM": 2.4882957903663398e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 16128,
+    "clearanceAdjustedVertices": 13870,
+    "maskedBodyFaces": 14722,
+    "drape": null,
+    "materials": [
+      {
+        "material": "Default-7.001",
+        "images": [
+          "texture_043_MK1_Omni_Man_Gear_D.001",
+          "Leather 1 B"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "omni_omni_man_shoes",
+    "sex": "male",
+    "source": "omni.glb",
+    "mesh": "Omni Man Shoes ",
+    "normalizationReference": "Reference_Omni Man Body",
+    "sourceFrameErrorM": 2.4882957903663398e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 7310,
+    "clearanceAdjustedVertices": 1621,
+    "maskedBodyFaces": 22360,
+    "drape": null,
+    "materials": [
+      {
+        "material": "Default-6.001",
+        "images": [
+          "texture_043_MK1_Omni_Man_Gear_D.001",
+          "Leather 1 B"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "omni_omniman_hair",
+    "sex": "male",
+    "source": "omni.glb",
+    "mesh": "OmniMan Hair",
+    "normalizationReference": "Reference_Omni Man Body",
+    "sourceFrameErrorM": 2.4882957903663398e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 49624,
+    "clearanceAdjustedVertices": 43335,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "MI_OmniMan_Hair001_Hair-1.002",
+        "images": [
+          "T_OmniMan_Hair001_Dout-T_OmniMan_Hair001_Dou_opat"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "MI_OmniManWhite_Hair001_Hair-1.002",
+        "images": [
+          "T_OmniManWhite_Hair001_Dout-T_OmniManWhite_Hair001_Dout_opa"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "omni_omniman_mustache_8799_002",
+    "sex": "male",
+    "source": "omni.glb",
+    "mesh": "OmniMan Mustache_8799.002",
+    "normalizationReference": "Reference_Omni Man Body",
+    "sourceFrameErrorM": 2.4882957903663398e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 8895,
+    "clearanceAdjustedVertices": 2949,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "MI_MI_OmniMan_Moustache-1.002",
+        "images": [
+          "T_OmniMan_Moustache001_D_2out-T_OmniMan_Moustache001_D_2out_opa"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "aloy_horizon_forbidden_west_aloy_hair_mesh",
+    "sex": "female",
+    "source": "aloy.glb",
+    "mesh": "Horizon Forbidden West - Aloy Hair Mesh",
+    "normalizationReference": "Reference_Aloy Mesh",
+    "sourceFrameErrorM": 1.0225860836671873e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 179697,
+    "clearanceAdjustedVertices": 67456,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "01_-_Default-1",
+        "images": [
+          "Hairs_Aloy_0_ALBEDO-Hairs_Aloy_1_ALBEDO_Cutout",
+          "Hairs_Aloy_ROUGHNESS",
+          "Hairs_Aloy_NORM"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "Material_#4134-1",
+        "images": [
+          "Hairs_Aloy_Details_ALBEDO"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "aloy_horizon_forbidden_west_aloy_hair_nora_head_gear_mesh",
+    "sex": "female",
+    "source": "aloy.glb",
+    "mesh": "Horizon Forbidden West - Aloy Hair Nora Head gear Mesh",
+    "normalizationReference": "Reference_Aloy Mesh",
+    "sourceFrameErrorM": 1.0225860836671873e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 3834,
+    "clearanceAdjustedVertices": 2118,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "material_D7EF_2EF_Headgear-1",
+        "images": [
+          "texture_074_Aloy_Nora_Anointed_Headgear_ALBEDO",
+          "Aloy_Nora_Anointed_Headgear_METALLICITY-Aloy_Nora_Anointed_Headgear_ROUGHNESS",
+          "texture_073_Aloy_Nora_Anointed_Headgear_NORM"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "aloy_horizon_forbidden_west_aloy_nora_belt_mesh",
+    "sex": "female",
+    "source": "aloy.glb",
+    "mesh": "Horizon Forbidden West - Aloy Nora Belt Mesh",
+    "normalizationReference": "Reference_Aloy Mesh",
+    "sourceFrameErrorM": 1.0225860836671873e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 10163,
+    "clearanceAdjustedVertices": 4315,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "material_D7EF_31C_Skirt-8",
+        "images": [
+          "texture_093_Aloy_Nora_Anointed_Skirt_ALBEDO",
+          "Aloy_Nora_Anointed_Skirt__METALLICTY-Aloy_Nora_Anointed_Skirt__ROUGHNESS",
+          "texture_092_Aloy_Nora_Anointed_Skirt_NORM"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "material_D7EF_3B8_Belts-15",
+        "images": [
+          "texture_082_Aloy_Nora_Anointed_Belts_ALBEDO",
+          "Aloy_Nora_Anointed_Belts_METALLICITY-Aloy_Nora_Anointed_Belts_ROUGHNESS",
+          "texture_081_Aloy_Nora_Anointed_Belts_NORM"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "aloy_horizon_forbidden_west_aloy_nora_pants_mesh",
+    "sex": "female",
+    "source": "aloy.glb",
+    "mesh": "Horizon Forbidden West - Aloy Nora Pants Mesh",
+    "normalizationReference": "Reference_Aloy Mesh",
+    "sourceFrameErrorM": 1.0225860836671873e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 51244,
+    "clearanceAdjustedVertices": 25735,
+    "maskedBodyFaces": 22952,
+    "drape": null,
+    "materials": [
+      {
+        "material": "material_D7EF_308_Pants-1",
+        "images": [
+          "texture_078_Aloy_Nora_Anointed_Pants_ALBEDO",
+          "Aloy_Nora_Anointed_Pant_METALLICITY-Aloy_Nora_Anointed_Pants__ROUGHNESS",
+          "texture_077_Aloy_Nora_Anointed_Pants_NORM"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "material_D7EF_3B8_Belts-9",
+        "images": [
+          "texture_082_Aloy_Nora_Anointed_Belts_ALBEDO",
+          "texture_081_Aloy_Nora_Anointed_Belts_NORM"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "material_D7EF_363_Fur-3",
+        "images": [
+          "Aloy_Nora_Anointed_Fur_ALBEDO-Aloy_Nora_Anointed_Fur_ALBEDO_Cutout",
+          "Aloy_Nora_Anointed_Fur_0_NORM"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "aloy_horizon_forbidden_west_aloy_nora_sleeves_mesh",
+    "sex": "female",
+    "source": "aloy.glb",
+    "mesh": "Horizon Forbidden West - Aloy Nora sleeves Mesh",
+    "normalizationReference": "Reference_Aloy Mesh",
+    "sourceFrameErrorM": 1.0225860836671873e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 31662,
+    "clearanceAdjustedVertices": 26878,
+    "maskedBodyFaces": 8576,
+    "drape": null,
+    "materials": [
+      {
+        "material": "material_D7EF_3D8_Sleeves-1",
+        "images": [
+          "texture_097_Aloy_Nora_Anointed_Sleeves_ALBEDO",
+          "Aloy_Nora_Anointed_Sleeve_METALLICITY-Aloy_Nora_Anointed_Sleeve_ROUGHNESS",
+          "texture_096_Aloy_Nora_Anointed_Sleeves_NORM"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "material_D7EF_3B8_Belts-17",
+        "images": [
+          "texture_082_Aloy_Nora_Anointed_Belts_ALBEDO",
+          "Aloy_Nora_Anointed_Belts_METALLICITY-Aloy_Nora_Anointed_Belts_ROUGHNESS",
+          "texture_081_Aloy_Nora_Anointed_Belts_NORM"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "material_D7EF_363_Fur-5",
+        "images": [
+          "Aloy_Nora_Anointed_Fur_ALBEDO-Aloy_Nora_Anointed_Fur_ALBEDO_Cutout",
+          "Aloy_Nora_Anointed_Fur_1_NORM"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "aloy_horizon_forbidden_west_aloy_nora_under_amour_mesh",
+    "sex": "female",
+    "source": "aloy.glb",
+    "mesh": "Horizon Forbidden West - Aloy Nora under amour Mesh",
+    "normalizationReference": "Reference_Aloy Mesh",
+    "sourceFrameErrorM": 1.0225860836671873e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 37538,
+    "clearanceAdjustedVertices": 31864,
+    "maskedBodyFaces": 17781,
+    "drape": null,
+    "materials": [
+      {
+        "material": "material_D7EF_3B8_Belts-11",
+        "images": [
+          "texture_082_Aloy_Nora_Anointed_Belts_ALBEDO",
+          "Aloy_Nora_Anointed_Belts_METALLICITY-Aloy_Nora_Anointed_Belts_ROUGHNESS",
+          "texture_081_Aloy_Nora_Anointed_Belts_NORM"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "material_D7EF_249_Top-1",
+        "images": [
+          "texture_089_Aloy_Nora_Anointed_Top_ALBEDO",
+          "Aloy_Nora_Anointed_Top__METALLICITY-Aloy_Nora_Anointed_Top_ROUGHNESS",
+          "texture_088_Aloy_Nora_Anointed_Top_NORM"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "material_D7EF_3B8_Belts-10",
+        "images": [
+          "texture_082_Aloy_Nora_Anointed_Belts_ALBEDO",
+          "Aloy_Nora_Anointed_Belts_METALLICITY-Aloy_Nora_Anointed_Belts_ROUGHNESS",
+          "texture_081_Aloy_Nora_Anointed_Belts_NORM"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "material_D7EF_363_Fur-4",
+        "images": [
+          "Aloy_Nora_Anointed_Fur_ALBEDO-Aloy_Nora_Anointed_Fur_ALBEDO_Cutout",
+          "Aloy_Nora_Anointed_Fur_0_NORM"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "quentin_pants_1",
+    "sex": "male",
+    "source": "quentin.glb",
+    "mesh": "Pants 1",
+    "normalizationReference": "Reference_Quentin",
+    "sourceFrameErrorM": 1.1770498737945583e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 2499,
+    "clearanceAdjustedVertices": 1944,
+    "maskedBodyFaces": 26638,
+    "drape": null,
+    "materials": [
+      {
+        "material": "quentin_Pants 1_2_MI_QSLegs01",
+        "images": [
+          "texture_038_T_QSLegs01_BC.png",
+          "texture_040_T_QSLegs01_N.png"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "quentin_shirt_1",
+    "sex": "male",
+    "source": "quentin.glb",
+    "mesh": "Shirt 1",
+    "normalizationReference": "Reference_Quentin",
+    "sourceFrameErrorM": 1.1770498737945583e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 8605,
+    "clearanceAdjustedVertices": 6175,
+    "maskedBodyFaces": 20003,
+    "drape": null,
+    "materials": [
+      {
+        "material": "quentin_Shirt 1_0_MI_QSTorso01",
+        "images": [
+          "texture_035_T_QSTorso01_BC.png",
+          "texture_036_T_QSTorso01_N.png"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "quentin_hair_1",
+    "sex": "male",
+    "source": "quentin.glb",
+    "mesh": "Hair 1",
+    "normalizationReference": "Reference_Quentin",
+    "sourceFrameErrorM": 1.1770498737945583e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 4992,
+    "clearanceAdjustedVertices": 1630,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "quentin_Hair 1_0_MI_QSHair01",
+        "images": [
+          "texture_033_T_CMMHair_05_BC.png"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "jill_jill_accessories_mesh",
+    "sex": "female",
+    "source": "jill.glb",
+    "mesh": "Jill-Accessories Mesh",
+    "normalizationReference": "Reference_Jill Valentine Mesh",
+    "sourceFrameErrorM": 1.4919751895745145e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 18971,
+    "clearanceAdjustedVertices": 8793,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "Asset-1",
+        "images": [
+          "texture_097_Asset_diffuse",
+          "Asset_metalness-Asset_roughness"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "jill_jill_bandage_mesh",
+    "sex": "female",
+    "source": "jill.glb",
+    "mesh": "Jill-Bandage Mesh",
+    "normalizationReference": "Reference_Jill Valentine Mesh",
+    "sourceFrameErrorM": 1.4919751895745145e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 1755,
+    "clearanceAdjustedVertices": 1009,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "Cloth-5",
+        "images": [
+          "texture_101_Cloth_diffuse",
+          "texture_102_Cloth_roughness",
+          "texture_100_Cloth_normal"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "jill_jill_boot_mesh",
+    "sex": "female",
+    "source": "jill.glb",
+    "mesh": "Jill-Boot Mesh",
+    "normalizationReference": "Reference_Jill Valentine Mesh",
+    "sourceFrameErrorM": 1.4919751895745145e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 6136,
+    "clearanceAdjustedVertices": 388,
+    "maskedBodyFaces": 21278,
+    "drape": null,
+    "materials": [
+      {
+        "material": "Shoes-1",
+        "images": [
+          "texture_104_Shoes_diffuse",
+          "texture_105_Shoes_roughness",
+          "texture_103_Shoes_normal"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "jill_jill_bottum_mesh",
+    "sex": "female",
+    "source": "jill.glb",
+    "mesh": "Jill-Bottum Mesh",
+    "normalizationReference": "Reference_Jill Valentine Mesh",
+    "sourceFrameErrorM": 1.4919751895745145e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 5802,
+    "clearanceAdjustedVertices": 4902,
+    "maskedBodyFaces": 6736,
+    "drape": null,
+    "materials": [
+      {
+        "material": "Cloth-6",
+        "images": [
+          "texture_101_Cloth_diffuse",
+          "texture_102_Cloth_roughness",
+          "texture_100_Cloth_normal"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "jill_jill_glove_mesh",
+    "sex": "female",
+    "source": "jill.glb",
+    "mesh": "Jill-Glove Mesh",
+    "normalizationReference": "Reference_Jill Valentine Mesh",
+    "sourceFrameErrorM": 1.4919751895745145e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 4344,
+    "clearanceAdjustedVertices": 3047,
+    "maskedBodyFaces": 8399,
+    "drape": null,
+    "materials": [
+      {
+        "material": "Cloth-7",
+        "images": [
+          "texture_101_Cloth_diffuse",
+          "texture_102_Cloth_roughness",
+          "texture_100_Cloth_normal"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "jill_jill_handband_mesh",
+    "sex": "female",
+    "source": "jill.glb",
+    "mesh": "Jill-HandBand Mesh",
+    "normalizationReference": "Reference_Jill Valentine Mesh",
+    "sourceFrameErrorM": 1.4919751895745145e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 453,
+    "clearanceAdjustedVertices": 225,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "Cloth-8",
+        "images": [
+          "texture_101_Cloth_diffuse",
+          "texture_102_Cloth_roughness",
+          "texture_100_Cloth_normal"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "jill_jill_top_mesh",
+    "sex": "female",
+    "source": "jill.glb",
+    "mesh": "Jill-Top Mesh",
+    "normalizationReference": "Reference_Jill Valentine Mesh",
+    "sourceFrameErrorM": 1.4919751895745145e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 20048,
+    "clearanceAdjustedVertices": 17421,
+    "maskedBodyFaces": 11451,
+    "drape": null,
+    "materials": [
+      {
+        "material": "Cloth-9",
+        "images": [
+          "texture_101_Cloth_diffuse",
+          "texture_102_Cloth_roughness",
+          "texture_100_Cloth_normal"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "jill_re3r_hair",
+    "sex": "female",
+    "source": "jill.glb",
+    "mesh": "RE3R Hair",
+    "normalizationReference": "Reference_Jill Valentine Mesh",
+    "sourceFrameErrorM": 1.4919751895745145e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 44780,
+    "clearanceAdjustedVertices": 21469,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "jill_RE3R Hair_0_Hairs-3",
+        "images": [
+          "texture_095_Hair_diffuse",
+          "texture_094_Hair_normal"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "vincent_hair",
+    "sex": "male",
+    "source": "vincent.glb",
+    "mesh": "Hair",
+    "normalizationReference": "Reference_Vincent Body",
+    "sourceFrameErrorM": 8.528284750308957e-07,
+    "unresolvedSourceImages": [],
+    "vertices": 8490,
+    "clearanceAdjustedVertices": 4692,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "vincent_Hair_0_5_hair_1_0_0.001",
+        "images": [
+          "NPC_vincent_Hair_0_BaseColor"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "vincent_head_wrap",
+    "sex": "male",
+    "source": "vincent.glb",
+    "mesh": "Head Wrap",
+    "normalizationReference": "Reference_Vincent Body",
+    "sourceFrameErrorM": 8.528284750308957e-07,
+    "unresolvedSourceImages": [],
+    "vertices": 292,
+    "clearanceAdjustedVertices": 240,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "vincent_Head Wrap_0_5_body_1_0_0",
+        "images": [
+          "NPC_vincent_Head Wrap_0_BaseColor"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "serena_serena_boots_mesh",
+    "sex": "female",
+    "source": "serena.glb",
+    "mesh": "Serena_Boots Mesh",
+    "normalizationReference": "Reference_Serena Mesh",
+    "sourceFrameErrorM": 6.609121983534447e-07,
+    "unresolvedSourceImages": [],
+    "vertices": 15128,
+    "clearanceAdjustedVertices": 6547,
+    "maskedBodyFaces": 22144,
+    "drape": null,
+    "materials": [
+      {
+        "material": "Serena_PartB_Serena_Boots.001-1",
+        "images": [
+          "texture_056_PC_019_A_Body_000_PartB_C",
+          "PC_019_A_Body_000_PartB_P_g-PC_019_A_Body_000_PartB_P_o",
+          "texture_055_PC_019_A_Body_000_PartB_N",
+          "texture_059_PC_019_A_Body_000_PartB_ID_s",
+          "texture_058_PC_019_A_Body_000_PartB_ID_g"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "serena_serena_chest_mesh",
+    "sex": "female",
+    "source": "serena.glb",
+    "mesh": "Serena_Chest Mesh",
+    "normalizationReference": "Reference_Serena Mesh",
+    "sourceFrameErrorM": 6.609121983534447e-07,
+    "unresolvedSourceImages": [],
+    "vertices": 32752,
+    "clearanceAdjustedVertices": 24313,
+    "maskedBodyFaces": 2283,
+    "drape": null,
+    "materials": [
+      {
+        "material": "Serena_PartB_Serena_Chest-1",
+        "images": [
+          "texture_056_PC_019_A_Body_000_PartB_C",
+          "texture_060_PC_019_A_Body_000_PartB_P_o",
+          "texture_055_PC_019_A_Body_000_PartB_N",
+          "texture_059_PC_019_A_Body_000_PartB_ID_s",
+          "texture_058_PC_019_A_Body_000_PartB_ID_g"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "serena_serena_dress_mesh",
+    "sex": "female",
+    "source": "serena.glb",
+    "mesh": "Serena_Dress Mesh",
+    "normalizationReference": "Reference_Serena Mesh",
+    "sourceFrameErrorM": 6.609121983534447e-07,
+    "unresolvedSourceImages": [],
+    "vertices": 16147,
+    "clearanceAdjustedVertices": 10352,
+    "maskedBodyFaces": 5901,
+    "drape": "skirt",
+    "materials": [
+      {
+        "material": "Serena_PartA_Sim-1",
+        "images": [
+          "texture_062_PC_019_A_Body_000_PartA_C",
+          "PC_019_A_Body_000_PartA_P-PC_019_A_Body_000_PartA_P_o",
+          "texture_061_PC_019_A_Body_000_PartA_N",
+          "texture_065_PC_019_A_Body_000_PartA_ID_s",
+          "texture_064_PC_019_A_Body_000_PartA_ID_g"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "serena_serena_hair_2_mesh",
+    "sex": "female",
+    "source": "serena.glb",
+    "mesh": "Serena_HaIR (2) Mesh",
+    "normalizationReference": "Reference_Serena Mesh",
+    "sourceFrameErrorM": 6.609121983534447e-07,
+    "unresolvedSourceImages": [],
+    "vertices": 29373,
+    "clearanceAdjustedVertices": 11790,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "PC_019_A_VAR_HEAD_000_Hair_MI-3",
+        "images": [
+          "PC_019_A0101_Hair_P_g",
+          "PC_019_A0101_Hair_P_o",
+          "PC_019_A0101_Hair_P_s"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "undeadf_undeadf_hair03_loose",
+    "sex": "female",
+    "source": "undeadf.glb",
+    "mesh": "UndeadF_Hair03_Loose",
+    "normalizationReference": "Reference_UndeadF_GEO",
+    "sourceFrameErrorM": 9.231695321894028e-07,
+    "unresolvedSourceImages": [],
+    "vertices": 723,
+    "clearanceAdjustedVertices": 354,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "undeadf_UndeadF_Hair03_Loose_4_UndeadF_Hair",
+        "images": [
+          "NPC_undeadf_UndeadF_Hair03_Loose_4_BaseColor"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "yuffie_yuffie_armor_6976_002",
+    "sex": "female",
+    "source": "yuffie.glb",
+    "mesh": "Yuffie Armor_6976.002",
+    "normalizationReference": "Reference_Genesis 8.1 Female Mesh",
+    "sourceFrameErrorM": 1.758874683946147e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 46233,
+    "clearanceAdjustedVertices": 23062,
+    "maskedBodyFaces": 11399,
+    "drape": null,
+    "materials": [
+      {
+        "material": "yuffie_Yuffie Armor Mesh_0_24_armor_0.8_0_0-5.002",
+        "images": [
+          "NPC_yuffie_Yuffie Armor Mesh_0_BaseColor"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "yuffie_Yuffie Armor Mesh_1_24_cothes_0.1_0_0-5.002",
+        "images": [
+          "NPC_yuffie_Yuffie Armor Mesh_1_BaseColor"
+        ],
+        "method": "preserved native PBR"
+      },
+      {
+        "material": "yuffie_Yuffie Armor Mesh_2_24_armor_0.8_0_0-4.002",
+        "images": [
+          "NPC_yuffie_Yuffie Armor Mesh_2_BaseColor"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "yuffie_yuffie_pants_mesh",
+    "sex": "female",
+    "source": "yuffie.glb",
+    "mesh": "Yuffie Pants Mesh",
+    "normalizationReference": "Reference_Genesis 8.1 Female Mesh",
+    "sourceFrameErrorM": 1.758874683946147e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 10833,
+    "clearanceAdjustedVertices": 10569,
+    "maskedBodyFaces": 1559,
+    "drape": null,
+    "materials": [
+      {
+        "material": "yuffie_Yuffie Pants Mesh_0_25_pants_0.35_0_0-4.002",
+        "images": [
+          "NPC_yuffie_Yuffie Pants Mesh_0_BaseColor"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "yuffie_yuffie_shoes_mesh",
+    "sex": "female",
+    "source": "yuffie.glb",
+    "mesh": "Yuffie Shoes Mesh",
+    "normalizationReference": "Reference_Genesis 8.1 Female Mesh",
+    "sourceFrameErrorM": 1.758874683946147e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 7957,
+    "clearanceAdjustedVertices": 1862,
+    "maskedBodyFaces": 23315,
+    "drape": null,
+    "materials": [
+      {
+        "material": "yuffie_Yuffie Shoes Mesh_0_25_pants_0.35_0_0-5.002",
+        "images": [
+          "NPC_yuffie_Yuffie Shoes Mesh_0_BaseColor"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "yuffie_yuffie_top_1988_002",
+    "sex": "female",
+    "source": "yuffie.glb",
+    "mesh": "Yuffie Top_1988.002",
+    "normalizationReference": "Reference_Genesis 8.1 Female Mesh",
+    "sourceFrameErrorM": 1.758874683946147e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 8527,
+    "clearanceAdjustedVertices": 7619,
+    "maskedBodyFaces": 8500,
+    "drape": null,
+    "materials": [
+      {
+        "material": "yuffie_Yuffie Top Mesh_0_24_cothes_0.1_0_0-6.002",
+        "images": [
+          "NPC_yuffie_Yuffie Top Mesh_0_BaseColor"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "yuffie_yuffie_hair_mesh",
+    "sex": "female",
+    "source": "yuffie.glb",
+    "mesh": "Yuffie Hair Mesh",
+    "normalizationReference": "Reference_Genesis 8.1 Female Mesh",
+    "sourceFrameErrorM": 1.758874683946147e-06,
+    "unresolvedSourceImages": [],
+    "vertices": 33844,
+    "clearanceAdjustedVertices": 21940,
+    "maskedBodyFaces": 0,
+    "drape": null,
+    "materials": [
+      {
+        "material": "DaniHairShader-1.002",
+        "images": [
+          "YFH_D-YFH_O"
+        ],
+        "method": "preserved native PBR"
+      }
+    ],
+    "status": "converted"
+  },
+  {
+    "id": "work_shirt",
+    "sex": "male",
+    "source": "Blender Human Base Meshes v1.4.1",
+    "mesh": "HumanBody surface",
+    "method": "duplicate, offset 12mm, solidify 3mm, inherited skin weights",
+    "vertices": 4324,
+    "status": "converted"
+  },
+  {
+    "id": "work_trousers",
+    "sex": "male",
+    "source": "Blender Human Base Meshes v1.4.1",
+    "mesh": "HumanBody surface",
+    "method": "duplicate, offset 6mm, solidify 3mm, inherited skin weights",
+    "vertices": 5318,
+    "status": "converted"
+  },
+  {
+    "id": "deluxe_bunny_suit_top",
+    "sex": "male",
+    "source": "Blender Human Base Meshes v1.4.1",
+    "mesh": "HumanBody surface",
+    "method": "duplicate, offset 12mm, solidify 3mm, inherited skin weights",
+    "vertices": 4324,
+    "status": "converted"
+  },
+  {
+    "id": "deluxe_bunny_suit_legs",
+    "sex": "male",
+    "source": "Blender Human Base Meshes v1.4.1",
+    "mesh": "HumanBody surface",
+    "method": "duplicate, offset 6mm, solidify 3mm, inherited skin weights",
+    "vertices": 5318,
+    "status": "converted"
+  },
+  {
+    "id": "work_shirt",
+    "sex": "female",
+    "source": "Blender Human Base Meshes v1.4.1",
+    "mesh": "HumanBody surface",
+    "method": "duplicate, offset 12mm, solidify 3mm, inherited skin weights",
+    "vertices": 4998,
+    "status": "converted"
+  },
+  {
+    "id": "work_trousers",
+    "sex": "female",
+    "source": "Blender Human Base Meshes v1.4.1",
+    "mesh": "HumanBody surface",
+    "method": "duplicate, offset 6mm, solidify 3mm, inherited skin weights",
+    "vertices": 5361,
+    "status": "converted"
+  },
+  {
+    "id": "deluxe_bunny_suit_top",
+    "sex": "female",
+    "source": "Blender Human Base Meshes v1.4.1",
+    "mesh": "HumanBody surface",
+    "method": "duplicate, offset 12mm, solidify 3mm, inherited skin weights",
+    "vertices": 4998,
+    "status": "converted"
+  },
+  {
+    "id": "deluxe_bunny_suit_legs",
+    "sex": "female",
+    "source": "Blender Human Base Meshes v1.4.1",
+    "mesh": "HumanBody surface",
+    "method": "duplicate, offset 6mm, solidify 3mm, inherited skin weights",
+    "vertices": 5361,
+    "status": "converted"
+  }
+]

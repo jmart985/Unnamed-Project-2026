@@ -54,8 +54,7 @@ public partial class PlayerCharacter : CharacterBody3D
 	[Export] public bool LeftShieldEquipped { get; set; }
 	[Export] public bool RightShieldEquipped { get; set; }
 
-	private const string MalePlayerModelPath = "res://assets/humanoids/human/player_male_humanoid_rig_v1.glb";
-	private const string FemalePlayerModelPath = "res://assets/humanoids/human/player_female_humanoid_rig_v1.glb";
+	private PlayerAppearanceLayers? _appearanceLayers;
 	private Vector3 _lastGroundedPosition;
 	private double _attackCooldownRemaining;
 	private PlayerBodyRig? _body;
@@ -63,13 +62,6 @@ public partial class PlayerCharacter : CharacterBody3D
 	private Skeleton3D? _visualSkeleton;
 	private AnimationPlayer? _visualAnimationPlayer;
 	private UpperBodyAttackAnimator? _upperBodyAttackAnimator;
-	private Node3D? _shirtMesh;
-	private Node3D? _shirtDetailsMesh;
-	private Node3D? _trousersMesh;
-	private Node3D? _beltMesh;
-	private Node3D? _beltBuckleMesh;
-	private Node3D[] _deluxeBunnyTopMeshes = [];
-	private Node3D[] _deluxeBunnyLegsMeshes = [];
 	private Node3D? _toolAnchor;
 	private Node3D _axeView = null!;
 	private bool _axeEquipped;
@@ -151,9 +143,8 @@ public partial class PlayerCharacter : CharacterBody3D
 		_visualSkeleton = null;
 		_visualAnimationPlayer = null;
 		_upperBodyAttackAnimator = null;
-		_shirtMesh = _shirtDetailsMesh = _trousersMesh = _beltMesh = _beltBuckleMesh = _toolAnchor = null;
-		_deluxeBunnyTopMeshes = [];
-		_deluxeBunnyLegsMeshes = [];
+		_appearanceLayers = null;
+		_toolAnchor = null;
 
 		var proportions = PlayerBodyProportions.From(profile);
 		if (!TryBuildImportedHumanoid(profile, proportions))
@@ -177,7 +168,7 @@ public partial class PlayerCharacter : CharacterBody3D
 
 	private bool TryBuildImportedHumanoid(PlayerCharacterProfile profile, PlayerBodyProportions proportions)
 	{
-		var assetPath = profile.Sex == PlayerSex.Male ? MalePlayerModelPath : FemalePlayerModelPath;
+		var assetPath = PlayerAppearanceAssets.BodyPath(profile.Sex);
 		if (!ResourceLoader.Exists(assetPath) || GD.Load<PackedScene>(assetPath) is not { } packed)
 		{
 			GD.PushWarning($"Player humanoid model '{assetPath}' is unavailable; using the procedural player visual.");
@@ -208,18 +199,11 @@ public partial class PlayerCharacter : CharacterBody3D
 		_visualModelRoot = adapter;
 		_visualSkeleton = skeleton;
 		_visualAnimationPlayer = animationPlayer;
+		_appearanceLayers = new PlayerAppearanceLayers(model, skeleton, profile);
 		// Evaluate imported animation before procedural look/attack poses. Otherwise
 		// idle processing runs after _PhysicsProcess and erases the head-look overlay.
 		animationPlayer.CallbackModeProcess = AnimationMixer.AnimationCallbackModeProcess.Manual;
 		PresentationModelAssetPath = assetPath;
-		_shirtMesh = model.FindChild("HumanWorkShirt", recursive: true, owned: false) as Node3D;
-		_shirtDetailsMesh = model.FindChild("HumanWorkShirtDetails", recursive: true, owned: false) as Node3D;
-		_trousersMesh = model.FindChild("HumanWorkTrousers", recursive: true, owned: false) as Node3D;
-		_beltMesh = model.FindChild("HumanWorkBelt", recursive: true, owned: false) as Node3D;
-		_beltBuckleMesh = model.FindChild("HumanWorkBeltBuckle", recursive: true, owned: false) as Node3D;
-		_deluxeBunnyTopMeshes = FindClothingMeshes(model,
-			"HumanDeluxeBunnySuitJacket", "HumanDeluxeBunnySuitVest", "HumanDeluxeBunnySuitEars");
-		_deluxeBunnyLegsMeshes = FindClothingMeshes(model, "HumanDeluxeBunnySuitStockings");
 		_toolAnchor = model.FindChild("anchor_hand_r", recursive: true, owned: false) as Node3D;
 		_modelAnimator.Bind(animationPlayer, "humanoid", false, MovementSpeed);
 		animationPlayer.Advance(0);
@@ -228,7 +212,7 @@ public partial class PlayerCharacter : CharacterBody3D
 		return true;
 	}
 
-	private static Vector3 PlayerVisualScale(PlayerBodyProportions proportions)
+	internal static Vector3 PlayerVisualScale(PlayerBodyProportions proportions)
 	{
 		// The source meshes provide the body shape; creation sliders make bounded
 		// whole-body proportion adjustments while the physics capsule stays separate.
@@ -289,53 +273,20 @@ public partial class PlayerCharacter : CharacterBody3D
 		ApplyAxeVisibility();
 	}
 
-	public bool IsClothingVisibleForTesting(string itemId) => itemId switch
-	{
-		ItemIds.WorkShirt => _shirtMesh?.Visible == true,
-		ItemIds.WorkTrousers => _trousersMesh?.Visible == true,
-		ItemIds.DeluxeBunnySuitTop => AreClothingMeshesVisible(_deluxeBunnyTopMeshes, 3),
-		ItemIds.DeluxeBunnySuitLegs => AreClothingMeshesVisible(_deluxeBunnyLegsMeshes, 1),
-		_ => false
-	};
+	public bool IsClothingVisibleForTesting(string itemId) => _appearanceLayers?.IsVisible(itemId) == true;
+	internal bool GenitaliaVisibleForTesting => _appearanceLayers?.GenitaliaVisible == true;
 
 	internal void SetPresentationMovementSpeedForTesting(float speed) => AdvancePresentationForTesting(speed, 0);
 
 	private void ApplyEquippedClothingVisibility()
 	{
-		var torso = _equippedClothing.GetValueOrDefault(EquipmentSlotIds.Torso);
-		var legs = _equippedClothing.GetValueOrDefault(EquipmentSlotIds.Legs);
-		var torsoVisible = !_hiddenEquipmentSlots.Contains(EquipmentSlotIds.Torso);
-		var legsVisible = !_hiddenEquipmentSlots.Contains(EquipmentSlotIds.Legs);
-		var wearingShirt = torsoVisible && torso == ItemIds.WorkShirt;
-		var wearingTrousers = legsVisible && legs == ItemIds.WorkTrousers;
-		if (_shirtMesh is not null) _shirtMesh.Visible = wearingShirt;
-		if (_shirtDetailsMesh is not null) _shirtDetailsMesh.Visible = wearingShirt;
-		if (_trousersMesh is not null) _trousersMesh.Visible = wearingTrousers;
-		if (_beltMesh is not null) _beltMesh.Visible = wearingTrousers;
-		if (_beltBuckleMesh is not null) _beltBuckleMesh.Visible = wearingTrousers;
-		SetClothingMeshesVisible(_deluxeBunnyTopMeshes, torsoVisible && torso == ItemIds.DeluxeBunnySuitTop);
-		SetClothingMeshesVisible(_deluxeBunnyLegsMeshes, legsVisible && legs == ItemIds.DeluxeBunnySuitLegs);
+		_appearanceLayers?.Apply(_equippedClothing, _hiddenEquipmentSlots);
 	}
 
 	private void ApplyAxeVisibility()
 	{
 		if (_axeView is not null)
 			_axeView.Visible = _axeEquipped && !_hiddenEquipmentSlots.Contains(EquipmentSlotIds.Tool);
-	}
-
-	private static Node3D[] FindClothingMeshes(Node root, params string[] names) => names
-		.Select(name => root.FindChild(name, recursive: true, owned: false) as Node3D)
-		.Where(node => node is not null)
-		.Cast<Node3D>()
-		.ToArray();
-
-	private static bool AreClothingMeshesVisible(IReadOnlyList<Node3D> meshes, int expectedCount) =>
-		meshes.Count == expectedCount && meshes.All(mesh => mesh.Visible);
-
-	private static void SetClothingMeshesVisible(IEnumerable<Node3D> meshes, bool visible)
-	{
-		foreach (var mesh in meshes)
-			mesh.Visible = visible;
 	}
 
 	// Walk drives hips, knees, shoulders, elbows, head and torso; an attack layer overrides the swinging arm

@@ -1,0 +1,1126 @@
+[
+  {
+    "id": "dwight_bracelets",
+    "name": "Dwight / Bracelets",
+    "slot": "accessory",
+    "sexes": [
+      "Male"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "dwight_pants",
+    "name": "Dwight / Pants",
+    "slot": "legs",
+    "sexes": [
+      "Male"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "dwight_shirt",
+    "name": "Dwight / Shirt",
+    "slot": "torso",
+    "sexes": [
+      "Male"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "dwight_watch",
+    "name": "Dwight / Watch",
+    "slot": "accessory",
+    "sexes": [
+      "Male"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "dwight_glasses",
+    "name": "Dwight / Glasses",
+    "slot": "head",
+    "sexes": [
+      "Male"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "dwight_hair",
+    "name": "Dwight / Hair",
+    "slot": "hair",
+    "sexes": [
+      "Male"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0
+  },
+  {
+    "id": "aerith_aerith_hair_default",
+    "name": "Aerith / Aerith Hair Default",
+    "slot": "hair",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0
+  },
+  {
+    "id": "aerith_aerith_pink_dress_boots",
+    "name": "Aerith / Aerith Pink Dress - Boots",
+    "slot": "feet",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "aerith_aerith_pink_dress_bracelet",
+    "name": "Aerith / Aerith Pink Dress - Bracelet",
+    "slot": "accessory",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "aerith_aerith_pink_dress_dress",
+    "name": "Aerith / Aerith Pink Dress - Dress",
+    "slot": "torso",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "aerith_aerith_pink_dress_jacket",
+    "name": "Aerith / Aerith Pink Dress - Jacket",
+    "slot": "outerwear",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "aerith_aerith_pink_dress_necklace",
+    "name": "Aerith / Aerith Pink Dress - Necklace",
+    "slot": "accessory",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "omni_omni_man_bodysuit",
+    "name": "Omni / Omni Man Bodysuit",
+    "slot": "torso",
+    "sexes": [
+      "Male"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "omni_omni_man_gloves",
+    "name": "Omni / Omni Man Gloves ",
+    "slot": "hands",
+    "sexes": [
+      "Male"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "omni_omni_man_shoes",
+    "name": "Omni / Omni Man Shoes ",
+    "slot": "feet",
+    "sexes": [
+      "Male"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "omni_omniman_hair",
+    "name": "Omni / OmniMan Hair",
+    "slot": "hair",
+    "sexes": [
+      "Male"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0
+  },
+  {
+    "id": "omni_omniman_mustache_8799_002",
+    "name": "Omni / OmniMan Mustache_8799.002",
+    "slot": "hair",
+    "sexes": [
+      "Male"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0
+  },
+  {
+    "id": "aloy_horizon_forbidden_west_aloy_hair_mesh",
+    "name": "Aloy / Horizon Forbidden West - Aloy Hair Mesh",
+    "slot": "hair",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0
+  },
+  {
+    "id": "aloy_horizon_forbidden_west_aloy_hair_nora_head_gear_mesh",
+    "name": "Aloy / Horizon Forbidden West - Aloy Hair Nora Head gear Mesh",
+    "slot": "hair",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0
+  },
+  {
+    "id": "aloy_horizon_forbidden_west_aloy_nora_belt_mesh",
+    "name": "Aloy / Horizon Forbidden West - Aloy Nora Belt Mesh",
+    "slot": "accessory",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "aloy_horizon_forbidden_west_aloy_nora_pants_mesh",
+    "name": "Aloy / Horizon Forbidden West - Aloy Nora Pants Mesh",
+    "slot": "legs",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "aloy_horizon_forbidden_west_aloy_nora_sleeves_mesh",
+    "name": "Aloy / Horizon Forbidden West - Aloy Nora sleeves Mesh",
+    "slot": "hands",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "aloy_horizon_forbidden_west_aloy_nora_under_amour_mesh",
+    "name": "Aloy / Horizon Forbidden West - Aloy Nora under amour Mesh",
+    "slot": "torso",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "quentin_pants_1",
+    "name": "Quentin / Pants 1",
+    "slot": "legs",
+    "sexes": [
+      "Male"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "quentin_shirt_1",
+    "name": "Quentin / Shirt 1",
+    "slot": "torso",
+    "sexes": [
+      "Male"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "quentin_hair_1",
+    "name": "Quentin / Hair 1",
+    "slot": "hair",
+    "sexes": [
+      "Male"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0
+  },
+  {
+    "id": "jill_jill_accessories_mesh",
+    "name": "Jill / Jill-Accessories Mesh",
+    "slot": "accessory",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "jill_jill_bandage_mesh",
+    "name": "Jill / Jill-Bandage Mesh",
+    "slot": "accessory",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "jill_jill_boot_mesh",
+    "name": "Jill / Jill-Boot Mesh",
+    "slot": "feet",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "jill_jill_bottum_mesh",
+    "name": "Jill / Jill-Bottum Mesh",
+    "slot": "legs",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "jill_jill_glove_mesh",
+    "name": "Jill / Jill-Glove Mesh",
+    "slot": "hands",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "jill_jill_handband_mesh",
+    "name": "Jill / Jill-HandBand Mesh",
+    "slot": "accessory",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "jill_jill_top_mesh",
+    "name": "Jill / Jill-Top Mesh",
+    "slot": "torso",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "jill_re3r_hair",
+    "name": "Jill / RE3R Hair",
+    "slot": "hair",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0
+  },
+  {
+    "id": "vincent_hair",
+    "name": "Vincent / Hair",
+    "slot": "hair",
+    "sexes": [
+      "Male"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0
+  },
+  {
+    "id": "vincent_head_wrap",
+    "name": "Vincent / Head Wrap",
+    "slot": "head",
+    "sexes": [
+      "Male"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "serena_serena_boots_mesh",
+    "name": "Serena / Serena_Boots Mesh",
+    "slot": "feet",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "serena_serena_chest_mesh",
+    "name": "Serena / Serena_Chest Mesh",
+    "slot": "torso",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "serena_serena_dress_mesh",
+    "name": "Serena / Serena_Dress Mesh",
+    "slot": "torso",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "serena_serena_hair_2_mesh",
+    "name": "Serena / Serena_HaIR (2) Mesh",
+    "slot": "hair",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0
+  },
+  {
+    "id": "undeadf_undeadf_hair03_loose",
+    "name": "Undeadf / UndeadF_Hair03_Loose",
+    "slot": "hair",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0
+  },
+  {
+    "id": "yuffie_yuffie_armor_6976_002",
+    "name": "Yuffie / Yuffie Armor_6976.002",
+    "slot": "torso",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "yuffie_yuffie_pants_mesh",
+    "name": "Yuffie / Yuffie Pants Mesh",
+    "slot": "legs",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "yuffie_yuffie_shoes_mesh",
+    "name": "Yuffie / Yuffie Shoes Mesh",
+    "slot": "feet",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "yuffie_yuffie_top_1988_002",
+    "name": "Yuffie / Yuffie Top_1988.002",
+    "slot": "torso",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "yuffie_yuffie_hair_mesh",
+    "name": "Yuffie / Yuffie Hair Mesh",
+    "slot": "hair",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0
+  },
+  {
+    "id": "bladedancer_bladedancermercenary_veil",
+    "name": "Bladedancer / BladeDancerMercenary_Veil",
+    "slot": "head",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "bladedancer_bladedancermercenary_panties",
+    "name": "Bladedancer / BladeDancerMercenary_Panties",
+    "slot": "legs",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "bladedancer_bladedancermercenary_earrings",
+    "name": "Bladedancer / BladeDancerMercenary_Earrings",
+    "slot": "accessory",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "bladedancer_bladedancermercenary_chest",
+    "name": "Bladedancer / BladeDancerMercenary_Chest",
+    "slot": "torso",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "bladedancer_bladedancermercenary_chain",
+    "name": "Bladedancer / BladeDancerMercenary_Chain",
+    "slot": "accessory",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "bladedancer_bladedancermercenary_bra",
+    "name": "Bladedancer / BladeDancerMercenary_Bra",
+    "slot": "torso",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "bladedancer_bladedancermercenary_boots",
+    "name": "Bladedancer / BladeDancerMercenary_Boots",
+    "slot": "feet",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "bladedancer_bladedancermercenary_belt",
+    "name": "Bladedancer / BladeDancerMercenary_Belt",
+    "slot": "accessory",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "bladedancer_bladedancermercenary_arms",
+    "name": "Bladedancer / BladeDancerMercenary_Arms",
+    "slot": "hands",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "bunny_akali_physiccage_veil",
+    "name": "Bunny Akali / PhysicCage_Veil",
+    "slot": "head",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "bunny_akali_choker",
+    "name": "Bunny Akali / choker",
+    "slot": "accessory",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "bunny_akali_bunnyakali_weapon_sickle_001",
+    "name": "Bunny Akali / BunnyAkali_Weapon_Sickle.001",
+    "slot": "accessory",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "bunny_akali_bunnyakali_weapon_sickle",
+    "name": "Bunny Akali / BunnyAkali_Weapon_Sickle",
+    "slot": "accessory",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "bunny_akali_bunnyakali_weapon_kunai_001",
+    "name": "Bunny Akali / BunnyAkali_Weapon_Kunai.001",
+    "slot": "accessory",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "bunny_akali_bunnyakali_weapon_kunai",
+    "name": "Bunny Akali / BunnyAkali_Weapon_Kunai",
+    "slot": "accessory",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "bunny_akali_bunnyakali_stockings_003",
+    "name": "Bunny Akali / BunnyAkali_Stockings.003",
+    "slot": "legs",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "bunny_akali_bunnyakali_stockings",
+    "name": "Bunny Akali / BunnyAkali_Stockings",
+    "slot": "legs",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "bunny_akali_bunnyakali_leotard_001",
+    "name": "Bunny Akali / BunnyAkali_Leotard.001",
+    "slot": "torso",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "bunny_akali_bunnyakali_leotard",
+    "name": "Bunny Akali / BunnyAkali_Leotard",
+    "slot": "torso",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "bunny_akali_bunnyakali_heels_003",
+    "name": "Bunny Akali / BunnyAkali_Heels.003",
+    "slot": "feet",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "bunny_akali_bunnyakali_heels",
+    "name": "Bunny Akali / BunnyAkali_Heels",
+    "slot": "feet",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "bunny_akali_bunnyakali_headwear_veil",
+    "name": "Bunny Akali / BunnyAkali_Headwear_Veil",
+    "slot": "head",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "bunny_akali_bunnyakali_headwear_bunnyears",
+    "name": "Bunny Akali / BunnyAkali_Headwear_BunnyEars",
+    "slot": "head",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "bunny_akali_bunnyakali_hairtie_003",
+    "name": "Bunny Akali / BunnyAkali_HairTie.003",
+    "slot": "hair",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0
+  },
+  {
+    "id": "bunny_akali_bunnyakali_hairtie",
+    "name": "Bunny Akali / BunnyAkali_HairTie",
+    "slot": "hair",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0
+  },
+  {
+    "id": "bunny_akali_bunnyakali_hair",
+    "name": "Bunny Akali / BunnyAkali_Hair",
+    "slot": "hair",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0
+  },
+  {
+    "id": "bunny_akali_bunnyakali_gloves_hands_001",
+    "name": "Bunny Akali / BunnyAkali_Gloves_Hands.001",
+    "slot": "hands",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "bunny_akali_bunnyakali_gloves_hands",
+    "name": "Bunny Akali / BunnyAkali_Gloves_Hands",
+    "slot": "hands",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "bunny_akali_bunnyakali_gloves_fans",
+    "name": "Bunny Akali / BunnyAkali_Gloves_Fans",
+    "slot": "hands",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "bunny_akali_bunnyakali_gloves_arms",
+    "name": "Bunny Akali / BunnyAkali_Gloves_Arms",
+    "slot": "hands",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "bunny_akali_bunnyakali_choker",
+    "name": "Bunny Akali / BunnyAkali_Choker",
+    "slot": "accessory",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "gris_grisswimsuit_thighstrap",
+    "name": "Gris / GrisSwimsuit_ThighStrap",
+    "slot": "legs",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "gris_grisswimsuit_main",
+    "name": "Gris / GrisSwimsuit_Main",
+    "slot": "torso",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "gris_grisswimsuit_choker",
+    "name": "Gris / GrisSwimsuit_Choker",
+    "slot": "accessory",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "deluxe_bunny_sourcevest",
+    "name": "Deluxe Bunny / SourceVest",
+    "slot": "torso",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "deluxe_bunny_sourcestockings",
+    "name": "Deluxe Bunny / SourceStockings",
+    "slot": "legs",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "deluxe_bunny_sourceleotard",
+    "name": "Deluxe Bunny / SourceLeotard",
+    "slot": "torso",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "deluxe_bunny_sourcejacket",
+    "name": "Deluxe Bunny / SourceJacket",
+    "slot": "outerwear",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "deluxe_bunny_sourcebunnyears",
+    "name": "Deluxe Bunny / SourceBunnyEars",
+    "slot": "head",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "radagon_male_radagon_hair_default",
+    "name": "Radagon Male / Radagon Hair - Default",
+    "slot": "hair",
+    "sexes": [
+      "Male"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0
+  },
+  {
+    "id": "radagon_male_radagon_default_pants",
+    "name": "Radagon Male / Radagon Default - Pants",
+    "slot": "legs",
+    "sexes": [
+      "Male"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "radagon_male_radagon_default_dress",
+    "name": "Radagon Male / Radagon Default - Dress",
+    "slot": "torso",
+    "sexes": [
+      "Male"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "elf_swordmaster_hair",
+    "name": "Elf Swordmaster / Hair",
+    "slot": "hair",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0
+  },
+  {
+    "id": "elf_swordmaster_armor_pauldron_r",
+    "name": "Elf Swordmaster / Armor_Pauldron_R",
+    "slot": "accessory",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "elf_swordmaster_armor_pauldron_l",
+    "name": "Elf Swordmaster / Armor_Pauldron_L",
+    "slot": "accessory",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "elf_swordmaster_armor_liner",
+    "name": "Elf Swordmaster / Armor_Liner",
+    "slot": "torso",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "elf_swordmaster_armor_leg_r",
+    "name": "Elf Swordmaster / Armor_Leg_R",
+    "slot": "legs",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "elf_swordmaster_armor_leg_l",
+    "name": "Elf Swordmaster / Armor_Leg_L",
+    "slot": "legs",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "elf_swordmaster_armor_knee_top_r",
+    "name": "Elf Swordmaster / Armor_Knee_Top_R",
+    "slot": "legs",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "elf_swordmaster_armor_knee_top_l",
+    "name": "Elf Swordmaster / Armor_Knee_Top_L",
+    "slot": "legs",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "elf_swordmaster_armor_knee_bottom_r",
+    "name": "Elf Swordmaster / Armor_Knee_Bottom_R",
+    "slot": "legs",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "elf_swordmaster_armor_knee_bottom_l",
+    "name": "Elf Swordmaster / Armor_Knee_Bottom_L",
+    "slot": "legs",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.5
+  },
+  {
+    "id": "elf_swordmaster_armor_hips",
+    "name": "Elf Swordmaster / Armor_Hips",
+    "slot": "accessory",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "elf_swordmaster_armor_elbow_r",
+    "name": "Elf Swordmaster / Armor_Elbow_R",
+    "slot": "hands",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "elf_swordmaster_armor_elbow_l",
+    "name": "Elf Swordmaster / Armor_Elbow_L",
+    "slot": "hands",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "elf_swordmaster_armor_earrings",
+    "name": "Elf Swordmaster / Armor_Earrings",
+    "slot": "accessory",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "elf_swordmaster_armor_cloth_front",
+    "name": "Elf Swordmaster / Armor_Cloth_Front",
+    "slot": "accessory",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "elf_swordmaster_armor_cloth_back",
+    "name": "Elf Swordmaster / Armor_Cloth_Back",
+    "slot": "accessory",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "elf_swordmaster_armor_chest",
+    "name": "Elf Swordmaster / Armor_Chest",
+    "slot": "torso",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "elf_swordmaster_armor_arms",
+    "name": "Elf Swordmaster / Armor_Arms",
+    "slot": "hands",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.5
+  },
+  {
+    "id": "deluxe_bunny_suit_top",
+    "name": "Deluxe Bunny Suit Top",
+    "slot": "torso",
+    "sexes": [
+      "Male",
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.8
+  },
+  {
+    "id": "deluxe_bunny_suit_legs",
+    "name": "Deluxe Bunny Suit Legs",
+    "slot": "legs",
+    "sexes": [
+      "Male",
+      "Female"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.65
+  },
+  {
+    "id": "legacy_male_humanhair",
+    "name": "Legacy Male / HumanHair",
+    "slot": "hair",
+    "sexes": [
+      "Male"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0
+  },
+  {
+    "id": "work_shirt",
+    "name": "Work Shirt",
+    "slot": "torso",
+    "sexes": [
+      "Male",
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0.7
+  },
+  {
+    "id": "work_trousers",
+    "name": "Work Trousers",
+    "slot": "legs",
+    "sexes": [
+      "Male",
+      "Female"
+    ],
+    "coversGenitalia": true,
+    "weightKg": 0.9
+  },
+  {
+    "id": "legacy_female_humanhair",
+    "name": "Legacy Female / HumanHair",
+    "slot": "hair",
+    "sexes": [
+      "Female"
+    ],
+    "coversGenitalia": false,
+    "weightKg": 0
+  }
+]

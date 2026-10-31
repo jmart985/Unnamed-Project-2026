@@ -18,8 +18,8 @@ internal static class PlayerWorkwearValidation
 
             foreach (var (sex, expectedPath) in new[]
             {
-                (PlayerSex.Male, "res://assets/humanoids/human/player_male_humanoid_rig_v1.glb"),
-                (PlayerSex.Female, "res://assets/humanoids/human/player_female_humanoid_rig_v1.glb")
+                (PlayerSex.Male, PlayerAppearanceAssets.BodyPath(PlayerSex.Male)),
+                (PlayerSex.Female, PlayerAppearanceAssets.BodyPath(PlayerSex.Female))
             })
             {
                 var profile = PlayerCharacterProfile.Create($"Workwear {sex}", sex: sex);
@@ -220,7 +220,9 @@ internal static class PlayerWorkwearValidation
                     $"{sex} saved equipment visibility was not restored independently on its matching player model");
             }
 
-            GD.Print("PLAYER WORKWEAR VALIDATION PASSED: male/female Blender base selection, imported animations, workwear and Deluxe Bunny outfit visibility, equipment swaps and save/load.");
+            foreach (var sex in new[] { PlayerSex.Male, PlayerSex.Female })
+                await ValidateIndependentEquipment(main, character, speciesCatalog, sex);
+            GD.Print("PLAYER WORKWEAR VALIDATION PASSED: male/female Blender bases, imported animations, independent boots/gloves/jackets, workwear and Deluxe Bunny outfit visibility, equipment swaps and save/load.");
             main.GetTree().Quit();
         }
         catch (Exception exception)
@@ -231,6 +233,57 @@ internal static class PlayerWorkwearValidation
         finally
         {
             character.QueueFree();
+        }
+    }
+
+    private static async Task ValidateIndependentEquipment(Main main, PlayerCharacter character,
+        SpeciesCatalog speciesCatalog, PlayerSex sex)
+    {
+        var boots = PlayerAppearanceCatalog.Default.ForSlot(EquipmentSlotIds.Feet, sex).First().Id;
+        var gloves = PlayerAppearanceCatalog.Default.ForSlot(EquipmentSlotIds.Hands, sex).First().Id;
+        var jacket = PlayerAppearanceCatalog.Default.ForSlot(EquipmentSlotIds.Outerwear, sex).FirstOrDefault()?.Id ?? "none";
+        var appearance = PlayerAppearance.Bare with
+        {
+            Torso = ItemIds.WorkShirt, Legs = ItemIds.WorkTrousers,
+            Feet = boots, Hands = gloves, Outerwear = jacket
+        };
+        var profile = PlayerCharacterProfile.Create($"Modular {sex}", sex: sex, appearance: appearance);
+        var session = NewGameSession.Create(speciesCatalog, profile);
+        var player = session.Player;
+        var speed = (float)speciesCatalog.GetRequired(player.SpeciesId).MovementSpeed;
+        character.BindPlayer(player.Id, profile, speed);
+        character.SetEquippedClothing(player.EquippedItems);
+        character.SetHiddenEquipmentSlots(player.HiddenEquipmentSlots);
+        await main.ToSignal(main.GetTree(), SceneTree.SignalName.ProcessFrame);
+        character.AdvancePresentationForTesting(speed * .5f, .2f);
+        Require(appearance.Equipment.Values.All(character.IsClothingVisibleForTesting),
+            $"{sex} independent pieces were not visible on the moving production player");
+        Require(new PlayerEquipmentService(session.World).SetVisibility(EquipmentSlotIds.Feet, false).Code
+            == PlayerEquipmentResultCode.VisibilityChanged, $"{sex} boots could not be hidden");
+        character.SetHiddenEquipmentSlots(player.HiddenEquipmentSlots);
+        character.AdvancePresentationForTesting(speed, .1f);
+        Require(!character.IsClothingVisibleForTesting(boots) && character.IsClothingVisibleForTesting(gloves)
+            && character.IsClothingVisibleForTesting(ItemIds.WorkShirt),
+            $"{sex} hiding boots affected other items during locomotion");
+        var restored = NewGameSession.Create(speciesCatalog, profile);
+        WorldSnapshotSerializer.Load(restored.World, WorldSnapshotSerializer.Serialize(session.World, 12), speciesCatalog);
+        var loaded = restored.World.Entities.Single(entity => entity.Id == restored.World.PlayerEntityId);
+        character.BindPlayer(loaded.Id, restored.World.PlayerProfile!, speed);
+        character.SetEquippedClothing(loaded.EquippedItems);
+        character.SetHiddenEquipmentSlots(loaded.HiddenEquipmentSlots);
+        await main.ToSignal(main.GetTree(), SceneTree.SignalName.ProcessFrame);
+        Require(!character.IsClothingVisibleForTesting(boots) && character.IsClothingVisibleForTesting(gloves)
+            && character.IsClothingVisibleForTesting(ItemIds.WorkShirt),
+            $"{sex} independent presentation was not restored from the save");
+        if (jacket != "none")
+        {
+            Require(character.IsClothingVisibleForTesting(jacket), "restored jacket is missing");
+            Require(new PlayerEquipmentService(restored.World).Unequip(EquipmentSlotIds.Outerwear).Code
+                == PlayerEquipmentResultCode.Unequipped, "jacket could not be unequipped");
+            character.SetEquippedClothing(loaded.EquippedItems);
+            Require(!character.IsClothingVisibleForTesting(jacket) && character.IsClothingVisibleForTesting(ItemIds.WorkShirt)
+                && loaded.Inventory.GetValueOrDefault(jacket) == 1,
+                "unequipping a jacket replaced the shirt or lost the carried item");
         }
     }
 

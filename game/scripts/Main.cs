@@ -6,7 +6,7 @@ namespace UnnamedProject2026;
 public partial class Main : Node3D
 {
 	[Export]
-	public bool SkipCharacterCreationForTesting { get; set; } = true;
+	public bool SkipCharacterCreationForTesting { get; set; } = false;
 
 	private readonly SimulationClock _clock = new();
 	private readonly SaveSlotStore _saveSlotStore = new();
@@ -80,7 +80,6 @@ public partial class Main : Node3D
 	private Label _muscleLabel = null!;
 	private Label _creationPreview = null!;
 	private Node3D _previewRoot = null!;
-	private double _previewTime;
 	private Label _creationError = null!;
 	private PlayerCharacterProfile? _playerProfile;
 	private int _sessionSeed = NewGameSession.DefaultSeed;
@@ -99,22 +98,22 @@ public partial class Main : Node3D
 		_controlsPanel = GetNode<Control>("Controls/Panel");
 		_playerCharacter = GetNode<PlayerCharacter>("PlayerCharacter");
 		_characterCreation = GetNode<CanvasLayer>("CharacterCreation");
-		_playerNameInput = GetNode<LineEdit>("CharacterCreation/Panel/Form/Name");
-		_heightChoice = GetNode<OptionButton>("CharacterCreation/Panel/Form/Height");
-		_bodyTypeChoice = GetNode<OptionButton>("CharacterCreation/Panel/Form/BodyType");
-		_sexChoice = GetNode<OptionButton>("CharacterCreation/Panel/Form/Sex");
-		_weightChoice = GetNode<HSlider>("CharacterCreation/Panel/Form/Weight");
-		_muscleChoice = GetNode<HSlider>("CharacterCreation/Panel/Form/Muscle");
-		_weightLabel = GetNode<Label>("CharacterCreation/Panel/Form/WeightLabel");
-		_muscleLabel = GetNode<Label>("CharacterCreation/Panel/Form/MuscleLabel");
-		_creationPreview = GetNode<Label>("CharacterCreation/Panel/Form/Preview");
-		_previewRoot = GetNode<Node3D>("CharacterCreation/Panel/Form/PreviewViewport/SubViewport/PreviewRoot");
+		_playerNameInput = GetNode<LineEdit>("CharacterCreation/Panel/Layout/Form/Fields/Name");
+		_heightChoice = GetNode<OptionButton>("CharacterCreation/Panel/Layout/Form/Fields/Height");
+		_bodyTypeChoice = GetNode<OptionButton>("CharacterCreation/Panel/Layout/Form/Fields/BodyType");
+		_sexChoice = GetNode<OptionButton>("CharacterCreation/Panel/Layout/Form/Fields/Sex");
+		_weightChoice = GetNode<HSlider>("CharacterCreation/Panel/Layout/Form/Fields/Weight");
+		_muscleChoice = GetNode<HSlider>("CharacterCreation/Panel/Layout/Form/Fields/Muscle");
+		_weightLabel = GetNode<Label>("CharacterCreation/Panel/Layout/Form/Fields/WeightLabel");
+		_muscleLabel = GetNode<Label>("CharacterCreation/Panel/Layout/Form/Fields/MuscleLabel");
+		_creationPreview = GetNode<Label>("CharacterCreation/Panel/Layout/PreviewColumn/Preview");
+		_previewRoot = GetNode<Node3D>("CharacterCreation/Panel/Layout/PreviewColumn/PreviewViewport/SubViewport/PreviewRoot");
 		_weightChoice.ValueChanged += value => { _weightLabel.Text = $"Weight: {value * 100:0}%"; UpdateCreationPreview(); };
 		_muscleChoice.ValueChanged += value => { _muscleLabel.Text = $"Muscle: {value * 100:0}%"; UpdateCreationPreview(); };
 		_heightChoice.ItemSelected += _ => UpdateCreationPreview();
 		_bodyTypeChoice.ItemSelected += _ => UpdateCreationPreview();
-		_sexChoice.ItemSelected += _ => UpdateCreationPreview();
-		_creationError = GetNode<Label>("CharacterCreation/Panel/Form/Error");
+		_sexChoice.ItemSelected += _ => { RefreshAppearanceChoices(); UpdateCreationPreview(); };
+		_creationError = GetNode<Label>("CharacterCreation/Panel/Layout/Form/Fields/Error");
 		_statusLabel = GetNode<Label>("Controls/Panel/Scroll/Margin/VBox/Status");
 		_pauseButton = GetNode<Button>("Controls/Panel/Scroll/Margin/VBox/Pause");
 		_entityList = GetNode<VBoxContainer>("Controls/Panel/Scroll/Margin/VBox/EntityList");
@@ -152,12 +151,12 @@ public partial class Main : Node3D
 		ConfigureWorldSelection();
 		ConfigureGameplayActions();
 		ApplyMenuState();
-		GetNode<Button>("CharacterCreation/Panel/Form/Start").Pressed += StartNewGame;
+		GetNode<Button>("CharacterCreation/Panel/Layout/Form/Fields/Start").Pressed += StartNewGame;
 		_controls.Visible = false;
 		_playerCharacter.Visible = false;
 		_playerCharacter.SetPhysicsProcess(false);
 		_playerCharacter.SetProcessUnhandledInput(false);
-		if (SkipCharacterCreationForTesting)
+		if (SkipCharacterCreationForTesting || OS.GetCmdlineUserArgs().Any(argument => argument.StartsWith("--validate-", StringComparison.Ordinal)))
 		{
 			_characterCreation.Visible = false;
 			StartSession(
@@ -223,6 +222,8 @@ public partial class Main : Node3D
 			Callable.From(RunPlayerWorkwearValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-character-lighting"))
 			Callable.From(RunCharacterLightingValidation).CallDeferred();
+		else if (OS.GetCmdlineUserArgs().Contains("--validate-character-appearance"))
+			Callable.From(RunCharacterAppearanceValidation).CallDeferred();
 	}
 
 	private void RunPlayerWorkwearValidation()
@@ -257,12 +258,6 @@ public partial class Main : Node3D
 	{
 		if (!_sessionActive)
 		{
-			if (_characterCreation.Visible && _previewRoot is not null)
-			{
-				_previewTime += Math.Max(0, delta);
-				_previewRoot.Rotation = new Vector3(0, (float)(_previewTime * 0.45), 0);
-				_previewRoot.Position = new Vector3(0, Mathf.Sin((float)_previewTime * 1.4f) * 0.025f, 0);
-			}
 			return;
 		}
 
@@ -428,45 +423,17 @@ public partial class Main : Node3D
 		_sexChoice.Select((int)PlayerSex.Female);
 		_weightChoice.Value = 0.5;
 		_muscleChoice.Value = 0.5;
+		ConfigureAppearanceEditor();
 		UpdateCreationPreview();
 	}
 
-	private void UpdateCreationPreview()
-	{
-		if (_creationPreview is null || _heightChoice.Selected < 0 || _bodyTypeChoice.Selected < 0 || _sexChoice.Selected < 0) return;
-		try
-		{
-			var profile = PlayerCharacterProfile.Create(
-				"Preview",
-				(PlayerHeight)_heightChoice.Selected,
-				(PlayerBodyType)_bodyTypeChoice.Selected,
-				(PlayerSex)_sexChoice.Selected,
-				_weightChoice.Value,
-				_muscleChoice.Value);
-			var body = PlayerBodyProportions.From(profile);
-			_creationPreview.Text = $"Preview: {body.Height:0.00}m tall · torso {body.TorsoWidth:0.00}m wide · limbs {body.LimbThickness:0.00}m";
-			foreach (var child in _previewRoot.GetChildren()) child.QueueFree();
-			var rig = new PlayerBodyRig(body);
-			_previewRoot.AddChild(rig.Root);
-			rig.Root.Position = new Vector3(0, -body.Height * 0.5f, 0);
-		}
-		catch (ArgumentException)
-		{
-			_creationPreview.Text = "Preview unavailable for the selected values.";
-		}
-	}
+	private void UpdateCreationPreview() => UpdateAppearancePreview();
 
 	private void StartNewGame()
 	{
 		try
 		{
-			var profile = PlayerCharacterProfile.Create(
-				_playerNameInput.Text,
-				(PlayerHeight)_heightChoice.Selected,
-				(PlayerBodyType)_bodyTypeChoice.Selected,
-				(PlayerSex)_sexChoice.Selected,
-				_weightChoice.Value,
-				_muscleChoice.Value);
+			var profile = ReadCreationProfile(_playerNameInput.Text);
 			StartSession(profile, NewGameSession.DefaultSeed, "New game started.", survivalGathering: true,
 				startStarterWildlifeAsFar: true);
 			_creationError.Text = string.Empty;
