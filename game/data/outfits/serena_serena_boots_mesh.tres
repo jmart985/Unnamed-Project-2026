@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EquipableItem" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/EquipableItem.cs" id="1"]
+[ext_resource type="Texture2D" path="res://assets/appearance/female/masks/serena_serena_boots_mesh.png" id="mask_female"]
+
+[resource]
+script = ExtResource("1")
+ItemId = "serena_serena_boots_mesh"
+ItemName = "Serena / Serena_Boots Mesh"
+Slot = 3
+MeshNodeNames = Array[String](["Appearance_serena_serena_boots_mesh"])
+FemaleModelPath = "res://assets/appearance/female/serena_serena_boots_mesh.glb"
+FemaleSkinMask = ExtResource("mask_female")

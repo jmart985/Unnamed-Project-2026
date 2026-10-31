@@ -7,6 +7,7 @@ public enum PlayerEquipmentResultCode
     AlreadyEquipped,
     NotEquipped,
     NotWearable,
+    IncompatibleBody,
     MissingItem,
     InventoryFull,
     Unavailable,
@@ -28,6 +29,9 @@ public sealed class PlayerEquipmentService(World world)
 
         var item = ItemCatalog.GetRequired(itemId!);
         var slot = item.EquipmentSlot!;
+        if (world.PlayerProfile is { } profile && PlayerAppearanceCatalog.Default.TryGet(item.Id, out var appearance)
+            && appearance is not null && !appearance.Sexes.Contains(profile.Sex))
+            return new(PlayerEquipmentResultCode.IncompatibleBody, "That item does not support this body.");
         if (player.EquippedItems.GetValueOrDefault(slot) == item.Id)
             return new(PlayerEquipmentResultCode.AlreadyEquipped, "That item is already equipped.");
         if (player.Inventory.GetValueOrDefault(item.Id) < 1)

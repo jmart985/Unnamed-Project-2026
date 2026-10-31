@@ -135,8 +135,7 @@ public sealed class EntityRecord
     internal bool HasVisibleEquipment(string slotId) => slotId switch
     {
         EquipmentSlotIds.Tool => EquippedTool is not null,
-        EquipmentSlotIds.Torso or EquipmentSlotIds.Legs => _equippedItems.ContainsKey(slotId),
-        _ => false
+        _ => EquipmentSlotIds.SupportsVisibility(slotId) && _equippedItems.ContainsKey(slotId)
     };
 
     internal bool SetEquipmentVisible(string slotId, bool visible)

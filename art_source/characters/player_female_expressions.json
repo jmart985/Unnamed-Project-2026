@@ -1,0 +1,122 @@
+[
+  {
+    "clip": "source_dwight_angry",
+    "source": "game\\assets\\humanoids\\human\\npc\\dwight.glb",
+    "sourceClip": "npc_face_angry",
+    "method": "facial morph to supported bone least-squares fit",
+    "sourceShape": "npc_face_angry",
+    "headAlignmentDegrees": 0,
+    "peakControlDisplacementM": 0.008458496771343102,
+    "maxRmsDisplacementErrorM": 0.000948826645743585
+  },
+  {
+    "clip": "source_dwight_blink",
+    "source": "game\\assets\\humanoids\\human\\npc\\dwight.glb",
+    "sourceClip": "npc_face_blink",
+    "method": "facial morph to supported bone least-squares fit",
+    "sourceShape": "npc_face_blink",
+    "headAlignmentDegrees": 0,
+    "peakControlDisplacementM": 0.0008717160960814614,
+    "maxRmsDisplacementErrorM": 0.00018764280753472365
+  },
+  {
+    "clip": "source_dwight_fear",
+    "source": "game\\assets\\humanoids\\human\\npc\\dwight.glb",
+    "sourceClip": "npc_face_fear",
+    "method": "facial morph to supported bone least-squares fit",
+    "sourceShape": "npc_face_fear",
+    "headAlignmentDegrees": 0,
+    "peakControlDisplacementM": 0.007116213181610242,
+    "maxRmsDisplacementErrorM": 0.00038622423058561306
+  },
+  {
+    "clip": "source_dwight_happy",
+    "source": "game\\assets\\humanoids\\human\\npc\\dwight.glb",
+    "sourceClip": "npc_face_happy",
+    "method": "facial morph to supported bone least-squares fit",
+    "sourceShape": "npc_face_happy",
+    "headAlignmentDegrees": 0,
+    "peakControlDisplacementM": 0.007550191774932378,
+    "maxRmsDisplacementErrorM": 0.0008290764182748875
+  },
+  {
+    "clip": "source_dwight_sad",
+    "source": "game\\assets\\humanoids\\human\\npc\\dwight.glb",
+    "sourceClip": "npc_face_sad",
+    "method": "facial morph to supported bone least-squares fit",
+    "sourceShape": "npc_face_sad",
+    "headAlignmentDegrees": 0,
+    "peakControlDisplacementM": 0.0070784263675350905,
+    "maxRmsDisplacementErrorM": 0.0010741316455796452
+  },
+  {
+    "clip": "source_dwight_surprised",
+    "source": "game\\assets\\humanoids\\human\\npc\\dwight.glb",
+    "sourceClip": "npc_face_surprised",
+    "method": "facial morph to supported bone least-squares fit",
+    "sourceShape": "npc_face_surprised",
+    "headAlignmentDegrees": 0,
+    "peakControlDisplacementM": 0.0027354003406146548,
+    "maxRmsDisplacementErrorM": 0.0007543367886388659
+  },
+  {
+    "clip": "source_yuffie_angry",
+    "source": "game\\assets\\humanoids\\human\\npc\\yuffie.glb",
+    "sourceClip": "npc_face_angry",
+    "method": "facial morph to supported bone least-squares fit",
+    "sourceShape": "npc_face_angry",
+    "headAlignmentDegrees": 0,
+    "peakControlDisplacementM": 0.009907572109463733,
+    "maxRmsDisplacementErrorM": 0.0008055343555112761
+  },
+  {
+    "clip": "source_yuffie_blink",
+    "source": "game\\assets\\humanoids\\human\\npc\\yuffie.glb",
+    "sourceClip": "npc_face_blink",
+    "method": "facial morph to supported bone least-squares fit",
+    "sourceShape": "npc_face_blink",
+    "headAlignmentDegrees": 0,
+    "peakControlDisplacementM": 0.0033469622989806525,
+    "maxRmsDisplacementErrorM": 0.000245083482289386
+  },
+  {
+    "clip": "source_yuffie_fear",
+    "source": "game\\assets\\humanoids\\human\\npc\\yuffie.glb",
+    "sourceClip": "npc_face_fear",
+    "method": "facial morph to supported bone least-squares fit",
+    "sourceShape": "npc_face_fear",
+    "headAlignmentDegrees": 0,
+    "peakControlDisplacementM": 0.003537088631888548,
+    "maxRmsDisplacementErrorM": 0.00019664683140371825
+  },
+  {
+    "clip": "source_yuffie_happy",
+    "source": "game\\assets\\humanoids\\human\\npc\\yuffie.glb",
+    "sourceClip": "npc_face_happy",
+    "method": "facial morph to supported bone least-squares fit",
+    "sourceShape": "npc_face_happy",
+    "headAlignmentDegrees": 0,
+    "peakControlDisplacementM": 0.009020387364646507,
+    "maxRmsDisplacementErrorM": 0.0006826082657769486
+  },
+  {
+    "clip": "source_yuffie_sad",
+    "source": "game\\assets\\humanoids\\human\\npc\\yuffie.glb",
+    "sourceClip": "npc_face_sad",
+    "method": "facial morph to supported bone least-squares fit",
+    "sourceShape": "npc_face_sad",
+    "headAlignmentDegrees": 0,
+    "peakControlDisplacementM": 0.008581291436320996,
+    "maxRmsDisplacementErrorM": 0.0008106874531599686
+  },
+  {
+    "clip": "source_yuffie_surprised",
+    "source": "game\\assets\\humanoids\\human\\npc\\yuffie.glb",
+    "sourceClip": "npc_face_surprised",
+    "method": "facial morph to supported bone least-squares fit",
+    "sourceShape": "npc_face_surprised",
+    "headAlignmentDegrees": 0,
+    "peakControlDisplacementM": 0.005524031678824408,
+    "maxRmsDisplacementErrorM": 0.0008700551924011534
+  }
+]

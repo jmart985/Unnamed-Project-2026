@@ -10,14 +10,14 @@ public partial class Main
         try
         {
             var previewViewport = GetNode<SubViewport>(
-                "CharacterCreation/Panel/Form/PreviewViewport/SubViewport");
+                "CharacterCreation/Panel/Layout/PreviewColumn/PreviewViewport/SubViewport");
             Require(previewViewport.OwnWorld3D
                 && previewViewport.World3D != GetViewport().World3D,
                 "character creation preview renders in an isolated 3D world");
 
             _playerNameInput.Text = "Survival profile";
             _sexChoice.Select((int)PlayerSex.Male);
-            GetNode<Button>("CharacterCreation/Panel/Form/Start")
+            GetNode<Button>("CharacterCreation/Panel/Layout/Form/Fields/Start")
                 .EmitSignal(BaseButton.SignalName.Pressed);
             Require(_world.PlayerProfile?.Sex == PlayerSex.Male
                 && _world.TryGetEntity(_world.PlayerEntityId ?? string.Empty, out var createdPlayer)

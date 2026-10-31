@@ -28,6 +28,9 @@ public partial class Main
 	private Button _workTrousersButton = null!;
 	private Button _deluxeBunnyTopButton = null!;
 	private Button _deluxeBunnyLegsButton = null!;
+	private OptionButton _carriedWardrobeChoice = null!;
+	private Button _equipCarriedWardrobe = null!;
+	private string _carriedWardrobeSignature = string.Empty;
 	private Texture2D _eyeOpenIcon = null!;
 	private Texture2D _eyeClosedIcon = null!;
 	private readonly Dictionary<string, Label> _equipmentVisibilityLabels = new(StringComparer.Ordinal);
@@ -76,6 +79,8 @@ public partial class Main
 		AddEquipmentVisibilityRow(equipmentVisibility, EquipmentSlotIds.Tool, "Tool");
 		AddEquipmentVisibilityRow(equipmentVisibility, EquipmentSlotIds.Torso, "Torso");
 		AddEquipmentVisibilityRow(equipmentVisibility, EquipmentSlotIds.Legs, "Legs");
+		foreach (var slot in new[] { EquipmentSlotIds.Head, EquipmentSlotIds.Hands, EquipmentSlotIds.Feet, EquipmentSlotIds.Accessory, EquipmentSlotIds.Outerwear })
+			AddEquipmentVisibilityRow(equipmentVisibility, slot, slot);
 		_carriedItems = AddTextTab(_inventoryTabs, "Items");
 		_itemCategory = new OptionButton();
 		foreach (var category in new[] { "All items", "Food", "Materials", "Currency", "Clothing" }) _itemCategory.AddItem(category);
@@ -87,7 +92,6 @@ public partial class Main
 		slots.AddThemeConstantOverride("h_separation", 12);
 		slots.AddThemeConstantOverride("v_separation", 12);
 		_equipmentSummary.GetParent().AddChild(slots);
-		slots.AddChild(new Button { Text = "Head\nPlanned", Disabled = true, CustomMinimumSize = new Vector2(170, 64) });
 		_workShirtButton = AddMenuButton(slots, "Torso\nWork shirt", () => TogglePlayerClothing(
 			EquipmentSlotIds.Torso, ItemIds.WorkShirt));
 		_workTrousersButton = AddMenuButton(slots, "Legs\nWork trousers", () => TogglePlayerClothing(
@@ -96,8 +100,21 @@ public partial class Main
 			EquipmentSlotIds.Torso, ItemIds.DeluxeBunnySuitTop));
 		_deluxeBunnyLegsButton = AddMenuButton(slots, "Legs\nBunny legs", () => TogglePlayerClothing(
 			EquipmentSlotIds.Legs, ItemIds.DeluxeBunnySuitLegs));
-		slots.AddChild(new Button { Text = "Feet\nPlanned", Disabled = true, CustomMinimumSize = new Vector2(170, 64) });
-		slots.AddChild(new Button { Text = "Accessories\nPlanned", Disabled = true, CustomMinimumSize = new Vector2(170, 64) });
+		_carriedWardrobeChoice = new OptionButton { FitToLongestItem = false, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		_equipmentSummary.GetParent().AddChild(_carriedWardrobeChoice);
+		_equipCarriedWardrobe = AddMenuButton((Control)_equipmentSummary.GetParent(), "Equip carried clothing / accessory", () =>
+		{
+			if (_carriedWardrobeChoice.Selected < 0) return;
+			var id = _carriedWardrobeChoice.GetItemMetadata(_carriedWardrobeChoice.Selected).AsString();
+			ShowActionFeedback(new PlayerEquipmentService(_world).Equip(id).Message);
+			UpdatePlayerMenuContents();
+		});
+		foreach (var slot in new[] { EquipmentSlotIds.Head, EquipmentSlotIds.Hands, EquipmentSlotIds.Feet, EquipmentSlotIds.Accessory, EquipmentSlotIds.Outerwear })
+			AddMenuButton((Control)_equipmentSummary.GetParent(), "Unequip " + slot, () =>
+			{
+				ShowActionFeedback(new PlayerEquipmentService(_world).Unequip(slot).Message);
+				UpdatePlayerMenuContents();
+			});
 		var toolActions = new HBoxContainer { Name = "ToolActions" };
 		_equipmentSummary.GetParent().AddChild(toolActions);
 		AddMenuButton(toolActions, "Craft axe", CraftPlayerAxe);
@@ -234,6 +251,34 @@ public partial class Main
 		var equipResult = new PlayerEquipmentService(_world).Equip(itemId);
 		ShowActionFeedback(equipResult.Message);
 		UpdatePlayerMenuContents();
+	}
+
+	private void UpdateCarriedWardrobeChoices(EntityRecord player, PlayerSex sex)
+	{
+		var items = player.Inventory.Where(pair => ItemCatalog.IsWearable(pair.Key)
+			&& PlayerAppearanceCatalog.Default.TryGet(pair.Key, out var definition)
+			&& definition is not null && definition.Sexes.Contains(sex))
+			.OrderBy(pair => pair.Key, StringComparer.Ordinal).ToArray();
+		var signature = sex + ":" + string.Join("|", items.Select(pair => $"{pair.Key}:{pair.Value}"));
+		if (signature == _carriedWardrobeSignature) return;
+		_carriedWardrobeSignature = signature;
+		var previous = _carriedWardrobeChoice.Selected >= 0
+			? _carriedWardrobeChoice.GetItemMetadata(_carriedWardrobeChoice.Selected).AsString() : string.Empty;
+		_carriedWardrobeChoice.Clear();
+		foreach (var item in items)
+		{
+			PlayerAppearanceCatalog.Default.TryGet(item.Key, out var definition);
+			_carriedWardrobeChoice.AddItem($"{PlayerAppearanceAssets.Default.GetItem(definition!.Id).ItemName} × {item.Value}");
+			_carriedWardrobeChoice.SetItemMetadata(_carriedWardrobeChoice.ItemCount - 1, item.Key);
+		}
+		_equipCarriedWardrobe.Disabled = items.Length == 0;
+		if (items.Length == 0)
+		{
+			_carriedWardrobeChoice.AddItem("No compatible carried clothing or accessories");
+			_carriedWardrobeChoice.Select(0);
+			return;
+		}
+		_carriedWardrobeChoice.Select(Math.Max(0, Array.FindIndex(items, item => item.Key == previous)));
 	}
 
 	private VBoxContainer CreateMenuPanel(string title, out Control panel)
@@ -477,6 +522,9 @@ public partial class Main
 		SetEquipmentVisibilityRow(EquipmentSlotIds.Tool, "Tool", player.EquippedTool, player.IsEquipmentVisible(EquipmentSlotIds.Tool));
 		SetEquipmentVisibilityRow(EquipmentSlotIds.Torso, "Torso", wornShirt, player.IsEquipmentVisible(EquipmentSlotIds.Torso));
 		SetEquipmentVisibilityRow(EquipmentSlotIds.Legs, "Legs", wornTrousers, player.IsEquipmentVisible(EquipmentSlotIds.Legs));
+		foreach (var slot in new[] { EquipmentSlotIds.Head, EquipmentSlotIds.Hands, EquipmentSlotIds.Feet, EquipmentSlotIds.Accessory, EquipmentSlotIds.Outerwear })
+			SetEquipmentVisibilityRow(slot, slot, player.EquippedItems.GetValueOrDefault(slot), player.IsEquipmentVisible(slot));
+		UpdateCarriedWardrobeChoices(player, profile.Sex);
 		_equipmentSummary.Text = $"EQUIPMENT\n\nLeft hand: {(_playerCharacter.LeftShieldEquipped ? "Shield" : "Empty")}\nRight hand: {(_playerCharacter.RightShieldEquipped ? "Shield" : "Empty")}\n\nUnarmed attacks are available in empty hands.";
 		var items = player.Inventory.Where(item => _itemCategory.Selected switch
 		{
@@ -577,7 +625,11 @@ public partial class Main
 			: $"{(isVisible ? "Hide" : "Show")} {FormatItemName(itemId)}";
 	}
 
-	private static string FormatItemName(string? itemId) => string.IsNullOrWhiteSpace(itemId)
-		? "Empty"
-		: string.Join(" ", itemId.Split('_').Select(part => char.ToUpperInvariant(part[0]) + part[1..]));
+	private static string FormatItemName(string? itemId)
+	{
+		if (string.IsNullOrWhiteSpace(itemId)) return "Empty";
+		if (PlayerAppearanceCatalog.Default.TryGet(itemId, out _))
+			return PlayerAppearanceAssets.Default.GetItem(itemId).ItemName;
+		return string.Join(" ", itemId.Split('_').Select(part => char.ToUpperInvariant(part[0]) + part[1..]));
+	}
 }

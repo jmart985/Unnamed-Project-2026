@@ -172,7 +172,8 @@ public static class WorldSnapshotSerializer
     private const int BiologicalSexSchemaVersion = 23;
     private const int ClothingEquipmentSchemaVersion = 24;
     private const int EquipmentVisibilitySchemaVersion = 25;
-    public const int CurrentSchemaVersion = EquipmentVisibilitySchemaVersion;
+    private const int PlayerAppearanceSchemaVersion = 26;
+    public const int CurrentSchemaVersion = PlayerAppearanceSchemaVersion;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -390,7 +391,10 @@ public static class WorldSnapshotSerializer
             };
         }
 
-        // Equipment visuals are visible by default in saves created before visibility toggles.
+        // Earlier profiles have no explicit appearance; equipment remains authoritative.
+        if (snapshot.SchemaVersion < PlayerAppearanceSchemaVersion && snapshot.PlayerProfile is { } oldProfile)
+            snapshot = snapshot with { PlayerProfile = oldProfile with { Appearance = null } };
+
         // Keep hidden slot state independent from equipped item identity and inventory counts.
         if (snapshot.SchemaVersion < EquipmentVisibilitySchemaVersion && snapshot.Entities is not null)
         {
@@ -501,7 +505,7 @@ public static class WorldSnapshotSerializer
         if (snapshot.SchemaVersion == BiologicalSexSchemaVersion)
             return snapshot with { SchemaVersion = CurrentSchemaVersion };
 
-        if (snapshot.SchemaVersion == ClothingEquipmentSchemaVersion)
+        if (snapshot.SchemaVersion is ClothingEquipmentSchemaVersion or EquipmentVisibilitySchemaVersion)
             return snapshot with { SchemaVersion = CurrentSchemaVersion };
 
         if (snapshot.SchemaVersion != CurrentSchemaVersion)
@@ -1044,6 +1048,10 @@ public static class WorldSnapshotSerializer
         }
         if (player.Sex != snapshot.PlayerProfile.EntitySex)
             throw new InvalidDataException("Snapshot player entity sex must match the character creation profile.");
+        foreach (var itemId in player.EquippedItems?.Values ?? Array.Empty<string>())
+            if (PlayerAppearanceCatalog.Default.TryGet(itemId, out var appearance) && appearance is not null
+                && !appearance.Sexes.Contains(snapshot.PlayerProfile.Sex))
+                throw new InvalidDataException("Snapshot equipment does not support the player's body.");
     }
 
     private static void ValidateRelationships(
@@ -1173,8 +1181,7 @@ public static class WorldSnapshotSerializer
             var hasEquipment = slotId switch
             {
                 EquipmentSlotIds.Tool => equippedTool is not null,
-                EquipmentSlotIds.Torso or EquipmentSlotIds.Legs => equippedItems?.ContainsKey(slotId) == true,
-                _ => false
+                _ => equippedItems?.ContainsKey(slotId) == true
             };
             if (string.IsNullOrWhiteSpace(slotId)
                 || !EquipmentSlotIds.SupportsVisibility(slotId)
