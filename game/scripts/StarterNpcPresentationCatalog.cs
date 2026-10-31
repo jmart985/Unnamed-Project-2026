@@ -8,7 +8,8 @@ internal sealed record StarterNpcPresentation(
     string EntityId,
     string DisplayName,
     BiologicalSex Sex,
-    string AssetPath);
+    string AssetPath,
+    float ForwardCorrectionDegrees);
 
 /// <summary>Presentation-only mapping from stable starter NPC IDs to imported models.</summary>
 internal static class StarterNpcPresentationCatalog
@@ -57,12 +58,15 @@ internal static class StarterNpcPresentationCatalog
                 throw new InvalidOperationException($"Starter model {entityId} has invalid sex '{sexName}'.");
             var assetPath = model.GetProperty("assetPath").GetString()
                 ?? throw new InvalidOperationException($"Starter model {entityId} assetPath cannot be null.");
+            var forwardCorrectionDegrees = model.GetProperty("forwardCorrectionDegrees").GetSingle();
+            if (!float.IsFinite(forwardCorrectionDegrees) || Math.Abs(forwardCorrectionDegrees) > 360f)
+                throw new InvalidOperationException($"Starter model {entityId} has an invalid forward correction.");
             if (!assetPath.StartsWith("res://assets/humanoids/human/npc/", StringComparison.Ordinal)
                 || !assetPath.EndsWith(".glb", StringComparison.OrdinalIgnoreCase))
                 throw new InvalidOperationException($"Starter model {entityId} has an invalid asset path.");
 
             if (!entries.TryAdd(entityId,
-                    new StarterNpcPresentation(entityId, displayName, sex, assetPath)))
+                    new StarterNpcPresentation(entityId, displayName, sex, assetPath, forwardCorrectionDegrees)))
                 throw new InvalidOperationException($"Starter NPC {entityId} has multiple presentation models.");
         }
 

@@ -577,6 +577,11 @@ internal static class NpcLocomotionValidation
             && view.PresentationModelAssetPath != expectedPath)
             throw new InvalidOperationException(
                 $"Starter NPC {modelCase.EntityId} selected '{view.PresentationModelAssetPath}', expected '{expectedPath}'.");
+        if (modelCase.ExpectedEntityViewPath is not null
+            && view.VisualForward.Dot(Vector3.Forward) < 0.99f)
+            throw new InvalidOperationException(
+                $"Starter NPC {modelCase.EntityId} faces {view.VisualForward}; expected the canonical forward direction {Vector3.Forward}. "
+                + "Check its per-asset forward correction in starter_npc_presentations.json.");
         var player = view.FindChild("AnimationPlayer", recursive: true, owned: false) as AnimationPlayer
             ?? throw new InvalidOperationException($"EntityView model missing for {modelCase.Path}");
         foreach (var fps in new[] { 30, 60, 144 })
