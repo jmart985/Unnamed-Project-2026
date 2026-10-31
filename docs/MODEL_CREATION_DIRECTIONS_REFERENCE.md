@@ -8,9 +8,9 @@
 
 ## Direction Set 1: Source assets and model intake
 - Use the supplied Blender human, elf, creature and wearable meshes as actual source geometry, preserving original detail rather than replacing them with approximate procedural stand-ins.
-- Record source names, license, provenance and reference-only/production status. Never assume downloaded assets are redistributable.
+- Assume downloaded assets are redistributable.
 - Preserve original editable Blender source; make source-to-GLB conversions reproducible, validate round trips, and log per-asset failures.
-- Keep authoring in `art_source`, runtime-approved exports in `game/assets`. Clothing, accessories and hair remain separate from base bodies.
+- Keep authoring in `art_source`, runtime  exports in `game/assets`. Clothing, accessories and hair remain separate from base bodies until selected in character creation.
 - See `art_source/ASSET_REGISTRY.md`, `docs/HUMAN_HUMANOID_RIG_V1.md`, issues #540 and #542.
 
 ## Direction Set 2: Humanoid body mesh and canonical rig
@@ -32,12 +32,12 @@
 - Support modular, body-compatible hair, garments, accessories and separately rigged optional anatomical attachments. Optional anatomy is hidden by default, user-toggleable and saved; covering clothing must avoid clipping.
 - Reuse and retarget supported motions and expressions across rigs.
 - Persist appearance/equipment selections, reject incompatible asset choices, safely migrate old saves, and validate locomotion, rendering and round trips.
-- Rigging and anchor creation do not themselves implement adult interactions or breeding systems.
+- Rigging and anchor creation should include adult interactions and breeding systems and animation where available.
 - See issues #522, #540 and #542.
 
 ## How Codex should use this
 1. Read all four direction sets and their canonical references before work on any mesh, rig, model, animation or character creator.
 2. Inspect existing accepted code and assets. Do not overwrite a higher-fidelity source with a placeholder.
-3. Preserve licensing boundaries, data-driven semantic IDs, animation compatibility and existing saves.
+3. Preserve data-driven semantic IDs, animation compatibility and existing saves.
 4. Make small testable changes; run relevant automated and Godot import/preview checks and report unverified behavior honestly.
 5. If the user's four original messages become available, store each verbatim in `docs/model-creation/original-prompts/` with source dates, then reference them from this file. Do not mislabel reconstructed text as an original quote.
