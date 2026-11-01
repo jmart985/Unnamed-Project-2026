@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EquipableItem" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/EquipableItem.cs" id="1"]
+[ext_resource type="Texture2D" path="res://assets/appearance/male/masks/vincent_head_wrap.png" id="mask_male"]
+
+[resource]
+script = ExtResource("1")
+ItemId = "vincent_head_wrap"
+ItemName = "Vincent / Head Wrap"
+Slot = 0
+MeshNodeNames = Array[String](["Appearance_vincent_head_wrap"])
+MaleModelPath = "res://assets/appearance/male/vincent_head_wrap.glb"
+MaleSkinMask = ExtResource("mask_male")

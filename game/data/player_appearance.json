@@ -1,0 +1,2145 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "id": "dwight_bracelets",
+      "name": "Dwight / Bracelets",
+      "slot": "accessory",
+      "sexes": [
+        "Male"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Male": "res://assets/appearance/male/dwight_bracelets.glb"
+      },
+      "source": "dwight.glb",
+      "sourceMesh": "Bracelets",
+      "bodyMasks": {
+        "Male": "res://assets/appearance/male/masks/dwight_bracelets.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "dwight_pants",
+      "name": "Dwight / Pants",
+      "slot": "legs",
+      "sexes": [
+        "Male"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Male": "res://assets/appearance/male/dwight_pants.glb"
+      },
+      "source": "dwight.glb",
+      "sourceMesh": "Pants",
+      "bodyMasks": {
+        "Male": "res://assets/appearance/male/masks/dwight_pants.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "dwight_shirt",
+      "name": "Dwight / Shirt",
+      "slot": "torso",
+      "sexes": [
+        "Male"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Male": "res://assets/appearance/male/dwight_shirt.glb"
+      },
+      "source": "dwight.glb",
+      "sourceMesh": "Shirt",
+      "bodyMasks": {
+        "Male": "res://assets/appearance/male/masks/dwight_shirt.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "dwight_watch",
+      "name": "Dwight / Watch",
+      "slot": "accessory",
+      "sexes": [
+        "Male"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Male": "res://assets/appearance/male/dwight_watch.glb"
+      },
+      "source": "dwight.glb",
+      "sourceMesh": "Watch",
+      "bodyMasks": {
+        "Male": "res://assets/appearance/male/masks/dwight_watch.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "dwight_glasses",
+      "name": "Dwight / Glasses",
+      "slot": "head",
+      "sexes": [
+        "Male"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Male": "res://assets/appearance/male/dwight_glasses.glb"
+      },
+      "source": "dwight.glb",
+      "sourceMesh": "Glasses",
+      "bodyMasks": {
+        "Male": "res://assets/appearance/male/masks/dwight_glasses.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "dwight_hair",
+      "name": "Dwight / Hair",
+      "slot": "hair",
+      "sexes": [
+        "Male"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0,
+      "assets": {
+        "Male": "res://assets/appearance/male/dwight_hair.glb"
+      },
+      "source": "dwight.glb",
+      "sourceMesh": "Hair",
+      "bodyMasks": {
+        "Male": "res://assets/appearance/male/masks/dwight_hair.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "aerith_aerith_hair_default",
+      "name": "Aerith / Aerith Hair Default",
+      "slot": "hair",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0,
+      "assets": {
+        "Female": "res://assets/appearance/female/aerith_aerith_hair_default.glb"
+      },
+      "source": "aerith.glb",
+      "sourceMesh": "Aerith Hair Default",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/aerith_aerith_hair_default.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "aerith_aerith_pink_dress_boots",
+      "name": "Aerith / Aerith Pink Dress - Boots",
+      "slot": "feet",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/aerith_aerith_pink_dress_boots.glb"
+      },
+      "source": "aerith.glb",
+      "sourceMesh": "Aerith Pink Dress - Boots",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/aerith_aerith_pink_dress_boots.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "aerith_aerith_pink_dress_bracelet",
+      "name": "Aerith / Aerith Pink Dress - Bracelet",
+      "slot": "accessory",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/aerith_aerith_pink_dress_bracelet.glb"
+      },
+      "source": "aerith.glb",
+      "sourceMesh": "Aerith Pink Dress - Bracelet",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/aerith_aerith_pink_dress_bracelet.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "aerith_aerith_pink_dress_dress",
+      "name": "Aerith / Aerith Pink Dress - Dress",
+      "slot": "torso",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/aerith_aerith_pink_dress_dress.glb"
+      },
+      "source": "aerith.glb",
+      "sourceMesh": "Aerith Pink Dress - Dress",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/aerith_aerith_pink_dress_dress.png"
+      },
+      "drape": "skirt"
+    },
+    {
+      "id": "aerith_aerith_pink_dress_jacket",
+      "name": "Aerith / Aerith Pink Dress - Jacket",
+      "slot": "outerwear",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/aerith_aerith_pink_dress_jacket.glb"
+      },
+      "source": "aerith.glb",
+      "sourceMesh": "Aerith Pink Dress - Jacket",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/aerith_aerith_pink_dress_jacket.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "aerith_aerith_pink_dress_necklace",
+      "name": "Aerith / Aerith Pink Dress - Necklace",
+      "slot": "accessory",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/aerith_aerith_pink_dress_necklace.glb"
+      },
+      "source": "aerith.glb",
+      "sourceMesh": "Aerith Pink Dress - Necklace",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/aerith_aerith_pink_dress_necklace.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "omni_omni_man_bodysuit",
+      "name": "Omni / Omni Man Bodysuit",
+      "slot": "torso",
+      "sexes": [
+        "Male"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Male": "res://assets/appearance/male/omni_omni_man_bodysuit.glb"
+      },
+      "source": "omni.glb",
+      "sourceMesh": "Omni Man Bodysuit",
+      "bodyMasks": {
+        "Male": "res://assets/appearance/male/masks/omni_omni_man_bodysuit.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "omni_omni_man_gloves",
+      "name": "Omni / Omni Man Gloves ",
+      "slot": "hands",
+      "sexes": [
+        "Male"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Male": "res://assets/appearance/male/omni_omni_man_gloves.glb"
+      },
+      "source": "omni.glb",
+      "sourceMesh": "Omni Man Gloves ",
+      "bodyMasks": {
+        "Male": "res://assets/appearance/male/masks/omni_omni_man_gloves.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "omni_omni_man_shoes",
+      "name": "Omni / Omni Man Shoes ",
+      "slot": "feet",
+      "sexes": [
+        "Male"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Male": "res://assets/appearance/male/omni_omni_man_shoes.glb"
+      },
+      "source": "omni.glb",
+      "sourceMesh": "Omni Man Shoes ",
+      "bodyMasks": {
+        "Male": "res://assets/appearance/male/masks/omni_omni_man_shoes.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "omni_omniman_hair",
+      "name": "Omni / OmniMan Hair",
+      "slot": "hair",
+      "sexes": [
+        "Male"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0,
+      "assets": {
+        "Male": "res://assets/appearance/male/omni_omniman_hair.glb"
+      },
+      "source": "omni.glb",
+      "sourceMesh": "OmniMan Hair",
+      "bodyMasks": {
+        "Male": "res://assets/appearance/male/masks/omni_omniman_hair.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "omni_omniman_mustache_8799_002",
+      "name": "Omni / OmniMan Mustache_8799.002",
+      "slot": "hair",
+      "sexes": [
+        "Male"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0,
+      "assets": {
+        "Male": "res://assets/appearance/male/omni_omniman_mustache_8799_002.glb"
+      },
+      "source": "omni.glb",
+      "sourceMesh": "OmniMan Mustache_8799.002",
+      "bodyMasks": {
+        "Male": "res://assets/appearance/male/masks/omni_omniman_mustache_8799_002.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "aloy_horizon_forbidden_west_aloy_hair_mesh",
+      "name": "Aloy / Horizon Forbidden West - Aloy Hair Mesh",
+      "slot": "hair",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0,
+      "assets": {
+        "Female": "res://assets/appearance/female/aloy_horizon_forbidden_west_aloy_hair_mesh.glb"
+      },
+      "source": "aloy.glb",
+      "sourceMesh": "Horizon Forbidden West - Aloy Hair Mesh",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/aloy_horizon_forbidden_west_aloy_hair_mesh.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "aloy_horizon_forbidden_west_aloy_hair_nora_head_gear_mesh",
+      "name": "Aloy / Horizon Forbidden West - Aloy Hair Nora Head gear Mesh",
+      "slot": "hair",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0,
+      "assets": {
+        "Female": "res://assets/appearance/female/aloy_horizon_forbidden_west_aloy_hair_nora_head_gear_mesh.glb"
+      },
+      "source": "aloy.glb",
+      "sourceMesh": "Horizon Forbidden West - Aloy Hair Nora Head gear Mesh",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/aloy_horizon_forbidden_west_aloy_hair_nora_head_gear_mesh.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "aloy_horizon_forbidden_west_aloy_nora_belt_mesh",
+      "name": "Aloy / Horizon Forbidden West - Aloy Nora Belt Mesh",
+      "slot": "accessory",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/aloy_horizon_forbidden_west_aloy_nora_belt_mesh.glb"
+      },
+      "source": "aloy.glb",
+      "sourceMesh": "Horizon Forbidden West - Aloy Nora Belt Mesh",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/aloy_horizon_forbidden_west_aloy_nora_belt_mesh.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "aloy_horizon_forbidden_west_aloy_nora_pants_mesh",
+      "name": "Aloy / Horizon Forbidden West - Aloy Nora Pants Mesh",
+      "slot": "legs",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/aloy_horizon_forbidden_west_aloy_nora_pants_mesh.glb"
+      },
+      "source": "aloy.glb",
+      "sourceMesh": "Horizon Forbidden West - Aloy Nora Pants Mesh",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/aloy_horizon_forbidden_west_aloy_nora_pants_mesh.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "aloy_horizon_forbidden_west_aloy_nora_sleeves_mesh",
+      "name": "Aloy / Horizon Forbidden West - Aloy Nora sleeves Mesh",
+      "slot": "hands",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/aloy_horizon_forbidden_west_aloy_nora_sleeves_mesh.glb"
+      },
+      "source": "aloy.glb",
+      "sourceMesh": "Horizon Forbidden West - Aloy Nora sleeves Mesh",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/aloy_horizon_forbidden_west_aloy_nora_sleeves_mesh.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "aloy_horizon_forbidden_west_aloy_nora_under_amour_mesh",
+      "name": "Aloy / Horizon Forbidden West - Aloy Nora under amour Mesh",
+      "slot": "torso",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/aloy_horizon_forbidden_west_aloy_nora_under_amour_mesh.glb"
+      },
+      "source": "aloy.glb",
+      "sourceMesh": "Horizon Forbidden West - Aloy Nora under amour Mesh",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/aloy_horizon_forbidden_west_aloy_nora_under_amour_mesh.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "quentin_pants_1",
+      "name": "Quentin / Pants 1",
+      "slot": "legs",
+      "sexes": [
+        "Male"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Male": "res://assets/appearance/male/quentin_pants_1.glb"
+      },
+      "source": "quentin.glb",
+      "sourceMesh": "Pants 1",
+      "bodyMasks": {
+        "Male": "res://assets/appearance/male/masks/quentin_pants_1.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "quentin_shirt_1",
+      "name": "Quentin / Shirt 1",
+      "slot": "torso",
+      "sexes": [
+        "Male"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Male": "res://assets/appearance/male/quentin_shirt_1.glb"
+      },
+      "source": "quentin.glb",
+      "sourceMesh": "Shirt 1",
+      "bodyMasks": {
+        "Male": "res://assets/appearance/male/masks/quentin_shirt_1.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "quentin_hair_1",
+      "name": "Quentin / Hair 1",
+      "slot": "hair",
+      "sexes": [
+        "Male"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0,
+      "assets": {
+        "Male": "res://assets/appearance/male/quentin_hair_1.glb"
+      },
+      "source": "quentin.glb",
+      "sourceMesh": "Hair 1",
+      "bodyMasks": {
+        "Male": "res://assets/appearance/male/masks/quentin_hair_1.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "jill_jill_accessories_mesh",
+      "name": "Jill / Jill-Accessories Mesh",
+      "slot": "accessory",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/jill_jill_accessories_mesh.glb"
+      },
+      "source": "jill.glb",
+      "sourceMesh": "Jill-Accessories Mesh",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/jill_jill_accessories_mesh.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "jill_jill_bandage_mesh",
+      "name": "Jill / Jill-Bandage Mesh",
+      "slot": "accessory",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/jill_jill_bandage_mesh.glb"
+      },
+      "source": "jill.glb",
+      "sourceMesh": "Jill-Bandage Mesh",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/jill_jill_bandage_mesh.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "jill_jill_boot_mesh",
+      "name": "Jill / Jill-Boot Mesh",
+      "slot": "feet",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/jill_jill_boot_mesh.glb"
+      },
+      "source": "jill.glb",
+      "sourceMesh": "Jill-Boot Mesh",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/jill_jill_boot_mesh.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "jill_jill_bottum_mesh",
+      "name": "Jill / Jill-Bottum Mesh",
+      "slot": "legs",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/jill_jill_bottum_mesh.glb"
+      },
+      "source": "jill.glb",
+      "sourceMesh": "Jill-Bottum Mesh",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/jill_jill_bottum_mesh.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "jill_jill_glove_mesh",
+      "name": "Jill / Jill-Glove Mesh",
+      "slot": "hands",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/jill_jill_glove_mesh.glb"
+      },
+      "source": "jill.glb",
+      "sourceMesh": "Jill-Glove Mesh",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/jill_jill_glove_mesh.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "jill_jill_handband_mesh",
+      "name": "Jill / Jill-HandBand Mesh",
+      "slot": "accessory",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/jill_jill_handband_mesh.glb"
+      },
+      "source": "jill.glb",
+      "sourceMesh": "Jill-HandBand Mesh",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/jill_jill_handband_mesh.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "jill_jill_top_mesh",
+      "name": "Jill / Jill-Top Mesh",
+      "slot": "torso",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/jill_jill_top_mesh.glb"
+      },
+      "source": "jill.glb",
+      "sourceMesh": "Jill-Top Mesh",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/jill_jill_top_mesh.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "jill_re3r_hair",
+      "name": "Jill / RE3R Hair",
+      "slot": "hair",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0,
+      "assets": {
+        "Female": "res://assets/appearance/female/jill_re3r_hair.glb"
+      },
+      "source": "jill.glb",
+      "sourceMesh": "RE3R Hair",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/jill_re3r_hair.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "vincent_hair",
+      "name": "Vincent / Hair",
+      "slot": "hair",
+      "sexes": [
+        "Male"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0,
+      "assets": {
+        "Male": "res://assets/appearance/male/vincent_hair.glb"
+      },
+      "source": "vincent.glb",
+      "sourceMesh": "Hair",
+      "bodyMasks": {
+        "Male": "res://assets/appearance/male/masks/vincent_hair.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "vincent_head_wrap",
+      "name": "Vincent / Head Wrap",
+      "slot": "head",
+      "sexes": [
+        "Male"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Male": "res://assets/appearance/male/vincent_head_wrap.glb"
+      },
+      "source": "vincent.glb",
+      "sourceMesh": "Head Wrap",
+      "bodyMasks": {
+        "Male": "res://assets/appearance/male/masks/vincent_head_wrap.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "serena_serena_boots_mesh",
+      "name": "Serena / Serena_Boots Mesh",
+      "slot": "feet",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/serena_serena_boots_mesh.glb"
+      },
+      "source": "serena.glb",
+      "sourceMesh": "Serena_Boots Mesh",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/serena_serena_boots_mesh.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "serena_serena_chest_mesh",
+      "name": "Serena / Serena_Chest Mesh",
+      "slot": "torso",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/serena_serena_chest_mesh.glb"
+      },
+      "source": "serena.glb",
+      "sourceMesh": "Serena_Chest Mesh",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/serena_serena_chest_mesh.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "serena_serena_dress_mesh",
+      "name": "Serena / Serena_Dress Mesh",
+      "slot": "torso",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/serena_serena_dress_mesh.glb"
+      },
+      "source": "serena.glb",
+      "sourceMesh": "Serena_Dress Mesh",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/serena_serena_dress_mesh.png"
+      },
+      "drape": "skirt"
+    },
+    {
+      "id": "serena_serena_hair_2_mesh",
+      "name": "Serena / Serena_HaIR (2) Mesh",
+      "slot": "hair",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0,
+      "assets": {
+        "Female": "res://assets/appearance/female/serena_serena_hair_2_mesh.glb"
+      },
+      "source": "serena.glb",
+      "sourceMesh": "Serena_HaIR (2) Mesh",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/serena_serena_hair_2_mesh.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "undeadf_undeadf_hair03_loose",
+      "name": "Undeadf / UndeadF_Hair03_Loose",
+      "slot": "hair",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0,
+      "assets": {
+        "Female": "res://assets/appearance/female/undeadf_undeadf_hair03_loose.glb"
+      },
+      "source": "undeadf.glb",
+      "sourceMesh": "UndeadF_Hair03_Loose",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/undeadf_undeadf_hair03_loose.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "yuffie_yuffie_armor_6976_002",
+      "name": "Yuffie / Yuffie Armor_6976.002",
+      "slot": "torso",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/yuffie_yuffie_armor_6976_002.glb"
+      },
+      "source": "yuffie.glb",
+      "sourceMesh": "Yuffie Armor_6976.002",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/yuffie_yuffie_armor_6976_002.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "yuffie_yuffie_pants_mesh",
+      "name": "Yuffie / Yuffie Pants Mesh",
+      "slot": "legs",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/yuffie_yuffie_pants_mesh.glb"
+      },
+      "source": "yuffie.glb",
+      "sourceMesh": "Yuffie Pants Mesh",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/yuffie_yuffie_pants_mesh.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "yuffie_yuffie_shoes_mesh",
+      "name": "Yuffie / Yuffie Shoes Mesh",
+      "slot": "feet",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/yuffie_yuffie_shoes_mesh.glb"
+      },
+      "source": "yuffie.glb",
+      "sourceMesh": "Yuffie Shoes Mesh",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/yuffie_yuffie_shoes_mesh.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "yuffie_yuffie_top_1988_002",
+      "name": "Yuffie / Yuffie Top_1988.002",
+      "slot": "torso",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/yuffie_yuffie_top_1988_002.glb"
+      },
+      "source": "yuffie.glb",
+      "sourceMesh": "Yuffie Top_1988.002",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/yuffie_yuffie_top_1988_002.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "yuffie_yuffie_hair_mesh",
+      "name": "Yuffie / Yuffie Hair Mesh",
+      "slot": "hair",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0,
+      "assets": {
+        "Female": "res://assets/appearance/female/yuffie_yuffie_hair_mesh.glb"
+      },
+      "source": "yuffie.glb",
+      "sourceMesh": "Yuffie Hair Mesh",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/yuffie_yuffie_hair_mesh.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bladedancer_bladedancermercenary_veil",
+      "name": "Bladedancer / BladeDancerMercenary_Veil",
+      "slot": "head",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/bladedancer_bladedancermercenary_veil.glb"
+      },
+      "source": "BladedancerMercenary.blend",
+      "sourceMesh": "BladeDancerMercenary_Veil",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bladedancer_bladedancermercenary_veil.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bladedancer_bladedancermercenary_panties",
+      "name": "Bladedancer / BladeDancerMercenary_Panties",
+      "slot": "legs",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/bladedancer_bladedancermercenary_panties.glb"
+      },
+      "source": "BladedancerMercenary.blend",
+      "sourceMesh": "BladeDancerMercenary_Panties",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bladedancer_bladedancermercenary_panties.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bladedancer_bladedancermercenary_earrings",
+      "name": "Bladedancer / BladeDancerMercenary_Earrings",
+      "slot": "accessory",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/bladedancer_bladedancermercenary_earrings.glb"
+      },
+      "source": "BladedancerMercenary.blend",
+      "sourceMesh": "BladeDancerMercenary_Earrings",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bladedancer_bladedancermercenary_earrings.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bladedancer_bladedancermercenary_chest",
+      "name": "Bladedancer / BladeDancerMercenary_Chest",
+      "slot": "torso",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/bladedancer_bladedancermercenary_chest.glb"
+      },
+      "source": "BladedancerMercenary.blend",
+      "sourceMesh": "BladeDancerMercenary_Chest",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bladedancer_bladedancermercenary_chest.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bladedancer_bladedancermercenary_chain",
+      "name": "Bladedancer / BladeDancerMercenary_Chain",
+      "slot": "accessory",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/bladedancer_bladedancermercenary_chain.glb"
+      },
+      "source": "BladedancerMercenary.blend",
+      "sourceMesh": "BladeDancerMercenary_Chain",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bladedancer_bladedancermercenary_chain.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bladedancer_bladedancermercenary_bra",
+      "name": "Bladedancer / BladeDancerMercenary_Bra",
+      "slot": "torso",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/bladedancer_bladedancermercenary_bra.glb"
+      },
+      "source": "BladedancerMercenary.blend",
+      "sourceMesh": "BladeDancerMercenary_Bra",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bladedancer_bladedancermercenary_bra.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bladedancer_bladedancermercenary_boots",
+      "name": "Bladedancer / BladeDancerMercenary_Boots",
+      "slot": "feet",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/bladedancer_bladedancermercenary_boots.glb"
+      },
+      "source": "BladedancerMercenary.blend",
+      "sourceMesh": "BladeDancerMercenary_Boots",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bladedancer_bladedancermercenary_boots.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bladedancer_bladedancermercenary_belt",
+      "name": "Bladedancer / BladeDancerMercenary_Belt",
+      "slot": "accessory",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/bladedancer_bladedancermercenary_belt.glb"
+      },
+      "source": "BladedancerMercenary.blend",
+      "sourceMesh": "BladeDancerMercenary_Belt",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bladedancer_bladedancermercenary_belt.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bladedancer_bladedancermercenary_arms",
+      "name": "Bladedancer / BladeDancerMercenary_Arms",
+      "slot": "hands",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/bladedancer_bladedancermercenary_arms.glb"
+      },
+      "source": "BladedancerMercenary.blend",
+      "sourceMesh": "BladeDancerMercenary_Arms",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bladedancer_bladedancermercenary_arms.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bunny_akali_physiccage_veil",
+      "name": "Bunny Akali / PhysicCage_Veil",
+      "slot": "head",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/bunny_akali_physiccage_veil.glb"
+      },
+      "source": "BunnyAkali_ARP_Walk_Animation.blend",
+      "sourceMesh": "PhysicCage_Veil",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bunny_akali_physiccage_veil.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bunny_akali_choker",
+      "name": "Bunny Akali / choker",
+      "slot": "accessory",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/bunny_akali_choker.glb"
+      },
+      "source": "BunnyAkali_ARP_Walk_Animation.blend",
+      "sourceMesh": "choker",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bunny_akali_choker.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bunny_akali_bunnyakali_weapon_sickle_001",
+      "name": "Bunny Akali / BunnyAkali_Weapon_Sickle.001",
+      "slot": "accessory",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/bunny_akali_bunnyakali_weapon_sickle_001.glb"
+      },
+      "source": "BunnyAkali_ARP_Walk_Animation.blend",
+      "sourceMesh": "BunnyAkali_Weapon_Sickle.001",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bunny_akali_bunnyakali_weapon_sickle_001.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bunny_akali_bunnyakali_weapon_sickle",
+      "name": "Bunny Akali / BunnyAkali_Weapon_Sickle",
+      "slot": "accessory",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/bunny_akali_bunnyakali_weapon_sickle.glb"
+      },
+      "source": "BunnyAkali_ARP_Walk_Animation.blend",
+      "sourceMesh": "BunnyAkali_Weapon_Sickle",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bunny_akali_bunnyakali_weapon_sickle.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bunny_akali_bunnyakali_weapon_kunai_001",
+      "name": "Bunny Akali / BunnyAkali_Weapon_Kunai.001",
+      "slot": "accessory",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/bunny_akali_bunnyakali_weapon_kunai_001.glb"
+      },
+      "source": "BunnyAkali_ARP_Walk_Animation.blend",
+      "sourceMesh": "BunnyAkali_Weapon_Kunai.001",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bunny_akali_bunnyakali_weapon_kunai_001.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bunny_akali_bunnyakali_weapon_kunai",
+      "name": "Bunny Akali / BunnyAkali_Weapon_Kunai",
+      "slot": "accessory",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/bunny_akali_bunnyakali_weapon_kunai.glb"
+      },
+      "source": "BunnyAkali_ARP_Walk_Animation.blend",
+      "sourceMesh": "BunnyAkali_Weapon_Kunai",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bunny_akali_bunnyakali_weapon_kunai.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bunny_akali_bunnyakali_stockings_003",
+      "name": "Bunny Akali / BunnyAkali_Stockings.003",
+      "slot": "legs",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/bunny_akali_bunnyakali_stockings_003.glb"
+      },
+      "source": "BunnyAkali_ARP_Walk_Animation.blend",
+      "sourceMesh": "BunnyAkali_Stockings.003",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bunny_akali_bunnyakali_stockings_003.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bunny_akali_bunnyakali_stockings",
+      "name": "Bunny Akali / BunnyAkali_Stockings",
+      "slot": "legs",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/bunny_akali_bunnyakali_stockings.glb"
+      },
+      "source": "BunnyAkali_ARP_Walk_Animation.blend",
+      "sourceMesh": "BunnyAkali_Stockings",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bunny_akali_bunnyakali_stockings.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bunny_akali_bunnyakali_leotard_001",
+      "name": "Bunny Akali / BunnyAkali_Leotard.001",
+      "slot": "torso",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/bunny_akali_bunnyakali_leotard_001.glb"
+      },
+      "source": "BunnyAkali_ARP_Walk_Animation.blend",
+      "sourceMesh": "BunnyAkali_Leotard.001",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bunny_akali_bunnyakali_leotard_001.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bunny_akali_bunnyakali_leotard",
+      "name": "Bunny Akali / BunnyAkali_Leotard",
+      "slot": "torso",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/bunny_akali_bunnyakali_leotard.glb"
+      },
+      "source": "BunnyAkali_ARP_Walk_Animation.blend",
+      "sourceMesh": "BunnyAkali_Leotard",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bunny_akali_bunnyakali_leotard.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bunny_akali_bunnyakali_heels_003",
+      "name": "Bunny Akali / BunnyAkali_Heels.003",
+      "slot": "feet",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/bunny_akali_bunnyakali_heels_003.glb"
+      },
+      "source": "BunnyAkali_ARP_Walk_Animation.blend",
+      "sourceMesh": "BunnyAkali_Heels.003",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bunny_akali_bunnyakali_heels_003.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bunny_akali_bunnyakali_heels",
+      "name": "Bunny Akali / BunnyAkali_Heels",
+      "slot": "feet",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/bunny_akali_bunnyakali_heels.glb"
+      },
+      "source": "BunnyAkali_ARP_Walk_Animation.blend",
+      "sourceMesh": "BunnyAkali_Heels",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bunny_akali_bunnyakali_heels.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bunny_akali_bunnyakali_headwear_veil",
+      "name": "Bunny Akali / BunnyAkali_Headwear_Veil",
+      "slot": "head",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/bunny_akali_bunnyakali_headwear_veil.glb"
+      },
+      "source": "BunnyAkali_ARP_Walk_Animation.blend",
+      "sourceMesh": "BunnyAkali_Headwear_Veil",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bunny_akali_bunnyakali_headwear_veil.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bunny_akali_bunnyakali_headwear_bunnyears",
+      "name": "Bunny Akali / BunnyAkali_Headwear_BunnyEars",
+      "slot": "head",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/bunny_akali_bunnyakali_headwear_bunnyears.glb"
+      },
+      "source": "BunnyAkali_ARP_Walk_Animation.blend",
+      "sourceMesh": "BunnyAkali_Headwear_BunnyEars",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bunny_akali_bunnyakali_headwear_bunnyears.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bunny_akali_bunnyakali_hairtie_003",
+      "name": "Bunny Akali / BunnyAkali_HairTie.003",
+      "slot": "hair",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0,
+      "assets": {
+        "Female": "res://assets/appearance/female/bunny_akali_bunnyakali_hairtie_003.glb"
+      },
+      "source": "BunnyAkali_ARP_Walk_Animation.blend",
+      "sourceMesh": "BunnyAkali_HairTie.003",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bunny_akali_bunnyakali_hairtie_003.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bunny_akali_bunnyakali_hairtie",
+      "name": "Bunny Akali / BunnyAkali_HairTie",
+      "slot": "hair",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0,
+      "assets": {
+        "Female": "res://assets/appearance/female/bunny_akali_bunnyakali_hairtie.glb"
+      },
+      "source": "BunnyAkali_ARP_Walk_Animation.blend",
+      "sourceMesh": "BunnyAkali_HairTie",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bunny_akali_bunnyakali_hairtie.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bunny_akali_bunnyakali_hair",
+      "name": "Bunny Akali / BunnyAkali_Hair",
+      "slot": "hair",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0,
+      "assets": {
+        "Female": "res://assets/appearance/female/bunny_akali_bunnyakali_hair.glb"
+      },
+      "source": "BunnyAkali_ARP_Walk_Animation.blend",
+      "sourceMesh": "BunnyAkali_Hair",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bunny_akali_bunnyakali_hair.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bunny_akali_bunnyakali_gloves_hands_001",
+      "name": "Bunny Akali / BunnyAkali_Gloves_Hands.001",
+      "slot": "hands",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/bunny_akali_bunnyakali_gloves_hands_001.glb"
+      },
+      "source": "BunnyAkali_ARP_Walk_Animation.blend",
+      "sourceMesh": "BunnyAkali_Gloves_Hands.001",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bunny_akali_bunnyakali_gloves_hands_001.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bunny_akali_bunnyakali_gloves_hands",
+      "name": "Bunny Akali / BunnyAkali_Gloves_Hands",
+      "slot": "hands",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/bunny_akali_bunnyakali_gloves_hands.glb"
+      },
+      "source": "BunnyAkali_ARP_Walk_Animation.blend",
+      "sourceMesh": "BunnyAkali_Gloves_Hands",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bunny_akali_bunnyakali_gloves_hands.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bunny_akali_bunnyakali_gloves_fans",
+      "name": "Bunny Akali / BunnyAkali_Gloves_Fans",
+      "slot": "hands",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/bunny_akali_bunnyakali_gloves_fans.glb"
+      },
+      "source": "BunnyAkali_ARP_Walk_Animation.blend",
+      "sourceMesh": "BunnyAkali_Gloves_Fans",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bunny_akali_bunnyakali_gloves_fans.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bunny_akali_bunnyakali_gloves_arms",
+      "name": "Bunny Akali / BunnyAkali_Gloves_Arms",
+      "slot": "hands",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/bunny_akali_bunnyakali_gloves_arms.glb"
+      },
+      "source": "BunnyAkali_ARP_Walk_Animation.blend",
+      "sourceMesh": "BunnyAkali_Gloves_Arms",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bunny_akali_bunnyakali_gloves_arms.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "bunny_akali_bunnyakali_choker",
+      "name": "Bunny Akali / BunnyAkali_Choker",
+      "slot": "accessory",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/bunny_akali_bunnyakali_choker.glb"
+      },
+      "source": "BunnyAkali_ARP_Walk_Animation.blend",
+      "sourceMesh": "BunnyAkali_Choker",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/bunny_akali_bunnyakali_choker.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "gris_grisswimsuit_thighstrap",
+      "name": "Gris / GrisSwimsuit_ThighStrap",
+      "slot": "legs",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/gris_grisswimsuit_thighstrap.glb"
+      },
+      "source": "GrisSwimsuit.blend",
+      "sourceMesh": "GrisSwimsuit_ThighStrap",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/gris_grisswimsuit_thighstrap.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "gris_grisswimsuit_main",
+      "name": "Gris / GrisSwimsuit_Main",
+      "slot": "torso",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/gris_grisswimsuit_main.glb"
+      },
+      "source": "GrisSwimsuit.blend",
+      "sourceMesh": "GrisSwimsuit_Main",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/gris_grisswimsuit_main.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "gris_grisswimsuit_choker",
+      "name": "Gris / GrisSwimsuit_Choker",
+      "slot": "accessory",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/gris_grisswimsuit_choker.glb"
+      },
+      "source": "GrisSwimsuit.blend",
+      "sourceMesh": "GrisSwimsuit_Choker",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/gris_grisswimsuit_choker.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "deluxe_bunny_sourcevest",
+      "name": "Deluxe Bunny / SourceVest",
+      "slot": "torso",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/deluxe_bunny_sourcevest.glb"
+      },
+      "source": "deluxe_bunny_suit_source_v1.blend",
+      "sourceMesh": "SourceVest",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/deluxe_bunny_sourcevest.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "deluxe_bunny_sourcestockings",
+      "name": "Deluxe Bunny / SourceStockings",
+      "slot": "legs",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/deluxe_bunny_sourcestockings.glb"
+      },
+      "source": "deluxe_bunny_suit_source_v1.blend",
+      "sourceMesh": "SourceStockings",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/deluxe_bunny_sourcestockings.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "deluxe_bunny_sourceleotard",
+      "name": "Deluxe Bunny / SourceLeotard",
+      "slot": "torso",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/deluxe_bunny_sourceleotard.glb"
+      },
+      "source": "deluxe_bunny_suit_source_v1.blend",
+      "sourceMesh": "SourceLeotard",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/deluxe_bunny_sourceleotard.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "deluxe_bunny_sourcejacket",
+      "name": "Deluxe Bunny / SourceJacket",
+      "slot": "outerwear",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/deluxe_bunny_sourcejacket.glb"
+      },
+      "source": "deluxe_bunny_suit_source_v1.blend",
+      "sourceMesh": "SourceJacket",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/deluxe_bunny_sourcejacket.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "deluxe_bunny_sourcebunnyears",
+      "name": "Deluxe Bunny / SourceBunnyEars",
+      "slot": "head",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/deluxe_bunny_sourcebunnyears.glb"
+      },
+      "source": "deluxe_bunny_suit_source_v1.blend",
+      "sourceMesh": "SourceBunnyEars",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/deluxe_bunny_sourcebunnyears.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "radagon_male_radagon_hair_default",
+      "name": "Radagon Male / Radagon Hair - Default",
+      "slot": "hair",
+      "sexes": [
+        "Male"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0,
+      "assets": {
+        "Male": "res://assets/appearance/male/radagon_male_radagon_hair_default.glb"
+      },
+      "source": "radagon_male_humanoid_rig_v1.blend",
+      "sourceMesh": "Radagon Hair - Default",
+      "bodyMasks": {
+        "Male": "res://assets/appearance/male/masks/radagon_male_radagon_hair_default.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "radagon_male_radagon_default_pants",
+      "name": "Radagon Male / Radagon Default - Pants",
+      "slot": "legs",
+      "sexes": [
+        "Male"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Male": "res://assets/appearance/male/radagon_male_radagon_default_pants.glb"
+      },
+      "source": "radagon_male_humanoid_rig_v1.blend",
+      "sourceMesh": "Radagon Default - Pants",
+      "bodyMasks": {
+        "Male": "res://assets/appearance/male/masks/radagon_male_radagon_default_pants.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "radagon_male_radagon_default_dress",
+      "name": "Radagon Male / Radagon Default - Dress",
+      "slot": "torso",
+      "sexes": [
+        "Male"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Male": "res://assets/appearance/male/radagon_male_radagon_default_dress.glb"
+      },
+      "source": "radagon_male_humanoid_rig_v1.blend",
+      "sourceMesh": "Radagon Default - Dress",
+      "bodyMasks": {
+        "Male": "res://assets/appearance/male/masks/radagon_male_radagon_default_dress.png"
+      },
+      "drape": "skirt"
+    },
+    {
+      "id": "elf_swordmaster_hair",
+      "name": "Elf Swordmaster / Hair",
+      "slot": "hair",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0,
+      "assets": {
+        "Female": "res://assets/appearance/female/elf_swordmaster_hair.glb"
+      },
+      "source": "elf_swordmaster_humanoid_rig_v1.blend",
+      "sourceMesh": "Hair",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/elf_swordmaster_hair.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "elf_swordmaster_armor_pauldron_r",
+      "name": "Elf Swordmaster / Armor_Pauldron_R",
+      "slot": "accessory",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/elf_swordmaster_armor_pauldron_r.glb"
+      },
+      "source": "elf_swordmaster_humanoid_rig_v1.blend",
+      "sourceMesh": "Armor_Pauldron_R",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/elf_swordmaster_armor_pauldron_r.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "elf_swordmaster_armor_pauldron_l",
+      "name": "Elf Swordmaster / Armor_Pauldron_L",
+      "slot": "accessory",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/elf_swordmaster_armor_pauldron_l.glb"
+      },
+      "source": "elf_swordmaster_humanoid_rig_v1.blend",
+      "sourceMesh": "Armor_Pauldron_L",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/elf_swordmaster_armor_pauldron_l.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "elf_swordmaster_armor_liner",
+      "name": "Elf Swordmaster / Armor_Liner",
+      "slot": "torso",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/elf_swordmaster_armor_liner.glb"
+      },
+      "source": "elf_swordmaster_humanoid_rig_v1.blend",
+      "sourceMesh": "Armor_Liner",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/elf_swordmaster_armor_liner.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "elf_swordmaster_armor_leg_r",
+      "name": "Elf Swordmaster / Armor_Leg_R",
+      "slot": "legs",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/elf_swordmaster_armor_leg_r.glb"
+      },
+      "source": "elf_swordmaster_humanoid_rig_v1.blend",
+      "sourceMesh": "Armor_Leg_R",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/elf_swordmaster_armor_leg_r.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "elf_swordmaster_armor_leg_l",
+      "name": "Elf Swordmaster / Armor_Leg_L",
+      "slot": "legs",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/elf_swordmaster_armor_leg_l.glb"
+      },
+      "source": "elf_swordmaster_humanoid_rig_v1.blend",
+      "sourceMesh": "Armor_Leg_L",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/elf_swordmaster_armor_leg_l.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "elf_swordmaster_armor_knee_top_r",
+      "name": "Elf Swordmaster / Armor_Knee_Top_R",
+      "slot": "legs",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/elf_swordmaster_armor_knee_top_r.glb"
+      },
+      "source": "elf_swordmaster_humanoid_rig_v1.blend",
+      "sourceMesh": "Armor_Knee_Top_R",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/elf_swordmaster_armor_knee_top_r.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "elf_swordmaster_armor_knee_top_l",
+      "name": "Elf Swordmaster / Armor_Knee_Top_L",
+      "slot": "legs",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/elf_swordmaster_armor_knee_top_l.glb"
+      },
+      "source": "elf_swordmaster_humanoid_rig_v1.blend",
+      "sourceMesh": "Armor_Knee_Top_L",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/elf_swordmaster_armor_knee_top_l.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "elf_swordmaster_armor_knee_bottom_r",
+      "name": "Elf Swordmaster / Armor_Knee_Bottom_R",
+      "slot": "legs",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/elf_swordmaster_armor_knee_bottom_r.glb"
+      },
+      "source": "elf_swordmaster_humanoid_rig_v1.blend",
+      "sourceMesh": "Armor_Knee_Bottom_R",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/elf_swordmaster_armor_knee_bottom_r.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "elf_swordmaster_armor_knee_bottom_l",
+      "name": "Elf Swordmaster / Armor_Knee_Bottom_L",
+      "slot": "legs",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/elf_swordmaster_armor_knee_bottom_l.glb"
+      },
+      "source": "elf_swordmaster_humanoid_rig_v1.blend",
+      "sourceMesh": "Armor_Knee_Bottom_L",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/elf_swordmaster_armor_knee_bottom_l.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "elf_swordmaster_armor_hips",
+      "name": "Elf Swordmaster / Armor_Hips",
+      "slot": "accessory",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/elf_swordmaster_armor_hips.glb"
+      },
+      "source": "elf_swordmaster_humanoid_rig_v1.blend",
+      "sourceMesh": "Armor_Hips",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/elf_swordmaster_armor_hips.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "elf_swordmaster_armor_elbow_r",
+      "name": "Elf Swordmaster / Armor_Elbow_R",
+      "slot": "hands",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/elf_swordmaster_armor_elbow_r.glb"
+      },
+      "source": "elf_swordmaster_humanoid_rig_v1.blend",
+      "sourceMesh": "Armor_Elbow_R",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/elf_swordmaster_armor_elbow_r.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "elf_swordmaster_armor_elbow_l",
+      "name": "Elf Swordmaster / Armor_Elbow_L",
+      "slot": "hands",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/elf_swordmaster_armor_elbow_l.glb"
+      },
+      "source": "elf_swordmaster_humanoid_rig_v1.blend",
+      "sourceMesh": "Armor_Elbow_L",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/elf_swordmaster_armor_elbow_l.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "elf_swordmaster_armor_earrings",
+      "name": "Elf Swordmaster / Armor_Earrings",
+      "slot": "accessory",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/elf_swordmaster_armor_earrings.glb"
+      },
+      "source": "elf_swordmaster_humanoid_rig_v1.blend",
+      "sourceMesh": "Armor_Earrings",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/elf_swordmaster_armor_earrings.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "elf_swordmaster_armor_cloth_front",
+      "name": "Elf Swordmaster / Armor_Cloth_Front",
+      "slot": "accessory",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/elf_swordmaster_armor_cloth_front.glb"
+      },
+      "source": "elf_swordmaster_humanoid_rig_v1.blend",
+      "sourceMesh": "Armor_Cloth_Front",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/elf_swordmaster_armor_cloth_front.png"
+      },
+      "drape": "skirt"
+    },
+    {
+      "id": "elf_swordmaster_armor_cloth_back",
+      "name": "Elf Swordmaster / Armor_Cloth_Back",
+      "slot": "accessory",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/elf_swordmaster_armor_cloth_back.glb"
+      },
+      "source": "elf_swordmaster_humanoid_rig_v1.blend",
+      "sourceMesh": "Armor_Cloth_Back",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/elf_swordmaster_armor_cloth_back.png"
+      },
+      "drape": "skirt"
+    },
+    {
+      "id": "elf_swordmaster_armor_chest",
+      "name": "Elf Swordmaster / Armor_Chest",
+      "slot": "torso",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/elf_swordmaster_armor_chest.glb"
+      },
+      "source": "elf_swordmaster_humanoid_rig_v1.blend",
+      "sourceMesh": "Armor_Chest",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/elf_swordmaster_armor_chest.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "elf_swordmaster_armor_arms",
+      "name": "Elf Swordmaster / Armor_Arms",
+      "slot": "hands",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.5,
+      "assets": {
+        "Female": "res://assets/appearance/female/elf_swordmaster_armor_arms.glb"
+      },
+      "source": "elf_swordmaster_humanoid_rig_v1.blend",
+      "sourceMesh": "Armor_Arms",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/elf_swordmaster_armor_arms.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "deluxe_bunny_suit_top",
+      "name": "Deluxe Bunny Suit Top",
+      "slot": "torso",
+      "sexes": [
+        "Male",
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.8,
+      "assets": {
+        "Male": "res://assets/appearance/male/deluxe_bunny_suit_top.glb",
+        "Female": "res://assets/appearance/female/deluxe_bunny_suit_top.glb"
+      },
+      "source": "Blender Human Base Meshes v1.4.1",
+      "sourceMesh": "HumanBody / duplicated fitted torso surface",
+      "bodyMasks": {
+        "Male": "res://assets/appearance/male/masks/deluxe_bunny_suit_top.png",
+        "Female": "res://assets/appearance/female/masks/deluxe_bunny_suit_top.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "deluxe_bunny_suit_legs",
+      "name": "Deluxe Bunny Suit Legs",
+      "slot": "legs",
+      "sexes": [
+        "Male",
+        "Female"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.65,
+      "assets": {
+        "Male": "res://assets/appearance/male/deluxe_bunny_suit_legs.glb",
+        "Female": "res://assets/appearance/female/deluxe_bunny_suit_legs.glb"
+      },
+      "source": "Blender Human Base Meshes v1.4.1",
+      "sourceMesh": "HumanBody / duplicated fitted legs surface",
+      "bodyMasks": {
+        "Male": "res://assets/appearance/male/masks/deluxe_bunny_suit_legs.png",
+        "Female": "res://assets/appearance/female/masks/deluxe_bunny_suit_legs.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "legacy_male_humanhair",
+      "name": "Legacy Male / HumanHair",
+      "slot": "hair",
+      "sexes": [
+        "Male"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0,
+      "assets": {
+        "Male": "res://assets/appearance/male/legacy_male_humanhair.glb"
+      },
+      "source": "player_male_humanoid_rig_v1.glb",
+      "sourceMesh": "HumanHair",
+      "bodyMasks": {
+        "Male": "res://assets/appearance/male/masks/legacy_male_humanhair.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "work_shirt",
+      "name": "Work Shirt",
+      "slot": "torso",
+      "sexes": [
+        "Male",
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0.7,
+      "assets": {
+        "Male": "res://assets/appearance/male/work_shirt.glb",
+        "Female": "res://assets/appearance/female/work_shirt.glb"
+      },
+      "source": "Blender Human Base Meshes v1.4.1",
+      "sourceMesh": "HumanBody / duplicated fitted torso surface",
+      "bodyMasks": {
+        "Male": "res://assets/appearance/male/masks/work_shirt.png",
+        "Female": "res://assets/appearance/female/masks/work_shirt.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "work_trousers",
+      "name": "Work Trousers",
+      "slot": "legs",
+      "sexes": [
+        "Male",
+        "Female"
+      ],
+      "coversGenitalia": true,
+      "weightKg": 0.9,
+      "assets": {
+        "Male": "res://assets/appearance/male/work_trousers.glb",
+        "Female": "res://assets/appearance/female/work_trousers.glb"
+      },
+      "source": "Blender Human Base Meshes v1.4.1",
+      "sourceMesh": "HumanBody / duplicated fitted legs surface",
+      "bodyMasks": {
+        "Male": "res://assets/appearance/male/masks/work_trousers.png",
+        "Female": "res://assets/appearance/female/masks/work_trousers.png"
+      },
+      "drape": null
+    },
+    {
+      "id": "legacy_female_humanhair",
+      "name": "Legacy Female / HumanHair",
+      "slot": "hair",
+      "sexes": [
+        "Female"
+      ],
+      "coversGenitalia": false,
+      "weightKg": 0,
+      "assets": {
+        "Female": "res://assets/appearance/female/legacy_female_humanhair.glb"
+      },
+      "source": "player_female_humanoid_rig_v1.glb",
+      "sourceMesh": "HumanHair",
+      "bodyMasks": {
+        "Female": "res://assets/appearance/female/masks/legacy_female_humanhair.png"
+      },
+      "drape": null
+    }
+  ]
+}

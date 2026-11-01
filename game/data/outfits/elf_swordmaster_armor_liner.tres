@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EquipableItem" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/EquipableItem.cs" id="1"]
+[ext_resource type="Texture2D" path="res://assets/appearance/female/masks/elf_swordmaster_armor_liner.png" id="mask_female"]
+
+[resource]
+script = ExtResource("1")
+ItemId = "elf_swordmaster_armor_liner"
+ItemName = "Elf Swordmaster / Armor_Liner"
+Slot = 1
+MeshNodeNames = Array[String](["Appearance_elf_swordmaster_armor_liner"])
+FemaleModelPath = "res://assets/appearance/female/elf_swordmaster_armor_liner.glb"
+FemaleSkinMask = ExtResource("mask_female")

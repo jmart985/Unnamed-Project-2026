@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EquipableItem" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/EquipableItem.cs" id="1"]
+[ext_resource type="Texture2D" path="res://assets/appearance/female/masks/jill_re3r_hair.png" id="mask_female"]
+
+[resource]
+script = ExtResource("1")
+ItemId = "jill_re3r_hair"
+ItemName = "Jill / RE3R Hair"
+Slot = 6
+MeshNodeNames = Array[String](["Appearance_jill_re3r_hair"])
+FemaleModelPath = "res://assets/appearance/female/jill_re3r_hair.glb"
+FemaleSkinMask = ExtResource("mask_female")

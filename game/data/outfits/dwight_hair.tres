@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EquipableItem" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/EquipableItem.cs" id="1"]
+[ext_resource type="Texture2D" path="res://assets/appearance/male/masks/dwight_hair.png" id="mask_male"]
+
+[resource]
+script = ExtResource("1")
+ItemId = "dwight_hair"
+ItemName = "Dwight / Hair"
+Slot = 6
+MeshNodeNames = Array[String](["Appearance_dwight_hair"])
+MaleModelPath = "res://assets/appearance/male/dwight_hair.glb"
+MaleSkinMask = ExtResource("mask_male")

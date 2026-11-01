@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EquipableItem" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/EquipableItem.cs" id="1"]
+[ext_resource type="Texture2D" path="res://assets/appearance/female/masks/yuffie_yuffie_shoes_mesh.png" id="mask_female"]
+
+[resource]
+script = ExtResource("1")
+ItemId = "yuffie_yuffie_shoes_mesh"
+ItemName = "Yuffie / Yuffie Shoes Mesh"
+Slot = 3
+MeshNodeNames = Array[String](["Appearance_yuffie_yuffie_shoes_mesh"])
+FemaleModelPath = "res://assets/appearance/female/yuffie_yuffie_shoes_mesh.glb"
+FemaleSkinMask = ExtResource("mask_female")

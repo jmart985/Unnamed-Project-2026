@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EquipableItem" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/EquipableItem.cs" id="1"]
+[ext_resource type="Texture2D" path="res://assets/appearance/female/masks/bunny_akali_bunnyakali_gloves_hands.png" id="mask_female"]
+
+[resource]
+script = ExtResource("1")
+ItemId = "bunny_akali_bunnyakali_gloves_hands"
+ItemName = "Bunny Akali / BunnyAkali_Gloves_Hands"
+Slot = 4
+MeshNodeNames = Array[String](["Appearance_bunny_akali_bunnyakali_gloves_hands"])
+FemaleModelPath = "res://assets/appearance/female/bunny_akali_bunnyakali_gloves_hands.glb"
+FemaleSkinMask = ExtResource("mask_female")

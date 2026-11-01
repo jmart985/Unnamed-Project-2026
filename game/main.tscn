@@ -123,105 +123,124 @@ grow_vertical = 2
 color = Color(0, 0, 0, 0.7)
 
 [node name="Panel" type="PanelContainer" parent="CharacterCreation" unique_id=260809038]
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -190.0
-offset_top = -220.0
-offset_right = 190.0
-offset_bottom = 220.0
+anchors_preset = 15
+anchor_left = 0.05
+anchor_top = 0.05
+anchor_right = 0.95
+anchor_bottom = 0.95
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Form" type="VBoxContainer" parent="CharacterCreation/Panel" unique_id=125861815]
+[node name="Layout" type="HBoxContainer" parent="CharacterCreation/Panel"]
 layout_mode = 2
 
-[node name="Title" type="Label" parent="CharacterCreation/Panel/Form" unique_id=490146039]
+[node name="Form" type="ScrollContainer" parent="CharacterCreation/Panel/Layout"]
+layout_mode = 2
+custom_minimum_size = Vector2(300, 0)
+size_flags_horizontal = 3
+horizontal_scroll_mode = 0
+
+[node name="Fields" type="VBoxContainer" parent="CharacterCreation/Panel/Layout/Form"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PreviewColumn" type="VBoxContainer" parent="CharacterCreation/Panel/Layout"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.7
+
+[node name="Title" type="Label" parent="CharacterCreation/Panel/Layout/Form/Fields" unique_id=490146039]
 layout_mode = 2
 text = "Create your character"
 
-[node name="NameLabel" type="Label" parent="CharacterCreation/Panel/Form" unique_id=970705478]
+[node name="NameLabel" type="Label" parent="CharacterCreation/Panel/Layout/Form/Fields" unique_id=970705478]
 layout_mode = 2
 text = "Name"
 
-[node name="Name" type="LineEdit" parent="CharacterCreation/Panel/Form" unique_id=1975871754]
+[node name="Name" type="LineEdit" parent="CharacterCreation/Panel/Layout/Form/Fields" unique_id=1975871754]
 layout_mode = 2
 placeholder_text = "Enter a name"
 
-[node name="HeightLabel" type="Label" parent="CharacterCreation/Panel/Form" unique_id=403384245]
+[node name="HeightLabel" type="Label" parent="CharacterCreation/Panel/Layout/Form/Fields" unique_id=403384245]
 layout_mode = 2
 text = "Height"
 
-[node name="Height" type="OptionButton" parent="CharacterCreation/Panel/Form" unique_id=1931068139]
+[node name="Height" type="OptionButton" parent="CharacterCreation/Panel/Layout/Form/Fields" unique_id=1931068139]
 layout_mode = 2
 
-[node name="BodyTypeLabel" type="Label" parent="CharacterCreation/Panel/Form" unique_id=1157247856]
+[node name="BodyTypeLabel" type="Label" parent="CharacterCreation/Panel/Layout/Form/Fields" unique_id=1157247856]
 layout_mode = 2
 text = "Body type"
 
-[node name="BodyType" type="OptionButton" parent="CharacterCreation/Panel/Form" unique_id=1772379822]
+[node name="BodyType" type="OptionButton" parent="CharacterCreation/Panel/Layout/Form/Fields" unique_id=1772379822]
 layout_mode = 2
 
-[node name="SexLabel" type="Label" parent="CharacterCreation/Panel/Form" unique_id=840467898]
+[node name="SexLabel" type="Label" parent="CharacterCreation/Panel/Layout/Form/Fields" unique_id=840467898]
 layout_mode = 2
 text = "Sex"
 
-[node name="Sex" type="OptionButton" parent="CharacterCreation/Panel/Form" unique_id=1406898256]
+[node name="Sex" type="OptionButton" parent="CharacterCreation/Panel/Layout/Form/Fields" unique_id=1406898256]
 layout_mode = 2
 
-[node name="WeightLabel" type="Label" parent="CharacterCreation/Panel/Form" unique_id=1406898257]
+[node name="WeightLabel" type="Label" parent="CharacterCreation/Panel/Layout/Form/Fields" unique_id=1406898257]
 layout_mode = 2
 text = "Weight: 50%"
 
-[node name="Weight" type="HSlider" parent="CharacterCreation/Panel/Form" unique_id=1406898258]
+[node name="Weight" type="HSlider" parent="CharacterCreation/Panel/Layout/Form/Fields" unique_id=1406898258]
 layout_mode = 2
 min_value = 0.0
 max_value = 1.0
 step = 0.01
 value = 0.5
 
-[node name="MuscleLabel" type="Label" parent="CharacterCreation/Panel/Form" unique_id=1406898259]
+[node name="MuscleLabel" type="Label" parent="CharacterCreation/Panel/Layout/Form/Fields" unique_id=1406898259]
 layout_mode = 2
 text = "Muscle: 50%"
 
-[node name="Muscle" type="HSlider" parent="CharacterCreation/Panel/Form" unique_id=1406898260]
+[node name="Muscle" type="HSlider" parent="CharacterCreation/Panel/Layout/Form/Fields" unique_id=1406898260]
 layout_mode = 2
 min_value = 0.0
 max_value = 1.0
 step = 0.01
 value = 0.5
 
-[node name="Preview" type="Label" parent="CharacterCreation/Panel/Form" unique_id=1406898261]
+[node name="Preview" type="Label" parent="CharacterCreation/Panel/Layout/PreviewColumn" unique_id=1406898261]
 layout_mode = 2
 text = "Preview: choose a name and body settings"
 autowrap_mode = 2
 
-[node name="PreviewViewport" type="SubViewportContainer" parent="CharacterCreation/Panel/Form" unique_id=1406898262]
-custom_minimum_size = Vector2(0, 180)
+[node name="PreviewViewport" type="SubViewportContainer" parent="CharacterCreation/Panel/Layout/PreviewColumn" unique_id=1406898262]
+custom_minimum_size = Vector2(280, 320)
 layout_mode = 2
+size_flags_vertical = 3
 stretch = true
 
-[node name="SubViewport" type="SubViewport" parent="CharacterCreation/Panel/Form/PreviewViewport" unique_id=1406898263]
+[node name="SubViewport" type="SubViewport" parent="CharacterCreation/Panel/Layout/PreviewColumn/PreviewViewport" unique_id=1406898263]
 own_world_3d = true
 transparent_bg = true
 render_target_update_mode = 4
 
-[node name="PreviewRoot" type="Node3D" parent="CharacterCreation/Panel/Form/PreviewViewport/SubViewport" unique_id=1406898264]
+[node name="PreviewRoot" type="Node3D" parent="CharacterCreation/Panel/Layout/PreviewColumn/PreviewViewport/SubViewport" unique_id=1406898264]
 
-[node name="PreviewCamera" type="Camera3D" parent="CharacterCreation/Panel/Form/PreviewViewport/SubViewport" unique_id=1406898265]
+[node name="PreviewCamera" type="Camera3D" parent="CharacterCreation/Panel/Layout/PreviewColumn/PreviewViewport/SubViewport" unique_id=1406898265]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 3.3)
 current = true
 
-[node name="PreviewLight" type="DirectionalLight3D" parent="CharacterCreation/Panel/Form/PreviewViewport/SubViewport" unique_id=1406898266]
+[node name="PreviewLight" type="DirectionalLight3D" parent="CharacterCreation/Panel/Layout/PreviewColumn/PreviewViewport/SubViewport" unique_id=1406898266]
 rotation_degrees = Vector3(-25, -25, 0)
 light_energy = 1.2
 
-[node name="Error" type="Label" parent="CharacterCreation/Panel/Form" unique_id=1083019040]
+[node name="PreviewEnvironment" type="WorldEnvironment" parent="CharacterCreation/Panel/Layout/PreviewColumn/PreviewViewport/SubViewport"]
+environment = ExtResource("3_environment")
+
+[node name="PreviewFill" type="DirectionalLight3D" parent="CharacterCreation/Panel/Layout/PreviewColumn/PreviewViewport/SubViewport"]
+rotation_degrees = Vector3(-20, 155, 0)
+light_energy = 0.8
+
+[node name="Error" type="Label" parent="CharacterCreation/Panel/Layout/Form/Fields" unique_id=1083019040]
 modulate = Color(1, 0.35, 0.35, 1)
 layout_mode = 2
 
-[node name="Start" type="Button" parent="CharacterCreation/Panel/Form" unique_id=612183697]
+[node name="Start" type="Button" parent="CharacterCreation/Panel/Layout/Form/Fields" unique_id=612183697]
 layout_mode = 2
 text = "Start new game"

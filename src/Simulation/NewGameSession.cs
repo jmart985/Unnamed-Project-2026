@@ -170,11 +170,15 @@ public sealed class NewGameSession
         var player = world.SpawnEntity(catalog.GetRequired("human"), GetPlayerSpawnPosition(seed),
             sex: playerProfile.EntitySex);
         world.SetSessionPlayer(seed, player.Id, playerProfile);
-        // The starter clothing is worn from the beginning, so it is not also
-        // duplicated in carried inventory. Unequipping returns it to inventory.
-        player.SetEquippedItem(EquipmentSlotIds.Torso, ItemIds.WorkShirt);
-        player.SetEquippedItem(EquipmentSlotIds.Legs, ItemIds.WorkTrousers);
-        foreach (var itemId in new[] { ItemIds.DeluxeBunnySuitTop, ItemIds.DeluxeBunnySuitLegs })
+        // Selected starter clothing is equipped directly, without duplicating
+        // it in carried inventory. Unequipping returns it to inventory.
+        foreach (var (slot, item) in (playerProfile.Appearance ?? new PlayerAppearance()).Equipment)
+            player.SetEquippedItem(slot, item);
+        // Preserve the earlier test/demo loadout only for legacy profiles.
+        // Explicit creation choices do not grant a duplicate spare outfit.
+        foreach (var itemId in playerProfile.Appearance is null
+                     ? new[] { ItemIds.DeluxeBunnySuitTop, ItemIds.DeluxeBunnySuitLegs }
+                     : Array.Empty<string>())
         {
             if (player.TryAddCarried(itemId, 1) != ResourceMutationResult.Success)
                 throw new InvalidOperationException($"Unable to seed player clothing item '{itemId}'.");

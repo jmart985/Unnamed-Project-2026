@@ -80,6 +80,10 @@ World owns per-human-NPC work-hour overrides; phase derives from SimulationClock
 Relationship and faction standing notifications carry actual applied deltas after authoritative changes. Gameplay displays transient signed changes; production social profiles and faction event steps use +1/-1. Petting and selection rings use the existing recipient Trusted/Loyal bond, with Fearful overriding permission. See [SOCIAL_FEEDBACK.md](SOCIAL_FEEDBACK.md) for domestic defaults, save compatibility and feedback validation.
 
 
+## Player appearance boundary
+
+Player appearance uses an engine-free catalogue of stable IDs and body compatibility. Godot EquipableItem resources own model paths, mesh names, masks and drape settings; the conversion manifest records provenance. World owns current equipment; the player profile owns hair and optional anatomical visibility. Imported wearables remap named skin binds to one canonical player skeleton. Rigify is a Blender authoring tool only: generated controls drive the canonical deform rig, and baked visual transforms cross the GLB boundary. Save data never stores source bone names, control widgets, bind indices or animation playback state. See [character creation](CHARACTER_CREATION_AND_BODY.md) and D071.
+
 ## Creature rig-family boundary
 
 Creature simulation uses one shared semantic contract, while visual assets use anatomically appropriate rig families. Do not make a universal quadruped skeleton a gameplay dependency. Canids, vulpines, ungulates, felids, primates, reptiles, plantigrades, and fictional composites may each have different joint chains, feet, shoulders, gaits, collision proxies, and interaction sockets.

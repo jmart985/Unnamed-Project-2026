@@ -1,0 +1,1054 @@
+[
+  {
+    "id": "dwight_bracelets",
+    "sex": "Male",
+    "vertices": 570,
+    "joints": 91,
+    "maximumWeightSumError": 0.0,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "dwight_pants",
+    "sex": "Male",
+    "vertices": 5054,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "dwight_shirt",
+    "sex": "Male",
+    "vertices": 18432,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "dwight_watch",
+    "sex": "Male",
+    "vertices": 314,
+    "joints": 91,
+    "maximumWeightSumError": 0.0,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "dwight_glasses",
+    "sex": "Male",
+    "vertices": 789,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "dwight_hair",
+    "sex": "Male",
+    "vertices": 8883,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "aerith_aerith_hair_default",
+    "sex": "Female",
+    "vertices": 63162,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "aerith_aerith_pink_dress_boots",
+    "sex": "Female",
+    "vertices": 6800,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "aerith_aerith_pink_dress_bracelet",
+    "sex": "Female",
+    "vertices": 1500,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "aerith_aerith_pink_dress_dress",
+    "sex": "Female",
+    "vertices": 142294,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 75658,
+    "status": "PASS"
+  },
+  {
+    "id": "aerith_aerith_pink_dress_jacket",
+    "sex": "Female",
+    "vertices": 116838,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "aerith_aerith_pink_dress_necklace",
+    "sex": "Female",
+    "vertices": 3669,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "omni_omni_man_bodysuit",
+    "sex": "Male",
+    "vertices": 118838,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "omni_omni_man_gloves",
+    "sex": "Male",
+    "vertices": 32256,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "omni_omni_man_shoes",
+    "sex": "Male",
+    "vertices": 14620,
+    "joints": 91,
+    "maximumWeightSumError": 0.0,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "omni_omniman_hair",
+    "sex": "Male",
+    "vertices": 49624,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "omni_omniman_mustache_8799_002",
+    "sex": "Male",
+    "vertices": 8895,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "aloy_horizon_forbidden_west_aloy_hair_mesh",
+    "sex": "Female",
+    "vertices": 179697,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "aloy_horizon_forbidden_west_aloy_hair_nora_head_gear_mesh",
+    "sex": "Female",
+    "vertices": 3834,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "aloy_horizon_forbidden_west_aloy_nora_belt_mesh",
+    "sex": "Female",
+    "vertices": 10163,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "aloy_horizon_forbidden_west_aloy_nora_pants_mesh",
+    "sex": "Female",
+    "vertices": 102488,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "aloy_horizon_forbidden_west_aloy_nora_sleeves_mesh",
+    "sex": "Female",
+    "vertices": 63324,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "aloy_horizon_forbidden_west_aloy_nora_under_amour_mesh",
+    "sex": "Female",
+    "vertices": 75076,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "quentin_pants_1",
+    "sex": "Male",
+    "vertices": 4998,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "quentin_shirt_1",
+    "sex": "Male",
+    "vertices": 17210,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "quentin_hair_1",
+    "sex": "Male",
+    "vertices": 4992,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "jill_jill_accessories_mesh",
+    "sex": "Female",
+    "vertices": 18971,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "jill_jill_bandage_mesh",
+    "sex": "Female",
+    "vertices": 1755,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "jill_jill_boot_mesh",
+    "sex": "Female",
+    "vertices": 12272,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "jill_jill_bottum_mesh",
+    "sex": "Female",
+    "vertices": 11604,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "jill_jill_glove_mesh",
+    "sex": "Female",
+    "vertices": 8688,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "jill_jill_handband_mesh",
+    "sex": "Female",
+    "vertices": 453,
+    "joints": 91,
+    "maximumWeightSumError": 0.0,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "jill_jill_top_mesh",
+    "sex": "Female",
+    "vertices": 40096,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "jill_re3r_hair",
+    "sex": "Female",
+    "vertices": 44780,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "vincent_hair",
+    "sex": "Male",
+    "vertices": 8490,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "vincent_head_wrap",
+    "sex": "Male",
+    "vertices": 292,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "serena_serena_boots_mesh",
+    "sex": "Female",
+    "vertices": 30256,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "serena_serena_chest_mesh",
+    "sex": "Female",
+    "vertices": 65504,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "serena_serena_dress_mesh",
+    "sex": "Female",
+    "vertices": 32294,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 7608,
+    "status": "PASS"
+  },
+  {
+    "id": "serena_serena_hair_2_mesh",
+    "sex": "Female",
+    "vertices": 29373,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "undeadf_undeadf_hair03_loose",
+    "sex": "Female",
+    "vertices": 723,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "yuffie_yuffie_armor_6976_002",
+    "sex": "Female",
+    "vertices": 92466,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "yuffie_yuffie_pants_mesh",
+    "sex": "Female",
+    "vertices": 21666,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "yuffie_yuffie_shoes_mesh",
+    "sex": "Female",
+    "vertices": 15914,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "yuffie_yuffie_top_1988_002",
+    "sex": "Female",
+    "vertices": 17054,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "yuffie_yuffie_hair_mesh",
+    "sex": "Female",
+    "vertices": 33844,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bladedancer_bladedancermercenary_veil",
+    "sex": "Female",
+    "vertices": 570,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bladedancer_bladedancermercenary_panties",
+    "sex": "Female",
+    "vertices": 3342,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bladedancer_bladedancermercenary_earrings",
+    "sex": "Female",
+    "vertices": 448,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bladedancer_bladedancermercenary_chest",
+    "sex": "Female",
+    "vertices": 12596,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bladedancer_bladedancermercenary_chain",
+    "sex": "Female",
+    "vertices": 3880,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bladedancer_bladedancermercenary_bra",
+    "sex": "Female",
+    "vertices": 14524,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bladedancer_bladedancermercenary_boots",
+    "sex": "Female",
+    "vertices": 8136,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bladedancer_bladedancermercenary_belt",
+    "sex": "Female",
+    "vertices": 3726,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bladedancer_bladedancermercenary_arms",
+    "sex": "Female",
+    "vertices": 6442,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bunny_akali_physiccage_veil",
+    "sex": "Female",
+    "vertices": 423,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bunny_akali_choker",
+    "sex": "Female",
+    "vertices": 12,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_weapon_sickle_001",
+    "sex": "Female",
+    "vertices": 1658,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_weapon_sickle",
+    "sex": "Female",
+    "vertices": 1658,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_weapon_kunai_001",
+    "sex": "Female",
+    "vertices": 761,
+    "joints": 91,
+    "maximumWeightSumError": 0.0,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_weapon_kunai",
+    "sex": "Female",
+    "vertices": 761,
+    "joints": 91,
+    "maximumWeightSumError": 0.0,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_stockings_003",
+    "sex": "Female",
+    "vertices": 8864,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_stockings",
+    "sex": "Female",
+    "vertices": 8864,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_leotard_001",
+    "sex": "Female",
+    "vertices": 45336,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_leotard",
+    "sex": "Female",
+    "vertices": 45336,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_heels_003",
+    "sex": "Female",
+    "vertices": 11088,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_heels",
+    "sex": "Female",
+    "vertices": 11088,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_headwear_veil",
+    "sex": "Female",
+    "vertices": 423,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_headwear_bunnyears",
+    "sex": "Female",
+    "vertices": 1040,
+    "joints": 91,
+    "maximumWeightSumError": 0.0,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_hairtie_003",
+    "sex": "Female",
+    "vertices": 4536,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_hairtie",
+    "sex": "Female",
+    "vertices": 1942,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_hair",
+    "sex": "Female",
+    "vertices": 35353,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_gloves_hands_001",
+    "sex": "Female",
+    "vertices": 9536,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_gloves_hands",
+    "sex": "Female",
+    "vertices": 1256,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_gloves_fans",
+    "sex": "Female",
+    "vertices": 2688,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_gloves_arms",
+    "sex": "Female",
+    "vertices": 5592,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "bunny_akali_bunnyakali_choker",
+    "sex": "Female",
+    "vertices": 1131,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "gris_grisswimsuit_thighstrap",
+    "sex": "Female",
+    "vertices": 492,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "gris_grisswimsuit_main",
+    "sex": "Female",
+    "vertices": 16006,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "gris_grisswimsuit_choker",
+    "sex": "Female",
+    "vertices": 300,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "deluxe_bunny_sourcevest",
+    "sex": "Female",
+    "vertices": 26406,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "deluxe_bunny_sourcestockings",
+    "sex": "Female",
+    "vertices": 5636,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "deluxe_bunny_sourceleotard",
+    "sex": "Female",
+    "vertices": 14024,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "deluxe_bunny_sourcejacket",
+    "sex": "Female",
+    "vertices": 66266,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "deluxe_bunny_sourcebunnyears",
+    "sex": "Female",
+    "vertices": 755,
+    "joints": 91,
+    "maximumWeightSumError": 0.0,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "radagon_male_radagon_hair_default",
+    "sex": "Male",
+    "vertices": 37421,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "radagon_male_radagon_default_pants",
+    "sex": "Male",
+    "vertices": 5840,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "radagon_male_radagon_default_dress",
+    "sex": "Male",
+    "vertices": 37258,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 20140,
+    "status": "PASS"
+  },
+  {
+    "id": "elf_swordmaster_hair",
+    "sex": "Female",
+    "vertices": 9903,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "elf_swordmaster_armor_pauldron_r",
+    "sex": "Female",
+    "vertices": 791,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "elf_swordmaster_armor_pauldron_l",
+    "sex": "Female",
+    "vertices": 791,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "elf_swordmaster_armor_liner",
+    "sex": "Female",
+    "vertices": 6930,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "elf_swordmaster_armor_leg_r",
+    "sex": "Female",
+    "vertices": 5152,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "elf_swordmaster_armor_leg_l",
+    "sex": "Female",
+    "vertices": 5152,
+    "joints": 91,
+    "maximumWeightSumError": 0.0,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "elf_swordmaster_armor_knee_top_r",
+    "sex": "Female",
+    "vertices": 259,
+    "joints": 91,
+    "maximumWeightSumError": 0.0,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "elf_swordmaster_armor_knee_top_l",
+    "sex": "Female",
+    "vertices": 259,
+    "joints": 91,
+    "maximumWeightSumError": 0.0,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "elf_swordmaster_armor_knee_bottom_r",
+    "sex": "Female",
+    "vertices": 136,
+    "joints": 91,
+    "maximumWeightSumError": 0.0,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "elf_swordmaster_armor_knee_bottom_l",
+    "sex": "Female",
+    "vertices": 136,
+    "joints": 91,
+    "maximumWeightSumError": 0.0,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "elf_swordmaster_armor_hips",
+    "sex": "Female",
+    "vertices": 1365,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "elf_swordmaster_armor_elbow_r",
+    "sex": "Female",
+    "vertices": 728,
+    "joints": 91,
+    "maximumWeightSumError": 0.0,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "elf_swordmaster_armor_elbow_l",
+    "sex": "Female",
+    "vertices": 728,
+    "joints": 91,
+    "maximumWeightSumError": 0.0,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "elf_swordmaster_armor_earrings",
+    "sex": "Female",
+    "vertices": 236,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "elf_swordmaster_armor_cloth_front",
+    "sex": "Female",
+    "vertices": 367,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 330,
+    "status": "PASS"
+  },
+  {
+    "id": "elf_swordmaster_armor_cloth_back",
+    "sex": "Female",
+    "vertices": 325,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 225,
+    "status": "PASS"
+  },
+  {
+    "id": "elf_swordmaster_armor_chest",
+    "sex": "Female",
+    "vertices": 13524,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "elf_swordmaster_armor_arms",
+    "sex": "Female",
+    "vertices": 6372,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "deluxe_bunny_suit_top",
+    "sex": "Male",
+    "vertices": 13700,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "medianFabricThicknessM": 0.003082261886447668,
+    "status": "PASS"
+  },
+  {
+    "id": "deluxe_bunny_suit_top",
+    "sex": "Female",
+    "vertices": 16184,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "medianFabricThicknessM": 0.0031783769372850657,
+    "status": "PASS"
+  },
+  {
+    "id": "deluxe_bunny_suit_legs",
+    "sex": "Male",
+    "vertices": 16686,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "medianFabricThicknessM": 0.003082810202613473,
+    "status": "PASS"
+  },
+  {
+    "id": "deluxe_bunny_suit_legs",
+    "sex": "Female",
+    "vertices": 16946,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "medianFabricThicknessM": 0.003178200335241854,
+    "status": "PASS"
+  },
+  {
+    "id": "legacy_male_humanhair",
+    "sex": "Male",
+    "vertices": 433,
+    "joints": 91,
+    "maximumWeightSumError": 0.0,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  },
+  {
+    "id": "work_shirt",
+    "sex": "Male",
+    "vertices": 13700,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "medianFabricThicknessM": 0.003082261886447668,
+    "status": "PASS"
+  },
+  {
+    "id": "work_shirt",
+    "sex": "Female",
+    "vertices": 16184,
+    "joints": 91,
+    "maximumWeightSumError": 1.7881393432617188e-07,
+    "freeHemVertices": 0,
+    "medianFabricThicknessM": 0.0031783769372850657,
+    "status": "PASS"
+  },
+  {
+    "id": "work_trousers",
+    "sex": "Male",
+    "vertices": 16686,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "medianFabricThicknessM": 0.003082810202613473,
+    "status": "PASS"
+  },
+  {
+    "id": "work_trousers",
+    "sex": "Female",
+    "vertices": 16946,
+    "joints": 91,
+    "maximumWeightSumError": 1.1920928955078125e-07,
+    "freeHemVertices": 0,
+    "medianFabricThicknessM": 0.003178200335241854,
+    "status": "PASS"
+  },
+  {
+    "id": "legacy_female_humanhair",
+    "sex": "Female",
+    "vertices": 433,
+    "joints": 91,
+    "maximumWeightSumError": 0.0,
+    "freeHemVertices": 0,
+    "status": "PASS"
+  }
+]

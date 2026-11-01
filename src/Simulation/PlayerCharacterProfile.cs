@@ -28,7 +28,8 @@ public sealed record PlayerCharacterProfile(
     PlayerBodyType BodyType = PlayerBodyType.Average,
     PlayerSex Sex = PlayerSex.Female,
     double Weight = 0.5,
-    double Muscle = 0.5)
+    double Muscle = 0.5,
+    PlayerAppearance? Appearance = null)
 {
     public BiologicalSex EntitySex => Sex == PlayerSex.Male
         ? BiologicalSex.Male
@@ -40,7 +41,8 @@ public sealed record PlayerCharacterProfile(
         PlayerBodyType bodyType = PlayerBodyType.Average,
         PlayerSex sex = PlayerSex.Female,
         double weight = 0.5,
-        double muscle = 0.5)
+        double muscle = 0.5,
+        PlayerAppearance? appearance = null)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -64,8 +66,10 @@ public sealed record PlayerCharacterProfile(
 
         ValidateSlider(weight, nameof(weight));
         ValidateSlider(muscle, nameof(muscle));
+        if (appearance is not null && !appearance.IsValid(sex))
+            throw new ArgumentException("Appearance choices must support the selected body and slot.", nameof(appearance));
 
-        return new PlayerCharacterProfile(name.Trim(), height, bodyType, sex, weight, muscle);
+        return new PlayerCharacterProfile(name.Trim(), height, bodyType, sex, weight, muscle, appearance);
     }
 
     public bool IsValid =>
@@ -75,7 +79,8 @@ public sealed record PlayerCharacterProfile(
         && Enum.IsDefined(BodyType)
         && Enum.IsDefined(Sex)
         && double.IsFinite(Weight) && Weight is >= 0 and <= 1
-        && double.IsFinite(Muscle) && Muscle is >= 0 and <= 1;
+        && double.IsFinite(Muscle) && Muscle is >= 0 and <= 1
+        && (Appearance is null || Appearance.IsValid(Sex));
 
     private static void ValidateSlider(double value, string parameterName)
     {

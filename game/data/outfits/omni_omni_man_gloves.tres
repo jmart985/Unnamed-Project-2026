@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EquipableItem" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/EquipableItem.cs" id="1"]
+[ext_resource type="Texture2D" path="res://assets/appearance/male/masks/omni_omni_man_gloves.png" id="mask_male"]
+
+[resource]
+script = ExtResource("1")
+ItemId = "omni_omni_man_gloves"
+ItemName = "Omni / Omni Man Gloves "
+Slot = 4
+MeshNodeNames = Array[String](["Appearance_omni_omni_man_gloves"])
+MaleModelPath = "res://assets/appearance/male/omni_omni_man_gloves.glb"
+MaleSkinMask = ExtResource("mask_male")

@@ -1,0 +1,28 @@
+{
+  "sex": "male",
+  "rigifyControls": 544,
+  "canonicalBones": 91,
+  "restPositionErrorM": 9.391007609841287e-06,
+  "armControlHandDisplacementM": 0.15192707848042056,
+  "footIkDisplacementM": 0.049971599172108125,
+  "bodyMasks": [
+    {
+      "item": "work_shirt",
+      "coveredCageVertices": 1246,
+      "visibilityDriven": true
+    },
+    {
+      "item": "work_trousers",
+      "coveredCageVertices": 1420,
+      "visibilityDriven": true
+    },
+    {
+      "item": "radagon_male_radagon_default_dress",
+      "coveredCageVertices": 2072,
+      "visibilityDriven": true
+    }
+  ],
+  "clothTweakDisplacementM": 0.0760506226713422,
+  "visualBakePositionErrorM": 1.2049341910983906e-06,
+  "status": "PASS"
+}

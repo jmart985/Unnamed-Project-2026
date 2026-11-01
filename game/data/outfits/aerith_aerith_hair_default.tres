@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EquipableItem" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/EquipableItem.cs" id="1"]
+[ext_resource type="Texture2D" path="res://assets/appearance/female/masks/aerith_aerith_hair_default.png" id="mask_female"]
+
+[resource]
+script = ExtResource("1")
+ItemId = "aerith_aerith_hair_default"
+ItemName = "Aerith / Aerith Hair Default"
+Slot = 6
+MeshNodeNames = Array[String](["Appearance_aerith_aerith_hair_default"])
+FemaleModelPath = "res://assets/appearance/female/aerith_aerith_hair_default.glb"
+FemaleSkinMask = ExtResource("mask_female")

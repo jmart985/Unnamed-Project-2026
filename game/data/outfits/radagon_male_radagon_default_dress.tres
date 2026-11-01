@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EquipableItem" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/EquipableItem.cs" id="1"]
+[ext_resource type="Texture2D" path="res://assets/appearance/male/masks/radagon_male_radagon_default_dress.png" id="mask_male"]
+
+[resource]
+script = ExtResource("1")
+ItemId = "radagon_male_radagon_default_dress"
+ItemName = "Radagon Male / Radagon Default - Dress"
+Slot = 1
+MeshNodeNames = Array[String](["Appearance_radagon_male_radagon_default_dress"])
+MaleModelPath = "res://assets/appearance/male/radagon_male_radagon_default_dress.glb"
+MaleSkinMask = ExtResource("mask_male")
+Drape = 1

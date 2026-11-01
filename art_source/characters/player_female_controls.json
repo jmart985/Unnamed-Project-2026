@@ -1,0 +1,28 @@
+{
+  "sex": "female",
+  "rigifyControls": 544,
+  "canonicalBones": 91,
+  "restPositionErrorM": 1.6678323223753843e-06,
+  "armControlHandDisplacementM": 0.1528316701939617,
+  "footIkDisplacementM": 0.04998366299112298,
+  "bodyMasks": [
+    {
+      "item": "work_shirt",
+      "coveredCageVertices": 1433,
+      "visibilityDriven": true
+    },
+    {
+      "item": "work_trousers",
+      "coveredCageVertices": 1484,
+      "visibilityDriven": true
+    },
+    {
+      "item": "aerith_aerith_pink_dress_dress",
+      "coveredCageVertices": 1415,
+      "visibilityDriven": true
+    }
+  ],
+  "clothTweakDisplacementM": 0.0760506254219282,
+  "visualBakePositionErrorM": 4.976212605686744e-06,
+  "status": "PASS"
+}

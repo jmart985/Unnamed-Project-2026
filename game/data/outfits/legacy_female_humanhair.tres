@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EquipableItem" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/EquipableItem.cs" id="1"]
+[ext_resource type="Texture2D" path="res://assets/appearance/female/masks/legacy_female_humanhair.png" id="mask_female"]
+
+[resource]
+script = ExtResource("1")
+ItemId = "legacy_female_humanhair"
+ItemName = "Legacy Female / HumanHair"
+Slot = 6
+MeshNodeNames = Array[String](["Appearance_legacy_female_humanhair"])
+FemaleModelPath = "res://assets/appearance/female/legacy_female_humanhair.glb"
+FemaleSkinMask = ExtResource("mask_female")

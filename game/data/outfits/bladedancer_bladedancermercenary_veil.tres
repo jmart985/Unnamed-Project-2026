@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EquipableItem" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/EquipableItem.cs" id="1"]
+[ext_resource type="Texture2D" path="res://assets/appearance/female/masks/bladedancer_bladedancermercenary_veil.png" id="mask_female"]
+
+[resource]
+script = ExtResource("1")
+ItemId = "bladedancer_bladedancermercenary_veil"
+ItemName = "Bladedancer / BladeDancerMercenary_Veil"
+Slot = 0
+MeshNodeNames = Array[String](["Appearance_bladedancer_bladedancermercenary_veil"])
+FemaleModelPath = "res://assets/appearance/female/bladedancer_bladedancermercenary_veil.glb"
+FemaleSkinMask = ExtResource("mask_female")

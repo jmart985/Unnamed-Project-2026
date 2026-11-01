@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EquipableItem" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/EquipableItem.cs" id="1"]
+[ext_resource type="Texture2D" path="res://assets/appearance/female/masks/undeadf_undeadf_hair03_loose.png" id="mask_female"]
+
+[resource]
+script = ExtResource("1")
+ItemId = "undeadf_undeadf_hair03_loose"
+ItemName = "Undeadf / UndeadF_Hair03_Loose"
+Slot = 6
+MeshNodeNames = Array[String](["Appearance_undeadf_undeadf_hair03_loose"])
+FemaleModelPath = "res://assets/appearance/female/undeadf_undeadf_hair03_loose.glb"
+FemaleSkinMask = ExtResource("mask_female")

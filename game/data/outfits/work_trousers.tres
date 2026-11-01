@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="EquipableItem" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/EquipableItem.cs" id="1"]
+[ext_resource type="Texture2D" path="res://assets/appearance/male/masks/work_trousers.png" id="mask_male"]
+[ext_resource type="Texture2D" path="res://assets/appearance/female/masks/work_trousers.png" id="mask_female"]
+
+[resource]
+script = ExtResource("1")
+ItemId = "work_trousers"
+ItemName = "Work Trousers"
+Slot = 2
+MeshNodeNames = Array[String](["Appearance_work_trousers"])
+MaleModelPath = "res://assets/appearance/male/work_trousers.glb"
+FemaleModelPath = "res://assets/appearance/female/work_trousers.glb"
+MaleSkinMask = ExtResource("mask_male")
+FemaleSkinMask = ExtResource("mask_female")
