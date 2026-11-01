@@ -536,6 +536,7 @@ public partial class EntityView : CharacterBody3D
         new NavigationRequest(target, timeoutSeconds: CrowdRecoveryTimeoutSeconds));
     public bool CancelNavigation() => _navigationAdapter?.ActiveRequestId is { } requestId && _navigationAdapter.Cancel(requestId);
     public bool RemoveNavigationTarget() => _navigationAdapter?.ActiveRequestId is { } requestId && _navigationAdapter.RemoveTarget(requestId);
+    public void InvalidateNavigationPathForMapChange() => _navigationAdapter?.InvalidatePathForMapChange();
 
     public void AdvanceNavigation(double simulationSeconds, World world, SquadOrderService? squad = null,
         OrderService? orders = null,

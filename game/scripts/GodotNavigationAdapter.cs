@@ -22,6 +22,8 @@ public sealed class GodotNavigationAdapter : INavigationAdapter
     private readonly NavigationRequestRegistry<RequestState> _requests = new("godot-navigation-");
     private RequestState? _activeRequest;
     private RequestState? _lastRequest;
+    private ulong? _requiredMapIteration;
+    private ulong _mapChangedFrame;
 
     public GodotNavigationAdapter(Node3D owner, NavigationAgent3D agent)
     {
@@ -82,6 +84,10 @@ public sealed class GodotNavigationAdapter : INavigationAdapter
             return state.Outcome;
         }
 
+        // Services also poll before/after movement. Do not turn an agent's stale
+        // closed-door path into a permanent failure while its replacement is pending.
+        if (_requiredMapIteration is not null) return NavigationOutcome.InProgress;
+
         if (ReferenceEquals(state, _activeRequest)
             && state.HasPath
             && _agent.IsNavigationFinished())
@@ -110,6 +116,13 @@ public sealed class GodotNavigationAdapter : INavigationAdapter
         return TryFinish(requestId, NavigationOutcome.Removed);
     }
 
+    public void InvalidatePathForMapChange()
+    {
+        _requiredMapIteration = NavigationServer3D.MapGetIterationId(_agent.GetNavigationMap()) + 1;
+        _mapChangedFrame = Engine.GetPhysicsFrames();
+        if (_activeRequest is { } state) state.HasPath = false;
+    }
+
     public void RefreshPath()
     {
         if (_activeRequest is not { } state)
@@ -117,6 +130,13 @@ public sealed class GodotNavigationAdapter : INavigationAdapter
             return;
         }
 
+        if (_requiredMapIteration is { } required)
+        {
+            if (Engine.GetPhysicsFrames() <= _mapChangedFrame
+                || NavigationServer3D.MapGetIterationId(_agent.GetNavigationMap()) < required) return;
+            _requiredMapIteration = null;
+            _agent.TargetPosition = ToGodot(state.Request.Target);
+        }
         state.NextPathPosition = _agent.GetNextPathPosition();
         state.HasPath = _agent.GetCurrentNavigationPath().Length > 0;
     }

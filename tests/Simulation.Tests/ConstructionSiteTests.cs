@@ -36,7 +36,7 @@ public sealed class ConstructionSiteTests
 
         Assert.False(service.PlaceHut(player.Id, "far-hut", new Vector3(100, 0, 100)).Succeeded);
         Assert.False(service.PlaceHut(player.Id, "invalid-hut", new Vector3(float.NaN, 0, 0)).Succeeded);
-        Assert.True(service.PlaceHut(player.Id, "hut-site", new Vector3(10, 0, 3)).Succeeded);
+        Assert.True(service.PlaceHut(player.Id, "hut-site", new Vector3(12, 0, 3)).Succeeded);
         var site = Assert.Single(session.World.ConstructionSites);
         Assert.Equal(SettlementConstruction.HutWood, site.Blueprint.RequiredMaterials[ItemIds.Wood]);
         Assert.False(service.ApplyWork(player.Id, site.Id).Succeeded);

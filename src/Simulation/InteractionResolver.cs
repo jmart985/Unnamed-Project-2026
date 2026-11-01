@@ -68,11 +68,15 @@ public sealed class InteractionResolver
         var structure = _world.Structures.FirstOrDefault(s => s.Id == request.TargetId);
         if (structure != null)
         {
-            if (MeleeReachValidator.Validate(actor.Position, structure.Position, CreatureGreetingService.DefaultMaximumReach) != MeleeReachResult.InRange)
+            if (MeleeReachValidator.Validate(actor.Position, structure.DoorPosition, CreatureGreetingService.DefaultMaximumReach) != MeleeReachResult.InRange)
                 return new(false, "Move closer before interacting (2 m reach).");
             return request.ActionId switch
             {
-                "toggle_door" => ResolveToggleDoor(actor, structure),
+                "toggle_door" => ResolveDoor(actor, structure, HouseDoorAction.Toggle),
+                "open_door" => ResolveDoor(actor, structure, HouseDoorAction.Open),
+                "close_door" => ResolveDoor(actor, structure, HouseDoorAction.Close),
+                "lock_door" => ResolveDoor(actor, structure, HouseDoorAction.Lock),
+                "unlock_door" => ResolveDoor(actor, structure, HouseDoorAction.Unlock),
                 _ => new(false, $"Unknown physical action: {request.ActionId}")
             };
         }
@@ -187,10 +191,10 @@ public sealed class InteractionResolver
         return new(true, $"Gave {transferred}x {item} to target.");
     }
 
-    private InteractionResult ResolveToggleDoor(EntityRecord actor, Structure structure)
+    private InteractionResult ResolveDoor(EntityRecord actor, Structure structure, HouseDoorAction action)
     {
-        structure.IsClosed = !structure.IsClosed;
-        return new(true, $"Door is now {(structure.IsClosed ? "closed" : "open")}.");
+        var result = _world.OperateDoor(actor.Id, structure.Id, action);
+        return new(result.Succeeded, result.Message);
     }
 
     private InteractionResult ResolveFeed(EntityRecord actor, EntityRecord target, ResourceContainer? itemContainer)

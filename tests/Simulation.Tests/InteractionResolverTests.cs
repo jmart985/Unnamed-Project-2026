@@ -62,6 +62,7 @@ public class InteractionResolverTests
         var (world, resolver, catalog) = CreateHarness();
         var player = world.SpawnEntity(catalog.GetRequired("human"), Vector3.Zero);
         var structure = world.AddStructure("house", StructureType.Hut, Vector3.Zero);
+        world.TrySetEntityPosition(player.Id, structure.DoorPosition + Vector3.UnitZ);
         
         var request = new InteractionRequest(player.Id, structure.Id, InteractionType.Physical, "toggle_door");
         var result = resolver.Resolve(request);

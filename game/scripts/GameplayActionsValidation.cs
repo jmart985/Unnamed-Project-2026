@@ -43,7 +43,7 @@ public partial class Main
                 && _workbench.GetNode<Label3D>("WorkbenchLabel").Text == "Workbench", "visible identifiable bench replaces old cube");
             var parts = _workbench.FindChildren("*", "MeshInstance3D", true, false).Count;
             Require(parts > 4 && _workbench.Mesh.GetAabb().Size.Y < 0.3f, "tabletop, supports and work tools rendered");
-            Require(IsBlockedCell(-1, 1, -1, 1), "central crossroads remains excluded from navigation");
+            Require(!IsBlockedCell(-1, 1, -1, 1), "central crossroads is walkable after removal of the obsolete central blocker");
             Require(IsBlockedCell(8, 12, 8, 12) && !IsBlockedCell(8, 12, 6, 8),
                 "workbench clearance is excluded while adjacent paved navigation remains connected");
             var target = new WorldTarget(TargetKind.Entity, "validation-target");

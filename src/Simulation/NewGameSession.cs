@@ -68,7 +68,9 @@ public sealed class NewGameSession
         int seed = DefaultSeed,
         bool survivalGathering = false,
         WildlifeRegionCatalog? wildlifeRegions = null,
-        bool startStarterWildlifeAsFar = false)
+        bool startStarterWildlifeAsFar = false,
+        bool createVillage = false,
+        double? dayLengthSeconds = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(playerProfile);
@@ -184,6 +186,8 @@ public sealed class NewGameSession
                 throw new InvalidOperationException($"Unable to seed player clothing item '{itemId}'.");
         }
         AssignStarterNpcSchedulesAndHomes(world, humanNpcs);
+        if (createVillage) StarterVillage.CreateHomes(world, humanNpcs);
+        world.SetDayLength(dayLengthSeconds ?? (createVillage ? StarterVillage.PlaytestDaySeconds : DailyScheduleState.SecondsPerDay));
         world.InitializeStarterEmployment(humanNpcs.Select(npc => npc.Id), "stockpile-1");
         world.AutoAssignWorkplacePositions();
         return new NewGameSession(world, seed, player.Id);

@@ -33,15 +33,28 @@ public sealed class Structure
     public string Id { get; }
     public StructureType Type { get; }
     public Vector3 Position { get; }
-    public bool IsClosed { get; set; }
+    private bool _isClosed;
+    public bool IsClosed
+    {
+        get => _isClosed;
+        set { _isClosed = value; if (!value) IsLocked = false; }
+    }
+    public bool IsLocked { get; internal set; }
+    public int FacingQuarterTurns { get; }
+    public string? ResidentId { get; internal set; }
+    public Vector3 DoorPosition => ToWorld(new Vector3(0, 0, HouseGeometry.DoorZ));
+    public Vector3 ToWorld(Vector3 local) => Position + HouseGeometry.Rotate(local, FacingQuarterTurns);
     public List<Bed> Beds { get; } = new();
 
-    public Structure(string id, StructureType type, Vector3 position)
+    public Structure(string id, StructureType type, Vector3 position, int facingQuarterTurns = 0, string? residentId = null)
     {
         if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Structure ID is required.");
+        if (facingQuarterTurns is < 0 or > 3) throw new ArgumentOutOfRangeException(nameof(facingQuarterTurns));
         Id = id;
         Type = type;
         Position = position;
+        FacingQuarterTurns = facingQuarterTurns;
+        ResidentId = residentId;
     }
 
     public void AddBed(Bed bed)

@@ -6,6 +6,8 @@ A systemic open-world colony RPG in which people and creatures share consistent 
 
 ## Work on GitHub
 
+New playtest games start in a [circular village](docs/VILLAGE_HOMES.md) with one spacious home per starter NPC and a two-minute work/rest day. Existing saves retain their settlement layout and clock.
+
 - [Project board](https://github.com/users/jmart985/projects/1): Ideas → Backlog → Ready → In Progress → Testing → Done
 - [Milestone 0.1: The Ant Farm](https://github.com/jmart985/Unnamed-Project-2026/milestone/1)
 - [Milestone 0.2: Character_Core](https://github.com/jmart985/Unnamed-Project-2026/milestone/26)

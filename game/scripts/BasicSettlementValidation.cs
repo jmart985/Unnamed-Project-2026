@@ -127,6 +127,8 @@ public partial class Main
         var hut = _world.Structures.Single();
         Require(_world.ConstructionSites.Count == 0 && _selectedTarget == new WorldTarget(TargetKind.Structure, hut.Id),
             "construction completion replaces site with one targetable hut");
+        _playerCharacter.GlobalPosition = new Vector3(hut.DoorPosition.X, 0, hut.DoorPosition.Z + 1.2f);
+        SyncPlayerPosition();
         PerformFriendlyInteraction();
         Require(hut.IsClosed, "completed hut door toggles closed through visible interaction");
         PerformFriendlyInteraction();

@@ -42,10 +42,10 @@ public partial class Main
         var scenerySurfaces = new[]
         {
             (Name: "TownGround", ExpectedTop: 0f),
-            (Name: "RoadEastWest", ExpectedTop: 0.001f),
-            (Name: "RoadNorthSouth", ExpectedTop: 0.001f),
-            (Name: "CountryRoadEast", ExpectedTop: 0.001f),
-            (Name: "CountryRoadWest", ExpectedTop: 0.001f)
+            (Name: "RoadEastWest", ExpectedTop: 0.02f),
+            (Name: "RoadNorthSouth", ExpectedTop: 0.02f),
+            (Name: "CountryRoadEast", ExpectedTop: 0.02f),
+            (Name: "CountryRoadWest", ExpectedTop: 0.02f)
         };
         var surfaceHeights = new List<float>();
         foreach (var (name, expectedTop) in scenerySurfaces)
@@ -65,8 +65,8 @@ public partial class Main
         var floorTop = floorShape.GlobalPosition.Y + floor.Size.Y * 0.5f;
         Require(Mathf.Abs(floorTop) <= 0.001f
             && surfaceHeights.Max() - surfaceHeights.Min()
-                <= SurfaceHeightToleranceMeters + FloatRoundingAllowanceMeters,
-            "town and road surfaces meet the shared Y=0 actor floor without a visible height step");
+                <= 0.02f + FloatRoundingAllowanceMeters,
+            "road overlays remain within 2 cm of the shared Y=0 actor floor without depth flicker");
 
         foreach (var id in starterIds)
         {

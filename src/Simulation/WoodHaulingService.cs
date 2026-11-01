@@ -150,18 +150,32 @@ public sealed class WoodHaulingService : ITransientSimulationState
             CancelHomeTrip(entity.Id);
             return true;
         }
-        var resting = _world.HasDailySchedule(entity) && !_world.GetWorkSchedule(entity.Id).Evaluate(simulationTime).IsWorking;
+        var resting = _world.HasDailySchedule(entity) && !_world.EvaluateWorkSchedule(entity.Id, simulationTime).IsWorking;
         if (!resting)
         {
+            if (!entity.Needs.IsHungry && ReconcileHomeDoor(entity, leaving: true)) return true;
             CancelHomeTrip(entity.Id);
             if (entity.Activity is "Resting" or "Going home") entity.Activity = "Idle";
             return false;
         }
-        if (entity.Inventory.GetValueOrDefault(ItemIds.Wood) > 0) return false;
+        // BeginDelivery reserves space for the entire carried stack. A smaller gap
+        // must not cancel rest for a delivery that cannot actually start.
+        var carriedWood = entity.Inventory.GetValueOrDefault(ItemIds.Wood);
+        if (carriedWood > 0
+            && (_activeTrips.ContainsKey(entity.Id)
+                || HaulingStockpiles(entity, finishingCargo: true)
+                    .Any(stockpile => _world.Reservations.GetAvailableCapacity(stockpile.Contents) >= carriedWood)))
+        {
+            if (!entity.Needs.IsHungry && ReconcileHomeDoor(entity, leaving: true)) return true;
+            CancelHomeTrip(entity.Id, completeAction: true);
+            return false;
+        }
         if (entity.Actions.Current?.Kind == ActionKind.Haul) entity.Actions.Cancel();
         ClearWaitingState(entity.Id);
         if (entity.Needs.IsHungry) return true;
         if (entity.Actions.Current is not null && !_activeHomeTrips.ContainsKey(entity.Id)) return true;
+        if (ReconcileHomeDoor(entity, leaving: false)) return true;
+        if (ReconcileRestDoor(entity)) return true;
         if (_world.TryGetHomePosition(entity.Id, out var home) && Vector3.Distance(entity.Position, home) > 0.6f)
         {
             AdvanceHomeTrip(entity, home);
@@ -543,8 +557,51 @@ public sealed class WoodHaulingService : ITransientSimulationState
         }
     }
 
-    private void AdvanceHomeTrip(EntityRecord entity, Vector3 home)
+    private bool ReconcileHomeDoor(EntityRecord entity, bool leaving)
     {
+        var house = _world.Structures.FirstOrDefault(home => home.ResidentId == entity.Id && home.IsClosed);
+        if (house is null) return false;
+        var inside = HouseGeometry.Contains(house, entity.Position);
+        if (leaving != inside) return false;
+        if (_world.SpeciesCatalog?.TryGet(entity.SpeciesId, out var species) != true || species is null || !species.CanOpenDoors)
+            return false;
+        if (Vector3.Distance(entity.Position, house.DoorPosition) <= 2)
+        {
+            _world.OperateDoor(entity.Id, house.Id, HouseDoorAction.Open);
+            CancelHomeTrip(entity.Id, completeAction: true);
+            return false;
+        }
+        // A newly closed door can invalidate an already-started haul out of the room.
+        // Release that path/reservations before using the normal home trip to reach the handle.
+        if (entity.Actions.Current?.Kind == ActionKind.Haul) entity.Actions.Cancel();
+        AdvanceHomeTrip(entity, house.ToWorld(new Vector3(0, 0, HouseGeometry.DoorZ + (inside ? -1.25f : 1.25f))), .25);
+        if (_activeHomeTrips.ContainsKey(entity.Id)) entity.Activity = "Approaching home door";
+        return true;
+    }
+
+    private bool ReconcileRestDoor(EntityRecord entity)
+    {
+        var house = _world.Structures.FirstOrDefault(home => home.ResidentId == entity.Id);
+        if (house is null || house.IsLocked || !HouseGeometry.Contains(house, entity.Position)) return false;
+        if (_world.SpeciesCatalog?.TryGet(entity.SpeciesId, out var species) != true || species is null || !species.CanOpenDoors)
+            return false;
+        var local = HouseGeometry.Rotate(entity.Position - house.Position, (4 - house.FacingQuarterTurns) % 4);
+        // Close behind the resident only once the complete capsule is clear of the door.
+        if (HouseGeometry.DoorZ - local.Z >= .75f && Vector3.Distance(entity.Position, house.DoorPosition) <= 2)
+        {
+            _world.OperateDoor(entity.Id, house.Id, HouseDoorAction.Lock);
+            CancelHomeTrip(entity.Id, completeAction: true);
+            return false;
+        }
+        AdvanceHomeTrip(entity, house.ToWorld(new Vector3(0, 0, HouseGeometry.DoorZ - 1.25f)), .25);
+        if (_activeHomeTrips.ContainsKey(entity.Id)) entity.Activity = "Securing home door";
+        return true;
+    }
+
+    private void AdvanceHomeTrip(EntityRecord entity, Vector3 home, double arrivalTolerance = .6)
+    {
+        if (_activeHomeTrips.TryGetValue(entity.Id, out var previous) && Vector3.DistanceSquared(previous.Destination, home) > .01f)
+            CancelHomeTrip(entity.Id, completeAction: true);
         if (_activeHomeTrips.TryGetValue(entity.Id, out var active))
         {
             if (!string.Equals(entity.Actions.Current?.Id, active.ActionId, StringComparison.Ordinal))
@@ -554,7 +611,7 @@ public sealed class WoodHaulingService : ITransientSimulationState
             }
 
             var outcome = active.Navigator.Poll(active.NavigationRequestId, 0);
-            if (outcome == NavigationOutcome.Arrived || Vector3.Distance(entity.Position, home) <= 0.6f)
+            if (outcome == NavigationOutcome.Arrived || Vector3.Distance(entity.Position, home) <= active.ArrivalTolerance)
             {
                 CancelHomeTrip(entity.Id, completeAction: true);
                 entity.Activity = "Resting at home";
@@ -578,8 +635,8 @@ public sealed class WoodHaulingService : ITransientSimulationState
         if (entity.Actions.TryStart(new ActionCandidate(actionId, ActionKind.Wander), () => CancelHomeTrip(entity.Id)) == ActionStartResult.Rejected)
             return;
         var navigator = _navigationForEntity(entity);
-        var requestId = navigator.Request(new NavigationRequest(home, timeoutSeconds: NavigationTimeoutSeconds, arrivalTolerance: 0.6));
-        _activeHomeTrips[entity.Id] = new ActiveHomeTrip(actionId, navigator, requestId);
+        var requestId = navigator.Request(new NavigationRequest(home, timeoutSeconds: NavigationTimeoutSeconds, arrivalTolerance: arrivalTolerance));
+        _activeHomeTrips[entity.Id] = new ActiveHomeTrip(actionId, navigator, requestId, home, arrivalTolerance);
         entity.Activity = "Going home";
         entity.WaitingReason = null;
     }
@@ -645,5 +702,5 @@ public sealed class WoodHaulingService : ITransientSimulationState
         INavigationAdapter? Navigator,
         string? NavigationRequestId);
 
-    private sealed record ActiveHomeTrip(string ActionId, INavigationAdapter Navigator, string NavigationRequestId);
+    private sealed record ActiveHomeTrip(string ActionId, INavigationAdapter Navigator, string NavigationRequestId, Vector3 Destination, double ArrivalTolerance);
 }

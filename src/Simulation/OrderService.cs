@@ -183,6 +183,7 @@ public sealed class OrderService : ITransientSimulationState
         var entity = active.Entity;
         var isFollowing = active.Intent.Kind == EntityOrderKind.Follow;
         var goal = isFollowing ? GetFollowGoal(entity.Position, issuer!.Position) : active.Intent.Position!.Value;
+        goal = _world.ResolveHomeDoorTarget(entity, goal);
         var followDistance = active.Holding ? SquadOrderService.FollowResumeDistance : FollowArrivalTolerance;
         var atGoal = isFollowing
             ? HorizontalDistanceSquared(entity.Position, issuer!.Position)
@@ -202,7 +203,7 @@ public sealed class OrderService : ITransientSimulationState
 
         if (active.NavigationRequestId is not null)
         {
-            if (isFollowing && Vector3.DistanceSquared(goal, active.Target) > 1)
+            if (Vector3.DistanceSquared(goal, active.Target) > 1)
             {
                 CancelNavigation(active);
                 active.Failed = false;

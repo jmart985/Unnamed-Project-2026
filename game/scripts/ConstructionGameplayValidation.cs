@@ -31,9 +31,8 @@ public partial class Main
                 }
                 return false;
             }
-            var sceneryCollider = _scenery!.GetNode<StaticBody3D>("Building_0Collision");
-            Require(sceneryCollider.GetChildren().OfType<CollisionShape3D>().Single().Shape is BoxShape3D,
-                "solid scenery buildings have matching static collision volumes");
+            Require(_scenery!.GetNodeOrNull<Node3D>("Building_0Collision") is null,
+                "obsolete scenery blocks have been removed in favor of usable houses");
             Require(!ControllerActions.All.Any(action => new[] { Key.Key1, Key.Key2, Key.Key0 }.Any(key =>
                     InputMap.ActionHasEvent(action, new InputEventKey { PhysicalKeycode = key }))),
                 "number-row build slots are not globally bound to actions outside Build mode");
@@ -138,22 +137,24 @@ public partial class Main
             Require(TargetLineClear(hutPosition + new Vector3(0, 1.2f, 3),
                 hutPosition + new Vector3(0, 1.2f, 0), new(TargetKind.Structure, hut.Id), targets),
                 "open doorway has a navigable clear center path");
+            var doorPosition = new Vector3(hut.DoorPosition.X, 0, hut.DoorPosition.Z);
+            _playerCharacter.GlobalPosition = doorPosition + new Vector3(0, 0, 1.2f); SyncPlayerPosition();
             PerformFriendlyInteraction();
-            Require(hut.IsClosed, "F toggles the completed hut door closed");
+            Require(hut.IsClosed, "F toggles the completed hut door closed from the outside doorstep");
             hutView = _constructionViews[new(TargetKind.Structure, hut.Id)];
             Require(hutView.GetNode<StaticBody3D>("BuildingCollision").GetNodeOrNull<CollisionShape3D>("Door") is not null,
                 "closed hut door receives a solid collision shape");
             var closedDoorNavigation = CreateNavigationMesh(CurrentWorkbenchPositions(), _world.Structures);
-            Require(!HasNavigationAt(closedDoorNavigation, hutPosition + new Vector3(0, 0, 1.9f)),
+            Require(!HasNavigationAt(closedDoorNavigation, doorPosition),
                 "closed hut door closes its navigation opening");
             targets = WorldTargets();
-            Require(!TargetLineClear(hutPosition + new Vector3(0, 1.2f, 3),
+            Require(!TargetLineClear(doorPosition + new Vector3(0, 1.2f, 1.2f),
                 hutPosition + new Vector3(0, 1.2f, 0), new(TargetKind.Entity, "door-ray"), targets),
                 "closed door blocks the doorway ray");
             PerformFriendlyInteraction();
             Require(!hut.IsClosed, "F reopens the completed hut door");
             var openDoorNavigation = CreateNavigationMesh(CurrentWorkbenchPositions(), _world.Structures);
-            Require(HasNavigationAt(openDoorNavigation, hutPosition + new Vector3(0, 0, 1.9f))
+            Require(HasNavigationAt(openDoorNavigation, doorPosition)
                 && HasNavigationAt(openDoorNavigation, hutPosition),
                 "open doorway connects the exterior and usable interior in navigation");
 
@@ -214,10 +215,11 @@ public partial class Main
             var navigation = CreateNavigationMesh(CurrentWorkbenchPositions(), _world.Structures);
             Require(!HasNavigationAt(navigation, new Vector3(42, 0, 42)) && HasNavigationAt(navigation, new Vector3(45, 0, 42)),
                 "generated navigation excludes the added workbench clearance while keeping the adjacent route open");
-            var subdividedBuildingNavigation = CreateNavigationMesh([new System.Numerics.Vector3(18, 0, 42)]);
-            Require(!HasNavigationAt(subdividedBuildingNavigation, new Vector3(15, 0, 15))
-                && HasNavigationAt(subdividedBuildingNavigation, new Vector3(13, 0, 15)),
-                "workbench grid subdivisions do not reopen scenery building interiors to navigation");
+            var navigationHouse = new Structure("navigation-house", StructureType.Hut, new(18, 0, 18));
+            var subdividedBuildingNavigation = CreateNavigationMesh([new System.Numerics.Vector3(18, 0, 42)], [navigationHouse]);
+            Require(!HasNavigationAt(subdividedBuildingNavigation, new Vector3(21.85f, 0, 18))
+                && HasNavigationAt(subdividedBuildingNavigation, new Vector3(18, 0, 18)),
+                "workbench grid subdivisions preserve real house walls and the usable interior");
             Require(WorldTargets().Any(view => view.Target == new WorldTarget(TargetKind.Workstation, addedWorkbench.Id)),
                 "the added workbench has an independent target-selection view");
 
