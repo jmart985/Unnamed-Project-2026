@@ -184,6 +184,8 @@ public sealed class NewGameSession
                 throw new InvalidOperationException($"Unable to seed player clothing item '{itemId}'.");
         }
         AssignStarterNpcSchedulesAndHomes(world, humanNpcs);
+        world.InitializeStarterEmployment(humanNpcs.Select(npc => npc.Id), "stockpile-1");
+        world.AutoAssignWorkplacePositions();
         return new NewGameSession(world, seed, player.Id);
     }
 

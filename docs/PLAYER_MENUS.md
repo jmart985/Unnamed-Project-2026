@@ -26,6 +26,8 @@ Torso, legs, head, hands, feet, accessory and outerwear slots have concrete wear
 
 Audio and Display are disabled **Planned** settings tabs with tooltips. Add real settings inside them when those capabilities are implemented. Other contains working skills and world information; it can receive future character information without crowding Status. Do not add speculative quest/crafting controls or enable placeholders before their acceptance criteria and systems exist.
 
+Settlement > People also exposes ongoing employment, automatic assignment preference, finite workplace positions, and explicit assignment/unassignment. Employment is separate from current activity and survives task completion or temporary interruptions. The first supported job is a wood hauler assigned to a stockpile; additional production professions need their own executable work loops. See [NPC employment](NPC_EMPLOYMENT.md).
+
 ## Button mapping and persistence
 
 Select a Keyboard / Mouse or Controller mapping button, then press the new input. Keyboard mapping uses unmodified physical keys; mouse mapping accepts left/middle/right and auxiliary buttons, not wheel axes. Controller mapping accepts buttons; existing stick movement remains available. Each action has one desktop binding and an optional controller button. Axis remapping and modifier chords are outside this slice.

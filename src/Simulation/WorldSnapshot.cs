@@ -34,7 +34,10 @@ public sealed record WorldSnapshot(
     IReadOnlyList<FireplaceSnapshot>? Fireplaces = null,
     IReadOnlyList<WildTerritorySnapshot>? WildTerritories = null,
     IReadOnlyList<FarPopulationSnapshot>? FarPopulations = null,
-    IReadOnlyList<NearPopulationSnapshot>? NearPopulations = null);
+    IReadOnlyList<NearPopulationSnapshot>? NearPopulations = null,
+    bool UsesWorkplaceEmployment = false,
+    IReadOnlyList<SettlementWorkerSetting>? SettlementWorkers = null,
+    IReadOnlyList<WorkplacePosition>? WorkplacePositions = null);
 
 public sealed record WildTerritorySnapshot(string EntityId, Vector3 Center, float Radius);
 public sealed record FarPopulationSnapshot(
@@ -149,7 +152,7 @@ public sealed record ResourceContainerSnapshot(
     int Capacity,
     IReadOnlyDictionary<string, int> Counts);
 
-public static class WorldSnapshotSerializer
+public static partial class WorldSnapshotSerializer
 {
     private const int LegacySchemaVersion = 4;
     private const int PreviousSchemaVersion = 5;
@@ -173,7 +176,8 @@ public static class WorldSnapshotSerializer
     private const int ClothingEquipmentSchemaVersion = 24;
     private const int EquipmentVisibilitySchemaVersion = 25;
     private const int PlayerAppearanceSchemaVersion = 26;
-    public const int CurrentSchemaVersion = PlayerAppearanceSchemaVersion;
+    private const int WorkplaceEmploymentSchemaVersion = 27;
+    public const int CurrentSchemaVersion = WorkplaceEmploymentSchemaVersion;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -302,7 +306,10 @@ public static class WorldSnapshotSerializer
                 record.RegionId,
                 record.SpeciesId,
                 record.EntityIds.ToArray(),
-                new Dictionary<string, int>(record.Resources, StringComparer.Ordinal))).ToArray());
+                new Dictionary<string, int>(record.Resources, StringComparer.Ordinal))).ToArray(),
+            world.UsesWorkplaceEmployment,
+            world.SettlementWorkers,
+            world.WorkplacePositions);
     }
 
     public static string Serialize(World world, double simulationTime)
@@ -391,6 +398,8 @@ public static class WorldSnapshotSerializer
             };
         }
 
+        if (snapshot.SchemaVersion < WorkplaceEmploymentSchemaVersion)
+            snapshot = MigrateEmployment(snapshot);
         // Earlier profiles have no explicit appearance; equipment remains authoritative.
         if (snapshot.SchemaVersion < PlayerAppearanceSchemaVersion && snapshot.PlayerProfile is { } oldProfile)
             snapshot = snapshot with { PlayerProfile = oldProfile with { Appearance = null } };
@@ -505,7 +514,7 @@ public static class WorldSnapshotSerializer
         if (snapshot.SchemaVersion == BiologicalSexSchemaVersion)
             return snapshot with { SchemaVersion = CurrentSchemaVersion };
 
-        if (snapshot.SchemaVersion is ClothingEquipmentSchemaVersion or EquipmentVisibilitySchemaVersion)
+        if (snapshot.SchemaVersion is ClothingEquipmentSchemaVersion or EquipmentVisibilitySchemaVersion or PlayerAppearanceSchemaVersion)
             return snapshot with { SchemaVersion = CurrentSchemaVersion };
 
         if (snapshot.SchemaVersion != CurrentSchemaVersion)
@@ -813,6 +822,7 @@ public static class WorldSnapshotSerializer
 
         ValidateLocations(snapshot.ResourcePiles, "resource pile", foodSourceIds, factionIds, allowFactionOwner: false);
         ValidateLocations(snapshot.Stockpiles, "stockpile", foodSourceIds, factionIds, allowFactionOwner: true);
+        ValidateEmployment(snapshot, speciesCatalog);
         foreach (var workstation in snapshot.Workstations)
         {
             if (workstation is null || string.IsNullOrWhiteSpace(workstation.Id) || !foodSourceIds.Add(workstation.Id))

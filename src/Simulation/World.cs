@@ -4,7 +4,7 @@ using System.Numerics;
 
 namespace Simulation;
 
-public sealed class World
+public sealed partial class World
 {
     public event Action<string, string, RelationshipAdjustment>? RelationshipChanged;
     public event Action<string, string, double>? FactionStandingChanged;
@@ -388,6 +388,8 @@ public sealed class World
 
         stockpile.FactionOwnerId = null;
         _stockpiles.Remove(stockpile);
+        foreach (var position in WorkplacePositions.Where(position => position.WorkplaceId == stockpile.Id))
+            RemoveWorkplacePosition(position.Id);
         Reservations.RemoveTarget(stockpile.Id);
         return true;
     }
@@ -450,6 +452,7 @@ public sealed class World
         if (factionId is null)
         {
             stockpile.FactionOwnerId = null;
+            ReconcileEmployment();
             return FactionOwnershipResult.Removed;
         }
 
@@ -459,6 +462,7 @@ public sealed class World
         }
 
         stockpile.FactionOwnerId = factionId;
+        ReconcileEmployment();
         return FactionOwnershipResult.Assigned;
     }
 
@@ -627,6 +631,7 @@ public sealed class World
         if (factionId is null)
         {
             entity.AllegianceFactionId = null;
+            ReconcileEmployment();
             return FactionAllegianceResult.Removed;
         }
 
@@ -636,6 +641,7 @@ public sealed class World
         }
 
         entity.AllegianceFactionId = factionId;
+        ReconcileEmployment();
         return FactionAllegianceResult.Assigned;
     }
 
@@ -845,6 +851,8 @@ public sealed class World
         _squadMembers.Remove(id);
         _workSchedules.Remove(id);
         _homePositions.Remove(id);
+        UnassignWorker(id, pauseAutoAssignment: false);
+        _settlementWorkers.Remove(id);
         _wildTerritories.Remove(id);
         foreach (var pair in _nearPopulations.ToArray())
         {
@@ -910,6 +918,7 @@ public sealed class World
         }
 
         _entities.Clear();
+        ResetEmployment();
         _squadMembers.Clear();
         _workSchedules.Clear();
         _homePositions.Clear();
@@ -1114,6 +1123,7 @@ public sealed class World
             _workSchedules.Add(setting.EntityId, new(setting.StartHour, setting.EndHour));
         foreach (var home in snapshot.HomePositions!)
             _homePositions.Add(home.EntityId, home.Position);
+        RestoreEmployment(snapshot);
         foreach (var territory in snapshot.WildTerritories!)
             _wildTerritories.Add(territory.EntityId,
                 new WildTerritory(territory.EntityId, territory.Center, territory.Radius));
