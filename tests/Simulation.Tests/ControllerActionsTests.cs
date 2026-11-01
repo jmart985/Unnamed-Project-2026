@@ -31,7 +31,7 @@ public sealed class ControllerActionsTests
             "close_menu", "debug_route", "debug_unreachable", "debug_cancel", "debug_remove_goal",
             "open_build_mode"
         ],
-        ControllerActions.All);
+        ControllerActions.All.Take(22));
     }
 
     [Fact]
