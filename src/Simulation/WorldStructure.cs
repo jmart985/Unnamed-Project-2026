@@ -33,7 +33,13 @@ public sealed class Structure
     public string Id { get; }
     public StructureType Type { get; }
     public Vector3 Position { get; }
-    public bool IsClosed { get; set; }
+    private bool _isClosed;
+    public bool IsClosed
+    {
+        get => _isClosed;
+        set { _isClosed = value; if (!value) IsLocked = false; }
+    }
+    public bool IsLocked { get; internal set; }
     public int FacingQuarterTurns { get; }
     public string? ResidentId { get; internal set; }
     public Vector3 DoorPosition => ToWorld(new Vector3(0, 0, HouseGeometry.DoorZ));

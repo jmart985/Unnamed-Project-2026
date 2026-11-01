@@ -79,7 +79,7 @@ After 0.1, reassess engine, presentation, and architecture using prototype resul
 
 ## Daily schedules (1.1)
 
-World owns per-human-NPC work-hour overrides; phase derives from SimulationClock with a 240-second day beginning at 08:00. WoodHaulingService reconciles rest before navigation, cancels empty pickup trips through ActionLifecycle, and allows carried delivery. Food and squad priorities remain higher. Schema 10 adds validated WorkSchedules; schemas 4-9 use defaults. See docs/NPC_SCHEDULES.md for boundaries, precedence and validation.
+World owns per-human-NPC work-hour overrides and configured day duration; phase derives from SimulationClock beginning at 08:00. New villages use 120-second days; baseline fixtures and legacy saves retain 240. WoodHaulingService reconciles rest before navigation, cancels empty pickup trips through ActionLifecycle, and allows carried delivery. Food and squad priorities remain higher. Schema 10 adds validated WorkSchedules; schemas 4-9 use defaults. See docs/NPC_SCHEDULES.md for boundaries, precedence and validation.
 
 Relationship and faction standing notifications carry actual applied deltas after authoritative changes. Gameplay displays transient signed changes; production social profiles and faction event steps use +1/-1. Petting and selection rings use the existing recipient Trusted/Loyal bond, with Fearful overriding permission. See [SOCIAL_FEEDBACK.md](SOCIAL_FEEDBACK.md) for domestic defaults, save compatibility and feedback validation.
 
@@ -87,6 +87,8 @@ Relationship and faction standing notifications carry actual applied deltas afte
 ## Village housing and calendar rate
 
 World owns resident home references, orientation, interior destinations and day duration. `HouseGeometry` is the shared metre-scale source for house solids, navigation walls and placement dimensions; Godot consumes cardinal turns without per-building orientation hacks. New village sessions use a 120-second day through World schedule evaluation and display; movement and needs continue to use ordinary simulation seconds. Schema 28 persists the scenario mode and duration, while older saves retain their 240-second clock and existing layout. Actor paths and actions are rebuilt, not serialized. See [village homes](VILLAGE_HOMES.md) and D073.
+
+Resident door authority and saved locks are also World-owned. Rest policy closes/locks only after the resident clears the threshold; needs and explicit movement can unlock the owned door to leave. Food owns its urgent door detour through the existing action/navigation interfaces, independently of work schedules. Visitors cannot open a locked door from outside but retain interior egress. Invalid locks reject before live-state or transient-path changes. See D074.
 
 ## Player appearance boundary
 

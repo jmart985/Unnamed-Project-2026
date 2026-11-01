@@ -118,18 +118,30 @@ public partial class Main
                     var npc = _world.Entities.Single(entity => entity.Id == house.ResidentId);
                     var working = _world.EvaluateWorkSchedule(npc.Id, _clock.SimulationTime).IsWorking;
                     if (!working && NumericsVector3.Distance(npc.Position, house.Position) < .85f) rested.Add(npc.Id);
-                    if (working && rested.Contains(npc.Id) && npc.Activity is not ("Resting" or "Resting at home" or "Going home")) resumed.Add(npc.Id);
+                    if (working && rested.Contains(npc.Id)
+                        && (_world.GetEmployment(npc.Id) is not null
+                            ? npc.Actions.Current?.Kind == ActionKind.Haul || npc.Activity == "Waiting"
+                            : npc.Activity is "Idle" or "Wandering" or "Waiting")) resumed.Add(npc.Id);
                 }
             }
             Require(rested.Count == 10 && resumed.Count == 10,
-                $"two-minute day drives every resident through home rest and back to work: rested {rested.Count}, resumed {resumed.Count}");
+                $"two-minute day drives every resident through home rest and back to work: rested {rested.Count}, resumed {resumed.Count}; "
+                + string.Join("; ", houses.Select(home => {
+                    var npc = _world.Entities.Single(entity => entity.Id == home.ResidentId);
+                    return $"{npc.Id} at {npc.Position} {npc.Activity} {npc.Actions.Current?.Kind} wait={npc.WaitingReason} "
+                        + $"closed={home.IsClosed} locked={home.IsLocked} rested={rested.Contains(npc.Id)} resumed={resumed.Contains(npc.Id)}";
+                })));
+            var lockedHomes = _world.Structures.Count(house => house.IsLocked);
+            Require(lockedHomes > 0, "off-shift residents secure their homes during the natural rest cycle");
             var saved = WorldSnapshotSerializer.Serialize(_world, _clock.SimulationTime);
             var loadedTime = WorldSnapshotSerializer.Load(_world, saved, _speciesCatalog,
                 _woodHauling!, _foodConsumption!, _wandering!, _squad!, _orders!);
             _clock.Restore(loadedTime);
             RebuildPresentationFromWorld();
-            Require(_world.DayLengthSeconds == 120 && _world.Structures.Count == 10 && _world.UsesVillageLayout,
-                "saved village restores resident homes, facing and the faster clock");
+            Require(_world.DayLengthSeconds == 120 && _world.Structures.Count == 10 && _world.UsesVillageLayout
+                && _world.Structures.Count(house => house.IsLocked) == lockedHomes,
+                "saved village restores resident homes, locks, facing and the faster clock");
+            await ValidateVillageDoorRecovery();
             ResetScenario();
             Require(_world.UsesVillageLayout && _world.Structures.Count == 10 && _world.DayLengthSeconds == 120,
                 "reset preserves the selected village scenario and clock");

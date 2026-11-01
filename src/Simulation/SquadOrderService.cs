@@ -128,6 +128,7 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
             var goal = following
                 ? AddHorizontal(playerPosition, _followOffsets.GetValueOrDefault(id))
                 : _moveTargets.GetValueOrDefault(id, Target!.Value);
+            goal = world.ResolveHomeDoorTarget(entity, goal);
             var arrivalTolerance = following ? FollowPathArrivalTolerance : 0.5f;
             var distanceSquared = following ? HorizontalDistanceSquared(entity.Position, playerPosition) : Vector3.DistanceSquared(entity.Position, goal);
             if (following && distanceSquared <= (_trips.ContainsKey(id) ? FollowArrivalTolerance * FollowArrivalTolerance : FollowResumeDistance * FollowResumeDistance))
@@ -141,7 +142,7 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
             if (_trips.TryGetValue(id, out var trip))
             {
                 // Retarget follow only after the player moves a meaningful distance.
-                if (Order == SquadOrderKind.FollowPlayer && Vector3.DistanceSquared(goal, trip.Target) > 1)
+                if (Vector3.DistanceSquared(goal, trip.Target) > 1)
                     CancelTrip(id);
                 else
                 {

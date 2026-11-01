@@ -37,7 +37,7 @@ public partial class Main
 
     private void SyncHouseDoorNavigation()
     {
-        var state = string.Join('|', _world.Structures.Select(house => $"{house.Id}:{house.IsClosed}"));
+        var state = string.Join('|', _world.Structures.Select(house => $"{house.Id}:{house.IsClosed}:{house.IsLocked}"));
         if (_houseDoorState == state) return;
         _houseDoorState = state;
         SyncConstructionPresentation();

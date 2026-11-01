@@ -57,7 +57,7 @@ public sealed record NearPopulationSnapshot(
 public sealed record FireplaceSnapshot(string Id, Vector3 Position, int Fuel);
 
 public sealed record StructureSnapshot(string Id, StructureType Type, Vector3 Position, bool IsClosed,
-    IReadOnlyList<BedSnapshot>? Beds = null, int FacingQuarterTurns = 0, string? ResidentId = null);
+    IReadOnlyList<BedSnapshot>? Beds = null, int FacingQuarterTurns = 0, string? ResidentId = null, bool IsLocked = false);
 public sealed record BedSnapshot(string Id, double RecoveryRateMultiplier, string? OccupantId);
 
 public sealed record ConstructionSiteSnapshot(
@@ -283,7 +283,7 @@ public static partial class WorldSnapshotSerializer
             world.Structures.OrderBy(item => item.Id, StringComparer.Ordinal)
                 .Select(item => new StructureSnapshot(item.Id, item.Type, item.Position, item.IsClosed,
                     item.Beds.Select(bed => new BedSnapshot(bed.Id, bed.RecoveryRateMultiplier, bed.OccupantId)).ToArray(),
-                    item.FacingQuarterTurns, item.ResidentId)).ToArray(),
+                    item.FacingQuarterTurns, item.ResidentId, item.IsLocked)).ToArray(),
             world.ConstructionSites.OrderBy(item => item.Id, StringComparer.Ordinal).Select(site =>
                 new ConstructionSiteSnapshot(site.Id, site.Position, site.Blueprint.Id, site.Blueprint.Width, site.Blueprint.Depth,
                     new Dictionary<string, int>(site.Blueprint.RequiredMaterials, StringComparer.Ordinal),
@@ -891,6 +891,7 @@ public static partial class WorldSnapshotSerializer
                 throw new InvalidDataException("Snapshot contains an invalid or duplicate structure.");
             ValidatePosition(structure.Position, $"structure '{structure.Id}' position");
             if (!Enum.IsDefined(structure.Type) || structure.FacingQuarterTurns is < 0 or > 3
+                || (structure.IsLocked && (!structure.IsClosed || structure.ResidentId is null))
                 || (structure.ResidentId is { } resident && (structure.Type != StructureType.Hut
                     || !entityIds.Contains(resident) || resident == snapshot.PlayerEntityId || !homeResidents.Add(resident))))
                 throw new InvalidDataException($"Structure '{structure.Id}' has invalid facing or resident.");

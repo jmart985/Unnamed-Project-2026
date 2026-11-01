@@ -828,6 +828,8 @@ public partial class Main : Node3D
 		AdvanceWoodHauling();
 		AdvanceWandering();
 		AdvanceNpcAnimationTestRoutes();
+		// Food and explicit orders may open a door after navigation's pre-step sync.
+		SyncHouseDoorNavigation();
 	}
 
 	private void UpdateWildlifeProximity()

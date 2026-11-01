@@ -39,7 +39,7 @@ public sealed record PlayerEatResult(
     string? ItemId = null,
     double Satiety = 0);
 
-public sealed class FoodConsumptionService : ITransientSimulationState
+public sealed partial class FoodConsumptionService : ITransientSimulationState
 {
     public const double PlayerEatReach = 2.0;
 
@@ -113,6 +113,9 @@ public sealed class FoodConsumptionService : ITransientSimulationState
         {
             return new FoodConsumptionResult(FoodConsumptionStatus.InvalidSpecies);
         }
+
+        var doorExit = ReconcileHomeExit(entity, species, simulationTick);
+        if (doorExit is not null) return doorExit;
 
         if (_activeTravels.TryGetValue(entity.Id, out var activeTravel))
         {
@@ -256,6 +259,7 @@ public sealed class FoodConsumptionService : ITransientSimulationState
 
     public void Reset()
     {
+        ResetHomeDoorExits();
         foreach (var entityId in _activeTravels.Keys.ToArray())
         {
             CancelTravel(entityId);

@@ -727,7 +727,7 @@ public partial class Main
         if (structure.ResidentId is { } resident && _world.TryGetEntity(resident, out var npc) && npc is not null)
             title = StarterNpcPresentationCatalog.TryGet(resident, npc.Sex, out var presentation) && presentation is not null
                 ? $"{presentation.DisplayName}'s home" : "Resident home";
-        root.AddChild(new Label3D { Text = $"{title} · DOOR {(structure.IsClosed ? "CLOSED" : "OPEN")}",
+        root.AddChild(new Label3D { Text = $"{title} · DOOR {(structure.IsLocked ? "LOCKED" : structure.IsClosed ? "CLOSED" : "OPEN")}",
             Position = new Vector3(0, 5.6f, 0), Billboard = BaseMaterial3D.BillboardModeEnum.Enabled, FontSize = 28, OutlineSize = 7 });
         return root;
     }

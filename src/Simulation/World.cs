@@ -854,7 +854,11 @@ public sealed partial class World
         _squadMembers.Remove(id);
         _workSchedules.Remove(id);
         _homePositions.Remove(id);
-        foreach (var home in _structures.Where(home => home.ResidentId == id)) home.ResidentId = null;
+        foreach (var home in _structures.Where(home => home.ResidentId == id))
+        {
+            home.ResidentId = null;
+            home.IsLocked = false;
+        }
         UnassignWorker(id, pauseAutoAssignment: false);
         _settlementWorkers.Remove(id);
         _wildTerritories.Remove(id);
@@ -1092,6 +1096,7 @@ public sealed partial class World
         {
             var structure = AddStructure(saved.Id, saved.Type, saved.Position, saved.FacingQuarterTurns, saved.ResidentId);
             structure.IsClosed = saved.IsClosed;
+            structure.IsLocked = saved.IsLocked;
             foreach (var bed in saved.Beds ?? Array.Empty<BedSnapshot>())
                 structure.AddBed(new Bed(bed.Id, bed.RecoveryRateMultiplier) { OccupantId = bed.OccupantId, IsOccupied = bed.OccupantId is not null });
         }
