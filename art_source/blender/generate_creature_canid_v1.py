@@ -335,7 +335,7 @@ def export() -> None:
     RUNTIME_ROOT.mkdir(parents=True, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=str(ROOT / f"{MODEL_NAME}.blend"))
     bpy.ops.export_scene.gltf(
-        filepath=str(ROOT / f"{MODEL_NAME}.glb"),
+        filepath=str(RUNTIME_ROOT / f"{MODEL_NAME}.glb"),
         export_format="GLB",
         use_selection=False,
         export_apply=True,
@@ -346,10 +346,7 @@ def export() -> None:
         export_skins=True,
         export_morph=False,
     )
-    # The runtime copies only the project-owned GLB.  Blender remains the
-    # editable source of truth and no downloaded asset is admitted here.
-    import shutil
-    shutil.copy2(ROOT / f"{MODEL_NAME}.glb", RUNTIME_ROOT / f"{MODEL_NAME}.glb")
+    # Keep one runtime GLB; the editable source remains the Blender file.
     metadata = {
         "asset_id": MODEL_NAME,
         "display_name": "Wolf / Canid Rig v1",

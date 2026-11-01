@@ -51,5 +51,6 @@
   },
   "usage": "Prototype body source only. The CC0 body is reusable, but the assembled runtime GLB remains prototype-only until the inherited rig and animation rights are resolved.",
   "working_copy": "art_source/reference/generated_humanoids/blender_male_base_source_v1.blend",
-  "runtime_asset": "game/assets/humanoids/human/human_male_humanoid_rig_v1.glb"
+  "retired_runtime_asset": "game/assets/humanoids/human/human_male_humanoid_rig_v1.glb",
+  "runtime_status": "Retired prototype; current selectable bodies are in game/assets/humanoids/player."
 }
