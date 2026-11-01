@@ -6,6 +6,8 @@ namespace UnnamedProject2026;
 public partial class Main
 {
     private string _houseDoorState = string.Empty;
+    private string _houseNavigationState = string.Empty;
+    private ulong _houseNavigationChangedFrame = ulong.MaxValue;
 
     private void BuildVillagePaths()
     {
@@ -41,6 +43,12 @@ public partial class Main
         if (_houseDoorState == state) return;
         _houseDoorState = state;
         SyncConstructionPresentation();
+        var navigationState = string.Join('|', _world.Structures.Select(house => $"{house.Id}:{house.IsClosed}"));
+        if (_houseNavigationState == navigationState) return;
+        _houseNavigationState = navigationState;
         _navigationRegion.NavigationMesh = CreateNavigationMesh(CurrentWorkbenchPositions(), _world.Structures);
+        // NavigationServer merges region changes at the physics boundary. Querying
+        // the just-opened doorway in this frame can incorrectly fail an order forever.
+        _houseNavigationChangedFrame = Engine.GetPhysicsFrames();
     }
 }

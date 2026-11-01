@@ -135,6 +135,32 @@ public sealed class ResidentDoorTests
         Assert.False(house.IsLocked || house.IsClosed);
     }
 
+    [Theory]
+    [InlineData(1)] [InlineData(4)]
+    public void SpaceForOnlyPartOfCargoDoesNotInterruptHomeTravel(int availableCapacity)
+    {
+        var world = Village();
+        var owner = Resident(world);
+        var house = world.Structures[0];
+        var stockpile = world.Stockpiles.Single();
+        stockpile.Contents.TryAdd(ItemIds.Wood, stockpile.Contents.Capacity);
+        owner.TryAddCarried(ItemIds.Wood, 5);
+        world.TrySetEntityPosition(owner.Id, house.ToWorld(new(0, 0, 8)));
+        var nav = new FakeNavigationAdapter();
+        var work = new WoodHaulingService(world, _ => nav);
+        Assert.True(work.ReconcileSchedule(owner, 60));
+        var homeAction = owner.Actions.Current!.Id;
+        var request = nav.Requests.Single().Key;
+        stockpile.Contents.TryRemove(ItemIds.Wood, availableCapacity);
+        Assert.True(work.ReconcileSchedule(owner, 60));
+        Assert.Equal(WoodHaulingStatus.Resting, work.Advance(owner, Catalog().GetRequired("human"), 1, 60).Status);
+        Assert.Equal(homeAction, owner.Actions.Current!.Id);
+        Assert.Equal(NavigationOutcome.InProgress, nav.Requests[request]);
+        Assert.Equal(house.Position, nav.RequestTargets[request]);
+        Assert.Single(nav.Requests);
+        Assert.Equal(5, owner.Inventory[ItemIds.Wood]);
+    }
+
     [Fact]
     public void ResidentSecuresDoorDuringRestAndOpensItForNextShift()
     {

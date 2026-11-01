@@ -861,6 +861,7 @@ public partial class Main : Node3D
 
 	private void AdvanceNavigationTick(double tickSeconds)
 	{
+		if (_houseNavigationChangedFrame == Engine.GetPhysicsFrames()) return;
 		// The step boundary uses the live player position, including validation/manual ticks.
 		SyncPlayerState();
 		foreach (var view in _entityViews.Values)

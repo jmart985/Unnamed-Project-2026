@@ -158,10 +158,12 @@ public sealed class WoodHaulingService : ITransientSimulationState
             if (entity.Activity is "Resting" or "Going home") entity.Activity = "Idle";
             return false;
         }
-        // Finish a possible delivery, but full storage must not strand a worker off shift.
-        if (entity.Inventory.GetValueOrDefault(ItemIds.Wood) > 0
+        // BeginDelivery reserves space for the entire carried stack. A smaller gap
+        // must not cancel rest for a delivery that cannot actually start.
+        var carriedWood = entity.Inventory.GetValueOrDefault(ItemIds.Wood);
+        if (carriedWood > 0
             && (_activeTrips.ContainsKey(entity.Id)
-                || HaulingStockpiles(entity).Any(stockpile => _world.Reservations.GetAvailableCapacity(stockpile.Contents) > 0)))
+                || HaulingStockpiles(entity).Any(stockpile => _world.Reservations.GetAvailableCapacity(stockpile.Contents) >= carriedWood)))
         {
             if (!entity.Needs.IsHungry && ReconcileHomeDoor(entity, leaving: true)) return true;
             CancelHomeTrip(entity.Id, completeAction: true);

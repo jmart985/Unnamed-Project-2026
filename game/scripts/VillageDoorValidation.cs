@@ -116,7 +116,9 @@ public partial class Main
             SyncEntityViews();
         }
         Require(!house.IsClosed && !house.IsLocked && NumericsVector3.Distance(worker.Position, commandGoal) < .65f
-            && _squad.Order == SquadOrderKind.MoveTo, "squad movement opens the owner's door and continues its original destination");
+            && _squad.Order == SquadOrderKind.MoveTo,
+            $"squad movement opens the owner's door and continues its original destination: {worker.Position}, {worker.Activity}, "
+                + $"{worker.WaitingReason}, {_entityViews[worker.Id].NavigationOutcome}, closed={house.IsClosed}, locked={house.IsLocked}");
         _squad.Reset();
         _world.RemoveSquadMember(worker.Id);
         _world.TrySetEntityPosition(worker.Id, house.ToWorld(new(0, 0, 2.6f)));
