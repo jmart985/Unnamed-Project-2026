@@ -47,6 +47,10 @@ These are planned paths. F01 creates the runnable scaffold. Use a fixed, flat 3D
 - A shared, documented bounded-retry policy lets a waiting job (no reachable/available candidate) defer reselection for a fixed number of simulation ticks instead of reevaluating every tick. Action candidates can require an entity's carried inventory to be empty before starting, so hunger (or any preemption) that interrupts a loaded trip keeps the carried items and the entity must resume delivery before claiming new pickup-style work.
 - Item/species definitions use small validated JSON files with stable string IDs. `data/species.json` defines each species' positive movement speed (world units per simulation second), nonnegative hunger rate (satiety per simulation second), known item IDs in its diet, and hauling capability. Capability profiles include body category, dietary profile, max health, strength, endurance, dexterity, smell range, tool use, door use, and tracking. Missing optional values default to `"unspecified"` for body category, an inferred profile for dietary profile, `100` for max health, `1` for strength/endurance/dexterity/smell range, and `false` for tool use/door use/tracking. Max health and the four capability stats must be finite and greater than zero. Start with food, wood, human, and one creature species. No mod loader or schema framework.
 
+## Ongoing employment
+
+Ongoing settlement employment is World-owned, separate from transient actions. Explicitly enrolled unemployed residents fill finite compatible workplace vacancies; needs, schedules and orders interrupt execution without erasing employment. Haulers reserve delivery capacity at their assigned stockpile. Schema 27 persists positions, workers and auto-assignment preferences. See [NPC employment](NPC_EMPLOYMENT.md) and D072.
+
 ## Navigation
 
 Use Godot navigation on a static map, with explicit arrival tolerance, failure/timeout handling, and throttled replanning. Domain decisions select goals; the engine adapter moves a view and feeds authoritative movement results back to entity position. Do not maintain independent UI and domain inventories or hunger values.

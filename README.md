@@ -43,6 +43,7 @@ A systemic open-world colony RPG in which people and creatures share consistent 
 - [Capture/feed/pet/give repair and current interaction controls](docs/INTERACTION_REPAIR.md)
 - [Follow distance, player clearance and physics validation](docs/FOLLOW_SPACING.md)
 - [NPC daily schedules and validation](docs/NPC_SCHEDULES.md)
+- [Ongoing NPC jobs and automatic assignment](docs/NPC_EMPLOYMENT.md)
 - [Social feedback and Trusted petting](docs/SOCIAL_FEEDBACK.md)
 - [Town-center workbench presentation](docs/TOWN_WORKBENCH.md)
 - [Playable workbench production and persistence](docs/PLAYABLE_WORKSTATION.md)

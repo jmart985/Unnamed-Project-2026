@@ -38,6 +38,7 @@ scenarios=(
   "--validate-player-workwear|PLAYER WORKWEAR VALIDATION PASSED"
   "--validate-character-lighting|CHARACTER LIGHTING VALIDATION PASSED"
   "--validate-character-appearance|CHARACTER APPEARANCE VALIDATION PASSED"
+  "--validate-employment|EMPLOYMENT VALIDATION PASSED"
 )
 
 mapfile -t registered_flags < <(

@@ -145,6 +145,7 @@ public partial class Main : Node3D
 		ConfigureScheduleControls();
 		ConfigurePlayerMenus();
 		ConfigureIndividualOrderControls();
+		ConfigureEmploymentControls();
 		ConfigureWorkstationGameplay();
 		ConfigureFarmGameplay();
 		ConfigureConstructionGameplay();
@@ -224,6 +225,8 @@ public partial class Main : Node3D
 			Callable.From(RunCharacterLightingValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-character-appearance"))
 			Callable.From(RunCharacterAppearanceValidation).CallDeferred();
+		else if (OS.GetCmdlineUserArgs().Contains("--validate-employment"))
+			Callable.From(RunEmploymentValidation).CallDeferred();
 	}
 
 	private void RunPlayerWorkwearValidation()
@@ -789,6 +792,7 @@ public partial class Main : Node3D
 		SyncPlayerState();
 		UpdateWildlifeProximity();
 		AdvanceNeeds(tickSeconds);
+		_world.AutoAssignWorkplacePositions();
 		var depletedTreesBefore = _world.ResourcePiles
 			.Where(source => source.Id.StartsWith("tree-adult-", StringComparison.Ordinal)
 				&& source.Contents.Counts.GetValueOrDefault(ItemIds.Wood) == 0)
@@ -1133,6 +1137,7 @@ public partial class Main : Node3D
 
 	private void UpdateInspector()
 	{
+		RefreshEmploymentControls();
 		if (_inspectorLabel is null)
 		{
 			return;

@@ -16,7 +16,9 @@ public enum WoodHaulingStatus
     ActionRejected,
     InvalidEntity,
     InvalidSpecies,
-    Resting
+    Resting,
+    NotEmployed,
+    Incapacitated
 }
 
 public sealed record WoodHaulingResult(
@@ -79,12 +81,20 @@ public sealed class WoodHaulingService : ITransientSimulationState
         }
 
         var resting = ReconcileSchedule(entity, simulationTime);
+        if (entity.Health.IsIncapacitated) return new WoodHaulingResult(WoodHaulingStatus.Incapacitated);
 
         if (entity.Needs.IsHungry)
         {
             return new WoodHaulingResult(WoodHaulingStatus.NeedsFood, WaitingReason: entity.WaitingReason);
         }
         if (resting) return new WoodHaulingResult(WoodHaulingStatus.Resting);
+
+        if (_world.UsesWorkplaceEmployment && _world.GetEmployment(entity.Id) is null
+            && entity.Inventory.GetValueOrDefault(ItemIds.Wood) == 0)
+        {
+            if (entity.Actions.Current?.Kind == ActionKind.Haul) entity.Actions.Cancel();
+            return new WoodHaulingResult(WoodHaulingStatus.NotEmployed);
+        }
 
         if (_activeTrips.TryGetValue(entity.Id, out var trip))
         {
@@ -134,6 +144,12 @@ public sealed class WoodHaulingService : ITransientSimulationState
     {
         ArgumentNullException.ThrowIfNull(entity);
         if (!OwnsEntity(entity)) return false;
+        if (entity.Health.IsIncapacitated)
+        {
+            if (entity.Actions.Current?.Kind == ActionKind.Haul) entity.Actions.Cancel();
+            CancelHomeTrip(entity.Id);
+            return true;
+        }
         var resting = _world.HasDailySchedule(entity) && !_world.GetWorkSchedule(entity.Id).Evaluate(simulationTime).IsWorking;
         if (!resting)
         {
@@ -222,7 +238,7 @@ public sealed class WoodHaulingService : ITransientSimulationState
 
         foreach (var source in sourceCandidates)
         {
-            var stockpileCandidates = _world.Stockpiles
+            var stockpileCandidates = HaulingStockpiles(entity)
                 .OrderBy(stockpile => DistanceSquared(source.Position, stockpile.Position))
                 .ThenBy(stockpile => stockpile.Id, StringComparer.Ordinal);
 
@@ -278,10 +294,19 @@ public sealed class WoodHaulingService : ITransientSimulationState
         return Wait(entity, "Wood or stockpile capacity is already reserved.", simulationTick, waitingForDelivery: false);
     }
 
+    private IEnumerable<ResourceLocation> HaulingStockpiles(EntityRecord entity, bool finishingCargo = false)
+    {
+        if (!_world.UsesWorkplaceEmployment) return _world.Stockpiles;
+        var employment = _world.GetEmployment(entity.Id);
+        return _world.Stockpiles.Where(stockpile =>
+            (stockpile.FactionOwnerId is null || stockpile.FactionOwnerId == entity.AllegianceFactionId)
+            && (employment?.WorkplaceId == stockpile.Id || (employment is null && finishingCargo)));
+    }
+
     private WoodHaulingResult BeginDelivery(EntityRecord entity, long simulationTick)
     {
         var amount = entity.Inventory.GetValueOrDefault(ItemIds.Wood);
-        var stockpiles = _world.Stockpiles
+        var stockpiles = HaulingStockpiles(entity, finishingCargo: true)
             .Where(target => _world.Reservations.GetAvailableCapacity(target.Contents) >= amount)
             .OrderBy(target => DistanceSquared(entity.Position, target.Position))
             .ThenBy(target => target.Id, StringComparer.Ordinal)
