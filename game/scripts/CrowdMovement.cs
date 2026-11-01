@@ -17,6 +17,10 @@ public partial class Main
         if (NumericsVector3.Dot(tangent, movement) < 0) tangent = -tangent;
         var candidate = current + tangent * new NumericsVector3(movement.X, 0, movement.Z).Length();
         candidate.Y = proposed.Y;
+        // The tangent replaces the earlier follow-clipped step. Reapply both
+        // holding boundaries before validating this new endpoint against obstacles.
+        candidate = _squad?.ConstrainFollowStep(entityId, current, candidate) ?? candidate;
+        candidate = _orders?.ConstrainFollowStep(entityId, current, candidate) ?? candidate;
         if (Math.Abs(candidate.X) > WorldHalfExtent || Math.Abs(candidate.Z) > WorldHalfExtent
             || IsBlockedCell(candidate.X, candidate.X, candidate.Z, candidate.Z, CurrentWorkbenchPositions(), _world.Structures))
             return current;

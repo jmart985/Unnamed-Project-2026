@@ -7,7 +7,6 @@ public partial class Main
 {
     private string _houseDoorState = string.Empty;
     private string _houseNavigationState = string.Empty;
-    private ulong _houseNavigationChangedFrame = ulong.MaxValue;
 
     private void BuildVillagePaths()
     {
@@ -46,9 +45,9 @@ public partial class Main
         var navigationState = string.Join('|', _world.Structures.Select(house => $"{house.Id}:{house.IsClosed}"));
         if (_houseNavigationState == navigationState) return;
         _houseNavigationState = navigationState;
+        // Invalidate before queueing the mesh so all agent and service polls wait
+        // for a newer server iteration and a fresh agent path, not a fixed delay.
+        foreach (var view in _entityViews.Values) view.InvalidateNavigationPathForMapChange();
         _navigationRegion.NavigationMesh = CreateNavigationMesh(CurrentWorkbenchPositions(), _world.Structures);
-        // NavigationServer merges region changes at the physics boundary. Querying
-        // the just-opened doorway in this frame can incorrectly fail an order forever.
-        _houseNavigationChangedFrame = Engine.GetPhysicsFrames();
     }
 }

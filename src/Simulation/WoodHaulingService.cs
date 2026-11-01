@@ -163,7 +163,8 @@ public sealed class WoodHaulingService : ITransientSimulationState
         var carriedWood = entity.Inventory.GetValueOrDefault(ItemIds.Wood);
         if (carriedWood > 0
             && (_activeTrips.ContainsKey(entity.Id)
-                || HaulingStockpiles(entity).Any(stockpile => _world.Reservations.GetAvailableCapacity(stockpile.Contents) >= carriedWood)))
+                || HaulingStockpiles(entity, finishingCargo: true)
+                    .Any(stockpile => _world.Reservations.GetAvailableCapacity(stockpile.Contents) >= carriedWood)))
         {
             if (!entity.Needs.IsHungry && ReconcileHomeDoor(entity, leaving: true)) return true;
             CancelHomeTrip(entity.Id, completeAction: true);

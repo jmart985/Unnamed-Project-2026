@@ -345,7 +345,8 @@ public partial class Main
             }
             PressSquadButton("Stop"); AdvanceSimulationTick(0.1);
             Require(members.All(e => e.Actions.Current?.Kind != ActionKind.SquadMove), "stop cancels all follow requests");
-            GD.Print($"FOLLOW SPACING VALIDATION PASSED: {ids.Length} followers; single/multiple safe arrival, stationary player <0.01 m drift, holding, resumed follow, live boundary and 4x steps.");
+            await ValidateCrowdedFollowRedirect();
+            GD.Print($"FOLLOW SPACING VALIDATION PASSED: {ids.Length} followers; single/multiple safe arrival, stationary player <0.01 m drift, holding, resumed follow, live boundary, crowded redirection and 4x steps.");
             GetTree().Quit();
         }
         catch (Exception exception)

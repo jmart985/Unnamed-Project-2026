@@ -162,6 +162,30 @@ public sealed class ResidentDoorTests
     }
 
     [Fact]
+    public void ReleasingAJobDuringRestStillPermitsFinishingItsCargo()
+    {
+        var world = Village();
+        var owner = Resident(world);
+        var stockpile = world.Stockpiles.Single();
+        var nav = new FakeNavigationAdapter();
+        var work = new WoodHaulingService(world, _ => nav);
+        owner.TryAddCarried(ItemIds.Wood, 5);
+        Assert.Equal(WoodHaulingStatus.TravelingToStockpile, work.Advance(owner, Catalog().GetRequired("human"), 1, 49).Status);
+        var oldRequest = nav.Requests.Single().Key;
+        Assert.Equal(EmploymentResult.Accepted, world.UnassignWorker(owner.Id));
+        Assert.Null(world.GetEmployment(owner.Id));
+        Assert.Equal(NavigationOutcome.Cancelled, nav.Requests[oldRequest]);
+        Assert.False(work.ReconcileSchedule(owner, 60));
+        Assert.Equal(WoodHaulingStatus.TravelingToStockpile, work.Advance(owner, Catalog().GetRequired("human"), 2, 60).Status);
+        nav.CompleteAsArrived(nav.Requests.Last().Key);
+        world.TrySetEntityPosition(owner.Id, stockpile.Position);
+        Assert.Equal(WoodHaulingStatus.Delivered, work.Advance(owner, Catalog().GetRequired("human"), 3, 60).Status);
+        Assert.Equal(5, stockpile.Contents.Counts[ItemIds.Wood]);
+        Assert.Empty(owner.Inventory);
+        Assert.Null(world.GetEmployment(owner.Id));
+    }
+
+    [Fact]
     public void ResidentSecuresDoorDuringRestAndOpensItForNextShift()
     {
         var world = Village();
