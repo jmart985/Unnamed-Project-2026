@@ -5,7 +5,6 @@ from __future__ import annotations
 import importlib.util
 import json
 import math
-import shutil
 from pathlib import Path
 
 import bpy
@@ -208,10 +207,9 @@ def export() -> None:
     ROOT.mkdir(parents=True, exist_ok=True)
     RUNTIME_ROOT.mkdir(parents=True, exist_ok=True)
     blend = ROOT / f"{MODEL_NAME}.blend"
-    glb = ROOT / f"{MODEL_NAME}.glb"
+    glb = RUNTIME_ROOT / f"{MODEL_NAME}.glb"
     bpy.ops.wm.save_as_mainfile(filepath=str(blend))
     bpy.ops.export_scene.gltf(filepath=str(glb), export_format="GLB", export_apply=True, export_animations=True, export_animation_mode="ACTIONS", export_extra_animations=True, export_nla_strips=True, export_skins=True, export_morph=False)
-    shutil.copy2(glb, RUNTIME_ROOT / glb.name)
     metadata = {
         "asset_id": MODEL_NAME,
         "display_name": "Pig / Suiform Rig v1",

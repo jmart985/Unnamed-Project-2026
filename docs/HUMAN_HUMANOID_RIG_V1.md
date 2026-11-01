@@ -66,13 +66,18 @@ and `art_source/ASSET_REGISTRY.md`.
 
 ## Male variant outputs and validation
 
-- Editable source: `art_source/reference/generated_humanoids/human_male_humanoid_rig_v1.blend`
-- Runtime prototype: `game/assets/humanoids/human/human_male_humanoid_rig_v1.glb`
-- Metadata: `game/assets/humanoids/human/human_male_humanoid_rig_v1.json`
-- Rebuild script: `art_source/reference/generated_humanoids/build_human_male_variant.py`
-- Previews: three-quarter, front, side, and back renders in `art_source/reference/generated_humanoids/`
+The male variant described above is a retired iteration. Its GLB, Blender
+output, companion runtime metadata and previews were removed in issue #549.
+Current selectable player bodies are `art_source/characters/player_male.blend`
+and `player_female.blend`, exported to `game/assets/humanoids/player/`.
+See [the model layout](MODEL_FILES.md) for current sources and exports.
 
-The builder checks the 1.75 m body, required rig bones, hand weights, the
+`art_source/reference/generated_humanoids/build_human_male_variant.py` remains
+an authoring helper imported by the legacy wardrobe builder. The recorded
+trouser clearance measurements and original Blender body sources are retained;
+they do not require the retired generated model to exist.
+
+Historically, the builder checked the 1.75 m body, required rig bones, hand weights, the
 measured shirt and trouser clearance profiles, `human_idle`, all 15 anchor
 nodes and their bone parents, and each exported anchor's composed world
 position. The Blender source body and clothing meshes are editable; visual

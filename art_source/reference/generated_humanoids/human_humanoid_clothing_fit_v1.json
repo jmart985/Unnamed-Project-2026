@@ -66,7 +66,7 @@
     },
     "fitted_trousers": {
       "asset_id": "human_male_humanoid_rig_v1",
-      "source_blend": "human_male_humanoid_rig_v1.blend",
+      "historical_source_blend": "human_male_humanoid_rig_v1.blend",
       "body_object": "HumanBody",
       "clothing_object": "HumanTrousers",
       "measurement_basis": "Measured from the prototype whose trouser fit was reviewed and accepted; body and trouser surfaces share topology and skin weights.",
