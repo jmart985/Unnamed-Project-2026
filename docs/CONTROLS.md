@@ -78,4 +78,3 @@ Settings version 5 activates the new layout once and preserves the previous file
 ## Acceptance
 
 Exercise actual player/menu/build dispatch with keyboard and controller. Verify B threshold boundaries and toggle behavior, no action on cancellation, no overlay-close attacks/placements, neutral rearming, device/focus recovery, context-aware conflicts, migration/write failure recovery, and manual/UI pause ownership. Register --validate-controls and its CONTROLS VALIDATION PASSED marker in Main and the CI manifest. Complete controller-only gather/equip/interact/command/build/save/load checks before accepting integration.
-

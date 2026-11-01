@@ -115,4 +115,3 @@ public static class ControlCatalog
             || new[] { firstId, secondId }.All(id =>
                 id is ControllerActions.DefaultInteraction or ControllerActions.ContextInteraction));
 }
-

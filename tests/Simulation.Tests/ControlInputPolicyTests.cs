@@ -94,4 +94,3 @@ public sealed class ControlInputPolicyTests
         Assert.False(pause.IsPaused);
     }
 }
-

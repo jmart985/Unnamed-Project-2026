@@ -100,4 +100,3 @@ public sealed class ControlPauseState
     }
     public void Reset() { _owners.Clear(); ManuallyPaused = false; }
 }
-
