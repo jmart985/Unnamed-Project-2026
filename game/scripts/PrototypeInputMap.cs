@@ -17,6 +17,9 @@ public static class PrototypeInputMap
         }
 
         _installed = true;
+        // Stable reserved IDs are valid even before their feature receives a binding.
+        foreach (var action in ControllerActions.All)
+            if (!InputMap.HasAction(action)) InputMap.AddAction(action);
         AddKeyboardAction(ControllerActions.MoveForward, Key.W);
         AddKeyboardAction(ControllerActions.MoveBackward, Key.S);
         AddKeyboardAction(ControllerActions.MoveLeft, Key.A);
