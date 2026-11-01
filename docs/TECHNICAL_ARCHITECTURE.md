@@ -84,6 +84,10 @@ World owns per-human-NPC work-hour overrides; phase derives from SimulationClock
 Relationship and faction standing notifications carry actual applied deltas after authoritative changes. Gameplay displays transient signed changes; production social profiles and faction event steps use +1/-1. Petting and selection rings use the existing recipient Trusted/Loyal bond, with Fearful overriding permission. See [SOCIAL_FEEDBACK.md](SOCIAL_FEEDBACK.md) for domestic defaults, save compatibility and feedback validation.
 
 
+## Village housing and calendar rate
+
+World owns resident home references, orientation, interior destinations and day duration. `HouseGeometry` is the shared metre-scale source for house solids, navigation walls and placement dimensions; Godot consumes cardinal turns without per-building orientation hacks. New village sessions use a 120-second day through World schedule evaluation and display; movement and needs continue to use ordinary simulation seconds. Schema 28 persists the scenario mode and duration, while older saves retain their 240-second clock and existing layout. Actor paths and actions are rebuilt, not serialized. See [village homes](VILLAGE_HOMES.md) and D073.
+
 ## Player appearance boundary
 
 Player appearance uses an engine-free catalogue of stable IDs and body compatibility. Godot EquipableItem resources own model paths, mesh names, masks and drape settings; the conversion manifest records provenance. World owns current equipment; the player profile owns hair and optional anatomical visibility. Imported wearables remap named skin binds to one canonical player skeleton. Rigify is a Blender authoring tool only: generated controls drive the canonical deform rig, and baked visual transforms cross the GLB boundary. Save data never stores source bone names, control widgets, bind indices or animation playback state. See [character creation](CHARACTER_CREATION_AND_BODY.md) and D071.

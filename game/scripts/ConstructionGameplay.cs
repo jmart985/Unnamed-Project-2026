@@ -41,7 +41,7 @@ public partial class Main
         AddChild(_constructionRoot);
         _hutPreview = new MeshInstance3D
         {
-            Name = "HutPreview", Mesh = new BoxMesh { Size = new Vector3(4, 0.15f, 4) }, Visible = false,
+            Name = "HutPreview", Mesh = new BoxMesh { Size = new Vector3(HouseGeometry.Width, 0.15f, HouseGeometry.Depth) }, Visible = false,
             MaterialOverride = new StandardMaterial3D
             {
                 Transparency = BaseMaterial3D.TransparencyEnum.Alpha, AlbedoColor = new Color(0.2f, 0.9f, 0.35f, 0.42f),
@@ -413,8 +413,9 @@ public partial class Main
         var candidate = new System.Numerics.Vector3(position.X, 0, position.Z);
         bool TooClose(System.Numerics.Vector3 other, float requiredDistance)
             => System.Numerics.Vector3.Distance(candidate, other) < requiredDistance;
-        if (_world.Structures.Any(item => TooClose(item.Position, footprintRadius + 2.5f))
-            || _world.ConstructionSites.Any(item => TooClose(item.Position, footprintRadius + 2.5f))
+        if (_world.Structures.Any(item => HouseGeometry.Contains(item, candidate, footprintRadius + .5f))
+            || _world.ConstructionSites.Any(item => Math.Abs(item.Position.X - candidate.X) < item.Blueprint.Width / 2f + footprintRadius + .5f
+                && Math.Abs(item.Position.Z - candidate.Z) < item.Blueprint.Depth / 2f + footprintRadius + .5f)
             || _world.Stockpiles.Any(item => TooClose(item.Position, footprintRadius + 1.5f))
             || _world.Fireplaces.Any(item => TooClose(item.Position, footprintRadius + 1.5f))
             || _world.Farms.Any(item => TooClose(item.Position, footprintRadius + 1.5f))
@@ -514,7 +515,7 @@ public partial class Main
         var hasWood = player?.Inventory.GetValueOrDefault(ItemIds.Wood) >= 2;
         var inRange = player is not null && System.Numerics.Vector3.Distance(player.Position,
             new System.Numerics.Vector3(_placementPosition.X, 0, _placementPosition.Z)) <= SettlementConstruction.PlacementRange;
-        var blocked = IsBlockedCell(_placementPosition.X - 1, _placementPosition.X + 1, _placementPosition.Z - 1, _placementPosition.Z + 1, CurrentWorkbenchPositions())
+        var blocked = IsBlockedCell(_placementPosition.X - 1, _placementPosition.X + 1, _placementPosition.Z - 1, _placementPosition.Z + 1, CurrentWorkbenchPositions(), _world.Structures)
             || _world.Fireplaces.Any(fire => System.Numerics.Vector3.Distance(fire.Position,
                 new System.Numerics.Vector3(_placementPosition.X, 0, _placementPosition.Z)) < 1.5f);
         _placementValid = hasGroundPoint && hasWood && inRange && !blocked;
@@ -551,7 +552,8 @@ public partial class Main
     }
 
     private bool IsHutTerrainBlocked(System.Numerics.Vector3 position)
-        => IsBlockedCell((int)position.X - 2, (int)position.X + 2, (int)position.Z - 2, (int)position.Z + 2,
+        => IsBlockedCell(position.X - HouseGeometry.Width / 2, position.X + HouseGeometry.Width / 2,
+            position.Z - HouseGeometry.Depth / 2, position.Z + HouseGeometry.Depth / 2,
             CurrentWorkbenchPositions());
 
     private void ConfirmHutPlacement()
@@ -572,7 +574,7 @@ public partial class Main
         if (!RefreshSelectedPlacementPreview()) return;
         var fireplaceId = $"fireplace-{_world.Fireplaces.Count + 1}";
         var result = new ActorConstructionService(_world, _speciesCatalog, position =>
-            IsBlockedCell(position.X - 1, position.X + 1, position.Z - 1, position.Z + 1, CurrentWorkbenchPositions()))
+            IsBlockedCell(position.X - 1, position.X + 1, position.Z - 1, position.Z + 1, CurrentWorkbenchPositions(), _world.Structures))
             .PlaceFireplace(PlayerId(), fireplaceId, new System.Numerics.Vector3(_placementPosition.X, 0, _placementPosition.Z));
         if (!result.Succeeded) { _placementMessage.Text = result.Message; UpdateFireplacePreview(); return; }
         CancelFireplacePlacement();
@@ -652,8 +654,9 @@ public partial class Main
         var progress = (site.Blueprint.GetProgress(ItemIds.Wood) + site.Blueprint.WorkProgress) /
             (float)(SettlementConstruction.HutWood + SettlementConstruction.HutWork);
         var material = new StandardMaterial3D { AlbedoColor = new Color(0.6f, 0.35f, 0.13f) };
-        root.AddChild(new MeshInstance3D { Mesh = new BoxMesh { Size = new Vector3(4, 0.16f, 4) }, Position = new Vector3(0, 0.08f, 0), MaterialOverride = material });
-        foreach (var x in new[] { -1.7f, 1.7f }) foreach (var z in new[] { -1.7f, 1.7f })
+        root.AddChild(new MeshInstance3D { Mesh = new BoxMesh { Size = new Vector3(site.Blueprint.Width, 0.16f, site.Blueprint.Depth) }, Position = new Vector3(0, 0.08f, 0), MaterialOverride = material });
+        foreach (var x in new[] { -site.Blueprint.Width / 2f + .3f, site.Blueprint.Width / 2f - .3f })
+        foreach (var z in new[] { -site.Blueprint.Depth / 2f + .3f, site.Blueprint.Depth / 2f - .3f })
             root.AddChild(new MeshInstance3D { Mesh = new BoxMesh { Size = new Vector3(0.2f, 2.8f * Math.Max(0.12f, progress), 0.2f) },
                 Position = new Vector3(x, 0.2f + 1.4f * Math.Max(0.12f, progress), z), MaterialOverride = material });
         root.AddChild(new Label3D { Text = $"HUT SITE · {site.State}", Position = new Vector3(0, 3.3f, 0),
@@ -661,11 +664,14 @@ public partial class Main
         return root;
     }
 
-    private static Node3D BuildHutView(Structure structure)
+    private Node3D BuildHutView(Structure structure)
     {
-        var root = new Node3D { Name = structure.Id, Position = new Vector3(structure.Position.X, structure.Position.Y, structure.Position.Z) };
-        var wall = new StandardMaterial3D { AlbedoColor = new Color(0.56f, 0.32f, 0.14f), Roughness = 0.9f };
-        var roof = new StandardMaterial3D { AlbedoColor = new Color(0.24f, 0.12f, 0.08f) };
+        var root = new Node3D { Name = structure.Id, Position = new Vector3(structure.Position.X, structure.Position.Y, structure.Position.Z),
+            Rotation = new Vector3(0, structure.FacingQuarterTurns * Mathf.Pi / 2, 0) };
+        var variant = structure.Id.Aggregate(0u, (hash, letter) => unchecked(hash * 31 + letter)) % 4;
+        var wall = new StandardMaterial3D { AlbedoColor = new Color(.72f + variant * .035f, .65f + variant * .025f, .49f + variant * .04f), Roughness = .95f };
+        var roof = new StandardMaterial3D { AlbedoColor = new Color(.28f + variant * .025f, .13f + variant * .025f, .09f + variant * .025f), Roughness = .95f };
+        var timber = new StandardMaterial3D { AlbedoColor = new Color(.24f, .15f, .08f), Roughness = .9f };
         void Part(Vector3 position, Vector3 size, Material material) => root.AddChild(new MeshInstance3D
             { Mesh = new BoxMesh { Size = size }, Position = position, MaterialOverride = material });
         var collision = new StaticBody3D { Name = "BuildingCollision", CollisionLayer = 2, CollisionMask = 1 };
@@ -674,31 +680,55 @@ public partial class Main
         {
             Name = name, Position = position, Shape = new BoxShape3D { Size = size }
         });
-        Part(new(0, 0.1f, 0), new(4, 0.2f, 4), wall);
-        Part(new(-1.9f, 1.5f, 0), new(0.2f, 3, 4), wall); Part(new(1.9f, 1.5f, 0), new(0.2f, 3, 4), wall);
-        Part(new(0, 1.5f, -1.9f), new(4, 3, 0.2f), wall);
-        Part(new(-1.25f, 1.5f, 1.9f), new(1.5f, 3, 0.2f), wall); Part(new(1.25f, 1.5f, 1.9f), new(1.5f, 3, 0.2f), wall);
-        Part(new(0, 3.15f, 0), new(4.5f, 0.3f, 4.5f), roof);
-        SolidPart("Floor", new(0, 0.1f, 0), new(4, 0.2f, 4));
-        SolidPart("WallLeft", new(-1.9f, 1.5f, 0), new(0.2f, 3, 4));
-        SolidPart("WallRight", new(1.9f, 1.5f, 0), new(0.2f, 3, 4));
-        SolidPart("WallBack", new(0, 1.5f, -1.9f), new(4, 3, 0.2f));
-        SolidPart("WallFrontLeft", new(-1.25f, 1.5f, 1.9f), new(1.5f, 3, 0.2f));
-        SolidPart("WallFrontRight", new(1.25f, 1.5f, 1.9f), new(1.5f, 3, 0.2f));
-        SolidPart("Ceiling", new(0, 3.15f, 0), new(4.5f, 0.3f, 4.5f));
+        foreach (var part in HouseGeometry.SolidParts(structure.IsClosed))
+        {
+            Part(new(part.Center.X, part.Center.Y, part.Center.Z), new(part.Size.X, part.Size.Y, part.Size.Z),
+                part.Name is "Floor" or "Door" ? timber : wall);
+            SolidPart(part.Name, new(part.Center.X, part.Center.Y, part.Center.Z), new(part.Size.X, part.Size.Y, part.Size.Z));
+        }
+        var roofAngle = Mathf.Atan2(1.8f, 4.4f);
+        foreach (var side in new[] { -1, 1 })
+            root.AddChild(new MeshInstance3D { Name = side < 0 ? "RoofLeft" : "RoofRight",
+                Mesh = new BoxMesh { Size = new Vector3(Mathf.Sqrt(4.4f * 4.4f + 1.8f * 1.8f), .18f, 8.8f) },
+                Position = new Vector3(side * 2.2f, 4.2f, 0), Rotation = new Vector3(0, 0, -side * roofAngle), MaterialOverride = roof });
+        foreach (var side in new[] { -1, 1 })
+        {
+            var gable = new ImmediateMesh();
+            gable.SurfaceBegin(Mesh.PrimitiveType.Triangles);
+            gable.SurfaceSetNormal(new Vector3(0, 0, side));
+            gable.SurfaceAddVertex(new Vector3(-4 * side, 3.3f, 4 * side));
+            gable.SurfaceAddVertex(new Vector3(0, 5.1f, 4 * side));
+            gable.SurfaceAddVertex(new Vector3(4 * side, 3.3f, 4 * side));
+            gable.SurfaceEnd();
+            root.AddChild(new MeshInstance3D { Mesh = gable, MaterialOverride = wall });
+        }
+        if (!structure.IsClosed)
+            Part(new(-2.5f, HouseGeometry.DoorHeight / 2, 4.025f), new(2.4f, HouseGeometry.DoorHeight, .06f), timber);
+        foreach (var x in new[] { -3.82f, 3.82f }) foreach (var z in new[] { -3.82f, 3.82f })
+            Part(new(x, HouseGeometry.WallHeight / 2, z), new(.24f, HouseGeometry.WallHeight, .24f), timber);
+        foreach (var x in new[] { -1.27f, 1.27f })
+            Part(new(x, HouseGeometry.DoorHeight / 2, 4.025f), new(.14f, HouseGeometry.DoorHeight, .1f), timber);
+        Part(new(0, 2.7f, 4.025f), new(2.7f, .2f, .1f), timber);
+        var glass = new StandardMaterial3D { AlbedoColor = new Color(.18f, .31f, .33f), Roughness = .35f };
+        foreach (var side in new[] { -1, 1 })
+        {
+            Part(new(side * 4.01f, 1.85f, -.7f), new(.04f, 1.1f, 1.5f), timber);
+            Part(new(side * 4.04f, 1.85f, -.7f), new(.04f, .86f, 1.22f), glass);
+            Part(new(side * 4.07f, 1.85f, -.7f), new(.04f, .08f, 1.22f), timber);
+            Part(new(side * 4.07f, 1.85f, -.7f), new(.04f, .86f, .08f), timber);
+        }
         // Keep the bed inside the open footprint so the shelter communicates its usable rest point.
         var bedFrame = new StandardMaterial3D { AlbedoColor = new Color(0.3f, 0.16f, 0.08f) };
         var bedding = new StandardMaterial3D { AlbedoColor = new Color(0.72f, 0.78f, 0.86f) };
-        Part(new(-0.9f, 0.42f, -0.75f), new(1.45f, 0.25f, 2.25f), bedFrame);
-        Part(new(-0.9f, 0.62f, -0.75f), new(1.3f, 0.18f, 2.1f), bedding);
-        Part(new(-0.9f, 0.78f, -1.55f), new(1.3f, 0.22f, 0.28f), bedding);
-        if (structure.IsClosed)
-        {
-            Part(new(0, 1.2f, 1.88f), new(1, 2.4f, 0.12f), roof);
-            SolidPart("Door", new(0, 1.2f, 1.88f), new(1, 2.4f, 0.12f));
-        }
-        root.AddChild(new Label3D { Text = structure.IsClosed ? "STARTER HUT · DOOR CLOSED" : "STARTER HUT · DOOR OPEN",
-            Position = new Vector3(0, 3.8f, 0), Billboard = BaseMaterial3D.BillboardModeEnum.Enabled, FontSize = 34, OutlineSize = 7, NoDepthTest = true });
+        Part(new(-2.5f, .42f, -1.7f), new(1.45f, .25f, 2.25f), bedFrame);
+        Part(new(-2.5f, .62f, -1.7f), new(1.3f, .18f, 2.1f), bedding);
+        Part(new(-2.5f, .78f, -2.5f), new(1.3f, .22f, .28f), bedding);
+        var title = "HOUSE";
+        if (structure.ResidentId is { } resident && _world.TryGetEntity(resident, out var npc) && npc is not null)
+            title = StarterNpcPresentationCatalog.TryGet(resident, npc.Sex, out var presentation) && presentation is not null
+                ? $"{presentation.DisplayName}'s home" : "Resident home";
+        root.AddChild(new Label3D { Text = $"{title} · DOOR {(structure.IsClosed ? "CLOSED" : "OPEN")}",
+            Position = new Vector3(0, 5.6f, 0), Billboard = BaseMaterial3D.BillboardModeEnum.Enabled, FontSize = 28, OutlineSize = 7 });
         return root;
     }
 }

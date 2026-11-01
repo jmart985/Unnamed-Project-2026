@@ -5,8 +5,8 @@ namespace Simulation;
 public static class SettlementConstruction
 {
     public const string HutBlueprintId = "starter-hut";
-    public const int HutWidth = 4;
-    public const int HutDepth = 4;
+    public const int HutWidth = (int)HouseGeometry.Width;
+    public const int HutDepth = (int)HouseGeometry.Depth;
     public const int HutWood = 6;
     public const int HutWork = 5;
     public const float PlacementRange = 8;
@@ -65,7 +65,8 @@ public sealed class ActorConstructionService(World world, SpeciesCatalog species
         if (!TryActor(actorId, out var actor, out var failure)) return failure;
         if (Vector3.Distance(actor!.Position, position) > SettlementConstruction.PlacementRange)
             return Fail(ConstructionActionResult.OutOfRange, "Place the hut within 8 m.");
-        if (position.Y != 0 || Math.Abs(position.X) > 58 || Math.Abs(position.Z) > 58 || terrainBlocked?.Invoke(position) == true)
+        if (position.Y != 0 || Math.Abs(position.X) > 60 - HouseGeometry.Width / 2
+            || Math.Abs(position.Z) > 60 - HouseGeometry.Depth / 2 || terrainBlocked?.Invoke(position) == true)
             return Fail(ConstructionActionResult.InvalidTerrain, "The hut footprint is blocked or outside valid town terrain.");
         if (Overlaps(position)) return Fail(ConstructionActionResult.Overlap, "The hut footprint overlaps an existing settlement target.");
         return Ok("Starter hut placement is valid.");
@@ -121,12 +122,15 @@ public sealed class ActorConstructionService(World world, SpeciesCatalog species
 
     private bool Overlaps(Vector3 position)
     {
-        const float radius = 3;
-        return world.Structures.Any(item => Vector3.Distance(item.Position, position) < radius)
-            || world.ConstructionSites.Any(item => Vector3.Distance(item.Position, position) < radius)
-            || world.Workstations.Any(item => Vector3.Distance(item.Position, position) < radius)
-            || world.Farms.Any(item => Vector3.Distance(item.Position, position) < radius)
-            || world.Stockpiles.Any(item => Vector3.Distance(item.Position, position) < radius);
+        bool Intersects(Vector3 center, float width, float depth) =>
+            Math.Abs(center.X - position.X) < (SettlementConstruction.HutWidth + width) / 2 + .5f
+            && Math.Abs(center.Z - position.Z) < (SettlementConstruction.HutDepth + depth) / 2 + .5f;
+        return world.Structures.Any(item => Intersects(item.Position, HouseGeometry.Width, HouseGeometry.Depth))
+            || world.ConstructionSites.Any(item => Intersects(item.Position, item.Blueprint.Width, item.Blueprint.Depth))
+            || world.Workstations.Any(item => Intersects(item.Position, 2, 2))
+            || world.Farms.Any(item => Intersects(item.Position, 2, 2))
+            || world.Stockpiles.Any(item => Intersects(item.Position, 2, 2))
+            || world.Fireplaces.Any(item => Intersects(item.Position, 1, 1));
     }
 
     private static ConstructionAction Ok(string message) => new(ConstructionActionResult.Success, message);

@@ -39,6 +39,7 @@ scenarios=(
   "--validate-character-lighting|CHARACTER LIGHTING VALIDATION PASSED"
   "--validate-character-appearance|CHARACTER APPEARANCE VALIDATION PASSED"
   "--validate-employment|EMPLOYMENT VALIDATION PASSED"
+  "--validate-village|VILLAGE VALIDATION PASSED"
 )
 
 mapfile -t registered_flags < <(

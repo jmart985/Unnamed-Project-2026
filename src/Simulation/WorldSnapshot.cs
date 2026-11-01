@@ -37,7 +37,9 @@ public sealed record WorldSnapshot(
     IReadOnlyList<NearPopulationSnapshot>? NearPopulations = null,
     bool UsesWorkplaceEmployment = false,
     IReadOnlyList<SettlementWorkerSetting>? SettlementWorkers = null,
-    IReadOnlyList<WorkplacePosition>? WorkplacePositions = null);
+    IReadOnlyList<WorkplacePosition>? WorkplacePositions = null,
+    bool UsesVillageLayout = false,
+    double? DayLengthSeconds = null);
 
 public sealed record WildTerritorySnapshot(string EntityId, Vector3 Center, float Radius);
 public sealed record FarPopulationSnapshot(
@@ -54,7 +56,8 @@ public sealed record NearPopulationSnapshot(
 
 public sealed record FireplaceSnapshot(string Id, Vector3 Position, int Fuel);
 
-public sealed record StructureSnapshot(string Id, StructureType Type, Vector3 Position, bool IsClosed, IReadOnlyList<BedSnapshot>? Beds = null);
+public sealed record StructureSnapshot(string Id, StructureType Type, Vector3 Position, bool IsClosed,
+    IReadOnlyList<BedSnapshot>? Beds = null, int FacingQuarterTurns = 0, string? ResidentId = null);
 public sealed record BedSnapshot(string Id, double RecoveryRateMultiplier, string? OccupantId);
 
 public sealed record ConstructionSiteSnapshot(
@@ -177,7 +180,8 @@ public static partial class WorldSnapshotSerializer
     private const int EquipmentVisibilitySchemaVersion = 25;
     private const int PlayerAppearanceSchemaVersion = 26;
     private const int WorkplaceEmploymentSchemaVersion = 27;
-    public const int CurrentSchemaVersion = WorkplaceEmploymentSchemaVersion;
+    private const int VillageSchemaVersion = 28;
+    public const int CurrentSchemaVersion = VillageSchemaVersion;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -278,7 +282,8 @@ public static partial class WorldSnapshotSerializer
                     new FarmPlotSnapshot(plot.Id, plot.Capacity, plot.Crop?.Id, plot.Growth)).ToArray())).ToArray(),
             world.Structures.OrderBy(item => item.Id, StringComparer.Ordinal)
                 .Select(item => new StructureSnapshot(item.Id, item.Type, item.Position, item.IsClosed,
-                    item.Beds.Select(bed => new BedSnapshot(bed.Id, bed.RecoveryRateMultiplier, bed.OccupantId)).ToArray())).ToArray(),
+                    item.Beds.Select(bed => new BedSnapshot(bed.Id, bed.RecoveryRateMultiplier, bed.OccupantId)).ToArray(),
+                    item.FacingQuarterTurns, item.ResidentId)).ToArray(),
             world.ConstructionSites.OrderBy(item => item.Id, StringComparer.Ordinal).Select(site =>
                 new ConstructionSiteSnapshot(site.Id, site.Position, site.Blueprint.Id, site.Blueprint.Width, site.Blueprint.Depth,
                     new Dictionary<string, int>(site.Blueprint.RequiredMaterials, StringComparer.Ordinal),
@@ -309,7 +314,9 @@ public static partial class WorldSnapshotSerializer
                 new Dictionary<string, int>(record.Resources, StringComparer.Ordinal))).ToArray(),
             world.UsesWorkplaceEmployment,
             world.SettlementWorkers,
-            world.WorkplacePositions);
+            world.WorkplacePositions,
+            world.UsesVillageLayout,
+            world.DayLengthSeconds);
     }
 
     public static string Serialize(World world, double simulationTime)
@@ -334,6 +341,16 @@ public static partial class WorldSnapshotSerializer
         {
             throw new InvalidDataException("Snapshot JSON is malformed.", exception);
         }
+
+        if (snapshot.SchemaVersion < VillageSchemaVersion)
+            snapshot = snapshot with
+            {
+                UsesVillageLayout = false,
+                DayLengthSeconds = DailyScheduleState.SecondsPerDay,
+                ConstructionSites = snapshot.ConstructionSites?.Select(site => site is not null
+                    && site.BlueprintId == SettlementConstruction.HutBlueprintId && site.Width == 4 && site.Depth == 4
+                    ? site with { Width = SettlementConstruction.HutWidth, Depth = SettlementConstruction.HutDepth } : site!).ToArray()
+            };
 
         // Entity sex was added after individual orders. Older saves assign a stable value
         // from the persisted entity identity; the player follows the saved creation profile.
@@ -514,7 +531,7 @@ public static partial class WorldSnapshotSerializer
         if (snapshot.SchemaVersion == BiologicalSexSchemaVersion)
             return snapshot with { SchemaVersion = CurrentSchemaVersion };
 
-        if (snapshot.SchemaVersion is ClothingEquipmentSchemaVersion or EquipmentVisibilitySchemaVersion or PlayerAppearanceSchemaVersion)
+        if (snapshot.SchemaVersion is ClothingEquipmentSchemaVersion or EquipmentVisibilitySchemaVersion or PlayerAppearanceSchemaVersion or WorkplaceEmploymentSchemaVersion)
             return snapshot with { SchemaVersion = CurrentSchemaVersion };
 
         if (snapshot.SchemaVersion != CurrentSchemaVersion)
@@ -823,6 +840,8 @@ public static partial class WorldSnapshotSerializer
         ValidateLocations(snapshot.ResourcePiles, "resource pile", foodSourceIds, factionIds, allowFactionOwner: false);
         ValidateLocations(snapshot.Stockpiles, "stockpile", foodSourceIds, factionIds, allowFactionOwner: true);
         ValidateEmployment(snapshot, speciesCatalog);
+        if (snapshot.DayLengthSeconds is not { } dayLength || !double.IsFinite(dayLength) || dayLength < 24 || dayLength > 86400)
+            throw new InvalidDataException("Snapshot day length must be between 24 and 86400 seconds.");
         foreach (var workstation in snapshot.Workstations)
         {
             if (workstation is null || string.IsNullOrWhiteSpace(workstation.Id) || !foodSourceIds.Add(workstation.Id))
@@ -865,11 +884,16 @@ public static partial class WorldSnapshotSerializer
                 }
             }
         }
+        var homeResidents = new HashSet<string>(StringComparer.Ordinal);
         foreach (var structure in snapshot.Structures)
         {
             if (structure is null || string.IsNullOrWhiteSpace(structure.Id) || !foodSourceIds.Add(structure.Id))
                 throw new InvalidDataException("Snapshot contains an invalid or duplicate structure.");
             ValidatePosition(structure.Position, $"structure '{structure.Id}' position");
+            if (!Enum.IsDefined(structure.Type) || structure.FacingQuarterTurns is < 0 or > 3
+                || (structure.ResidentId is { } resident && (structure.Type != StructureType.Hut
+                    || !entityIds.Contains(resident) || resident == snapshot.PlayerEntityId || !homeResidents.Add(resident))))
+                throw new InvalidDataException($"Structure '{structure.Id}' has invalid facing or resident.");
             var bedIds = new HashSet<string>(StringComparer.Ordinal);
             foreach (var bed in structure.Beds ?? Array.Empty<BedSnapshot>())
             {

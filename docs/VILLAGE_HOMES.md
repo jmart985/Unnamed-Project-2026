@@ -1,0 +1,19 @@
+# Playtest village homes
+
+Start a **new game** to create ten resident homes on a roughly 44 m radius ring. Each has an inward-facing entrance, an interior rest destination and a bed. Pitched roofs, timber trim, windows, varied plaster colours and connecting footpaths replace the sixteen solid placeholder blocks. The workbench and farm remain world-owned in their existing positions. The crossroads is clear and the two main lanes are 4 m wide so houses remain off the road.
+
+Houses use an **8 x 8 m footprint**, twice the old width and depth. Doors have **2.4 m clear width and 2.6 m clear height**; floors finish flush with the ground and ceilings are above the supported player capsule. Build mode previews, construction sites and placement checks use the enlarged dimensions. Completed floors, ceilings, walls and closed doors are solid. `HouseGeometry` defines physical parts in metres; Godot rotates them by saved quarter turns and expands navigation wall exclusions by 0.35 m. NPC routes enter through doors and do not treat entire rooms as blocked cells. Interaction range is measured from the doorway rather than the house center.
+
+Residents keep existing employment and schedules. During rest, they navigate to their own home. Species capable of opening doors approach the door before opening it, including when leaving for work. Doors opened by residents remain open. Hunger, threats and explicit orders retain their existing priorities. Full storage allows home return with cargo held safely for next shift. Scheduled rest currently means resting at the interior destination; autonomous bed sleeping and sleep animations are not implemented by this change.
+
+New playable villages use a **two-minute day** at normal simulation speed. The default 08:00–18:00 worker finishes its shift after 50 seconds and returns to work at 120 seconds. Other residents keep their varied day/night schedules. This changes calendar progression only: movement, hunger and other simulation rates are unchanged. Pause and simulation speed controls continue to work. The status display shows day duration alongside time; the inspector's transition countdown uses actual simulation seconds.
+
+Schema 28 saves resident references, house orientation, village creation mode and day duration. Loading restores them; reset preserves village mode and day duration. Saves from schema 27 and earlier retain their four-minute clock and customized settlement/home positions. They are not silently relocated into the ring. Start a new game for the complete new layout. Legacy unfinished 4 x 4 starter huts migrate to 8 x 8 construction blueprints. Removing a resident leaves a vacant, usable house. Invalid facing, resident references, duplicate home ownership or clock values reject before changing the live world.
+
+## Verification
+
+`dotnet test UnnamedProject2026.slnx --configuration Release` covers layout spacing, inward facing, scale/footprint overlap, schedule timing, full-storage rest, door approach, vacant houses, snapshot round trips and invalid-load atomicity.
+
+`--validate-village` is registered in the PR validation manifest. It starts through the actual character-menu path, moves the largest male/female player capsules into and out of each cardinal door orientation, checks a closed door and reopening from outside, routes all ten real NPC views through their doorways both ways, runs a natural two-minute work/rest cycle for all residents, and checks save/load/reset. It does not infer traversal from an anchor name or an approach-only route.
+
+For rendered evidence, run the same scenario with `--capture-village` using a rendering display driver. It saves an overview and house close-up under `docs/evidence/village/`, then exits without claiming a validation pass. This optional capture path is separate from the headless acceptance run.

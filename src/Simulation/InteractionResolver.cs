@@ -68,7 +68,7 @@ public sealed class InteractionResolver
         var structure = _world.Structures.FirstOrDefault(s => s.Id == request.TargetId);
         if (structure != null)
         {
-            if (MeleeReachValidator.Validate(actor.Position, structure.Position, CreatureGreetingService.DefaultMaximumReach) != MeleeReachResult.InRange)
+            if (MeleeReachValidator.Validate(actor.Position, structure.DoorPosition, CreatureGreetingService.DefaultMaximumReach) != MeleeReachResult.InRange)
                 return new(false, "Move closer before interacting (2 m reach).");
             return request.ActionId switch
             {

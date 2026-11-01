@@ -394,9 +394,12 @@ public sealed partial class World
         return true;
     }
 
-    public Structure AddStructure(string id, StructureType type, Vector3 position)
+    public Structure AddStructure(string id, StructureType type, Vector3 position, int facingQuarterTurns = 0, string? residentId = null)
     {
-        var structure = new Structure(id, type, position);
+        if (residentId is not null && (type != StructureType.Hut || !_entities.ContainsKey(residentId) || residentId == PlayerEntityId
+            || _structures.Any(structure => structure.ResidentId == residentId)))
+            throw new ArgumentException("A home resident must be an existing NPC without another house.", nameof(residentId));
+        var structure = new Structure(id, type, position, facingQuarterTurns, residentId);
         AddTargetId(structure.Id, nameof(id));
         _structures.Add(structure);
         return structure;
@@ -851,6 +854,7 @@ public sealed partial class World
         _squadMembers.Remove(id);
         _workSchedules.Remove(id);
         _homePositions.Remove(id);
+        foreach (var home in _structures.Where(home => home.ResidentId == id)) home.ResidentId = null;
         UnassignWorker(id, pauseAutoAssignment: false);
         _settlementWorkers.Remove(id);
         _wildTerritories.Remove(id);
@@ -919,6 +923,8 @@ public sealed partial class World
 
         _entities.Clear();
         ResetEmployment();
+        UsesVillageLayout = false;
+        DayLengthSeconds = DailyScheduleState.SecondsPerDay;
         _squadMembers.Clear();
         _workSchedules.Clear();
         _homePositions.Clear();
@@ -1084,7 +1090,7 @@ public sealed partial class World
 
         foreach (var saved in snapshot.Structures!)
         {
-            var structure = AddStructure(saved.Id, saved.Type, saved.Position);
+            var structure = AddStructure(saved.Id, saved.Type, saved.Position, saved.FacingQuarterTurns, saved.ResidentId);
             structure.IsClosed = saved.IsClosed;
             foreach (var bed in saved.Beds ?? Array.Empty<BedSnapshot>())
                 structure.AddBed(new Bed(bed.Id, bed.RecoveryRateMultiplier) { OccupantId = bed.OccupantId, IsOccupied = bed.OccupantId is not null });
@@ -1124,6 +1130,8 @@ public sealed partial class World
         foreach (var home in snapshot.HomePositions!)
             _homePositions.Add(home.EntityId, home.Position);
         RestoreEmployment(snapshot);
+        UsesVillageLayout = snapshot.UsesVillageLayout;
+        SetDayLength(snapshot.DayLengthSeconds!.Value);
         foreach (var territory in snapshot.WildTerritories!)
             _wildTerritories.Add(territory.EntityId,
                 new WildTerritory(territory.EntityId, territory.Center, territory.Radius));

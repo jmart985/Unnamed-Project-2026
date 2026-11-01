@@ -15,8 +15,6 @@ public partial class Main : Node3D
 	private const float TownHalfExtent = 60f;
 	private static readonly float[] NavigationGridLines =
 		[-200f, -120f, -60f, -38f, -30f, -22f, -14f, -1f, 1f, 8f, 12f, 14f, 22f, 30f, 38f, 60f, 120f, 200f];
-	private static readonly (float Min, float Max)[] BuildingBands =
-		[(-38f, -30f), (-22f, -14f), (14f, 22f), (30f, 38f)];
 	private Node3D? _scenery;
 	private readonly Dictionary<string, EntityView> _entityViews = new(StringComparer.Ordinal);
 	private readonly Dictionary<string, Button> _entityButtons = new(StringComparer.Ordinal);
@@ -227,6 +225,8 @@ public partial class Main : Node3D
 			Callable.From(RunCharacterAppearanceValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-employment"))
 			Callable.From(RunEmploymentValidation).CallDeferred();
+		else if (OS.GetCmdlineUserArgs().Contains("--validate-village"))
+			Callable.From(RunVillageValidation).CallDeferred();
 	}
 
 	private void RunPlayerWorkwearValidation()
@@ -401,7 +401,8 @@ public partial class Main : Node3D
 			return;
 		}
 
-		StartSession(profile, _sessionSeed, "Scenario reset; save slot unchanged.", _survivalGathering, _starterWildlifeAsFar);
+		StartSession(profile, _sessionSeed, "Scenario reset; save slot unchanged.", _survivalGathering,
+			_starterWildlifeAsFar, _world.UsesVillageLayout, _world.DayLengthSeconds);
 	}
 
 	private void ConfigureCreationChoices()
@@ -438,7 +439,7 @@ public partial class Main : Node3D
 		{
 			var profile = ReadCreationProfile(_playerNameInput.Text);
 			StartSession(profile, NewGameSession.DefaultSeed, "New game started.", survivalGathering: true,
-				startStarterWildlifeAsFar: true);
+				startStarterWildlifeAsFar: true, createVillage: true);
 			_creationError.Text = string.Empty;
 		}
 		catch (ArgumentException exception)
@@ -452,11 +453,13 @@ public partial class Main : Node3D
 		int seed,
 		string saveLoadMessage,
 		bool survivalGathering = false,
-		bool startStarterWildlifeAsFar = false)
+		bool startStarterWildlifeAsFar = false,
+		bool createVillage = false,
+		double? dayLengthSeconds = null)
 	{
 		CancelGameplayActions();
 		var session = NewGameSession.Create(_speciesCatalog, profile, seed, survivalGathering,
-			_wildlifeRegionCatalog, startStarterWildlifeAsFar);
+			_wildlifeRegionCatalog, startStarterWildlifeAsFar, createVillage, dayLengthSeconds);
 		_sessionActive = false;
 		_playerCharacter.SetPhysicsProcess(false);
 		ResetTransientServices();
@@ -815,6 +818,7 @@ public partial class Main : Node3D
 				continue;
 			_woodHauling!.ReconcileSchedule(entity, _clock.SimulationTime);
 		}
+		SyncHouseDoorNavigation();
 		AdvanceNavigationTick(tickSeconds);
 		foreach (var expiredId in _carcassDecay!.Advance(tickSeconds))
 			RemoveResourceMarker(new(TargetKind.Food, expiredId));
@@ -877,7 +881,8 @@ public partial class Main : Node3D
 			var currentDx = current.X - other.Position.X;
 			var currentDz = current.Z - other.Position.Z;
 			var currentDistanceSquared = currentDx * currentDx + currentDz * currentDz;
-			if (currentDistanceSquared >= minimumSeparation * minimumSeparation) return current;
+			if (currentDistanceSquared >= minimumSeparation * minimumSeparation)
+				return SlidePastActor(entityId, current, proposed, other.Position, minimumSeparation);
 			var distance = MathF.Sqrt(MathF.Max(distanceSquared, 0.0001f));
 			adjusted = new System.Numerics.Vector3(
 				other.Position.X + dx / distance * minimumSeparation,
@@ -1118,7 +1123,7 @@ public partial class Main : Node3D
 			? new FireplaceService(_world).IsWarm(playerId) ? "Warm by lit fireplace" : "No nearby warmth"
 			: "Unavailable";
 		_statusLabel.Text =
-			$"Simulation time: {_clock.SimulationTime:0.0}s | Day time: {ScheduleTime(DailyScheduleState.DaySeconds(_clock.SimulationTime) / DailyScheduleState.SecondsPerHour)}\nState: {state}\nSpeed: {(int)_clock.Speed}x\n" +
+			$"Simulation time: {_clock.SimulationTime:0.0}s | Day time: {ScheduleTime(_world.DayHour(_clock.SimulationTime))} ({_world.DayLengthSeconds:0}s/day)\nState: {state}\nSpeed: {(int)_clock.Speed}x\n" +
 			playerStatus +
 			$"Food: {foodConsumption.FoodUnitsRemaining} remaining, {foodConsumption.FoodUnitsConsumed} consumed\n" +
 			$"Wood: ground {groundWood}, carried {carriedWood}, stored {storedWood} (total {totalWood})\n" +
@@ -1198,7 +1203,7 @@ public partial class Main : Node3D
 		if (scheduled)
 		{
 			var schedule = _world.GetWorkSchedule(entity.Id);
-			var phase = schedule.Evaluate(_clock.SimulationTime);
+			var phase = _world.EvaluateWorkSchedule(entity.Id, _clock.SimulationTime);
 			scheduleText = $"Work hours: {schedule.StartHour:00}:00–{schedule.EndHour:00}:00\n" +
 				$"Schedule: {(phase.IsWorking ? "Work" : "Rest")} | Next: {ScheduleTime(phase.NextTransitionHour)} in {phase.SecondsUntilTransition:0.0}s\n" +
 				"Hunger and squad orders take priority; carried wood can finish delivery.\n";
@@ -1286,6 +1291,7 @@ public partial class Main : Node3D
 
 	private void RebuildPresentationFromWorld()
 	{
+		BuildScenery();
 		RebuildWorkbenchViews();
 		_navigationRegion.NavigationMesh = CreateNavigationMesh(CurrentWorkbenchPositions(), _world.Structures);
 		ClearEntityViews();
@@ -1338,11 +1344,6 @@ public partial class Main : Node3D
 		IEnumerable<System.Numerics.Vector3>? workbenchPositions = null, IEnumerable<Structure>? structures = null,
 		IReadOnlyList<NavigationBlocker>? structureBlockers = null)
 	{
-		if (minX < 1f && maxX > -1f && minZ < 1f && maxZ > -1f)
-		{
-			return true;
-		}
-
 		const float workbenchNavigationClearance = 2f;
 		var workbenches = workbenchPositions ?? [NewGameSession.TownWorkbenchPosition];
 		if (workbenches.Any(workbench =>
@@ -1352,14 +1353,9 @@ public partial class Main : Node3D
 			return true;
 		}
 
-		if (IsBuildingBand(minX, maxX) && IsBuildingBand(minZ, maxZ)) return true;
-
 		return (structureBlockers ?? StructureNavigationBlockers(structures).ToArray()).Any(blocker =>
 			minX < blocker.MaxX && maxX > blocker.MinX && minZ < blocker.MaxZ && maxZ > blocker.MinZ);
 	}
-
-	private static bool IsBuildingBand(float min, float max) =>
-		BuildingBands.Any(band => min >= band.Min && max <= band.Max);
 
 	private readonly record struct NavigationBlocker(float MinX, float MaxX, float MinZ, float MaxZ);
 
@@ -1368,16 +1364,15 @@ public partial class Main : Node3D
 		foreach (var structure in structures ?? [])
 		{
 			if (structure.Type != StructureType.Hut) continue;
-			var x = structure.Position.X;
-			var z = structure.Position.Z;
-			// Match the completed hut's wall segments while leaving its open doorway traversable.
-			yield return new(x - 2f, x - 1.8f, z - 2f, z + 2f);
-			yield return new(x + 1.8f, x + 2f, z - 2f, z + 2f);
-			yield return new(x - 2f, x + 2f, z - 2f, z - 1.8f);
-			yield return new(x - 2f, x - 0.5f, z + 1.8f, z + 2f);
-			yield return new(x + 0.5f, x + 2f, z + 1.8f, z + 2f);
-			if (structure.IsClosed)
-				yield return new(x - 0.5f, x + 0.5f, z + 1.8f, z + 2f);
+			foreach (var part in HouseGeometry.SolidParts(structure.IsClosed))
+			{
+				if (part.Name is "Floor" or "Ceiling" or "DoorHeader") continue;
+				var center = structure.ToWorld(part.Center);
+				var half = HouseGeometry.Rotate(part.Size / 2, structure.FacingQuarterTurns);
+				var clearance = HouseGeometry.NavigationClearance;
+				yield return new(center.X - Math.Abs(half.X) - clearance, center.X + Math.Abs(half.X) + clearance,
+					center.Z - Math.Abs(half.Z) - clearance, center.Z + Math.Abs(half.Z) + clearance);
+			}
 		}
 	}
 
@@ -1501,27 +1496,16 @@ public partial class Main : Node3D
 
 		AddScenery("TownGround", new Vector3(TownHalfExtent * 2, 0.05f, TownHalfExtent * 2),
 			new Vector3(0, -0.025f, 0), new Color(0.62f, 0.62f, 0.6f));
-		AddScenery("RoadEastWest", new Vector3(TownHalfExtent * 2, 0.05f, 8), new Vector3(0, -0.024f, 0),
+		AddScenery("RoadEastWest", new Vector3(TownHalfExtent * 2, 0.05f, 4), new Vector3(0, -0.005f, 0),
 			new Color(0.2f, 0.2f, 0.22f));
-		AddScenery("RoadNorthSouth", new Vector3(8, 0.05f, TownHalfExtent * 2), new Vector3(0, -0.024f, 0),
+		AddScenery("RoadNorthSouth", new Vector3(4, 0.05f, TownHalfExtent * 2), new Vector3(0, -0.005f, 0),
 			new Color(0.2f, 0.2f, 0.22f));
 		AddScenery("CountryRoadEast", new Vector3(WorldHalfExtent - TownHalfExtent, 0.05f, 6),
-			new Vector3((WorldHalfExtent + TownHalfExtent) / 2, -0.024f, 0), new Color(0.5f, 0.4f, 0.28f));
+			new Vector3((WorldHalfExtent + TownHalfExtent) / 2, -0.005f, 0), new Color(0.5f, 0.4f, 0.28f));
 		AddScenery("CountryRoadWest", new Vector3(WorldHalfExtent - TownHalfExtent, 0.05f, 6),
-			new Vector3(-(WorldHalfExtent + TownHalfExtent) / 2, -0.024f, 0), new Color(0.5f, 0.4f, 0.28f));
+			new Vector3(-(WorldHalfExtent + TownHalfExtent) / 2, -0.005f, 0), new Color(0.5f, 0.4f, 0.28f));
 
-		var index = 0;
-		foreach (var (minX, maxX) in BuildingBands)
-		{
-			foreach (var (minZ, maxZ) in BuildingBands)
-			{
-				var height = 6f + ((index * 7) % 5) * 3f;
-				AddSolidScenery($"Building_{index}", new Vector3(maxX - minX, height, maxZ - minZ),
-					new Vector3((minX + maxX) / 2, height / 2, (minZ + maxZ) / 2),
-					new Color(0.55f + (index % 3) * 0.08f, 0.5f, 0.45f));
-				index++;
-			}
-		}
+		BuildVillagePaths();
 
 		var random = new RandomNumberGenerator { Seed = 2026 };
 		for (var field = 0; field < 24; field++)
