@@ -193,6 +193,8 @@ public partial class Main : Node3D
 			Callable.From(RunScheduleValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-schedule-integration"))
 			Callable.From(RunScheduleValidation).CallDeferred();
+		else if (OS.GetCmdlineUserArgs().Contains("--validate-controls"))
+			Callable.From(RunControlsValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-menus"))
 			Callable.From(RunMenuValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-selection"))
