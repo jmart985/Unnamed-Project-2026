@@ -33,7 +33,7 @@ public sealed class UnifiedControlSettings
 
     public static Dictionary<string, ControlBinding[]> Defaults()
         => ControlCatalog.All.ToDictionary(d => d.Id,
-            d => new[] { d.Desktop, d.Controller }.OfType<ControlBinding>().ToArray(), StringComparer.Ordinal);
+            d => new[] { d.Desktop, d.Controller }.OfType<ControlBinding>().Concat(d.Alternates ?? []).ToArray(), StringComparer.Ordinal);
 
     public bool Load()
     {
@@ -55,6 +55,13 @@ public sealed class UnifiedControlSettings
                 if (actions.EnumerateObject().Count() != expected.Length
                     || expected.Any(id => !actions.TryGetProperty(id, out var value) || value.ValueKind != JsonValueKind.Object))
                     throw new InvalidDataException("Incomplete legacy controls; original file retained.");
+                var legacy = JsonSerializer.Deserialize<PlayerButtonBindings.SettingsFile>(raw);
+                if (legacy?.Actions is null || legacy.Actions.Values.Any(value => value?.Desktop is null
+                    || value.Desktop.Device is not ("key" or "mouse")
+                    || !ValidPhysical(new(value.Desktop.Device, value.Desktop.Code))
+                    || value.Controller is { } controller && (controller.Device != "joypad"
+                        || !ValidPhysical(new(controller.Device, controller.Code)))))
+                    throw new InvalidDataException("Invalid legacy binding; original file retained.");
                 var backup = Path + $".v{version}.bak";
                 if (File.Exists(backup) && _store.Load(backup) != raw)
                     backup += "." + Guid.NewGuid().ToString("N");
@@ -74,7 +81,7 @@ public sealed class UnifiedControlSettings
             Status = "Custom controls loaded.";
             return true;
         }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException or JsonException or InvalidOperationException)
+        catch (Exception error) when (error is IOException or InvalidDataException or UnauthorizedAccessException or JsonException or InvalidOperationException)
         {
             Status = "Controls not loaded; file preserved. " + error.Message;
             return false;
@@ -102,7 +109,7 @@ public sealed class UnifiedControlSettings
         }
         var previous = Get(action);
         var template = previous.FirstOrDefault(b => controller == (b.Device is "joypad" or "axis"));
-        if (template is not null) binding = binding with { Gesture = template.Gesture };
+        if (template is not null) binding = binding with { Gesture = template.Gesture, Contexts = template.Contexts };
         var retained = previous.Where(b => alternate || controller != (b.Device is "joypad" or "axis"));
         return SetBindings(action, retained.Append(binding).Distinct(), out reason);
     }
@@ -111,7 +118,7 @@ public sealed class UnifiedControlSettings
     {
         var proposed = _bindings.ToDictionary(p => p.Key, p => p.Value.ToArray(), StringComparer.Ordinal);
         foreach (var definition in ControlCatalog.All.Where(d => category is null || d.Category == category))
-            proposed[definition.Id] = new[] { definition.Desktop, definition.Controller }.OfType<ControlBinding>().ToArray();
+            proposed[definition.Id] = new[] { definition.Desktop, definition.Controller }.OfType<ControlBinding>().Concat(definition.Alternates ?? []).ToArray();
         return Save(proposed, category is null ? new() : Preferences, out reason);
     }
 
@@ -146,12 +153,14 @@ public sealed class UnifiedControlSettings
             if (bindings[definition.Id] is not { Length: <= 8 } values) return false;
             foreach (var binding in values)
             {
-                if (binding is null || !ValidPhysical(binding)) { reason = "Invalid physical binding for " + definition.Label; return false; }
+                if (binding is null || !ValidPhysical(binding)
+                    || ((binding.Contexts ?? definition.Contexts) & ~definition.Contexts) != 0)
+                { reason = "Invalid physical binding or context for " + definition.Label; return false; }
                 foreach (var other in seen)
                 {
                     if (other.Definition.Id == definition.Id || other.Binding.PhysicalId != binding.PhysicalId
                         || other.Binding.Modifier != binding.Modifier
-                        || (other.Definition.Contexts & definition.Contexts) == ControlContext.None
+                        || ((other.Binding.Contexts ?? other.Definition.Contexts) & (binding.Contexts ?? definition.Contexts)) == ControlContext.None
                         || (ControlCatalog.MayShare(other.Definition.Id, definition.Id)
                             && other.Binding.Gesture != binding.Gesture
                             && other.Binding.Gesture is "tap" or "hold" && binding.Gesture is "tap" or "hold")) continue;
@@ -170,6 +179,7 @@ public sealed class UnifiedControlSettings
     private static bool ValidPhysical(ControlBinding binding)
     {
         if (binding.Gesture is not ("press" or "tap" or "hold")) return false;
+        if (binding.Contexts is { } context && (context == ControlContext.None || (context & ~ControlContext.All) != 0)) return false;
         if (binding.Modifier is not null)
         {
             if (binding.Device is "key" or "mouse")
@@ -212,7 +222,8 @@ public sealed class UnifiedControlSettings
         if (input is InputEventJoypadButton { Pressed: true } button)
             return new("joypad", (long)button.ButtonIndex, Modifier:
                 button.ButtonIndex != JoyButton.LeftShoulder && Input.IsJoyButtonPressed(button.Device, JoyButton.LeftShoulder)
-                    ? ControlCatalog.PadUtility : null);
+                    ? ControlCatalog.PadUtility : Input.GetJoyAxis(button.Device, JoyAxis.TriggerLeft) > 0.5f
+                        ? ControlCatalog.LeftTrigger : null);
         if (input is InputEventJoypadMotion motion && Math.Abs(motion.AxisValue) >= 0.65f)
             return new("axis", (long)motion.Axis, Math.Sign(motion.AxisValue), Modifier:
                 Input.IsJoyButtonPressed(motion.Device, JoyButton.LeftShoulder) ? ControlCatalog.PadUtility : null);
@@ -224,6 +235,7 @@ public sealed class UnifiedControlSettings
         foreach (var definition in ControlCatalog.All)
         {
             if (!InputMap.HasAction(definition.Id)) InputMap.AddAction(definition.Id, Preferences.StickDeadzone);
+            InputMap.ActionSetDeadzone(definition.Id, Preferences.StickDeadzone);
             Input.ActionRelease(definition.Id);
             InputMap.ActionEraseEvents(definition.Id);
             if (!definition.Available) continue;
@@ -237,8 +249,8 @@ public sealed class UnifiedControlSettings
         {
             "key" => new InputEventKey { PhysicalKeycode = (Key)binding.Code },
             "mouse" => new InputEventMouseButton { ButtonIndex = (MouseButton)binding.Code },
-            "joypad" => new InputEventJoypadButton { ButtonIndex = (JoyButton)binding.Code },
-            "axis" => new InputEventJoypadMotion { Axis = (JoyAxis)binding.Code, AxisValue = binding.Sign },
+            "joypad" => new InputEventJoypadButton { ButtonIndex = (JoyButton)binding.Code, Device = -1 },
+            "axis" => new InputEventJoypadMotion { Axis = (JoyAxis)binding.Code, AxisValue = binding.Sign, Device = -1 },
             _ => throw new InvalidDataException("Unknown binding device.")
         };
         if (result is InputEventWithModifiers modifiers)

@@ -103,6 +103,8 @@ public partial class Main
         var player = _world.Entities.Single(e => e.Id == _world.PlayerEntityId);
         var initialPosition = player.Position;
         var initialSatiety = player.Satiety;
+        _clock.SetPaused(false);
+        SynchronizeUnifiedContext();
         await ValidatePlayerForwardAndBackwardInput();
         _playerCharacter.SetPhysicsProcess(true);
         Input.ActionPress(ControllerActions.MoveRight);

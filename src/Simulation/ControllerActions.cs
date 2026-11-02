@@ -94,6 +94,14 @@ public static class ControllerActions
     public const string Quickslot10 = "quickslot_10";
     public const string BuildSlot10 = "build_slot_10";
 
+    public const string MenuConfirm = "menu_confirm";
+    public const string MenuPreviousTab = "menu_previous_tab";
+    public const string MenuNextTab = "menu_next_tab";
+    public const string MenuPreviousCategory = "menu_previous_category";
+    public const string MenuNextCategory = "menu_next_category";
+    public const string MenuActions = "menu_item_actions";
+    public const string MenuVisibility = "menu_equipment_visibility";
+
     public static IReadOnlyList<string> All { get; } =
     [
         MoveLeft, MoveRight, MoveForward, MoveBackward, Jump,
@@ -166,6 +174,13 @@ public static class ControllerActions
         BuildSlot9,
         Quickslot10,
         BuildSlot10,
+        MenuConfirm,
+        MenuPreviousTab,
+        MenuNextTab,
+        MenuPreviousCategory,
+        MenuNextCategory,
+        MenuActions,
+        MenuVisibility,
     ];
 }
 

@@ -4,7 +4,7 @@ Current relationship feedback, recipient greeting direction and Trusted pet perm
 
 Issue [#390](https://github.com/jmart985/Unnamed-Project-2026/issues/390) fixes gaps found by user playtesting the #388 selection build. It extends existing World, melee/social combat, resource transfer and greeting services.
 
-This document records the #390 acceptance. Subsequent interaction changes and #393 repair use F to feed/pet and G to greet humans or supported creatures; see [current interaction controls and validation](INTERACTION_REPAIR.md). The original targeted-damage and collect/hold rules below remain applicable.
+This document records historical #390 acceptance. The [unified controls](CONTROLS.md) supersede its bindings and input timing: tap E interacts/collects, hold E opens contextual choices, and G opens self/social actions including carried-food use. The per-item carried limit is now 999, with no aggregate item-count limit. The original damage and transfer invariants remain relevant; the old controls, capacities and settings versions below are historical.
 
 ## Player controls
 

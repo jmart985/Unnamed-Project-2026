@@ -4,13 +4,13 @@ using Simulation;
 namespace UnnamedProject2026;
 
 /// Physical bindings belong to presentation preferences, never world saves.
-public sealed record ControlBinding(string Device, long Code, int Sign = 0, string? Modifier = null, string Gesture = "press")
+public sealed record ControlBinding(string Device, long Code, int Sign = 0, string? Modifier = null, string Gesture = "press", ControlContext? Contexts = null)
 {
     public string PhysicalId => $"{Device}:{Code}:{Sign}";
 }
 
 public sealed record ControlActionDefinition(string Id, string Label, string Category, ControlContext Contexts,
-    ControlBinding? Desktop, ControlBinding? Controller, bool Available);
+    ControlBinding? Desktop, ControlBinding? Controller, bool Available, ControlBinding[]? Alternates = null);
 
 /// One source for defaults, settings, help and contextual prompts. Reserved actions do not execute.
 public static class ControlCatalog
@@ -19,10 +19,10 @@ public static class ControlCatalog
     public static readonly string LeftTrigger = $"axis:{(long)JoyAxis.TriggerLeft}";
     public static IReadOnlyList<ControlActionDefinition> All { get; } =
     [
-        new(ControllerActions.MoveForward, "Move forward", "Movement", ControlContext.Play, K(Key.W), A(JoyAxis.LeftY, -1), true),
-        new(ControllerActions.MoveBackward, "Move backward", "Movement", ControlContext.Play, K(Key.S), A(JoyAxis.LeftY, 1), true),
-        new(ControllerActions.MoveLeft, "Move left", "Movement", ControlContext.Play, K(Key.A), A(JoyAxis.LeftX, -1), true),
-        new(ControllerActions.MoveRight, "Move right", "Movement", ControlContext.Play, K(Key.D), A(JoyAxis.LeftX, 1), true),
+        new(ControllerActions.MoveForward, "Move forward", "Movement", ControlContext.Play | ControlContext.Wheel, K(Key.W), A(JoyAxis.LeftY, -1), true),
+        new(ControllerActions.MoveBackward, "Move backward", "Movement", ControlContext.Play | ControlContext.Wheel, K(Key.S), A(JoyAxis.LeftY, 1), true),
+        new(ControllerActions.MoveLeft, "Move left", "Movement", ControlContext.Play | ControlContext.Wheel, K(Key.A), A(JoyAxis.LeftX, -1), true),
+        new(ControllerActions.MoveRight, "Move right", "Movement", ControlContext.Play | ControlContext.Wheel, K(Key.D), A(JoyAxis.LeftX, 1), true),
         new(ControllerActions.Jump, "Jump / vault", "Movement", ControlContext.Play, K(Key.Space), P(JoyButton.A), true),
         new(ControllerActions.Sprint, "Sprint", "Movement", ControlContext.Play, K(Key.Shift), P(JoyButton.LeftStick), false),
         new(ControllerActions.Crouch, "Crouch (hold / optional toggle)", "Movement", ControlContext.Gameplay, K(Key.Ctrl, gesture: "hold"), P(JoyButton.B, gesture: "hold"), false),
@@ -44,10 +44,10 @@ public static class ControlCatalog
         new(ControllerActions.UseQuickslot, "Use selected quickslot", "Quickslots", ControlContext.Gameplay, K(Key.F), P(JoyButton.DpadUp), false),
         new(ControllerActions.PreviousSlot, "Previous quickslot", "Quickslots", ControlContext.Gameplay, null, P(JoyButton.DpadLeft), false),
         new(ControllerActions.NextSlot, "Next quickslot", "Quickslots", ControlContext.Gameplay, null, P(JoyButton.DpadRight), false),
-        new(ControllerActions.Inventory, "Inventory / equipment", "Menus", ControlContext.Play, K(Key.I), P(JoyButton.Back), true),
-        new(ControllerActions.Settlement, "Settlement", "Menus", ControlContext.Play, K(Key.N), P(JoyButton.DpadRight, PadUtility), true),
-        new(ControllerActions.Settings, "Pause / settings", "Menus", ControlContext.Gameplay, K(Key.Escape), P(JoyButton.Start), true),
-        new(ControllerActions.Help, "Controls reference", "Menus", ControlContext.Play, K(Key.F1), null, true),
+        new(ControllerActions.Inventory, "Inventory / equipment", "Menus", ControlContext.Play | ControlContext.Modal, K(Key.I), P(JoyButton.Back), true),
+        new(ControllerActions.Settlement, "Settlement", "Menus", ControlContext.Play | ControlContext.Modal, K(Key.N), P(JoyButton.DpadRight, PadUtility), true),
+        new(ControllerActions.Settings, "Pause / settings", "Menus", ControlContext.Play | ControlContext.Modal, K(Key.Escape) with { Contexts = ControlContext.Gameplay }, P(JoyButton.Start), true),
+        new(ControllerActions.Help, "Controls reference", "Menus", ControlContext.Play | ControlContext.Modal, K(Key.F1), null, true),
         new(ControllerActions.Map, "Map", "Menus", ControlContext.Play, K(Key.M), P(JoyButton.DpadUp, PadUtility), false),
         new(ControllerActions.Skills, "Character / skills", "Menus", ControlContext.Play, K(Key.K), P(JoyButton.DpadLeft, PadUtility), false),
         new(ControllerActions.Journal, "Journal", "Menus", ControlContext.Play, K(Key.J), null, false),
@@ -68,14 +68,21 @@ public static class ControlCatalog
         new(ControllerActions.BuildPlace, "Place preview", "Build", ControlContext.Build, M(MouseButton.Left), A(JoyAxis.TriggerRight, 1), true),
         new(ControllerActions.BuildCancel, "Cancel preview / leave build", "Build", ControlContext.Build, M(MouseButton.Right), P(JoyButton.B), true),
         new(ControllerActions.BuildCatalog, "Build catalog", "Build", ControlContext.Build, K(Key.C), P(JoyButton.X), true),
-        new(ControllerActions.BuildRotateLeft, "Rotate preview left", "Build", ControlContext.Build, K(Key.Q), P(JoyButton.DpadLeft, LeftTrigger), true),
-        new(ControllerActions.BuildRotateRight, "Rotate preview right", "Build", ControlContext.Build, K(Key.R), P(JoyButton.DpadRight, LeftTrigger), true),
+        new(ControllerActions.BuildRotateLeft, "Rotate preview left", "Build", ControlContext.Build, K(Key.Q), P(JoyButton.DpadLeft, LeftTrigger), false),
+        new(ControllerActions.BuildRotateRight, "Rotate preview right", "Build", ControlContext.Build, K(Key.R), P(JoyButton.DpadRight, LeftTrigger), false),
         new(ControllerActions.BuildSnap, "Toggle snapping", "Build", ControlContext.Build, K(Key.G), P(JoyButton.Y), false),
         new(ControllerActions.BuildPrevious, "Previous build slot", "Build", ControlContext.Build, null, P(JoyButton.DpadLeft), true),
         new(ControllerActions.BuildNext, "Next build slot", "Build", ControlContext.Build, null, P(JoyButton.DpadRight), true),
         new(ControllerActions.BuildWheel, "Build wheel (hold)", "Build", ControlContext.Build, null, P(JoyButton.RightShoulder, gesture: "hold"), true),
-        new(ControllerActions.CloseMenu, "Back / cancel", "Menus", ControlContext.Modal | ControlContext.Wheel | ControlContext.TextEntry | ControlContext.Rebinding, K(Key.Escape), P(JoyButton.B), true),
+        new(ControllerActions.CloseMenu, "Back / cancel", "Menus", ControlContext.Build | ControlContext.Modal | ControlContext.Wheel | ControlContext.TextEntry | ControlContext.Rebinding, K(Key.Escape), P(JoyButton.B) with { Contexts = ControlContext.Modal | ControlContext.Wheel | ControlContext.TextEntry | ControlContext.Rebinding }, true, [M(MouseButton.Right) with { Contexts = ControlContext.Wheel }]),
         new(ControllerActions.Utility, "Utility modifier", "Menus", ControlContext.Play, null, P(JoyButton.LeftShoulder), true),
+        new(ControllerActions.MenuConfirm, "Confirm", "Menus", ControlContext.Modal | ControlContext.Wheel, K(Key.Enter), P(JoyButton.A), true, [M(MouseButton.Left) with { Contexts = ControlContext.Wheel }]),
+        new(ControllerActions.MenuPreviousTab, "Previous menu tab", "Menus", ControlContext.Modal, K(Key.Q), P(JoyButton.LeftShoulder), true),
+        new(ControllerActions.MenuNextTab, "Next menu tab", "Menus", ControlContext.Modal, K(Key.E), P(JoyButton.RightShoulder), true),
+        new(ControllerActions.MenuPreviousCategory, "Previous category", "Menus", ControlContext.Modal, null, A(JoyAxis.TriggerLeft, 1), true),
+        new(ControllerActions.MenuNextCategory, "Next category", "Menus", ControlContext.Modal, null, A(JoyAxis.TriggerRight, 1), true),
+        new(ControllerActions.MenuActions, "Item actions", "Menus", ControlContext.Modal, M(MouseButton.Right), P(JoyButton.X), true),
+        new(ControllerActions.MenuVisibility, "Equipment visibility", "Menus", ControlContext.Modal, null, P(JoyButton.Y), true),
         new(ControllerActions.Greet, "Greet (interaction menu)", "Interaction", ControlContext.Gameplay, null, null, true),
         new(ControllerActions.Rest, "Rest / wake (self menu)", "Interaction", ControlContext.Gameplay, null, null, true),
         new(ControllerActions.Quickslot1, "Quickslot 1", "Quickslots", ControlContext.Gameplay, K(Key.Key1), null, false),

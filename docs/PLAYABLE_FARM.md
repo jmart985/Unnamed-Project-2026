@@ -6,7 +6,7 @@ Milestone 0.4 issue #403 turns the existing farming foundation into one usable, 
 
 1. Collect at least one plant with the Collect control (default `E`).
 2. Use the Target control (default `T`) until `Farm · farm-1` is selected.
-3. Stand within 2 m and press Interact (default `F`).
+3. Stand within 2 m and tap Interact (default `E`, controller X). See [unified controls](CONTROLS.md).
 4. Plant one carried plant, apply five growth steps, then harvest three food.
 
 The world label and target HUD distinguish Empty, Growing and Harvest Ready. The panel reports every rejection. Planting, tending and harvesting reject missing/stale farms or plots, distance greater than 2 m, incapacitation, occupied/empty/premature states, missing seed, and a full carried food stack without partially changing inventory or the plot.

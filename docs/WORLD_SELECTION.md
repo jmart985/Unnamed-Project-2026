@@ -12,7 +12,7 @@ A yellow ground ring marks the visible selection and a compact bottom-left HUD s
 
 Selected entities are the same selection used by Settlement inspection, squad membership, schedules, greeting and debug navigation. Selecting a resource clears the entity target, so entity actions cannot accidentally address the previously selected NPC. Selection never opens a menu, attacks, consumes resources or changes the simulation clock. Menus, creation and paused gameplay suppress target cycling; menu feedback and the ring are hidden while a screen is open.
 
-The target key is configurable in **Save / Settings → Controls → Cycle target**, including an optional controller button. Defaults are WASD movement, Space jump, E tap to collect / hold to use carried food, F greet the selected entity, I inventory, Tab settlement, T cycle target, F10/Escape settings and mouse left/right attacks. Existing saved bindings, including G for greeting, are preserved by settings migration; see [Player menu preferences](PLAYER_MENUS.md). Issue #390 connects targeted strikes, pickup/use and visible greeting responses; see [gameplay refinement](GAMEPLAY_REFINEMENT.md). Drop, map, sprint, dodge and abilities remain outside these slices.
+The target key is configurable in **Save / Settings → Controls → Next target**. T and Shift+T cycle forward/backward, middle mouse/R3 toggles lock, and a deliberate right-stick flick cycles while locked. The complete keyboard/controller layout and one-time settings migration are documented in [unified controls](CONTROLS.md). Gameplay actions reuse the current authoritative selection and existing range/obstruction checks.
 
 ## Reproduction and validation
 

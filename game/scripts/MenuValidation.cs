@@ -26,6 +26,7 @@ public partial class Main
             validationSettingsPath = ProjectSettings.GlobalizePath($"res://../.menu-validation-settings-{validationRun}.json");
             _saveSlotPath = validationSavePath;
             _buttonBindings.Path = validationSettingsPath;
+            _controlSettings.Path = validationSettingsPath;
             Require(_menuState.ActiveMenu is null && !_controls.Visible && !_inventoryPanel.Visible && !_settingsPanel.Visible, "session starts closed");
             SendMenuKey(Key.I);
             Require(_menuState.ActiveMenu == PlayerMenu.Inventory && _inventoryPanel.Visible && !_controls.Visible, "I opens inventory");
@@ -34,10 +35,10 @@ public partial class Main
                 && _characterIdentity.Text.Contains("Menu validation"), "starter clothing and player identity");
             SendMenuKey(Key.I);
             Require(_menuState.ActiveMenu is null && !_inventoryPanel.Visible, "same key closes inventory");
-            SendMenuKey(Key.Tab);
-            Require(_controls.Visible && !_inventoryPanel.Visible && _menuState.ActiveMenu == PlayerMenu.Settlement, "Tab opens settlement");
-            SendMenuKey(Key.F10);
-            Require(!_controls.Visible && _settingsPanel.Visible && _menuState.ActiveMenu == PlayerMenu.Settings, "F10 switches to separate settings");
+            SendMenuKey(Key.N);
+            Require(_controls.Visible && !_inventoryPanel.Visible && _menuState.ActiveMenu == PlayerMenu.Settlement, "N opens settlement");
+            SendControlAction(ControllerActions.Settings, true);
+            Require(!_controls.Visible && _settingsPanel.Visible && _menuState.ActiveMenu == PlayerMenu.Settings, "controller Menu switches to settings");
             SendMenuKey(Key.Escape);
             Require(!_settingsPanel.Visible && _menuState.ActiveMenu is null && _clock.IsPaused, "Escape closes without unpausing");
             SendMenuKey(Key.Escape);
@@ -52,14 +53,15 @@ public partial class Main
             var strikes = 0;
             _playerCharacter.StrikeReleased += (_, _) => strikes++;
             Input.ActionPress(ControllerActions.MoveRight);
-            _playerCharacter._UnhandledInput(new InputEventMouseMotion { Relative = new Vector2(100, 100) });
-            _playerCharacter._UnhandledInput(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true });
+            _Input(new InputEventMouseMotion { Relative = new Vector2(100, 100) });
+            SendMenuMouse(MouseButton.Left);
             var message = _lastActionMessage;
             Input.ActionPress(ControllerActions.Collect);
-            _UnhandledInput(new InputEventKey { PhysicalKeycode = Key.E, Pressed = true });
+            _Input(new InputEventKey { PhysicalKeycode = Key.E, Pressed = true });
             for (var frame = 0; frame < 30; frame++) await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
             Input.ActionRelease(ControllerActions.MoveRight);
             Input.ActionRelease(ControllerActions.Collect);
+            _Input(new InputEventKey { PhysicalKeycode = Key.E, Pressed = false });
             Require(new Vector2(before.X, before.Z).DistanceTo(new(_playerCharacter.GlobalPosition.X, _playerCharacter.GlobalPosition.Z)) < 0.001f, "menu blocks walking");
             Require(rotation == _playerCharacter.Rotation && strikes == 0 && message == _lastActionMessage, "menu blocks aim combat and world actions");
             ClosePlayerMenus();
@@ -113,44 +115,58 @@ public partial class Main
             _mappingButtons[(ControllerActions.Inventory, false)].EmitSignal(BaseButton.SignalName.Pressed);
             SendMenuKey(Key.O);
             Require(_captureBinding is null && InputMap.ActionHasEvent(ControllerActions.Inventory, new InputEventKey { PhysicalKeycode = Key.O }), "real InputMap rebound");
-            var reloadedBindings = new PlayerButtonBindings(_buttonBindings.Path);
+            var reloadedBindings = new UnifiedControlSettings(_controlSettings.Path);
             reloadedBindings.Load();
-            Require(reloadedBindings.Get(ControllerActions.Inventory).Desktop.Code == (long)Key.O, "new settings instance reload persists");
+            Require(reloadedBindings.Get(ControllerActions.Inventory).Any(b => b.Device == "key" && b.Code == (long)Key.O), "new settings instance reload persists");
             SendMenuKey(Key.O);
             Require(_inventoryPanel.Visible && !_settingsPanel.Visible, "rebound menu key works");
-            _buttonBindings.TryBind(ControllerActions.Interact, false, new InputEventMouseButton { ButtonIndex = MouseButton.Middle, Pressed = true }, out var mouseReason);
-            Require(InputMap.ActionHasEvent(ControllerActions.Interact, new InputEventMouseButton { ButtonIndex = MouseButton.Middle }), mouseReason);
-            _buttonBindings.TryBind(ControllerActions.Settings, true, new InputEventJoypadButton { ButtonIndex = JoyButton.RightStick, Pressed = true }, out var padReason);
-            Require(InputMap.ActionHasEvent(ControllerActions.Settings, new InputEventJoypadButton { ButtonIndex = JoyButton.RightStick }), padReason);
-            var validPath = _buttonBindings.Path;
-            _buttonBindings.Path = validPath + "/invalid-child.json";
-            Require(!_buttonBindings.TryBind(ControllerActions.Inventory, false, new InputEventKey { PhysicalKeycode = Key.P, Pressed = true }, out _)
-                && _buttonBindings.Get(ControllerActions.Inventory).Desktop.Code == (long)Key.O, "failed settings write retains active binding");
-            _buttonBindings.Path = validPath;
+            Require(_controlSettings.TryBind(ControllerActions.Inspect, false,
+                new InputEventMouseButton { ButtonIndex = MouseButton.Xbutton1, Pressed = true }, false, out var mouseReason), mouseReason);
+            Require(_controlSettings.TryBind(ControllerActions.Settings, true,
+                new InputEventJoypadButton { ButtonIndex = JoyButton.RightStick, Pressed = true }, false, out var padReason) == false,
+                "target-lock conflict is rejected");
+            var validPath = _controlSettings.Path;
+            _controlSettings.Path = validPath + "/invalid-child.json";
+            Require(!_controlSettings.TryBind(ControllerActions.Inventory, false,
+                new InputEventKey { PhysicalKeycode = Key.F11, Pressed = true }, false, out _)
+                && _controlSettings.Get(ControllerActions.Inventory).Any(b => b.Code == (long)Key.O),
+                "failed settings write retains active binding");
+            _controlSettings.Path = validPath;
             ToggleMenu(PlayerMenu.Settings);
             PressMenuButton(_settingsPanel, "Restore default button mapping");
-            Require(_bindingStatus.Text == "Button mapping saved.", "restore default mapping persists");
+            Require(_bindingStatus.Text == "Controls saved.", "restore default mapping persists");
             RefreshMappingButtons();
             Require(InputMap.ActionHasEvent(ControllerActions.Inventory, new InputEventKey { PhysicalKeycode = Key.I }), "defaults restored in InputMap");
 
-            Require(_buttonBindings.TryBind(ControllerActions.AttackLeft, false, new InputEventKey { PhysicalKeycode = Key.K, Pressed = true }, out _), "left attack rebind");
-            Require(_buttonBindings.TryBind(ControllerActions.AttackRight, false, new InputEventMouseButton { ButtonIndex = MouseButton.Middle, Pressed = true }, out _), "right attack mouse rebind");
+            Require(_controlSettings.TryBind(ControllerActions.PrimaryAction, false,
+                new InputEventKey { PhysicalKeycode = Key.O, Pressed = true }, false, out _), "primary attack rebind");
+            Require(_controlSettings.TryBind(ControllerActions.Inspect, false,
+                new InputEventMouseButton { ButtonIndex = MouseButton.Xbutton1, Pressed = true }, false, out _), "inspect mouse rebind");
+            Require(_controlSettings.TryBind(ControllerActions.SecondaryAction, false,
+                new InputEventMouseButton { ButtonIndex = MouseButton.Xbutton1, Pressed = true }, false, out _) == false,
+                "inspect conflict rejected");
+            Require(_controlSettings.TryBind(ControllerActions.SecondaryAction, false,
+                new InputEventMouseButton { ButtonIndex = MouseButton.Xbutton2, Pressed = true }, false, out _), "secondary mouse rebind");
+            ApplyUnifiedProfile();
+            _controlPause.SetManual(false);
+            ClosePlayerMenus();
             _clock.SetPaused(false);
             _playerCharacter.SetPhysicsProcess(true);
-            ClosePlayerMenus();
+            SynchronizeUnifiedContext();
             strikes = 0;
             SendMenuMouse(MouseButton.Left);
             for (var frame = 0; frame < 30; frame++) await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
             Require(strikes == 0, "old hardcoded mouse attack is removed");
-            SendMenuKey(Key.K);
+            SendMenuKey(Key.O);
             for (var frame = 0; frame < 30; frame++) await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
             Require(strikes == 1, "rebound keyboard attack reaches actual swing");
-            SendMenuMouse(MouseButton.Middle);
+            SendMenuMouse(MouseButton.Xbutton2);
             for (var frame = 0; frame < 30; frame++) await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
             Require(strikes == 2, "rebound mouse attack reaches actual swing");
             _clock.SetPaused(true);
             _playerCharacter.SetPhysicsProcess(false);
-            Require(_buttonBindings.RestoreDefaults(out _), "defaults restored after attack check");
+            Require(_controlSettings.RestoreDefaults(null, out _), "defaults restored after attack check");
+            ApplyUnifiedProfile();
             RefreshMappingButtons();
             ToggleMenu(PlayerMenu.Settings);
 
@@ -220,6 +236,38 @@ public partial class Main
 
     private static void PressMenuButton(Control panel, string text) => panel.FindChildren("*", "Button", true, false)
         .OfType<Button>().Single(button => button.Text == text).EmitSignal(BaseButton.SignalName.Pressed);
+
+    private void SendControlAction(string action, bool controller = false)
+    {
+        var binding = _controlSettings.Get(action).First(b => controller == (b.Device is "joypad" or "axis"));
+        var press = UnifiedControlSettings.ToEvent(binding);
+        switch (press)
+        {
+            case InputEventKey key: key.Pressed = true; break;
+            case InputEventMouseButton mouse: mouse.Pressed = true; break;
+            case InputEventJoypadButton pad: pad.Pressed = true; break;
+        }
+        GetViewport().PushInput(press);
+        var release = UnifiedControlSettings.ToEvent(binding);
+        switch (release)
+        {
+            case InputEventKey key: key.Pressed = false; break;
+            case InputEventMouseButton mouse: mouse.Pressed = false; break;
+            case InputEventJoypadButton pad: pad.Pressed = false; break;
+            case InputEventJoypadMotion axis: axis.AxisValue = 0; break;
+        }
+        GetViewport().PushInput(release);
+    }
+
+    private void SendSocialGreeting()
+    {
+        SendControlAction(ControllerActions.SocialWheel);
+        if (UnifiedWheelOpen)
+        {
+            _controlWheel.Stick(Vector2.Up);
+            SendControlAction(ControllerActions.MenuConfirm);
+        }
+    }
 
     private void SendMenuKey(Key key)
     {

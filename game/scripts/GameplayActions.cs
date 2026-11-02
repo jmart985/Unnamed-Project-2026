@@ -113,11 +113,11 @@ public partial class Main
     }
 
     private bool GameplayActionsAllowed => _sessionActive && _menuState.ActiveMenu is null && !WorkstationPanelOpen && !FarmPanelOpen
-        && !ConstructionPanelOpen && !PlacementPanelOpen && !_clock.IsPaused;
+        && !ConstructionPanelOpen && !PlacementPanelOpen && !UnifiedWheelOpen && !_clock.IsPaused;
 
     private bool GameplayCameraCaptureAllowed => _sessionActive && _menuState.ActiveMenu is null
         && !WorkstationPanelOpen && !FarmPanelOpen && !ConstructionPanelOpen
-        && _npcAnimationTestPanel?.IsOpen != true && !_clock.IsPaused;
+        && _npcAnimationTestPanel?.IsOpen != true && !UnifiedWheelOpen && !_clock.IsPaused;
 
     private void ConfigureGameplayActions()
     {
@@ -183,11 +183,11 @@ public partial class Main
         // Direct build mode keeps the live camera and centered reticle while its hotbar
         // suppresses world actions; ordinary modal menus release the captured cursor.
         Input.MouseMode = cameraCaptureAllowed ? Input.MouseModeEnum.Captured : Input.MouseModeEnum.Visible;
-        var collect = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.Collect).Desktop);
-        var interact = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.Interact).Desktop);
-        var greet = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.Greet).Desktop);
-        var build = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.BuildMode).Desktop);
-        var hint = $"Tap {collect}: collect · Hold {collect} 0.6s: use carried food · {interact}: interact/feed/pet · {greet}: greet (2 m) · {build}: build mode";
+        var interact = UnifiedLabel(ControllerActions.DefaultInteraction);
+        var context = UnifiedLabel(ControllerActions.ContextInteraction);
+        var social = UnifiedLabel(ControllerActions.SocialWheel);
+        var build = UnifiedLabel(ControllerActions.BuildMode);
+        var hint = $"{interact}: interact / collect · {context}: more actions · {social}: self / social · {build}: build";
         _actionHud.Text = _collectUse.IsPressed && !_collectUse.Used
             ? $"Hold to use… {Math.Min(100, _collectUse.Elapsed / CollectUseGesture.HoldSeconds * 100):0}%\nRelease now to collect.\n{hint}"
             : (_feedbackSeconds > 0 ? _lastActionMessage + "\n" : "") + hint;
@@ -352,7 +352,7 @@ public partial class Main
 
         if (string.Equals(target.SpeciesId, "human", StringComparison.Ordinal))
         {
-            ShowActionFeedback($"Press {PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.Greet).Desktop)} to greet this person.");
+            ShowActionFeedback($"Use {UnifiedLabel(ControllerActions.SocialWheel)} for social actions with this person.");
             return;
         }
         else

@@ -10,6 +10,21 @@ public partial class PlayerCharacter : CharacterBody3D
     private float _interactionMovementHoldSeconds;
 
 	public bool GameplayInputEnabled { get; private set; } = true;
+	public UnifiedInputRouter? Controls { get; set; }
+	private bool _controlJumpRequested;
+	public void RequestControlJump() => _controlJumpRequested = true;
+	public void PerformEquipmentAction(bool primary) => StartAttackSwing(!primary, primary ? RightShieldEquipped : LeftShieldEquipped);
+	public void ApplyControlLook(Vector2 motion, ControlPreferences preferences)
+	{
+		if (!GameplayInputEnabled || !MouseLookEnabled) return;
+		RotateY(-motion.X * MouseSensitivity * preferences.LookSensitivity);
+		var vertical = preferences.InvertLookY ? -motion.Y : motion.Y;
+		_headPitchTarget = Mathf.Clamp(_headPitchTarget - vertical * MouseSensitivity * preferences.LookSensitivity, -0.6f, 1.0f);
+	}
+	public void AdjustControlZoom(float steps)
+		=> _cameraZoomDistance = Mathf.Clamp(_cameraZoomDistance + steps * CameraZoomStep, CameraFirstPersonDistance, CameraZoomDistance);
+	public void ToggleControlView()
+		=> _cameraZoomDistance = _cameraZoomDistance <= CameraFirstPersonDistance + 0.01f ? CameraZoomDistance : CameraFirstPersonDistance;
     public bool IsMovementHeldForInteraction => _interactionMovementHoldSeconds > 0;
 
     public void HoldMovementForInteraction(float seconds)
@@ -31,6 +46,7 @@ public partial class PlayerCharacter : CharacterBody3D
 		GameplayInputEnabled = enabled;
 		if (!enabled)
 		{
+			_controlJumpRequested = false;
 			Velocity = new Vector3(0, Velocity.Y, 0);
 			_swing = AttackSwing.ForTotalDuration(AttackDuration);
 		}
@@ -340,6 +356,7 @@ public partial class PlayerCharacter : CharacterBody3D
 	}
 	public override void _UnhandledInput(InputEvent @event)
 	{
+		if (Controls is not null) return;
 		if (!GameplayInputEnabled) return;
 		if (MouseLookEnabled && @event is InputEventMouseMotion motion)
 		{
@@ -384,13 +401,12 @@ public partial class PlayerCharacter : CharacterBody3D
 		var physicsDelta = (float)delta;
 		AdvanceInteractionMovementHold(physicsDelta);
         var canMove = GameplayInputEnabled && !IsMovementHeldForInteraction;
-		if (GameplayInputEnabled)
+        if (GameplayInputEnabled && MouseLookEnabled)
 		{
-			var stickLook = new Vector2(Input.GetJoyAxis(0, JoyAxis.RightX), Input.GetJoyAxis(0, JoyAxis.RightY));
+			var stickLook = Controls?.Look() ?? Vector2.Zero;
 			if (stickLook.LengthSquared() > 0.01f)
 			{
-				RotateY(-stickLook.X * MouseSensitivity * 60f * physicsDelta);
-				_headPitchTarget = Mathf.Clamp(_headPitchTarget - stickLook.Y * MouseSensitivity * 60f * physicsDelta, -0.6f, 1.0f);
+				ApplyControlLook(stickLook * 60f * physicsDelta, Controls?.Preferences ?? new ControlPreferences());
 			}
 		}
 		_attackCooldownRemaining = Mathf.Max(0.0, _attackCooldownRemaining - delta);
@@ -399,14 +415,19 @@ public partial class PlayerCharacter : CharacterBody3D
 			Velocity = new Vector3(Velocity.X, Velocity.Y - Gravity * physicsDelta, Velocity.Z);
 		}
 
-        if (canMove && Input.IsActionJustPressed(ControllerActions.Jump) && IsOnFloor())
+		var jumpRequested = _controlJumpRequested || (Input.IsActionJustPressed(ControllerActions.Jump)
+			&& (Controls?.Strength(ControllerActions.Jump) ?? 1) > 0);
+		_controlJumpRequested = false;
+		if (canMove && jumpRequested && IsOnFloor())
 		{
 			Velocity = new Vector3(Velocity.X, JumpVelocity, Velocity.Z);
 		}
 
 		// GetAxis takes (negative, positive); forward is the negative local -Z direction.
-        var forward = canMove ? Input.GetAxis(ControllerActions.MoveForward, ControllerActions.MoveBackward) : 0;
-        var strafe = canMove ? Input.GetAxis(ControllerActions.MoveLeft, ControllerActions.MoveRight) : 0;
+		var movement = Controls?.Movement ?? new Vector2(Input.GetAxis(ControllerActions.MoveLeft, ControllerActions.MoveRight),
+			Input.GetAxis(ControllerActions.MoveForward, ControllerActions.MoveBackward));
+		var forward = canMove ? movement.Y : 0;
+		var strafe = canMove ? movement.X : 0;
 		var localDirection = new Vector3(strafe, 0.0f, forward);
 		if (localDirection.LengthSquared() > 1.0f)
 		{

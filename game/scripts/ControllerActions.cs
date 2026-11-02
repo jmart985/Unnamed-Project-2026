@@ -86,6 +86,13 @@ public static class ControllerActions
     public const string BuildSlot9 = Simulation.ControllerActions.BuildSlot9;
     public const string Quickslot10 = Simulation.ControllerActions.Quickslot10;
     public const string BuildSlot10 = Simulation.ControllerActions.BuildSlot10;
+    public const string MenuConfirm = Simulation.ControllerActions.MenuConfirm;
+    public const string MenuPreviousTab = Simulation.ControllerActions.MenuPreviousTab;
+    public const string MenuNextTab = Simulation.ControllerActions.MenuNextTab;
+    public const string MenuPreviousCategory = Simulation.ControllerActions.MenuPreviousCategory;
+    public const string MenuNextCategory = Simulation.ControllerActions.MenuNextCategory;
+    public const string MenuActions = Simulation.ControllerActions.MenuActions;
+    public const string MenuVisibility = Simulation.ControllerActions.MenuVisibility;
     public static IReadOnlyList<string> All => Simulation.ControllerActions.All;
     public const string CloseMenu = Simulation.ControllerActions.CloseMenu;
     public const string DebugRoute = Simulation.ControllerActions.DebugRoute;

@@ -169,7 +169,8 @@ public partial class Main
 
     private void BeginBuildMode()
     {
-        if (!_sessionActive || _clock.IsPaused) return;
+        if (!_sessionActive || _controlPause.ManuallyPaused) return;
+        _suspendedBuildSlot = 0;
         ClosePlayerMenus();
         _placingHut = false;
         _placingFireplace = false;
@@ -285,47 +286,27 @@ public partial class Main
     private void UpdateBuildHotbar()
     {
         if (_placementHotbar is null || _buttonBindings is null) return;
-        var place = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.AttackLeft).Desktop);
-        var toggle = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.BuildMode).Desktop);
-        var padPlace = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.AttackLeft).Controller);
-        var padToggle = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.BuildMode).Controller);
+        var place = UnifiedLabel(ControllerActions.BuildPlace, false);
+        var toggle = UnifiedLabel(ControllerActions.BuildMode, false);
+        var padPlace = UnifiedLabel(ControllerActions.BuildPlace, true);
+        var padToggle = UnifiedLabel(ControllerActions.BuildMode, true);
         for (var index = 0; index < _buildHotbarSlots.Count; index++)
         {
             var slot = index + 1;
             var title = slot switch { 1 => "Starter hut", 2 => "Fireplace", 3 => "Workbench", 4 => "Farm", _ => "Empty" };
             var label = _buildHotbarSlots[index].Label;
-            label.Text = $"{HotbarKey(slot)}\n{title}";
+            label.Text = $"{UnifiedLabel("build_slot_" + slot, false)}\n{title}";
             label.AddThemeColorOverride("font_color", slot == _selectedBuildSlot
                 ? new Color(0.72f, 1, 0.72f) : new Color(0.9f, 0.93f, 0.98f));
             _buildHotbarSlots[index].Cell.Modulate = slot == _selectedBuildSlot
                 ? new Color(0.9f, 1, 0.82f) : Colors.White;
         }
-        _placementHotbar.Text = $"1–9, 0 select a slot · {place} place · Esc exit · {toggle} toggle build mode\n" +
-            $"Pad: {padToggle} toggle · D-pad left/right cycles 4 items · {padPlace} place · Pad B exit";
+        _placementHotbar.Text = $"1–9, 0 select · {place} place · {UnifiedLabel(ControllerActions.BuildCancel, false)} cancel preview / exit · {toggle} toggle\n" +
+            $"Pad: {padToggle} toggle · {UnifiedLabel(ControllerActions.BuildWheel, true)} options · {padPlace} place · " +
+            $"{UnifiedLabel(ControllerActions.BuildCancel, true)} cancel preview / exit";
     }
 
     private static string HotbarKey(int slot) => slot == 10 ? "0" : slot.ToString(System.Globalization.CultureInfo.InvariantCulture);
-
-    private bool TryGetBuildHotbarSlot(InputEvent input, out int slot)
-    {
-        if (input is InputEventKey key)
-        {
-            var keycode = key.PhysicalKeycode != Key.None ? key.PhysicalKeycode : key.Keycode;
-            slot = keycode switch
-            {
-                Key.Key1 => 1, Key.Key2 => 2, Key.Key3 => 3, Key.Key4 => 4, Key.Key5 => 5,
-                Key.Key6 => 6, Key.Key7 => 7, Key.Key8 => 8, Key.Key9 => 9, Key.Key0 => 10, _ => 0
-            };
-        }
-        else
-        {
-            slot = input is InputEventJoypadButton { ButtonIndex: JoyButton.DpadLeft }
-                ? (_selectedBuildSlot <= 1 ? 4 : _selectedBuildSlot - 1)
-                : input is InputEventJoypadButton { ButtonIndex: JoyButton.DpadRight }
-                    ? (_selectedBuildSlot is < 1 or >= 4 ? 1 : _selectedBuildSlot + 1) : 0;
-        }
-        return slot != 0;
-    }
 
     private void CancelHutPlacement()
     {
@@ -427,6 +408,7 @@ public partial class Main
 
     private bool RefreshSelectedPlacementPreview()
     {
+        if (!_placingHut && !_placingFireplace && !_placingWorkbench && !_placingFarm) return false;
         SyncPlayerPosition();
         if (_placingHut) UpdateHutPreview();
         else if (_placingFireplace) UpdateFireplacePreview();
