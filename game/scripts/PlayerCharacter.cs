@@ -13,7 +13,10 @@ public partial class PlayerCharacter : CharacterBody3D
 	public UnifiedInputRouter? Controls { get; set; }
 	private bool _controlJumpRequested;
 	public void RequestControlJump() => _controlJumpRequested = true;
-	public void PerformEquipmentAction(bool primary) => StartAttackSwing(!primary, primary ? RightShieldEquipped : LeftShieldEquipped);
+	public void PerformEquipmentAction(bool primary)
+	{
+		if (GameplayInputEnabled) StartAttackSwing(!primary, primary ? RightShieldEquipped : LeftShieldEquipped);
+	}
 	public void ApplyControlLook(Vector2 motion, ControlPreferences preferences)
 	{
 		if (!GameplayInputEnabled || !MouseLookEnabled) return;

@@ -342,6 +342,7 @@ public partial class Main
             var plantStack = new ResourceContainer("feed fixture", 3); plantStack.TryAdd(ItemIds.Plant, 3);
             Require(ResourceTransferService.TryPickUp(plantStack, player, ItemIds.Plant, 3) == ResourceMutationResult.Success, "feed stack fixture pickup");
             var cowSatiety = cow.Satiety;
+            camera.LookAt(WorldTargets().Single(view => view.Target == new WorldTarget(TargetKind.Entity, cow.Id)).Center);
             SendControlAction(ControllerActions.DefaultInteraction);
             Require(_actionHud.Text.StartsWith("Fed plant", StringComparison.Ordinal) && _targetResponse.Visible
                 && player.Inventory[ItemIds.Plant] == 2

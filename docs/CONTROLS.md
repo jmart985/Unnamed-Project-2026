@@ -50,7 +50,7 @@ Use unscaled monotonic time. Repeated key events do not restart the threshold. C
 
 ## Wheels and interaction
 
-Quickslot wheels select only. Using the selected item is a separate command. A hold interaction opens a latched contextual menu at 0.30 seconds and suppresses tap; the opener can be released before selecting. Command/quickslot wheels normally commit on opener release outside the center. Their context is latched at opening. Toggle-open accessibility uses explicit confirm/cancel.
+Quickslot wheels select only. Using the selected item is a separate command. A hold interaction opens a latched contextual menu at 0.30 seconds and suppresses tap; the opener can be released before selecting. Command/quickslot wheels normally commit on opener release outside the center. Their context is latched at opening. Toggle-open accessibility accepts the active opener again or explicit confirm/cancel; unrelated wheel openers remain inactive.
 
 Movement continues; mouse/right stick selects instead of turning the camera. Commands identify their recipients and use existing authority/capability/navigation services. Target interactions offer currently supported collect, greet, feed/pet, work and Follow/Stay actions. Medical, carry and additional social actions require their own gameplay implementations. Destructive actions require explicit selection/confirmation.
 
@@ -70,6 +70,8 @@ Movement/look remain available. A fresh confirm places one instance. Rotation an
 ## Menus and preferences
 
 Full inventory/settings/management menus pause single-player time; future map menus must use the same ownership. Live wheels/building do not. Removing a UI pause owner cannot resume a manual pause or another UI owner's pause. Keep selected simulation speed.
+
+The NPC Test Lab owns player input while leaving simulation time running so its navigation tests can complete. An existing manual pause remains effective. Text fields retain native key repeat. Sleeping players can open self/social choices to wake, but cannot execute ordinary world actions or attacks. Unlocked reticle targets refresh on each interaction; explicit locks retain the existing target-lock grace rules.
 
 Menu defaults: Enter/A confirm, Escape/B back, Tab/Shift+Tab keyboard focus, Q/E or LB/RB tabs, right-click/X actions on a focused equipment slot; LT/RT cycle the item/control category where available. Equipment eye visibility is separate from equip/ownership; Y toggles a focused equipment slot.
 

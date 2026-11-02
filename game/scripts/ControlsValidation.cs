@@ -102,6 +102,7 @@ public partial class Main
             Require(gesture.Advance(0.3) == HoldTapSignal.HoldStarted && gesture.IsActive, "hold enters crouch");
             Require(gesture.Release(0.4) == HoldTapSignal.HoldEnded && !gesture.IsActive, "release never dodges");
             await ValidateProductionControlRouting();
+            await ValidateReviewedControlRegressions();
             GD.Print("CONTROLS VALIDATION PASSED");
             GetTree().Quit();
         }

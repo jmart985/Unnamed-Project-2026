@@ -16,6 +16,7 @@ public sealed class UnifiedInputRouter
     private readonly HashSet<string> _virtualBlocked = new(StringComparer.Ordinal);
     private string? _wheelToken;
     private string? _wheelAction;
+    private string? _activeWheelOpener;
     private double _time;
     public int ActiveDevice { get; private set; } = -1;
     public bool ControllerLast { get; private set; }
@@ -28,8 +29,9 @@ public sealed class UnifiedInputRouter
 
     public UnifiedInputRouter(UnifiedControlSettings settings) => _settings = settings;
 
-    public void SetContext(ControlContext context)
+    public void SetContext(ControlContext context, string? wheelOpener = null)
     {
+        _activeWheelOpener = context == ControlContext.Wheel ? wheelOpener : null;
         if (context == Context) return;
         var modalTransition = context is ControlContext.Modal or ControlContext.TextEntry or ControlContext.Rebinding
             || Context is ControlContext.Modal or ControlContext.TextEntry or ControlContext.Rebinding;
@@ -49,6 +51,7 @@ public sealed class UnifiedInputRouter
         _pending.Clear();
         _axisDown.Clear();
         _wheelToken = _wheelAction = null;
+        _activeWheelOpener = null;
         foreach (var action in ControllerActions.All) Input.ActionRelease(action);
     }
 
@@ -83,7 +86,8 @@ public sealed class UnifiedInputRouter
             return false;
         }
         if (!TryPhysical(input, out var token, out var value)) return false;
-        if (input is InputEventKey { Echo: true }) return true;
+        if (input is InputEventKey { Echo: true })
+            return Context is not (ControlContext.TextEntry or ControlContext.Modal);
         var previous = _physical.GetValueOrDefault(token);
         _physical[token] = value;
         if (input is InputEventJoypadButton or InputEventJoypadMotion)
@@ -115,8 +119,10 @@ public sealed class UnifiedInputRouter
         }
         if (_blocked.Contains(token)) return true;
         if (Math.Abs(previous) > 0.15f && input is not InputEventJoypadMotion) return true;
-        var candidates = ControlCatalog.All.Where(d => ControlInputPolicy.Accepts(Context, d.Contexts))
-            .SelectMany(d => _settings.Get(d.Id).Where(b => ControlInputPolicy.Accepts(Context, b.Contexts ?? d.Contexts) && PhysicalMatches(b, input, value)
+        bool ActiveOpener(ControlActionDefinition definition) => Context == ControlContext.Wheel
+            && _settings.Preferences.ToggleWheels && definition.Id == _activeWheelOpener;
+        var candidates = ControlCatalog.All.Where(d => ControlInputPolicy.Accepts(Context, d.Contexts) || ActiveOpener(d))
+            .SelectMany(d => _settings.Get(d.Id).Where(b => (ControlInputPolicy.Accepts(Context, b.Contexts ?? d.Contexts) || ActiveOpener(d)) && PhysicalMatches(b, input, value)
                 && ModifierMatches(b, input.Device, input)).Select(b => (Definition: d, Binding: b))).ToArray();
         if (candidates.Any(c => c.Binding.Modifier is not null))
             candidates = candidates.Where(c => c.Binding.Modifier is not null || IsMovement(c.Definition.Id)).ToArray();

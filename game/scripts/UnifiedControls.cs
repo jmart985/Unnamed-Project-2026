@@ -85,19 +85,21 @@ public partial class Main
     private void SynchronizeUnifiedContext()
     {
         if (_inputRouter is null || !_sessionActive) return;
-        var modal = _menuState.ActiveMenu is not null || WorkstationPanelOpen || FarmPanelOpen || ConstructionPanelOpen
-            || _npcAnimationTestPanel?.IsOpen == true || _buildCatalogPanel?.Visible == true || _quickLoadDialog?.Visible == true
+        var pausingModal = _menuState.ActiveMenu is not null || WorkstationPanelOpen || FarmPanelOpen || ConstructionPanelOpen
+            || _buildCatalogPanel?.Visible == true || _quickLoadDialog?.Visible == true
             || _equipmentActionMenu?.Visible == true;
+        var modal = pausingModal || _npcAnimationTestPanel?.IsOpen == true;
         if (!_controlUiPause && _clock.IsPaused != _controlPause.IsPaused) _controlPause.SetManual(_clock.IsPaused);
-        _controlPause.SetOwner("menus", modal);
-        if (modal && !_controlUiPause)
+        _controlPause.SetOwner("menus", pausingModal);
+        if (pausingModal && !_controlUiPause)
         { _physicsBeforeControlMenu = _playerCharacter.IsPhysicsProcessing(); _playerCharacter.SetPhysicsProcess(false); }
-        else if (!modal && _controlUiPause)
+        else if (!pausingModal && _controlUiPause)
             _playerCharacter.SetPhysicsProcess(_physicsBeforeControlMenu && !_controlPause.ManuallyPaused);
-        if (modal || _controlUiPause) _clock.SetPaused(_controlPause.IsPaused);
-        _controlUiPause = modal;
+        if (pausingModal || _controlUiPause) _clock.SetPaused(_controlPause.IsPaused);
+        _controlUiPause = pausingModal;
         var text = GetViewport().GuiGetFocusOwner() is LineEdit or TextEdit;
-        _inputRouter.SetContext(ControlInputPolicy.Resolve(_captureBinding is not null, modal && text, modal, UnifiedWheelOpen, PlacementPanelOpen));
+        _inputRouter.SetContext(ControlInputPolicy.Resolve(_captureBinding is not null, modal && text, modal, UnifiedWheelOpen, PlacementPanelOpen),
+            UnifiedWheelOpen ? _controlWheel.Opener : null);
         var awake = _world.PlayerEntityId is { } id && _world.TryGetEntity(id, out var player) && player is not null
             && player.SleepState != SleepState.Sleeping;
         var enabled = !modal && !_clock.IsPaused && awake;
@@ -199,6 +201,13 @@ public partial class Main
         if (_inputRouter.Context == ControlContext.Modal) { HandleUnifiedMenuAction(action); return; }
         if (action == ControllerActions.Pause) { TogglePause(); return; }
         if (_clock.IsPaused) return;
+        if (_world.PlayerEntityId is { } sleepingId && _world.TryGetEntity(sleepingId, out var sleepingPlayer)
+            && sleepingPlayer?.SleepState == SleepState.Sleeping)
+        {
+            if (action == ControllerActions.SocialWheel) OpenSocialWheel();
+            else ShowActionFeedback("You are sleeping. Open self/social actions to wake up.");
+            return;
+        }
         if (_choosingSquadDestination && action is ControllerActions.PrimaryAction or ControllerActions.SecondaryAction)
         {
             if (action == ControllerActions.PrimaryAction && TryGetLookedAtGroundPoint(out var point))
@@ -259,7 +268,7 @@ public partial class Main
 
     private void FocusReticleTarget()
     {
-        if (_selectedTarget is not null && TargetExists(_selectedTarget)) return;
+        if (_targetLocked && _selectedTarget is not null && TargetExists(_selectedTarget)) return;
         var camera = GetViewport().GetCamera3D();
         if (camera is null) return;
         var center = GetViewport().GetVisibleRect().GetCenter();
@@ -325,6 +334,12 @@ public partial class Main
 
     private void OpenSocialWheel()
     {
+        if (_world.PlayerEntityId is { } id && _world.TryGetEntity(id, out var player)
+            && player?.SleepState == SleepState.Sleeping)
+        {
+            OpenUnifiedWheel("SLEEPING", ControllerActions.SocialWheel, [new("Wake up", PerformRestAction)]);
+            return;
+        }
         OpenUnifiedWheel("SELF / SOCIAL", ControllerActions.SocialWheel,
         [
             new("Greet selected", _selectedTarget is { Kind: TargetKind.Entity } ? PerformGreeting : null),
