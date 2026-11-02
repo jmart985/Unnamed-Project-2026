@@ -33,9 +33,8 @@ public partial class Main
             }
             Require(_scenery!.GetNodeOrNull<Node3D>("Building_0Collision") is null,
                 "obsolete scenery blocks have been removed in favor of usable houses");
-            Require(!ControllerActions.All.Any(action => new[] { Key.Key1, Key.Key2, Key.Key0 }.Any(key =>
-                    InputMap.ActionHasEvent(action, new InputEventKey { PhysicalKeycode = key }))),
-                "number-row build slots are not globally bound to actions outside Build mode");
+            SendMenuKey(Key.Key1);
+            Require(!PlacementPanelOpen && _selectedBuildSlot == 0, "number-row slots cannot start building outside Build context");
             var wood = _world.ResourcePiles.Single().Contents;
             Require(ResourceTransferService.TryPickUp(wood, player, ItemIds.Wood, SettlementConstruction.HutWood)
                 == ResourceMutationResult.Success, "construction wood transferred atomically");
@@ -45,25 +44,28 @@ public partial class Main
             Require(PlacementPanelOpen && !_hutPreview.Visible && _playerCharacter.GameplayInputEnabled
                 && _placementPanel.MouseFilter == Control.MouseFilterEnum.Ignore && _buildHotbarSlots.Count == 10,
                 "Settlement opens a ten-slot non-modal hotbar while player input remains enabled");
-            _Input(new InputEventKey { PhysicalKeycode = Key.Key2, Keycode = Key.Key2, Pressed = true });
+            SendMenuKey(Key.Key2);
             Require(_fireplacePreview.Visible && !_hutPreview.Visible, "hotbar slot 2 selects the existing fireplace option");
-            _Input(new InputEventJoypadButton { ButtonIndex = JoyButton.DpadRight, Pressed = true });
+            GetViewport().PushInput(new InputEventJoypadButton { ButtonIndex = JoyButton.DpadRight, Pressed = true });
+            GetViewport().PushInput(new InputEventJoypadButton { ButtonIndex = JoyButton.DpadRight, Pressed = false });
             Require(_workbenchPreview.Visible, "controller D-pad right cycles to the additional workbench option");
-            _Input(new InputEventJoypadButton { ButtonIndex = JoyButton.DpadLeft, Pressed = true });
+            GetViewport().PushInput(new InputEventJoypadButton { ButtonIndex = JoyButton.DpadLeft, Pressed = true });
+            GetViewport().PushInput(new InputEventJoypadButton { ButtonIndex = JoyButton.DpadLeft, Pressed = false });
             Require(_fireplacePreview.Visible, "controller D-pad left cycles back to the fireplace option");
-            _Input(new InputEventKey { PhysicalKeycode = Key.Key0, Keycode = Key.Key0, Pressed = true });
+            SendMenuKey(Key.Key0);
             Require(!_fireplacePreview.Visible && !_hutPreview.Visible && _placementMessage.Text.Contains("slot 0 is empty", StringComparison.OrdinalIgnoreCase),
                 "hotbar slot 0 is empty and cannot show a build preview");
             var woodBeforeCancel = player.Inventory.GetValueOrDefault(ItemIds.Wood);
-            _Input(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true });
+            SendMenuMouse(MouseButton.Left);
             Require(_world.Fireplaces.Count == 0 && _world.ConstructionSites.Count == 0,
                 "left click on an empty hotbar slot creates no object");
-            _Input(new InputEventKey { PhysicalKeycode = Key.Escape, Keycode = Key.Escape, Pressed = true });
+            SendMenuKey(Key.Escape);
+            if (PlacementPanelOpen) SendMenuKey(Key.Escape);
             Require(!PlacementPanelOpen && player.Inventory.GetValueOrDefault(ItemIds.Wood) == woodBeforeCancel,
                 "Escape cancels build mode without consuming materials");
 
-            _Input(new InputEventKey { PhysicalKeycode = Key.B, Keycode = Key.B, Pressed = true });
-            _Input(new InputEventKey { PhysicalKeycode = Key.Key1, Keycode = Key.Key1, Pressed = true });
+            SendMenuKey(Key.B);
+            SendMenuKey(Key.Key1);
             Require(PlacementPanelOpen && _hutPreview.Visible && _placementValid,
                 "B opens Build mode and hotbar key 1 selects a valid starter hut preview");
             Require(_targetReticle.Visible, "build mode keeps the centered reticle visible");
@@ -92,7 +94,7 @@ public partial class Main
             Require(_hutPreview.GlobalPosition.DistanceTo(initialPreviewPosition) > 0.1f,
                 $"selected preview follows player movement ({initialPreviewPosition} -> {_hutPreview.GlobalPosition})");
             var beforeLook = _hutPreview.GlobalPosition;
-            _playerCharacter._UnhandledInput(new InputEventMouseMotion { Relative = new Vector2(35, 0) });
+            _Input(new InputEventMouseMotion { Relative = new Vector2(35, 0) });
             UpdateHutPreview();
             Require(_hutPreview.GlobalPosition.DistanceTo(beforeLook) > 0.1f,
                 "center camera ray moves the preview when the player looks around");
@@ -104,7 +106,7 @@ public partial class Main
             playerCamera.Rotation = new Vector3(_playerCharacter.CameraPitchOffset, 0, 0);
             SyncPlayerPosition(); UpdateHutPreview();
             Require(_placementValid, "camera-center ground ray returns to a valid starter hut footprint");
-            _Input(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true });
+            SendMenuMouse(MouseButton.Left);
             var site = _world.ConstructionSites.Single();
             Require(!PlacementPanelOpen && _constructionViews.ContainsKey(new(TargetKind.ConstructionSite, site.Id)),
                 "left click creates one authoritative targetable construction site");
@@ -162,15 +164,16 @@ public partial class Main
             playerCamera.Current = true;
             AimPlayerCameraAt(_playerCharacter.GlobalPosition);
             BeginBuildMode();
-            _Input(new InputEventKey { PhysicalKeycode = Key.Key3, Keycode = Key.Key3, Pressed = true });
+            SendMenuKey(Key.Key3);
             UpdateWorkbenchPreview();
             Require(_placementGroundHit && _placementValid, "workbench preview is valid before checking a missed ground ray");
             var workbenchCountBeforeMissedRay = _world.Workstations.Count;
             playerCamera.Rotation = new Vector3(0.4f, 0, 0);
-            _Input(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true });
+            SendMenuMouse(MouseButton.Left);
             Require(_world.Workstations.Count == workbenchCountBeforeMissedRay && PlacementPanelOpen && !_placementGroundHit,
                 "a missed ground ray cannot place a fixture even when the previous preview was valid");
-            _Input(new InputEventKey { PhysicalKeycode = Key.Escape, Keycode = Key.Escape, Pressed = true });
+            SendMenuKey(Key.Escape);
+            if (PlacementPanelOpen) SendMenuKey(Key.Escape);
 
             foreach (var view in _entityViews.Values) view.Visible = false;
             var camera = GetNode<Camera3D>("Camera3D"); camera.Current = true;
@@ -191,22 +194,23 @@ public partial class Main
             playerCamera.Current = true;
             AimPlayerCameraAt(new Vector3(10, 0, 10));
             BeginBuildMode();
-            _Input(new InputEventKey { PhysicalKeycode = Key.Key3, Keycode = Key.Key3, Pressed = true });
+            SendMenuKey(Key.Key3);
             var overlappingWorkbenchPosition = new Vector3(10, 0, 10);
             Require(!CanPlaceWorkbench(overlappingWorkbenchPosition, out var overlapReason)
                 && overlapReason.Contains("workbench clearance", StringComparison.OrdinalIgnoreCase),
                 "workbench validation rejects overlap with the original fixture");
-            _Input(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true });
+            SendMenuMouse(MouseButton.Left);
             Require(_world.Workstations.Count == 1, "invalid workbench placement does not mutate the World");
-            _Input(new InputEventKey { PhysicalKeycode = Key.Escape, Keycode = Key.Escape, Pressed = true });
+            SendMenuKey(Key.Escape);
+            if (PlacementPanelOpen) SendMenuKey(Key.Escape);
             _playerCharacter.GlobalPosition = new Vector3(42, 0, 42); SyncPlayerPosition();
             AimPlayerCameraAt(_playerCharacter.GlobalPosition);
             var starterWorkbenchPosition = _world.Workstations.Single(item => item.Id == "workbench-1").Position;
             BeginBuildMode();
-            _Input(new InputEventKey { PhysicalKeycode = Key.Key3, Keycode = Key.Key3, Pressed = true });
+            SendMenuKey(Key.Key3);
             Require(_workbenchPreview.Visible && _buildHotbarSlots[2].Label.Text.Contains("Workbench", StringComparison.Ordinal),
                 "hotbar slot 3 previews an additional workbench while the original fixture remains in place");
-            _Input(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true });
+            SendMenuMouse(MouseButton.Left);
             var addedWorkbench = _world.Workstations.Single(item => item.Id == "workbench-2");
             Require(addedWorkbench.Position == new System.Numerics.Vector3(42, 0, 42)
                 && _world.Workstations.Single(item => item.Id == "workbench-1").Position == starterWorkbenchPosition
@@ -224,9 +228,9 @@ public partial class Main
                 "the added workbench has an independent target-selection view");
 
             BeginBuildMode();
-            _Input(new InputEventKey { PhysicalKeycode = Key.Key3, Keycode = Key.Key3, Pressed = true });
+            SendMenuKey(Key.Key3);
             AimPlayerCameraAt(new Vector3(48, 0, 42));
-            _Input(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true });
+            SendMenuMouse(MouseButton.Left);
             var secondAddedWorkbench = _world.Workstations.Single(item => item.Id == "workbench-3");
             Require(secondAddedWorkbench.Id != addedWorkbench.Id && _workbenchViews.Count == 3,
                 "slot 3 can place multiple workbenches with distinct identities");
@@ -247,11 +251,11 @@ public partial class Main
             CloseWorkstation();
 
             BeginBuildMode();
-            _Input(new InputEventKey { PhysicalKeycode = Key.Key4, Keycode = Key.Key4, Pressed = true });
+            SendMenuKey(Key.Key4);
             Require(_farmPreview.Visible && _buildHotbarSlots[3].Label.Text.Contains("Farm", StringComparison.Ordinal),
                 "hotbar slot 4 previews an additional farm");
             AimPlayerCameraAt(new Vector3(42, 0, 50));
-            _Input(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true });
+            SendMenuMouse(MouseButton.Left);
             var addedFarm = _world.Farms.Single(item => item.Id == "farm-2");
             Require(addedFarm.Plots.Count == 1 && _farmViews.ContainsKey(addedFarm.Id) && _world.Farms.Single(item => item.Id == "farm-1").Position == new System.Numerics.Vector3(5, 0, 5),
                 "placing slot 4 adds a targetable farm with one empty plot and retains the starter farm");
@@ -266,9 +270,9 @@ public partial class Main
 
             _playerCharacter.GlobalPosition = new Vector3(50, 0, 50); SyncPlayerPosition();
             BeginBuildMode();
-            _Input(new InputEventKey { PhysicalKeycode = Key.Key4, Keycode = Key.Key4, Pressed = true });
+            SendMenuKey(Key.Key4);
             AimPlayerCameraAt(new Vector3(50, 0, 50));
-            _Input(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true });
+            SendMenuMouse(MouseButton.Left);
             var secondAddedFarm = _world.Farms.Single(item => item.Id == "farm-3");
             Require(secondAddedFarm.Id != addedFarm.Id && _farmViews.Count == 3
                 && !secondAddedFarm.Plots[0].IsPlanted,

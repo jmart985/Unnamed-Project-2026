@@ -193,6 +193,8 @@ public partial class Main : Node3D
 			Callable.From(RunScheduleValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-schedule-integration"))
 			Callable.From(RunScheduleValidation).CallDeferred();
+		else if (OS.GetCmdlineUserArgs().Contains("--validate-controls"))
+			Callable.From(RunControlsValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-menus"))
 			Callable.From(RunMenuValidation).CallDeferred();
 		else if (OS.GetCmdlineUserArgs().Contains("--validate-selection"))
@@ -264,6 +266,7 @@ public partial class Main : Node3D
 			return;
 		}
 
+		AdvanceUnifiedControls(delta);
 		_clock.Advance(delta, AdvanceSimulationTick);
 		AdvanceCollectUse(delta);
 		UpdateGameplayFeedback(delta);
@@ -281,105 +284,14 @@ public partial class Main : Node3D
 		UpdateConstructionPanel();
 	}
 
-	public override void _UnhandledInput(InputEvent @event)
-	{
-		if (!_sessionActive || _menuState.ActiveMenu is not null || WorkstationPanelOpen || FarmPanelOpen || ConstructionPanelOpen || PlacementPanelOpen || _clock.IsPaused)
-		{
-			return;
-		}
-		if (_world.PlayerEntityId is { } sleepingPlayerId && _world.TryGetEntity(sleepingPlayerId, out var sleepingPlayer)
-			&& sleepingPlayer is not null && sleepingPlayer.SleepState == SleepState.Sleeping)
-		{
-			if (@event.IsActionPressed(ControllerActions.Rest)) PerformRestAction();
-			GetViewport().SetInputAsHandled();
-			return;
-		}
 
-		if (@event.IsActionReleased(ControllerActions.Collect))
-		{
-			CompleteCollectUse();
-			GetViewport().SetInputAsHandled();
-			return;
-		}
-
-		if (@event is InputEventKey key && (!key.Pressed || key.Echo))
-		{
-			return;
-		}
-
-		if (@event.IsActionPressed(ControllerActions.CycleTarget))
-		{
-			CycleWorldTarget();
-			GetViewport().SetInputAsHandled();
-			return;
-		}
-
-		if (@event.IsActionPressed(ControllerActions.Collect))
-		{
-			BeginCollectUse();
-			GetViewport().SetInputAsHandled();
-			return;
-		}
-
-		if (@event.IsActionPressed(ControllerActions.AttackLeft) || @event.IsActionPressed(ControllerActions.AttackRight))
-		{
-			// PlayerCharacter captures the target only when a swing actually begins.
-			return;
-		}
-
-		if (@event.IsActionPressed(ControllerActions.Interact))
-		{
-			PerformFriendlyInteraction();
-			return;
-		}
-
-		if (@event.IsActionPressed(ControllerActions.Greet))
-		{
-			PerformGreeting();
-			return;
-		}
-
-		if (@event.IsActionPressed(ControllerActions.Rest))
-		{
-			PerformRestAction();
-			GetViewport().SetInputAsHandled();
-			return;
-		}
-
-		if (_selectedEntityId is not { } entityId
-			|| !_entityViews.TryGetValue(entityId, out var view))
-		{
-			return;
-		}
-
-		if (@event.IsActionPressed(ControllerActions.DebugRoute))
-		{
-			view.RequestNavigation(new System.Numerics.Vector3(8, 0, 0));
-		}
-		else if (@event.IsActionPressed(ControllerActions.DebugUnreachable))
-		{
-			view.RequestNavigation(new System.Numerics.Vector3(25, 0, 0));
-		}
-		else if (@event.IsActionPressed(ControllerActions.DebugCancel))
-		{
-			view.CancelNavigation();
-		}
-		else if (@event.IsActionPressed(ControllerActions.DebugRemoveGoal))
-		{
-			view.RemoveNavigationTarget();
-		}
-		else
-		{
-			return;
-		}
-
-		UpdateStatus();
-	}
 
 	private void ToggleMenu(PlayerMenu menu)
 	{
+		if (PlacementPanelOpen) _suspendedBuildSlot = _selectedBuildSlot;
 		_menuState.Toggle(menu);
 		ApplyMenuState();
+		if (_menuState.ActiveMenu is null) RestoreSuspendedBuild();
 		UpdateFarmPresentation();
 		SyncConstructionPresentation();
 		UpdateStatus();
@@ -388,7 +300,9 @@ public partial class Main : Node3D
 	private void TogglePause()
 	{
 		CancelGameplayActions();
-		_clock.SetPaused(!_clock.IsPaused);
+		SynchronizeUnifiedContext();
+		_controlPause.SetManual(!_controlPause.ManuallyPaused);
+		_clock.SetPaused(_controlPause.IsPaused);
 		_playerCharacter.SetPhysicsProcess(!_clock.IsPaused);
 		_playerCharacter.SetGameplayInputEnabled(!_clock.IsPaused && _menuState.ActiveMenu is null);
 		UpdateStatus();
@@ -464,6 +378,10 @@ public partial class Main : Node3D
 		_playerCharacter.SetPhysicsProcess(false);
 		ResetTransientServices();
 		_clock.Reset();
+		_controlPause.Reset();
+		_controlUiPause = false;
+		_suspendedBuildSlot = 0;
+		CancelUnifiedInput();
 		_simulationTick = 0;
 		ClearEntityViews();
 		ClearResourceMarkers();
@@ -1135,7 +1053,7 @@ public partial class Main : Node3D
 			$"Menu: {_menuState.ActiveMenu?.ToString() ?? "closed"} | Change button mapping in Save / Settings.\n" +
 			$"Last action: {_lastActionMessage}\n" +
 			$"Squad: {string.Join(", ", _world.SquadMemberIds)} | {_squad?.Order}\n" +
-			"Select an entity; F5 route, F6 unreachable, F7 cancel, F8 remove goal";
+			"Select an entity to inspect its state; use the command wheel for squad orders.";
 		_pauseButton.Text = _clock.IsPaused ? "Resume" : "Pause";
 		UpdatePlayerMenuContents();
 		UpdateWorldSelection();
@@ -1238,6 +1156,7 @@ public partial class Main : Node3D
 	{
 		SyncPlayerState();
 		CancelGameplayActions();
+		_controlPause.SetManual(true);
 		_clock.SetPaused(true);
 		_playerCharacter.SetPhysicsProcess(false);
 		try
@@ -1258,6 +1177,7 @@ public partial class Main : Node3D
 	private void LoadScenario()
 	{
 		CancelGameplayActions();
+		_controlPause.SetManual(true);
 		_clock.SetPaused(true);
 		_playerCharacter.SetPhysicsProcess(false);
 		try

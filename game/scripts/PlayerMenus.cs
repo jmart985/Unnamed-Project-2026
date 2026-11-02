@@ -43,8 +43,7 @@ public partial class Main
 		_buttonBindings = new(ProjectSettings.GlobalizePath("user://player-settings.json"));
 		_eyeOpenIcon = GD.Load<Texture2D>("res://assets/ui/eye_open.svg");
 		_eyeClosedIcon = GD.Load<Texture2D>("res://assets/ui/eye_closed.svg");
-		if (!OS.GetCmdlineUserArgs().Any(arg => arg.StartsWith("--validate-", StringComparison.Ordinal)))
-			_buttonBindings.Load();
+		InitializeUnifiedInput();
 		_menuHud = new CanvasLayer { Name = "PlayerMenus", Layer = 2 };
 		AddChild(_menuHud);
 		var navigation = new HBoxContainer { Position = new Vector2(20, 12) };
@@ -126,40 +125,10 @@ public partial class Main
 		AddMenuButton(saves, "Reset current scenario", ResetScenario);
 		saves.AddChild(MenuLabel("Save and load use the existing local save slot. Reset starts this character's scenario again; it preserves the save slot."));
 		var mapping = AddScrollTab(_settingsTabs, "Controls");
-		_bindingStatus = MenuLabel(_buttonBindings.Status);
-		mapping.AddChild(_bindingStatus);
-		mapping.AddChild(MenuLabel("Mouse or right stick looks. Escape clears the target lock, then closes menus or cancels mapping. Pad B closes menus. Left stick moves."));
-		var mappingHeader = new HBoxContainer();
-		mappingHeader.AddChild(new Label { Text = "Action", CustomMinimumSize = new Vector2(160, 0) });
-		foreach (var columnTitle in new[] { "Keyboard / Mouse", "Controller" })
-			mappingHeader.AddChild(new Label { Text = columnTitle, HorizontalAlignment = HorizontalAlignment.Center, CustomMinimumSize = new Vector2(155, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
-		mapping.AddChild(mappingHeader);
-		foreach (var (action, label) in PlayerButtonBindings.Actions)
-		{
-			var row = new HBoxContainer();
-			mapping.AddChild(row);
-			row.AddChild(new Label { Text = label, CustomMinimumSize = new Vector2(160, 0) });
-			foreach (var controller in new[] { false, true })
-			{
-				var button = new Button { CustomMinimumSize = new Vector2(155, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-				button.Pressed += () =>
-				{
-					_captureBinding = (action, controller);
-					_bindingStatus.Text = $"Mapping {label}: press {(controller ? "a controller button" : "a key or mouse button")}. Escape cancels.";
-				};
-				_mappingButtons.Add((action, controller), button);
-				row.AddChild(button);
-			}
-		}
-		AddMenuButton(mapping, "Restore default button mapping", () =>
-		{
-			_captureBinding = null;
-			_buttonBindings.RestoreDefaults(out var reason);
-			_bindingStatus.Text = reason;
-			RefreshMappingButtons();
-		});
+		ConfigureUnifiedControlsUi(mapping);
 		AddPlannedSettingsTab("Audio", "Volume and audio options are planned; this build has no audio settings.");
 		AddPlannedSettingsTab("Display", "Display quality and accessibility options are planned; this build uses project defaults.");
+		ConfigureUnifiedOverlays();
 		RefreshMappingButtons();
 
 		// Keep the established settlement controls and signals, with fewer controls visible per tab.
@@ -362,6 +331,7 @@ public partial class Main
 		_captureBinding = null;
 		_menuState.Close();
 		ApplyMenuState();
+		RestoreSuspendedBuild();
 	}
 
 	private void ApplyMenuState()
@@ -379,118 +349,31 @@ public partial class Main
 		_playerCharacter.SetGameplayInputEnabled(_sessionActive && _menuState.ActiveMenu is null && !_clock.IsPaused);
 		foreach (var action in ControllerActions.All) Input.ActionRelease(action);
 		GetViewport().GuiReleaseFocus();
+		SynchronizeUnifiedContext();
 		UpdatePlayerMenuContents();
 		UpdateWorldSelection();
 	}
 
 	public override void _Input(InputEvent input)
 	{
-		if (!_sessionActive) return;
-		if (_npcAnimationTestPanel?.IsOpen == true)
-		{
-			if (input.IsActionPressed(ControllerActions.CloseMenu))
-			{
-				_npcAnimationTestPanel.Close();
-				GetViewport().SetInputAsHandled();
-				return;
-			}
-			if (input.IsActionPressed(ControllerActions.Inventory)
-				|| input.IsActionPressed(ControllerActions.Settlement)
-				|| input.IsActionPressed(ControllerActions.Settings))
-				_npcAnimationTestPanel.Close();
-		}
-		if (input is InputEventKey { Pressed: false } or InputEventKey { Echo: true }
-			or InputEventMouseButton { Pressed: false } or InputEventJoypadButton { Pressed: false }) return;
-		if (PlacementPanelOpen)
-		{
-			if (input.IsActionPressed(ControllerActions.BuildMode) || input.IsActionPressed(ControllerActions.CloseMenu))
-			{
-				CancelHutPlacement();
-				UpdateWorldSelection();
-			}
-			else if (TryGetBuildHotbarSlot(input, out var slot))
-				SelectBuildHotbarSlot(slot);
-			else if (input.IsActionPressed(ControllerActions.AttackLeft))
-			{
-                if (_placingHut || _placingFireplace || _placingWorkbench || _placingFarm) ConfirmPlacement();
-				else _placementMessage.Text = "Choose a build option before placing.";
-			}
-			else if (input.IsActionPressed(ControllerActions.AttackRight))
-			{
-				// Right attack is reserved in this input context so a placement click never
-				// leaks through to the combat handler.
-			}
-			else return;
-			GetViewport().SetInputAsHandled();
-			return;
-		}
-		if (input.IsActionPressed(ControllerActions.BuildMode)
-			&& (_menuState.ActiveMenu is null or PlayerMenu.Settlement))
-		{
-			BeginBuildMode();
-			GetViewport().SetInputAsHandled();
-			return;
-		}
-		if (WorkstationPanelOpen || FarmPanelOpen || ConstructionPanelOpen || PlacementPanelOpen)
-		{
-			if (input.IsActionPressed(ControllerActions.CloseMenu))
-			{
-				if (WorkstationPanelOpen) CloseWorkstation();
-				if (FarmPanelOpen) CloseFarm();
-				if (ConstructionPanelOpen) CloseConstruction();
-				if (PlacementPanelOpen) CancelHutPlacement();
-				GetViewport().SetInputAsHandled();
-			}
-			return;
-		}
-		if (_captureBinding is { } capture)
-		{
-			if (input is InputEventKey key && (key.PhysicalKeycode == Key.Escape || key.Keycode == Key.Escape))
-			{
-				_captureBinding = null;
-				_bindingStatus.Text = "Mapping cancelled.";
-			}
-			else if (input is InputEventKey or InputEventMouseButton or InputEventJoypadButton)
-			{
-				if (_buttonBindings.TryBind(capture.Action, capture.Controller, input, out var reason)) _captureBinding = null;
-				_bindingStatus.Text = reason;
-				RefreshMappingButtons();
-			}
-			GetViewport().SetInputAsHandled();
-			return;
-		}
-		if (input.IsActionPressed(ControllerActions.CloseMenu))
-		{
-			if (_menuState.ActiveMenu is null && (_selectedTarget is not null || _targetLocked))
-			{
-				ClearTargetLock();
-				GetViewport().SetInputAsHandled();
-				return;
-			}
-			if (_menuState.ActiveMenu is null) ToggleMenu(PlayerMenu.Settings);
-			else ClosePlayerMenus();
-		}
-		else if (input.IsActionPressed(ControllerActions.Inventory)) ToggleMenu(PlayerMenu.Inventory);
-		else if (input.IsActionPressed(ControllerActions.Settlement)) ToggleMenu(PlayerMenu.Settlement);
-		else if (input.IsActionPressed(ControllerActions.Settings)) ToggleMenu(PlayerMenu.Settings);
-		else return;
-		GetViewport().SetInputAsHandled();
+		if (HandleUnifiedInput(input)) GetViewport().SetInputAsHandled();
 	}
 
 	private void RefreshMappingButtons()
 	{
 		foreach (var (key, button) in _mappingButtons)
 		{
-			var binding = _buttonBindings.Get(key.Action);
-			button.Text = PlayerButtonBindings.Label(key.Controller ? binding.Controller : binding.Desktop);
+			button.Text = string.Join(" / ", _controlSettings.Get(key.Action)
+				.Where(b => key.Controller == (b.Device is "joypad" or "axis")).Select(UnifiedControlSettings.Label));
 		}
+		_controlDiagram?.QueueRedraw();
 		UpdatePlayerMenuContents();
 	}
 
 	private void UpdatePlayerMenuContents()
 	{
 		if (_menuHint is null) return;
-		string Binding(string action) => PlayerButtonBindings.Label(_buttonBindings.Get(action).Desktop);
+		string Binding(string action) => UnifiedLabel(action);
 		_menuHint.Text = $"{Binding(ControllerActions.Inventory)} Inventory  |  {Binding(ControllerActions.Settlement)} Settlement  |  {Binding(ControllerActions.BuildMode)} Build mode  |  {Binding(ControllerActions.Settings)} Save / Settings  |  {Binding(ControllerActions.CycleTarget)} Target lock  |  Esc close / menu";
 		_settingsStatus.Text = $"{(_clock.IsPaused ? "Paused" : "Running")} · {_clock.SimulationTime:0.0}s · {(int)_clock.Speed}x\n{_saveLoadStatus}";
 		if (_world.PlayerEntityId is not { } id || !_world.TryGetEntity(id, out var player) || player is null)
@@ -659,7 +542,7 @@ public partial class Main
 			ToggleMode = true,
 			Icon = _eyeOpenIcon,
 			TooltipText = $"Show or hide the equipped {label.ToLowerInvariant()} item",
-			FocusMode = Control.FocusModeEnum.None
+			FocusMode = Control.FocusModeEnum.All
 		};
 		visibilityButton.Pressed += () => TogglePlayerEquipmentVisibility(slotId);
 		row.AddChild(itemLabel);

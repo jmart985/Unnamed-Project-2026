@@ -24,7 +24,7 @@ public partial class Main
             _npcAnimationTestPanel.ActionRequested += HandleNpcAnimationTestAction;
             _npcAnimationTestPanel.MovementRequested += HandleNpcAnimationTestMovement;
             _npcAnimationTestPanel.RefreshRequested += RefreshNpcAnimationTestActors;
-            _npcAnimationTestPanel.Closed += () => UpdateGameplayFeedback(0);
+            _npcAnimationTestPanel.Closed += () => { SynchronizeUnifiedContext(); UpdateGameplayFeedback(0); };
             AddChild(_npcAnimationTestPanel);
         }
 
@@ -43,6 +43,7 @@ public partial class Main
         }
 
         _npcAnimationTestPanel.Open(GetNpcAnimationTestActors(), id => _entityViews.GetValueOrDefault(id));
+        SynchronizeUnifiedContext();
         _playerCharacter.MouseLookEnabled = false;
         Input.MouseMode = Input.MouseModeEnum.Visible;
     }
@@ -287,8 +288,8 @@ public partial class Main
                 throw new InvalidOperationException($"NPC Test Lab did not open while the {name} panel was active.");
             if (isOpen() || WorkstationPanelOpen || FarmPanelOpen || ConstructionPanelOpen || PlacementPanelOpen)
                 throw new InvalidOperationException($"NPC Test Lab left the {name} panel or another gameplay overlay open.");
-            if (!GameplayActionsAllowed || !_playerCharacter.GameplayInputEnabled)
-                throw new InvalidOperationException($"NPC Test Lab did not restore live gameplay input after closing the {name} panel.");
+            if (!GameplayActionsAllowed || _playerCharacter.GameplayInputEnabled)
+                throw new InvalidOperationException($"NPC Test Lab did not retain input ownership after closing the {name} panel.");
             _npcAnimationTestPanel.Close();
         }
 

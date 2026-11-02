@@ -206,7 +206,7 @@ public partial class Main
         _targetLockLostSeconds = 0;
     }
 
-    private void CycleWorldTarget()
+    private void CycleWorldTarget(int step = 1)
     {
         var targets = VisibleWorldTargets();
         var previous = targets.FindIndex(target => target.Target == _selectedTarget);
@@ -215,7 +215,7 @@ public partial class Main
         _selectedTarget = targets.Count == 0 ? null : previous < 0
             ? targets.OrderBy(target => camera.UnprojectPosition(target.Center).DistanceSquaredTo(center))
                 .ThenBy(target => target.Center.DistanceSquaredTo(camera.GlobalPosition)).First().Target
-            : targets[(previous + 1) % targets.Count].Target;
+            : targets[(previous + step + targets.Count) % targets.Count].Target;
         _targetLocked = _selectedTarget is not null;
         _targetLockLostSeconds = 0;
         if (_selectedEntityId is { } id) ShowSelectedSchedule(id);
@@ -258,7 +258,7 @@ public partial class Main
         ((StandardMaterial3D)_targetRing.MaterialOverride).AlbedoColor = new Color(1, 0.85f, 0.1f);
         _targetLockMarker.Visible = false;
         ((StandardMaterial3D)_targetRing.MaterialOverride).AlbedoColor = new Color(1, 0.85f, 0.1f);
-        var binding = PlayerButtonBindings.Label(_buttonBindings.Get(ControllerActions.CycleTarget).Desktop);
+        var binding = UnifiedLabel(ControllerActions.LockTarget);
         var hint = $"{binding}: {(_targetLocked ? "switch / unlock target" : "lock target at reticle")} (40 m)";
         if (_selectedTarget is not { } target)
         {

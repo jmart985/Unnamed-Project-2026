@@ -1,6 +1,6 @@
 # Playable town workbench
 
-The town workbench is a selectable production target in the paved work area at `(10, 0, 10)`, clear of the central road crossing. Press **T** until the workbench is selected, move within 2 metres, then press **F** to open its controls. The panel shows the active recipe, input storage, output storage, and work progress.
+The town workbench is a selectable production target in the paved work area at `(10, 0, 10)`, clear of the central road crossing. Press **T** until the workbench is selected, move within 2 metres, then tap **E** (controller X) to open its controls. The panel shows the active recipe, input storage, output storage, and work progress. See [unified controls](CONTROLS.md) for remapping and contextual choices.
 
 The first provisional recipe is intentionally small: one plant and one wood produce two food after five work steps. Carry the materials, load each input, apply work five times, then collect the output. Every rejected action leaves carried items, workbench storage, and progress unchanged. Output capacity is checked before any work is applied.
 
@@ -10,4 +10,4 @@ This slice establishes one production loop for milestone 0.4. Recipe selection, 
 
 ## Validation
 
-Run the normal solution build and simulation tests. The Godot `--validate-workbench` path verifies the rendered target, close-range F interaction, input loading, five work steps, exact output collection, partial-progress save/load, repeated reset, navigation footprint, and occlusion. A rendered production-panel image is written to `docs/evidence/workbench/production-controls.png` when a display is available.
+Run the normal solution build and simulation tests. The Godot `--validate-workbench` path verifies the rendered target, close-range interaction, input loading, five work steps, exact output collection, partial-progress save/load, repeated reset, navigation footprint, and occlusion. A rendered production-panel image is written to `docs/evidence/workbench/production-controls.png` when a display is available.

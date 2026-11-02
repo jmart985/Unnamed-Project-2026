@@ -22,6 +22,7 @@ scenarios=(
   "--validate-session-profiles|SESSION PROFILE VALIDATION PASSED"
   "--validate-schedules|SCHEDULE VALIDATION PASSED"
   "--validate-schedule-integration|SCHEDULE INTEGRATION PASSED"
+  "--validate-controls|CONTROLS VALIDATION PASSED"
   "--validate-menus|MENU VALIDATION PASSED"
   "--validate-selection|SELECTION VALIDATION PASSED"
   "--validate-gameplay-actions|GAMEPLAY ACTIONS VALIDATION PASSED"

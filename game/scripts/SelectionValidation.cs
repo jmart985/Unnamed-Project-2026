@@ -174,14 +174,17 @@ public partial class Main
             SetProcess(false); _playerCharacter.SetPhysicsProcess(false);
             camera.Current = true; camera.GlobalPosition = new Vector3(0, 8, 6); camera.LookAt(new Vector3(0, 0, -10));
             _world.TrySetEntityPosition(creature.Id, new(3, 0, -10)); SyncEntityViews();
-            SendMenuKey(Key.K);
+            Require(_controlSettings.TryBind(ControllerActions.CycleTarget, false,
+                new InputEventKey { PhysicalKeycode = Key.O, Pressed = true }, false, out _), "new profile target rebind");
+            ApplyUnifiedProfile();
+            SendMenuKey(Key.O);
             Require(_selectedTarget is not null && _menuState.ActiveMenu is null, "rebound key reaches dispatched world targeting");
             _saveSlotPath = ProjectSettings.GlobalizePath("user://selection-validation-save.json");
             SaveScenario(); LoadScenario();
             Require(_selectedTarget is null && !_targetRing.Visible, "load clears old target references");
             _clock.SetPaused(false); _playerCharacter.SetPhysicsProcess(true); ClosePlayerMenus();
             var rotation = _playerCharacter.Rotation;
-            _playerCharacter._UnhandledInput(new InputEventMouseMotion { Relative = new Vector2(10, 0) });
+            _Input(new InputEventMouseMotion { Relative = new Vector2(10, 0) });
             Require(_playerCharacter.Rotation != rotation, "mouse look retained");
             SendMenuMouse(MouseButton.Left);
             Require(_playerCharacter.IsAttacking, "normal mouse attack retained");
@@ -190,7 +193,7 @@ public partial class Main
             var greetingTarget = _world.Entities.First(entity => entity.SpeciesId == "human" && entity.Id != player.Id);
             _world.TrySetEntityPosition(greetingTarget.Id, player.Position + new System.Numerics.Vector3(1.5f, 0, 0));
             SyncEntityViews(); SelectEntity(greetingTarget.Id);
-            SendMenuKey(Key.G);
+            SendSocialGreeting();
             Require(_lastActionMessage.StartsWith("Successfully performed greet.", StringComparison.Ordinal) && _menuState.ActiveMenu is null,
                 "default G greets the human gameplay target without opening a menu");
             GD.Print("SELECTION VALIDATION PASSED: menu-free cycling, visibility/occlusion, shared selection, live feedback, stale cleanup, preferences migration and combat/look regression.");

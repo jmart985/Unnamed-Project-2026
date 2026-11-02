@@ -143,13 +143,13 @@ public partial class Main
             CancelGameplayActions(); UpdateWorldSelection();
             var lockedColor = ((StandardMaterial3D)_targetRing.MaterialOverride).AlbedoColor;
             var saved = WorldSnapshotSerializer.Serialize(_world, 0);
-            SendMenuKey(Key.F);
+            SendControlAction(ControllerActions.DefaultInteraction);
             Require(_actionHud.Text.Contains("Pet unavailable") && _socialPopups.Count == 0
                 && saved == WorldSnapshotSerializer.Serialize(_world, 0), "untrusted pet rejects without state change or fake gain");
             await CaptureSocialFeedback("pet-locked.png");
             var foodStack = new ResourceContainer("social food fixture", 2); foodStack.TryAdd(ItemIds.Plant, 2);
             Require(ResourceTransferService.TryPickUp(foodStack, player, ItemIds.Plant, 2) == ResourceMutationResult.Success, "carried food fixture");
-            SendMenuKey(Key.F);
+            SendControlAction(ControllerActions.DefaultInteraction);
             Require(_world.TryGetRelationship(cow.Id, player.Id, out var bond) && bond!.Trust == 50,
                 "real F feeding crosses 49 to 50");
             Require(player.Inventory[ItemIds.Plant] == 1 && _socialPopups.Any(popup => popup.EntityId == cow.Id
@@ -160,7 +160,7 @@ public partial class Main
                 "Trusted ring changes and persistent numeric totals stay hidden");
             await CaptureSocialFeedback("trusted-feed.png");
             CancelGameplayActions();
-            SendMenuKey(Key.F);
+            SendControlAction(ControllerActions.DefaultInteraction);
             Require(_actionHud.Text.Contains("petted") && bond!.Trust == 51 && player.Inventory[ItemIds.Plant] == 1,
                 "full Trusted creature can be petted even while carrying food");
             Require(_entityViews[cow.Id].HasGreetingAttention, "pet response preserves sustained attention");
@@ -180,11 +180,11 @@ public partial class Main
             await CaptureSocialFeedback("trust-loss.png");
             CancelGameplayActions();
             Require(ResourceTransferService.TryDeliver(player, foodStack, ItemIds.Plant, 1) == ResourceMutationResult.Success, "clear carried food for pet-only test");
-            SendMenuKey(Key.F);
+            SendControlAction(ControllerActions.DefaultInteraction);
             Require(_actionHud.Text.Contains("Pet unavailable") && bond.Trust == 49 && _socialPopups.Count == 0, "pet is removed after harm");
             _playerCharacter.SetPhysicsProcess(false);
             _world.TrySetEntityPosition(human.Id, new(1.5f, 0, -6)); SyncEntityViews(); SelectEntity(human.Id);
-            SendMenuKey(Key.G);
+            SendSocialGreeting();
             Require(_socialPopups.Any(popup => popup.EntityId == human.Id && popup.Label.Visible && popup.Label.Text == "Familiarity +1"),
                 "human greeting feedback belongs to NPC rather than player");
             Require(!_world.TryGetRelationship(player.Id, human.Id, out _), "player outgoing relationship is not fabricated");
@@ -206,7 +206,7 @@ public partial class Main
             await CaptureSocialFeedback("npc-standing.png");
             UpdateGameplayFeedback(3.1);
             Require(_socialPopups.Count == 0, "feedback expires without keeping numeric totals on screen");
-            SendMenuKey(Key.G); ToggleMenu(PlayerMenu.Inventory);
+            SendSocialGreeting(); ToggleMenu(PlayerMenu.Inventory);
             Require(_socialPopups.Count == 0, "menus clear social feedback");
             ClosePlayerMenus(); UpdateInspector();
             Require(!_inspectorLabel.Text.Contains("Familiarity ") && !_inspectorLabel.Text.Contains("Trust "), "settlement inspector hides relationship totals");
@@ -271,20 +271,28 @@ public partial class Main
 
             _selectedTarget = null; UpdateStatus();
             var satiety = player.Satiety;
+            _targetLocked = false;
+            camera.LookAt(WorldTargets().Single(v => v.Target == new WorldTarget(TargetKind.Food, "refinement-food")).Center);
             SendMenuKey(Key.E);
             Require(player.Inventory.GetValueOrDefault(ItemIds.Food) == 1 && food.Counts[ItemIds.Food] == 7
-                && player.Satiety == satiety, "real short E collects nearest visible resource without selection or consumption");
+                && player.Satiety == satiety, "real short E collects the reticle food target without consuming it: " + _lastActionMessage);
             Require(_actionHud.Visible && _actionHud.Text.Contains("Collected 1 food") && _menuState.ActiveMenu is null,
                 "pickup feedback visible in gameplay");
             _selectedTarget = new(TargetKind.Food, "refinement-food");
             var beforeHold = food.Counts[ItemIds.Food];
             GetViewport().PushInput(new InputEventKey { PhysicalKeycode = Key.E, Keycode = Key.E, Pressed = true });
-            AdvanceCollectUse(0.3); UpdateGameplayFeedback(0);
-            Require(_actionHud.Text.Contains("50%"), "visible hold progress");
-            AdvanceCollectUse(0.3); AdvanceCollectUse(3);
+            _inputRouter.Advance(0.31);
+            Require(UnifiedWheelOpen, "hold opens contextual menu");
             GetViewport().PushInput(new InputEventKey { PhysicalKeycode = Key.E, Keycode = Key.E, Pressed = false });
+            Require(player.Inventory.GetValueOrDefault(ItemIds.Food) == 1 && food.Counts[ItemIds.Food] == beforeHold,
+                "context hold neither consumes nor collects");
+            CloseUnifiedWheel(false);
+            SendControlAction(ControllerActions.SocialWheel);
+            _controlWheel.Stick(Vector2.Right);
+            // Four self actions: eat is the right-hand entry.
+            SendControlAction(ControllerActions.MenuConfirm);
             Require(player.Inventory.GetValueOrDefault(ItemIds.Food) == 0 && food.Counts[ItemIds.Food] == beforeHold
-                && player.Satiety == Math.Min(100, satiety + player.Needs.NutritionPerUnit), "hold consumes once from carried food and does not pick up");
+                && player.Satiety == Math.Min(100, satiety + player.Needs.NutritionPerUnit), "explicit self action consumes once");
             SendMenuKey(Key.E);
             foreach (var menu in Enum.GetValues<PlayerMenu>())
             {
@@ -297,9 +305,10 @@ public partial class Main
             Require(player.Inventory.GetValueOrDefault(ItemIds.Food) == 1, "pause cancels pending collect/use");
             BeginCollectUse(); GetWindow().EmitSignal(Window.SignalName.FocusExited); CompleteCollectUse();
             Require(player.Inventory.GetValueOrDefault(ItemIds.Food) == 1 && !_collectUse.IsPressed, "focus loss cancels pending collect/use");
-            _buttonBindings.Path = ProjectSettings.GlobalizePath("user://refinement-validation-settings.json");
-            Require(_buttonBindings.TryBind(ControllerActions.Collect, false, new InputEventKey { PhysicalKeycode = Key.K, Pressed = true }, out _), "collect rebind persists");
-            SendMenuKey(Key.K);
+            _controlSettings.Path = ProjectSettings.GlobalizePath("user://refinement-validation-settings.json");
+            Require(_controlSettings.TryBind(ControllerActions.DefaultInteraction, false, new InputEventKey { PhysicalKeycode = Key.O, Pressed = true }, false, out _), "interact rebind persists");
+            ApplyUnifiedProfile();
+            SendMenuKey(Key.O);
             Require(player.Inventory[ItemIds.Food] == 2, "remapped key still collects");
             GetViewport().PushInput(new InputEventJoypadButton { ButtonIndex = JoyButton.X, Pressed = true });
             GetViewport().PushInput(new InputEventJoypadButton { ButtonIndex = JoyButton.X, Pressed = false });
@@ -309,11 +318,16 @@ public partial class Main
             var groundBeforeRealHold = food.Counts[ItemIds.Food];
             GetViewport().PushInput(new InputEventJoypadButton { ButtonIndex = JoyButton.X, Pressed = true });
             SetProcess(true);
-            await ToSignal(GetTree().CreateTimer(0.8), SceneTreeTimer.SignalName.Timeout);
+            await ToSignal(GetTree().CreateTimer(0.4), SceneTreeTimer.SignalName.Timeout);
             GetViewport().PushInput(new InputEventJoypadButton { ButtonIndex = JoyButton.X, Pressed = false });
             SetProcess(false);
-            Require(player.Inventory[ItemIds.Food] == carriedBeforeRealHold - 1 && food.Counts[ItemIds.Food] == groundBeforeRealHold
-                && player.Satiety > 95, "real elapsed controller hold dispatches through Main process once");
+            Require(UnifiedWheelOpen && player.Inventory[ItemIds.Food] == carriedBeforeRealHold
+                && food.Counts[ItemIds.Food] == groundBeforeRealHold, "real elapsed controller hold opens menu without inventory mutation");
+            CloseUnifiedWheel(false);
+            SendControlAction(ControllerActions.SocialWheel);
+            _controlWheel.Stick(Vector2.Right);
+            SendControlAction(ControllerActions.MenuConfirm);
+            Require(player.Inventory[ItemIds.Food] == carriedBeforeRealHold - 1 && player.Satiety > 95, "explicit food action restores satiety");
             _world.TrySetEntityPosition(cow.Id, new(-1.5f, 0, -6));
             _world.TrySetEntityPosition(human.Id, new(0, 0, -7.5f));
             // Freeze the player during interaction assertions/screenshots so overlapping
@@ -321,21 +335,23 @@ public partial class Main
             _playerCharacter.SetPhysicsProcess(false);
             _playerCharacter.GlobalPosition = new Vector3(0, 0, -6); SyncPlayerPosition();
             SyncEntityViews();
-            _buttonBindings.RestoreDefaults(out _);
+            _controlSettings.RestoreDefaults(null, out _);
+            ApplyUnifiedProfile();
 
             SelectEntity(cow.Id);
             var plantStack = new ResourceContainer("feed fixture", 3); plantStack.TryAdd(ItemIds.Plant, 3);
             Require(ResourceTransferService.TryPickUp(plantStack, player, ItemIds.Plant, 3) == ResourceMutationResult.Success, "feed stack fixture pickup");
             var cowSatiety = cow.Satiety;
-            SendMenuKey(Key.F);
+            camera.LookAt(WorldTargets().Single(view => view.Target == new WorldTarget(TargetKind.Entity, cow.Id)).Center);
+            SendControlAction(ControllerActions.DefaultInteraction);
             Require(_actionHud.Text.StartsWith("Fed plant", StringComparison.Ordinal) && _targetResponse.Visible
                 && player.Inventory[ItemIds.Plant] == 2
                 && cow.Satiety == Math.Min(100, cowSatiety + cow.Needs.NutritionPerUnit), $"F feeds exactly one from a carried stack and shows acknowledgment: {_lastActionMessage}; carried {player.Inventory[ItemIds.Plant]}; satiety {cow.Satiety}; response {_targetResponse.Visible}");
             await CaptureGameplayRefinement("feed.png");
-            SendMenuKey(Key.F);
+            SendControlAction(ControllerActions.DefaultInteraction);
             Require(_actionHud.Text.Contains("petted") && player.Inventory[ItemIds.Plant] == 2, "full Trusted target can be petted without item waste");
             Require(ResourceTransferService.TryDeliver(player, plantStack, ItemIds.Plant, 2) == ResourceMutationResult.Success, "feed stack fixture removal");
-            SendMenuKey(Key.F);
+            SendControlAction(ControllerActions.DefaultInteraction);
             Require(_actionHud.Text.Contains("petted") && _targetResponse.Visible
                 && _world.TryGetRelationship(cow.Id, player.Id, out var petBond) && petBond!.Trust == 53, "F pets with visible directed response when no compatible food is carried");
             Require(!_entityViews[cow.Id].IsMovementHeldForInteraction,
@@ -347,7 +363,7 @@ public partial class Main
             var give = _interactionResolver.Resolve(new(player.Id, human.Id, InteractionType.Physical, "give", given));
             Require(give.Succeeded && player.Inventory[ItemIds.Food] == foodBeforeGive - 1 && human.Inventory[ItemIds.Food] == 1,
                 $"live give resolver conserves actor and recipient inventory: {give.Reason}");
-            SelectEntity(human.Id); SendMenuKey(Key.G);
+            SelectEntity(human.Id); SendSocialGreeting();
             Require(_actionHud.Text.Contains("Successfully performed greet") && _targetResponse.Visible, "G greets humans visibly");
             var humanView = _entityViews[human.Id];
             Require(_playerCharacter.IsMovementHeldForInteraction && humanView.IsMovementHeldForInteraction,
@@ -371,7 +387,7 @@ public partial class Main
             humanView._Process(0.1);
             Require(!humanView.HasGreetingAttention, "attention stops beyond 2 m separation");
             _playerCharacter.GlobalPosition = playerBeforeAttentionRange; SyncPlayerPosition();
-            SendMenuKey(Key.G);
+            SendSocialGreeting();
             Require(humanView.HasGreetingAttention, "new nearby greeting restores attention");
             human.Actions.Cancel();
             Require(human.Actions.TryStart(new ActionCandidate("attention-override", ActionKind.Eat)) == ActionStartResult.Started,
@@ -379,12 +395,12 @@ public partial class Main
             humanView.Sync(_world);
             Require(!humanView.HasGreetingAttention, "new task overrides greeting attention even before movement");
             human.Actions.Cancel();
-            ToggleMenu(PlayerMenu.Inventory); SendMenuKey(Key.G); SendMenuKey(Key.F); ClosePlayerMenus();
+            ToggleMenu(PlayerMenu.Inventory); SendSocialGreeting(); SendControlAction(ControllerActions.DefaultInteraction); ClosePlayerMenus();
             Require(player.Inventory[ItemIds.Food] == foodBeforeGive - 1, "menus isolate interactions");
             cow.Actions.Cancel();
             _entityViews[cow.Id].CancelNavigation();
             _entityViews[cow.Id]._Process(0.1);
-            SelectEntity(cow.Id); SendMenuKey(Key.G);
+            SelectEntity(cow.Id); SendSocialGreeting();
             Require(_actionHud.Text.StartsWith("Greeted", StringComparison.Ordinal) && _targetResponse.Visible
                 && _targetHud.Text.Contains("Trusted") && !_targetHud.Text.Contains("Familiarity"), "G exposes recipient bond without numeric relationship totals");
             var greeterDirection = (_playerCharacter.GlobalPosition - _entityViews[cow.Id].GlobalPosition).Normalized();
@@ -402,9 +418,9 @@ public partial class Main
             _playerCharacter.GlobalPosition = priorPlayerPosition;
             _entityViews[cow.Id]._Process(0.1);
             await CaptureGameplayRefinement("greeting.png");
-            SelectEntity(wolf.Id); SendMenuKey(Key.G);
+            SelectEntity(wolf.Id); SendSocialGreeting();
             Require(_actionHud.Text.Contains("does not accept") && !_targetResponse.Visible, "unsupported greeting visible without false acknowledgment");
-            _world.TrySetEntityPosition(cow.Id, new(-10, 0, -6)); SyncEntityViews(); SelectEntity(cow.Id); SendMenuKey(Key.G);
+            _world.TrySetEntityPosition(cow.Id, new(-10, 0, -6)); SyncEntityViews(); SelectEntity(cow.Id); SendSocialGreeting();
             Require(_actionHud.Text.Contains("Move closer"), "distant greeting visible rejection");
             _world.TrySetEntityPosition(cow.Id, new(-1.5f, 0, -6)); SyncEntityViews();
 
