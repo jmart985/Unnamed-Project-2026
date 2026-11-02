@@ -101,7 +101,6 @@ public static class ControllerActions
     public const string MenuNextCategory = "menu_next_category";
     public const string MenuActions = "menu_item_actions";
     public const string MenuVisibility = "menu_equipment_visibility";
-
     public static IReadOnlyList<string> All { get; } =
     [
         MoveLeft, MoveRight, MoveForward, MoveBackward, Jump,
