@@ -11,6 +11,31 @@ public partial class Main
         SetProcess(false);
         _clock.SetPaused(false);
         SynchronizeUnifiedContext();
+        SendMenuKey(Key.P);
+        SendMenuKey(Key.N);
+        _pauseButton.EmitSignal(BaseButton.SignalName.Pressed);
+        Require(_clock.IsPaused && !_controlPause.ManuallyPaused && !_playerCharacter.IsPhysicsProcessing(),
+            "Settlement Resume clears manual pause while the menu still owns pause");
+        SendMenuKey(Key.N);
+        Require(!_clock.IsPaused && _playerCharacter.GameplayInputEnabled && _playerCharacter.IsPhysicsProcessing(),
+            "closing a resumed menu restores player physics");
+        var resumePosition = _playerCharacter.GlobalPosition;
+        GetViewport().PushInput(new InputEventKey { PhysicalKeycode = Key.W, Pressed = true });
+        await PhysicsFrames(8);
+        GetViewport().PushInput(new InputEventKey { PhysicalKeycode = Key.W, Pressed = false });
+        var resumedDisplacement = _playerCharacter.GlobalPosition - resumePosition;
+        Require(new Vector2(resumedDisplacement.X, resumedDisplacement.Z).Length() > 0.05f,
+            "player actually moves horizontally after Settlement Resume");
+        SendMenuKey(Key.P);
+        SendMenuKey(Key.N);
+        SendMenuKey(Key.N);
+        Require(_clock.IsPaused && !_playerCharacter.IsPhysicsProcessing(), "closing without Resume preserves manual pause");
+        SendMenuKey(Key.P);
+        _playerCharacter.SetPhysicsProcess(false);
+        SendMenuKey(Key.I);
+        SendMenuKey(Key.I);
+        Require(!_clock.IsPaused && !_playerCharacter.IsPhysicsProcessing(), "menu close preserves a physics freeze unrelated to manual pause");
+        _playerCharacter.SetPhysicsProcess(true);
         var preferences = _controlSettings.Preferences;
         Require(_controlSettings.SetPreferences(preferences with { ToggleWheels = true }, out _), "toggle fixture saves");
         SendMenuKey(Key.Q);

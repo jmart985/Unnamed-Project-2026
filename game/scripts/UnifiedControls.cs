@@ -92,7 +92,11 @@ public partial class Main
         if (!_controlUiPause && _clock.IsPaused != _controlPause.IsPaused) _controlPause.SetManual(_clock.IsPaused);
         _controlPause.SetOwner("menus", pausingModal);
         if (pausingModal && !_controlUiPause)
-        { _physicsBeforeControlMenu = _playerCharacter.IsPhysicsProcessing(); _playerCharacter.SetPhysicsProcess(false); }
+        {
+            // Manual pause is temporary; an in-menu Resume must not preserve its physics disablement.
+            _physicsBeforeControlMenu = _playerCharacter.IsPhysicsProcessing() || _controlPause.ManuallyPaused;
+            _playerCharacter.SetPhysicsProcess(false);
+        }
         else if (!pausingModal && _controlUiPause)
             _playerCharacter.SetPhysicsProcess(_physicsBeforeControlMenu && !_controlPause.ManuallyPaused);
         if (pausingModal || _controlUiPause) _clock.SetPaused(_controlPause.IsPaused);
