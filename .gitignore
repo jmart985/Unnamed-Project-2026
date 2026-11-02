@@ -8,3 +8,17 @@
 TestResults/
 *.tmp
 *.blend[0-9]
+
+# Unity caches and reproducible build artifacts
+unity/Library/
+unity/Temp/
+unity/Logs/
+unity/UserSettings/
+unity/Builds/
+unity/.vscode/
+unity/*.csproj
+unity/*.slnx
+unity/Assets/Plugins/Simulation/*.dll
+unity/Assets/StreamingAssets/Simulation/*.json
+work/
+compatibility-build.log

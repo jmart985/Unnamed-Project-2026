@@ -14,8 +14,8 @@ public static class ResourceTransferService
         out int transferred)
     {
         transferred = 0;
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(destination);
+        if (source is null) throw new ArgumentNullException(nameof(source));
+        if (destination is null) throw new ArgumentNullException(nameof(destination));
         if (ReferenceEquals(source, destination)) return ResourceMutationResult.InvalidDestination;
         if (!ItemIds.IsKnown(itemId)) return ResourceMutationResult.UnknownItem;
         if (amount <= 0) return ResourceMutationResult.InvalidAmount;
@@ -38,8 +38,8 @@ public static class ResourceTransferService
         string? itemId,
         int amount)
     {
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(destination);
+        if (source is null) throw new ArgumentNullException(nameof(source));
+        if (destination is null) throw new ArgumentNullException(nameof(destination));
 
         if (ReferenceEquals(source, destination))
         {
@@ -92,8 +92,8 @@ public static class ResourceTransferService
         out int transferred)
     {
         transferred = 0;
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(entity);
+        if (source is null) throw new ArgumentNullException(nameof(source));
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
 
         if (!ItemIds.IsKnown(itemId))
         {
@@ -137,8 +137,8 @@ public static class ResourceTransferService
         string? itemId,
         int amount)
     {
-        ArgumentNullException.ThrowIfNull(entity);
-        ArgumentNullException.ThrowIfNull(destination);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        if (destination is null) throw new ArgumentNullException(nameof(destination));
 
         if (!ItemIds.IsKnown(itemId))
         {
@@ -180,8 +180,8 @@ public static class ResourceTransferService
         string? secondItemId,
         int secondAmount)
     {
-        ArgumentNullException.ThrowIfNull(first);
-        ArgumentNullException.ThrowIfNull(second);
+        if (first is null) throw new ArgumentNullException(nameof(first));
+        if (second is null) throw new ArgumentNullException(nameof(second));
 
         if (ReferenceEquals(first, second))
         {

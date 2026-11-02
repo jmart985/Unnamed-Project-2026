@@ -70,7 +70,7 @@ public sealed class WildPreyThreatService : ITransientSimulationState
 
     public WildPreyThreatResult Advance(EntityRecord prey, long simulationTick)
     {
-        ArgumentNullException.ThrowIfNull(prey);
+        if (prey is null) throw new ArgumentNullException(nameof(prey));
         if (simulationTick < 0)
             throw new ArgumentOutOfRangeException(nameof(simulationTick));
         if (!_world.TryGetEntity(prey.Id, out var livePrey) || !ReferenceEquals(prey, livePrey))

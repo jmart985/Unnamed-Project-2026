@@ -18,7 +18,7 @@ public static class RecruitmentReadinessPolicy
         string? recruiterEntityId,
         RelationshipBondThresholds? thresholds = null)
     {
-        ArgumentNullException.ThrowIfNull(world);
+        if (world is null) throw new ArgumentNullException(nameof(world));
 
         if (!world.TryGetRelationship(
             prospectiveRecruitEntityId,

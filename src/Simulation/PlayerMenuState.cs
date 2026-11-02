@@ -13,7 +13,7 @@ public sealed class PlayerMenuState
 
     public void Toggle(PlayerMenu menu)
     {
-        if (!Enum.IsDefined(menu))
+        if (!CompatibilityGuard.IsDefined(menu))
         {
             throw new ArgumentOutOfRangeException(nameof(menu));
         }

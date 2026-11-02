@@ -18,7 +18,7 @@ public sealed class SocialMeleeCombatService
         IMeleeDamageResponder? damageResponder = null)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
-        ArgumentNullException.ThrowIfNull(eventCatalog);
+        if (eventCatalog is null) throw new ArgumentNullException(nameof(eventCatalog));
         if (!eventCatalog.TryGet(HarmedEventId, out _))
         {
             throw new ArgumentException(

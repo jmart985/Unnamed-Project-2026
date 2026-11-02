@@ -112,7 +112,7 @@ public sealed class SpeciesDefinition
 
     public CharacterStats CreateCharacterStats(CharacterStats defaults)
     {
-        ArgumentNullException.ThrowIfNull(defaults);
+        if (defaults is null) throw new ArgumentNullException(nameof(defaults));
 
         return new CharacterStats(
             health: MaxHealth,

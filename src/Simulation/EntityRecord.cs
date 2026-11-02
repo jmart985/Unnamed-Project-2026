@@ -22,7 +22,7 @@ public sealed class EntityRecord
         BiologicalSex sex,
         CharacterStats? baseStats = null)
     {
-        if (!Enum.IsDefined(sex) || sex == BiologicalSex.Unspecified)
+        if (!CompatibilityGuard.IsDefined(sex) || sex == BiologicalSex.Unspecified)
             throw new ArgumentOutOfRangeException(nameof(sex), "An entity must have a defined biological sex.");
         Id = id;
         SpeciesId = speciesId;
@@ -51,7 +51,7 @@ public sealed class EntityRecord
     public double Satiety => Needs.Satiety;
     public IReadOnlyDictionary<string, int> Inventory => _inventoryView;
     public IReadOnlyDictionary<string, string> EquippedItems => _equippedItemsView;
-    public IReadOnlyList<string> HiddenEquipmentSlots => _hiddenEquipmentSlots.Order(StringComparer.Ordinal).ToArray();
+    public IReadOnlyList<string> HiddenEquipmentSlots => _hiddenEquipmentSlots.OrderBy(value => value, StringComparer.Ordinal).ToArray();
     public double CarriedWeightKg =>
         _inventory.Sum(item => item.Value * ItemCatalog.GetWeightKg(item.Key))
         + _equippedItems.Values.Sum(ItemCatalog.GetWeightKg);
@@ -111,8 +111,8 @@ public sealed class EntityRecord
 
     internal void SetEquippedItem(string slotId, string itemId)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(slotId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(itemId);
+        CompatibilityGuard.NotBlank(slotId, nameof(slotId));
+        CompatibilityGuard.NotBlank(itemId, nameof(itemId));
         if (!ItemCatalog.IsWearable(itemId)
             || ItemCatalog.GetRequired(itemId).EquipmentSlot != slotId)
             throw new ArgumentException($"Item '{itemId}' cannot be equipped in slot '{slotId}'.", nameof(itemId));
@@ -153,7 +153,7 @@ public sealed class EntityRecord
 
     internal void RestoreHiddenEquipmentSlots(IEnumerable<string> slotIds)
     {
-        ArgumentNullException.ThrowIfNull(slotIds);
+        if (slotIds is null) throw new ArgumentNullException(nameof(slotIds));
         _hiddenEquipmentSlots.Clear();
         foreach (var slotId in slotIds)
             _hiddenEquipmentSlots.Add(slotId);

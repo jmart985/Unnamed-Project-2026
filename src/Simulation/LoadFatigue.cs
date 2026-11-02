@@ -9,7 +9,7 @@ public static class LoadFatigue
 
     public static double PerSecond(double carriedWeightKg, CharacterStats stats)
     {
-        ArgumentNullException.ThrowIfNull(stats);
+        if (stats is null) throw new ArgumentNullException(nameof(stats));
         if (!double.IsFinite(carriedWeightKg) || carriedWeightKg < 0)
             throw new ArgumentOutOfRangeException(nameof(carriedWeightKg));
 

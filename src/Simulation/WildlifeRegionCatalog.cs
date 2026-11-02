@@ -15,8 +15,8 @@ public sealed class WildlifeRegionCatalog
 
     public WildlifeRegionCatalog(IEnumerable<WildlifeRegionDefinition> regions, SpeciesCatalog speciesCatalog)
     {
-        ArgumentNullException.ThrowIfNull(regions);
-        ArgumentNullException.ThrowIfNull(speciesCatalog);
+        if (regions is null) throw new ArgumentNullException(nameof(regions));
+        if (speciesCatalog is null) throw new ArgumentNullException(nameof(speciesCatalog));
         var values = regions.ToArray();
         if (values.Length == 0 || values.Any(region => region is null)
             || values.Select(region => region.Id).Distinct(StringComparer.Ordinal).Count() != values.Length)
@@ -47,7 +47,7 @@ public sealed class WildlifeRegionCatalog
 
     public static WildlifeRegionCatalog LoadFromFile(string path, SpeciesCatalog speciesCatalog)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        CompatibilityGuard.NotBlank(path, nameof(path));
         var json = File.ReadAllText(path);
         var document = JsonSerializer.Deserialize<RegionFile[]>(json, JsonOptions)
             ?? throw new InvalidDataException("Wildlife region data is empty.");

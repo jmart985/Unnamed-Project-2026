@@ -59,7 +59,7 @@ public sealed class CreatureHuntingService : ITransientSimulationState
 
     public CreatureHuntingResult Advance(EntityRecord hunter, long simulationTick)
     {
-        ArgumentNullException.ThrowIfNull(hunter);
+        if (hunter is null) throw new ArgumentNullException(nameof(hunter));
         if (simulationTick < 0)
             throw new ArgumentOutOfRangeException(nameof(simulationTick), "Simulation tick cannot be negative.");
         if (!_world.TryGetEntity(hunter.Id, out var liveHunter) || !ReferenceEquals(hunter, liveHunter))

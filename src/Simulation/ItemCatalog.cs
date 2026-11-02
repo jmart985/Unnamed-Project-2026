@@ -48,7 +48,7 @@ public static class ItemCatalog
 
     public static ItemDefinition GetRequired(string itemId)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(itemId);
+        CompatibilityGuard.NotBlank(itemId, nameof(itemId));
         return Definitions.TryGetValue(itemId, out var definition)
             ? definition
             : throw new ArgumentException($"Unknown item '{itemId}'.", nameof(itemId));

@@ -18,7 +18,7 @@ public static class ScenarioAcceptanceHarness
 {
     public static ScenarioAcceptanceResult Run(SpeciesCatalog catalog, int seed = AntFarmScenario.DefaultSeed, int ticks = 25)
     {
-        ArgumentNullException.ThrowIfNull(catalog);
+        if (catalog is null) throw new ArgumentNullException(nameof(catalog));
         if (ticks < 0) throw new ArgumentOutOfRangeException(nameof(ticks));
 
         var first = CreateScenario(catalog, seed, ticks);

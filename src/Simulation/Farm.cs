@@ -18,7 +18,7 @@ public sealed class Farm
 
     public void AddPlot(FarmPlot plot)
     {
-        ArgumentNullException.ThrowIfNull(plot);
+        if (plot is null) throw new ArgumentNullException(nameof(plot));
         if (Plots.Any(existing => string.Equals(existing.Id, plot.Id, StringComparison.Ordinal)))
             throw new ArgumentException($"Farm already contains plot '{plot.Id}'.", nameof(plot));
         Plots.Add(plot);

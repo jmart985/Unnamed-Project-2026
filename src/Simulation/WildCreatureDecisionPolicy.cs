@@ -83,7 +83,7 @@ public sealed record WildCreatureDecisionResult
 {
     public WildCreatureDecisionResult(WildCreatureDecision decision, WildCreatureDecisionTarget? target)
     {
-        if (!Enum.IsDefined(decision))
+        if (!CompatibilityGuard.IsDefined(decision))
         {
             throw new ArgumentOutOfRangeException(nameof(decision));
         }
@@ -110,8 +110,8 @@ public static class WildCreatureDecisionPolicy
         EntityRecord entity,
         WildCreatureDecisionContext context)
     {
-        ArgumentNullException.ThrowIfNull(entity);
-        ArgumentNullException.ThrowIfNull(context);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        if (context is null) throw new ArgumentNullException(nameof(context));
 
         if (context.Threat is not null)
         {

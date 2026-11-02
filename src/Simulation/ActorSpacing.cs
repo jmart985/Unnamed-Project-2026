@@ -7,7 +7,7 @@ public static class ActorSpacing
 {
     public static double RadiusFor(SpeciesDefinition species)
     {
-        ArgumentNullException.ThrowIfNull(species);
+        if (species is null) throw new ArgumentNullException(nameof(species));
         return species.BodyCategory.ToLowerInvariant() switch
         {
             "quadruped" => 0.75,
@@ -19,8 +19,8 @@ public static class ActorSpacing
 
     public static bool IsPositionAvailable(World world, EntityRecord moving, Vector3 position, double clearance = 0.05)
     {
-        ArgumentNullException.ThrowIfNull(world);
-        ArgumentNullException.ThrowIfNull(moving);
+        if (world is null) throw new ArgumentNullException(nameof(world));
+        if (moving is null) throw new ArgumentNullException(nameof(moving));
         if (!float.IsFinite(position.X) || !float.IsFinite(position.Y) || !float.IsFinite(position.Z)) return false;
         if (!double.IsFinite(clearance) || clearance < 0) throw new ArgumentOutOfRangeException(nameof(clearance));
 

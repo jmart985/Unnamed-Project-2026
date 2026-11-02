@@ -27,8 +27,8 @@ public static class EntityInspectionReadModel
 {
     public static EntityInspectionSnapshot Create(World world, EntityRecord entity)
     {
-        ArgumentNullException.ThrowIfNull(world);
-        ArgumentNullException.ThrowIfNull(entity);
+        if (world is null) throw new ArgumentNullException(nameof(world));
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
         var inventory = new ReadOnlyDictionary<string, int>(entity.Inventory.ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal));
         var relationships = world.Relationships
             .Where(relationship => string.Equals(
@@ -59,7 +59,7 @@ public static class EntityInspectionReadModel
 
     public static string FormatOutgoingRelationships(EntityInspectionSnapshot snapshot, bool includeValues = true)
     {
-        ArgumentNullException.ThrowIfNull(snapshot);
+        if (snapshot is null) throw new ArgumentNullException(nameof(snapshot));
         if (snapshot.OutgoingRelationships.Count == 0)
         {
             return "none";

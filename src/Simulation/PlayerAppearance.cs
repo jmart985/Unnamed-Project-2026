@@ -51,7 +51,7 @@ public sealed class PlayerAppearanceCatalog
         {
             if (string.IsNullOrWhiteSpace(entry.Id) || entry.Id == "none" || string.IsNullOrWhiteSpace(entry.Name)
                 || (entry.Slot != "hair" && !EquipmentSlotIds.SupportsVisibility(entry.Slot))
-                || entry.Sexes is not { Length: > 0 } || entry.Sexes.Any(sex => !Enum.IsDefined(sex))
+                || entry.Sexes is not { Length: > 0 } || entry.Sexes.Any(sex => !CompatibilityGuard.IsDefined(sex))
                 || entry.Sexes.Distinct().Count() != entry.Sexes.Length
                 || !double.IsFinite(entry.WeightKg) || entry.WeightKg < 0 || !result.TryAdd(entry.Id, entry))
                 throw new InvalidDataException($"Invalid or duplicate appearance definition '{entry.Id}'.");

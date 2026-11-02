@@ -30,7 +30,7 @@ public sealed class WorkstationRecipe
     }
     private static void ValidateMaterials(IReadOnlyDictionary<string,int> materials,string parameter)
     {
-        ArgumentNullException.ThrowIfNull(materials);
+        if (materials is null) throw new ArgumentNullException(nameof(materials));
         if (materials.Any(item => !ItemIds.IsKnown(item.Key) || item.Value <= 0)) throw new ArgumentException("Materials must use known items with positive quantities.", parameter);
     }
 }

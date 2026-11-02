@@ -48,7 +48,7 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
 
     public SquadOrderResult Execute(SquadOrderKind order, Vector3? target = null)
     {
-        if (!Enum.IsDefined(order) || order == SquadOrderKind.None) return Reject(SquadResult.InvalidOrder, "Choose move, follow, or stop.");
+        if (!CompatibilityGuard.IsDefined(order) || order == SquadOrderKind.None) return Reject(SquadResult.InvalidOrder, "Choose move, follow, or stop.");
         if (world.SquadMemberIds.Count == 0) return Reject(SquadResult.EmptySquad, "Add an eligible NPC first.");
         if (world.SquadMemberIds.Any(id => !world.TryGetEntity(id, out var entity) || entity is null || entity.Health.IsDead))
             return Reject(SquadResult.InvalidEntity, "A squad member is unavailable.");
@@ -325,7 +325,7 @@ public sealed class SquadOrderService(World world, Func<EntityRecord, INavigatio
         for (var index = 0; index < orderedMembers.Length; index++)
         {
             var angle = useFullCircle
-                ? circleStartAngle + MathF.Tau * index / orderedMembers.Length
+                ? circleStartAngle + (2f * MathF.PI) * index / orderedMembers.Length
                 : (index - (orderedMembers.Length - 1) * 0.5f) * angleStep;
             _followOffsets[orderedMembers[index].Entity.Id] = outward * (radius * MathF.Cos(angle))
                 + tangent * (radius * MathF.Sin(angle));

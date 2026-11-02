@@ -41,7 +41,7 @@ public sealed class RelationshipEventCatalog
 
     public static RelationshipEventCatalog Load(Stream stream)
     {
-        ArgumentNullException.ThrowIfNull(stream);
+        if (stream is null) throw new ArgumentNullException(nameof(stream));
 
         RelationshipEventData?[]? entries;
         try

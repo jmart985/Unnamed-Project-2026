@@ -52,7 +52,7 @@ public sealed class CharacterHealth
 
     public CharacterHealth(IEnumerable<BodyPartHealth> parts, double headDeathDelaySeconds = 1)
     {
-        ArgumentNullException.ThrowIfNull(parts);
+        if (parts is null) throw new ArgumentNullException(nameof(parts));
         if (!double.IsFinite(headDeathDelaySeconds) || headDeathDelaySeconds <= 0) throw new ArgumentOutOfRangeException(nameof(headDeathDelaySeconds));
         HeadDeathDelaySeconds = headDeathDelaySeconds;
         var materialized = parts.ToArray();
@@ -76,7 +76,7 @@ public sealed class CharacterHealth
 
     internal void Restore(IReadOnlyList<HealthPartSnapshot> parts, double pendingDeathSeconds, bool isDead)
     {
-        ArgumentNullException.ThrowIfNull(parts);
+        if (parts is null) throw new ArgumentNullException(nameof(parts));
         if (!double.IsFinite(pendingDeathSeconds) || pendingDeathSeconds < 0 || pendingDeathSeconds > HeadDeathDelaySeconds)
             throw new ArgumentOutOfRangeException(nameof(pendingDeathSeconds));
         if (isDead && pendingDeathSeconds > 0)

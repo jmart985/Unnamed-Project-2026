@@ -47,7 +47,7 @@ public sealed class RelationshipState
 
     public RelationshipUpdateResult ApplyDelta(RelationshipDimension dimension, double delta)
     {
-        if (!Enum.IsDefined(dimension))
+        if (!CompatibilityGuard.IsDefined(dimension))
         {
             return RelationshipUpdateResult.InvalidDimension;
         }

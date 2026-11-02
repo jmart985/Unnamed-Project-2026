@@ -9,8 +9,8 @@ public static class IndividualTemperament
 
     public static TemperamentProfile ForEntity(string entityId, TemperamentProfile speciesTemperament)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(entityId);
-        ArgumentNullException.ThrowIfNull(speciesTemperament);
+        CompatibilityGuard.NotBlank(entityId, nameof(entityId));
+        if (speciesTemperament is null) throw new ArgumentNullException(nameof(speciesTemperament));
 
         return new TemperamentProfile(
             Adjust(speciesTemperament.Boldness, entityId, "boldness"),

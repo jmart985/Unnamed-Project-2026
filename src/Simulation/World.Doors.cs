@@ -23,7 +23,7 @@ public sealed partial class World
 
     public HouseDoorResult OperateDoor(string actorId, string houseId, HouseDoorAction action)
     {
-        if (!Enum.IsDefined(action)) return new(false, "Unknown door action.");
+        if (!CompatibilityGuard.IsDefined(action)) return new(false, "Unknown door action.");
         if (!TryGetEntity(actorId, out var actor) || actor is null || actor.Health.IsIncapacitated)
             return new(false, "The door user is unavailable.");
         if (SpeciesCatalog?.TryGet(actor.SpeciesId, out var species) != true || species is null || !species.CanOpenDoors)

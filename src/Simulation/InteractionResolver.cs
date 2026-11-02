@@ -14,9 +14,9 @@ public sealed class InteractionResolver
 
     public InteractionResolver(World world, TradeGoodsCatalog tradeCatalog, RelationshipEventService socialService)
     {
-        ArgumentNullException.ThrowIfNull(world);
-        ArgumentNullException.ThrowIfNull(tradeCatalog);
-        ArgumentNullException.ThrowIfNull(socialService);
+        if (world is null) throw new ArgumentNullException(nameof(world));
+        if (tradeCatalog is null) throw new ArgumentNullException(nameof(tradeCatalog));
+        if (socialService is null) throw new ArgumentNullException(nameof(socialService));
         if (!socialService.BelongsTo(world)) throw new ArgumentException("Relationship events must use the same World.", nameof(socialService));
         _world = world;
         _socialService = socialService;

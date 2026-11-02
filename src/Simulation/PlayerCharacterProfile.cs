@@ -49,17 +49,17 @@ public sealed record PlayerCharacterProfile(
             throw new ArgumentException("A player name is required.", nameof(name));
         }
 
-        if (!Enum.IsDefined(height))
+        if (!CompatibilityGuard.IsDefined(height))
         {
             throw new ArgumentOutOfRangeException(nameof(height));
         }
 
-        if (!Enum.IsDefined(bodyType))
+        if (!CompatibilityGuard.IsDefined(bodyType))
         {
             throw new ArgumentOutOfRangeException(nameof(bodyType));
         }
 
-        if (!Enum.IsDefined(sex))
+        if (!CompatibilityGuard.IsDefined(sex))
         {
             throw new ArgumentOutOfRangeException(nameof(sex));
         }
@@ -75,9 +75,9 @@ public sealed record PlayerCharacterProfile(
     public bool IsValid =>
         !string.IsNullOrWhiteSpace(Name)
         && string.Equals(Name, Name.Trim(), StringComparison.Ordinal)
-        && Enum.IsDefined(Height)
-        && Enum.IsDefined(BodyType)
-        && Enum.IsDefined(Sex)
+        && CompatibilityGuard.IsDefined(Height)
+        && CompatibilityGuard.IsDefined(BodyType)
+        && CompatibilityGuard.IsDefined(Sex)
         && double.IsFinite(Weight) && Weight is >= 0 and <= 1
         && double.IsFinite(Muscle) && Muscle is >= 0 and <= 1
         && (Appearance is null || Appearance.IsValid(Sex));

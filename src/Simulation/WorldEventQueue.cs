@@ -10,7 +10,7 @@ public sealed class WorldEventQueue
 
     public void Enqueue(WorldEvent worldEvent)
     {
-        ArgumentNullException.ThrowIfNull(worldEvent);
+        if (worldEvent is null) throw new ArgumentNullException(nameof(worldEvent));
         if (string.IsNullOrWhiteSpace(worldEvent.Id) || worldEvent.ScheduledTick < 0 || string.IsNullOrWhiteSpace(worldEvent.Type))
         {
             throw new ArgumentException("World events require an ID, nonnegative scheduled tick, and type.", nameof(worldEvent));
@@ -26,7 +26,7 @@ public sealed class WorldEventQueue
 
     public IReadOnlyList<WorldEvent> ProcessDue(long simulationTick, Action<WorldEvent> process)
     {
-        ArgumentNullException.ThrowIfNull(process);
+        if (process is null) throw new ArgumentNullException(nameof(process));
         var due = _events
             .Where(worldEvent => worldEvent.ScheduledTick <= simulationTick)
             .OrderBy(worldEvent => worldEvent.ScheduledTick)

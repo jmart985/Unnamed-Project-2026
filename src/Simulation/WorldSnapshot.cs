@@ -192,7 +192,7 @@ public static partial class WorldSnapshotSerializer
 
     public static WorldSnapshot Capture(World world, double simulationTime)
     {
-        ArgumentNullException.ThrowIfNull(world);
+        if (world is null) throw new ArgumentNullException(nameof(world));
         if (!double.IsFinite(simulationTime) || simulationTime < 0)
         {
             throw new ArgumentOutOfRangeException(nameof(simulationTime), "Simulation time must be finite and nonnegative.");
@@ -580,8 +580,8 @@ public static partial class WorldSnapshotSerializer
         SpeciesCatalog speciesCatalog,
         params ITransientSimulationState[] transientState)
     {
-        ArgumentNullException.ThrowIfNull(target);
-        ArgumentNullException.ThrowIfNull(speciesCatalog);
+        if (target is null) throw new ArgumentNullException(nameof(target));
+        if (speciesCatalog is null) throw new ArgumentNullException(nameof(speciesCatalog));
 
         var snapshot = Deserialize(json);
         if (snapshot.PlayerEntityId is not null && snapshot.PlayerHealth is null)
@@ -596,7 +596,7 @@ public static partial class WorldSnapshotSerializer
 
         foreach (var state in transientState)
         {
-            ArgumentNullException.ThrowIfNull(state);
+            if (state is null) throw new ArgumentNullException(nameof(state));
         }
 
         foreach (var state in transientState)
@@ -675,7 +675,7 @@ public static partial class WorldSnapshotSerializer
             }
 
             ValidatePosition(entity.Position, $"entity '{entity.Id}' position");
-            if (entity.Sex is not { } sex || !Enum.IsDefined(sex) || sex == BiologicalSex.Unspecified)
+            if (entity.Sex is not { } sex || !CompatibilityGuard.IsDefined(sex) || sex == BiologicalSex.Unspecified)
                 throw new InvalidDataException($"Snapshot entity '{entity.Id}' must have a defined biological sex.");
             if (!double.IsFinite(entity.Satiety) || entity.Satiety is < 0 or > 100)
             {
@@ -683,7 +683,7 @@ public static partial class WorldSnapshotSerializer
                     $"Snapshot entity '{entity.Id}' satiety must be finite and within [0, 100].");
             }
 
-            if (!Enum.IsDefined(entity.CaptivityState)
+            if (!CompatibilityGuard.IsDefined(entity.CaptivityState)
                 || (entity.CaptivityState != CreatureCaptivityState.Wild
                     && !species.CanBeCaptured))
             {
@@ -890,7 +890,7 @@ public static partial class WorldSnapshotSerializer
             if (structure is null || string.IsNullOrWhiteSpace(structure.Id) || !foodSourceIds.Add(structure.Id))
                 throw new InvalidDataException("Snapshot contains an invalid or duplicate structure.");
             ValidatePosition(structure.Position, $"structure '{structure.Id}' position");
-            if (!Enum.IsDefined(structure.Type) || structure.FacingQuarterTurns is < 0 or > 3
+            if (!CompatibilityGuard.IsDefined(structure.Type) || structure.FacingQuarterTurns is < 0 or > 3
                 || (structure.IsLocked && (!structure.IsClosed || structure.ResidentId is null))
                 || (structure.ResidentId is { } resident && (structure.Type != StructureType.Hut
                     || !entityIds.Contains(resident) || resident == snapshot.PlayerEntityId || !homeResidents.Add(resident))))
@@ -1269,7 +1269,7 @@ public static partial class WorldSnapshotSerializer
     private static void ValidateOrder(EntityOrder? order, string entityId)
     {
         if (order is null) return;
-        if (!Enum.IsDefined(order.Kind) || string.IsNullOrWhiteSpace(order.IssuerId))
+        if (!CompatibilityGuard.IsDefined(order.Kind) || string.IsNullOrWhiteSpace(order.IssuerId))
             throw new InvalidDataException($"Snapshot entity '{entityId}' has an invalid order.");
 
         var validOrder = order.Kind switch

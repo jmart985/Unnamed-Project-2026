@@ -48,8 +48,8 @@ public sealed class WoodHaulingService : ITransientSimulationState
         Func<EntityRecord, INavigationAdapter> navigationForEntity,
         int retryDelayTicks = DefaultRetryDelayTicks)
     {
-        ArgumentNullException.ThrowIfNull(world);
-        ArgumentNullException.ThrowIfNull(navigationForEntity);
+        if (world is null) throw new ArgumentNullException(nameof(world));
+        if (navigationForEntity is null) throw new ArgumentNullException(nameof(navigationForEntity));
 
         _world = world;
         _navigationForEntity = navigationForEntity;
@@ -58,8 +58,8 @@ public sealed class WoodHaulingService : ITransientSimulationState
 
     public WoodHaulingResult Advance(EntityRecord entity, SpeciesDefinition species, long simulationTick, double simulationTime = 0)
     {
-        ArgumentNullException.ThrowIfNull(entity);
-        ArgumentNullException.ThrowIfNull(species);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        if (species is null) throw new ArgumentNullException(nameof(species));
         if (simulationTick < 0)
         {
             throw new ArgumentOutOfRangeException(nameof(simulationTick), "Simulation tick cannot be negative.");
@@ -142,7 +142,7 @@ public sealed class WoodHaulingService : ITransientSimulationState
     // Call before navigation advances so an off-shift pickup cannot move or collect on the boundary tick.
     public bool ReconcileSchedule(EntityRecord entity, double simulationTime)
     {
-        ArgumentNullException.ThrowIfNull(entity);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
         if (!OwnsEntity(entity)) return false;
         if (entity.Health.IsIncapacitated)
         {

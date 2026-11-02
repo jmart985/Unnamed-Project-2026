@@ -9,8 +9,8 @@ public static class CreatureHarvestService
 {
     public static CreatureHarvestResult Harvest(World world, EntityRecord creature, int meatUnits, double freshnessSeconds = 300)
     {
-        ArgumentNullException.ThrowIfNull(world);
-        ArgumentNullException.ThrowIfNull(creature);
+        if (world is null) throw new ArgumentNullException(nameof(world));
+        if (creature is null) throw new ArgumentNullException(nameof(creature));
         if (meatUnits <= 0) return new(CreatureHarvestStatus.InvalidAmount);
         if (!double.IsFinite(freshnessSeconds) || freshnessSeconds <= 0)
             return new(CreatureHarvestStatus.InvalidAmount);

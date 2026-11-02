@@ -56,8 +56,8 @@ public sealed partial class FoodConsumptionService : ITransientSimulationState
         Func<EntityRecord, INavigationAdapter> navigationForEntity,
         int retryDelayTicks = FoodSelectionService.DefaultRetryDelayTicks)
     {
-        ArgumentNullException.ThrowIfNull(world);
-        ArgumentNullException.ThrowIfNull(navigationForEntity);
+        if (world is null) throw new ArgumentNullException(nameof(world));
+        if (navigationForEntity is null) throw new ArgumentNullException(nameof(navigationForEntity));
 
         _world = world;
         _navigationForEntity = navigationForEntity;
@@ -77,8 +77,8 @@ public sealed partial class FoodConsumptionService : ITransientSimulationState
 
     public FoodConsumptionResult Advance(EntityRecord entity, long simulationTick)
     {
-        ArgumentNullException.ThrowIfNull(_catalog);
-        ArgumentNullException.ThrowIfNull(entity);
+        if (_catalog is null) throw new ArgumentNullException(nameof(_catalog));
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
         if (!_catalog.TryGet(entity.SpeciesId, out var species) || species is null)
         {
             return new FoodConsumptionResult(FoodConsumptionStatus.InvalidSpecies);
@@ -97,8 +97,8 @@ public sealed partial class FoodConsumptionService : ITransientSimulationState
         SpeciesDefinition species,
         long simulationTick)
     {
-        ArgumentNullException.ThrowIfNull(entity);
-        ArgumentNullException.ThrowIfNull(species);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        if (species is null) throw new ArgumentNullException(nameof(species));
         if (simulationTick < 0)
         {
             throw new ArgumentOutOfRangeException(nameof(simulationTick), "Simulation tick cannot be negative.");
@@ -179,7 +179,7 @@ public sealed partial class FoodConsumptionService : ITransientSimulationState
     /// <summary>Eats one compatible unit from a food source within reach for the World-owned player.</summary>
     public PlayerEatResult TryPlayerEat(string? sourceId, double maximumReach = PlayerEatReach)
     {
-        ArgumentNullException.ThrowIfNull(_catalog);
+        if (_catalog is null) throw new ArgumentNullException(nameof(_catalog));
         if (!double.IsFinite(maximumReach) || maximumReach < 0)
         {
             throw new ArgumentOutOfRangeException(nameof(maximumReach));

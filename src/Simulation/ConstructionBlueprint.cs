@@ -8,7 +8,7 @@ public sealed class ConstructionBlueprint
     {
         if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("A blueprint ID is required.", nameof(id));
         if (width <= 0 || depth <= 0) throw new ArgumentOutOfRangeException(nameof(width));
-        ArgumentNullException.ThrowIfNull(required);
+        if (required is null) throw new ArgumentNullException(nameof(required));
         if (required.Count == 0 || required.Any(item => !ItemIds.IsKnown(item.Key) || item.Value <= 0)) throw new ArgumentException("Requirements must contain known items with positive quantities.", nameof(required));
         if (workRequired < 0) throw new ArgumentOutOfRangeException(nameof(workRequired));
         Id=id; Width=width; Depth=depth; WorkRequired=workRequired; _required=new(required, StringComparer.Ordinal);
@@ -40,7 +40,7 @@ public sealed class ConstructionBlueprint
     }
     internal void Restore(IReadOnlyDictionary<string, int> progress, int workProgress)
     {
-        ArgumentNullException.ThrowIfNull(progress);
+        if (progress is null) throw new ArgumentNullException(nameof(progress));
         if (progress.Any(item => !_required.TryGetValue(item.Key, out var required) || item.Value < 0 || item.Value > required)
             || _required.Any(item => progress.GetValueOrDefault(item.Key) > item.Value)
             || (workProgress > 0 && _required.Any(item => progress.GetValueOrDefault(item.Key) < item.Value))
