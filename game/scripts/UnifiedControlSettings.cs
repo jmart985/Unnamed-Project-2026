@@ -74,7 +74,7 @@ public sealed class UnifiedControlSettings
             Status = "Custom controls loaded.";
             return true;
         }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException or JsonException or InvalidOperationException)
+        catch (Exception error) when (error is IOException or InvalidDataException or UnauthorizedAccessException or JsonException or InvalidOperationException)
         {
             Status = "Controls not loaded; file preserved. " + error.Message;
             return false;
@@ -212,7 +212,8 @@ public sealed class UnifiedControlSettings
         if (input is InputEventJoypadButton { Pressed: true } button)
             return new("joypad", (long)button.ButtonIndex, Modifier:
                 button.ButtonIndex != JoyButton.LeftShoulder && Input.IsJoyButtonPressed(button.Device, JoyButton.LeftShoulder)
-                    ? ControlCatalog.PadUtility : null);
+                    ? ControlCatalog.PadUtility : Input.GetJoyAxis(button.Device, JoyAxis.TriggerLeft) > 0.5f
+                        ? ControlCatalog.LeftTrigger : null);
         if (input is InputEventJoypadMotion motion && Math.Abs(motion.AxisValue) >= 0.65f)
             return new("axis", (long)motion.Axis, Math.Sign(motion.AxisValue), Modifier:
                 Input.IsJoyButtonPressed(motion.Device, JoyButton.LeftShoulder) ? ControlCatalog.PadUtility : null);
@@ -224,6 +225,7 @@ public sealed class UnifiedControlSettings
         foreach (var definition in ControlCatalog.All)
         {
             if (!InputMap.HasAction(definition.Id)) InputMap.AddAction(definition.Id, Preferences.StickDeadzone);
+            InputMap.ActionSetDeadzone(definition.Id, Preferences.StickDeadzone);
             Input.ActionRelease(definition.Id);
             InputMap.ActionEraseEvents(definition.Id);
             if (!definition.Available) continue;

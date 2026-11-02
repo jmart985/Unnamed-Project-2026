@@ -23,6 +23,14 @@ public partial class Main
             var settings = new UnifiedControlSettings(path);
             var custom = new ControlPreferences(ToggleCrouch: true, ToggleWheels: true, StickDeadzone: 0.25f, InvertLookY: true);
             Require(settings.SetPreferences(custom, out _), "preferences save");
+            settings.ApplyInputMap();
+            Require(Math.Abs(InputMap.ActionGetDeadzone(ControllerActions.MoveForward) - custom.StickDeadzone) < 0.001f,
+                "saved deadzone updates existing movement actions");
+            Require(settings.SetPreferences(custom with { StickDeadzone = 0.35f }, out _), "deadzone change saves");
+            settings.ApplyInputMap();
+            Require(Math.Abs(InputMap.ActionGetDeadzone(ControllerActions.MoveForward) - 0.35f) < 0.001f,
+                "reapplying updates an action created earlier");
+            Require(settings.SetPreferences(custom, out _), "restore validation preferences");
             Require(settings.SetBindings(ControllerActions.BuildSlot1,
                 [ControlCatalog.K(Key.Key1), ControlCatalog.K(Key.F11)], out _), "alternate binding saves");
             Require(settings.TryBind(ControllerActions.Inspect, false,
@@ -40,6 +48,12 @@ public partial class Main
             Require(UnifiedControlSettings.Capture(new InputEventJoypadMotion { Axis = JoyAxis.RightX, AxisValue = -0.8f })
                 is { Device: "axis", Sign: -1 }, "axis capture");
             Require(UnifiedControlSettings.Capture(new InputEventJoypadMotion { Axis = JoyAxis.RightX, AxisValue = 0.1f }) is null, "axis noise ignored");
+            Input.ParseInputEvent(new InputEventJoypadMotion { Device = 7, Axis = JoyAxis.TriggerLeft, AxisValue = 0.9f });
+            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+            Require(UnifiedControlSettings.Capture(new InputEventJoypadButton { Device = 7,
+                ButtonIndex = JoyButton.DpadLeft, Pressed = true }) is { } triggerChord && triggerChord.Modifier == ControlCatalog.LeftTrigger,
+                "left-trigger chord is captured from actual input state");
+            Input.ParseInputEvent(new InputEventJoypadMotion { Device = 7, Axis = JoyAxis.TriggerLeft, AxisValue = 0 });
 
             var failed = new UnifiedControlSettings(path, new SaveSlotStore(new RejectControlWrites()));
             var beforeFile = File.ReadAllText(path);
@@ -66,6 +80,14 @@ public partial class Main
             }
 
             var corruptPath = System.IO.Path.Combine(folder, "corrupt.json");
+            foreach (var invalid in new[] { "{\"Version\":99}", "{\"Version\":4,\"Actions\":{}}",
+                "{\"Version\":5,\"Bindings\":{},\"Preferences\":{}}" })
+            {
+                File.WriteAllText(corruptPath, invalid);
+                var rejected = new UnifiedControlSettings(corruptPath);
+                Require(!rejected.Load() && rejected.Status.Contains("preserved") && File.ReadAllText(corruptPath) == invalid,
+                    "structurally invalid profile is rejected without throwing or changing the file");
+            }
             File.WriteAllText(corruptPath, "{bad");
             Require(!new UnifiedControlSettings(corruptPath).Load() && File.ReadAllText(corruptPath) == "{bad", "corrupt file preserved");
             var gesture = new HoldTapGesture(0.3);
