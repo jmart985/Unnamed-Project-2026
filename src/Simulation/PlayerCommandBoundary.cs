@@ -44,7 +44,7 @@ public sealed class PlayerCommandBoundary
 
     public PlayerCommandResult Execute(PlayerCommand? command)
     {
-        if (command is null || !Enum.IsDefined(command.Kind)) return new(PlayerCommandResultCode.InvalidCommand, Reason: "Unknown command.");
+        if (command is null || !CompatibilityGuard.IsDefined(command.Kind)) return new(PlayerCommandResultCode.InvalidCommand, Reason: "Unknown command.");
         switch (command.Kind)
         {
             case PlayerCommandKind.Pause:

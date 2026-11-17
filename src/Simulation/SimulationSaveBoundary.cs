@@ -18,8 +18,8 @@ public sealed class SimulationSaveBoundary
 {
     public SaveBoundaryResult Save(World world, SimulationClock clock)
     {
-        ArgumentNullException.ThrowIfNull(world);
-        ArgumentNullException.ThrowIfNull(clock);
+        if (world is null) throw new ArgumentNullException(nameof(world));
+        if (clock is null) throw new ArgumentNullException(nameof(clock));
         if (!clock.IsPaused)
         {
             return new(SaveBoundaryStatus.RequiresPausedBoundary, null, clock.SimulationTime, "save_requires_paused_boundary");
@@ -35,9 +35,9 @@ public sealed class SimulationSaveBoundary
         SpeciesCatalog speciesCatalog,
         params ITransientSimulationState[] transientState)
     {
-        ArgumentNullException.ThrowIfNull(world);
-        ArgumentNullException.ThrowIfNull(clock);
-        ArgumentNullException.ThrowIfNull(speciesCatalog);
+        if (world is null) throw new ArgumentNullException(nameof(world));
+        if (clock is null) throw new ArgumentNullException(nameof(clock));
+        if (speciesCatalog is null) throw new ArgumentNullException(nameof(speciesCatalog));
         if (!clock.IsPaused)
         {
             return new(SaveBoundaryStatus.RequiresPausedBoundary, null, clock.SimulationTime, "load_requires_paused_boundary");

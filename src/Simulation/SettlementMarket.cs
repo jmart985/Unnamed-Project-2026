@@ -51,8 +51,8 @@ public sealed class SettlementMarket
 
     public SettlementMarket(World world, TradeGoodsCatalog catalog, string marketLocationId)
     {
-        ArgumentNullException.ThrowIfNull(world);
-        ArgumentNullException.ThrowIfNull(catalog);
+        if (world is null) throw new ArgumentNullException(nameof(world));
+        if (catalog is null) throw new ArgumentNullException(nameof(catalog));
         if (string.IsNullOrWhiteSpace(marketLocationId))
         {
             throw new ArgumentException("A market stockpile ID is required.", nameof(marketLocationId));
@@ -65,7 +65,7 @@ public sealed class SettlementMarket
 
     public MarketTransactionResult TryExecute(MarketTransactionRequest? request)
     {
-        if (request is null || !Enum.IsDefined(request.Side))
+        if (request is null || !CompatibilityGuard.IsDefined(request.Side))
         {
             return Reject(MarketTransactionStatus.InvalidRequest);
         }

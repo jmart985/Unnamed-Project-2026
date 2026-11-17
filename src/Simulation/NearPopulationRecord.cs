@@ -10,8 +10,8 @@ public sealed class NearPopulationRecord
     {
         if (string.IsNullOrWhiteSpace(regionId) || string.IsNullOrWhiteSpace(speciesId))
             throw new ArgumentException("Near populations require region and species IDs.");
-        ArgumentNullException.ThrowIfNull(entityIds);
-        ArgumentNullException.ThrowIfNull(resources);
+        if (entityIds is null) throw new ArgumentNullException(nameof(entityIds));
+        if (resources is null) throw new ArgumentNullException(nameof(resources));
         var ids = entityIds.ToArray();
         if (ids.Any(string.IsNullOrWhiteSpace) || ids.Distinct(StringComparer.Ordinal).Count() != ids.Length)
             throw new ArgumentException("Near populations require distinct entity IDs.", nameof(entityIds));

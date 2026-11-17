@@ -36,7 +36,7 @@ public sealed class FoodSource
             throw new ArgumentOutOfRangeException(nameof(position), "Position coordinates must be finite.");
         }
 
-        ArgumentNullException.ThrowIfNull(contents);
+        if (contents is null) throw new ArgumentNullException(nameof(contents));
         if (freshnessSecondsRemaining is { } freshness
             && (!double.IsFinite(freshness) || freshness <= 0))
         {
@@ -91,7 +91,7 @@ public sealed class FoodSelectionService : ITransientSimulationState
 
     public FoodSelectionService(World world, int retryDelayTicks = DefaultRetryDelayTicks)
     {
-        ArgumentNullException.ThrowIfNull(world);
+        if (world is null) throw new ArgumentNullException(nameof(world));
 
         _world = world;
         _retryScheduler = new RetryScheduler(retryDelayTicks);
@@ -105,8 +105,8 @@ public sealed class FoodSelectionService : ITransientSimulationState
 
     public FoodSelectionResult TrySelect(EntityRecord entity, IEnumerable<FoodSource> sources, long simulationTick, Action? actionCleanup = null)
     {
-        ArgumentNullException.ThrowIfNull(_catalog);
-        ArgumentNullException.ThrowIfNull(entity);
+        if (_catalog is null) throw new ArgumentNullException(nameof(_catalog));
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
         if (!_catalog.TryGet(entity.SpeciesId, out var species) || species is null)
         {
             return new FoodSelectionResult(FoodSelectionStatus.InvalidSpecies);
@@ -196,8 +196,8 @@ public sealed class FoodSelectionService : ITransientSimulationState
         IEnumerable<FoodSource> sources,
         long simulationTick)
     {
-        ArgumentNullException.ThrowIfNull(entity);
-        ArgumentNullException.ThrowIfNull(sources);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        if (sources is null) throw new ArgumentNullException(nameof(sources));
         if (simulationTick < 0)
         {
             throw new ArgumentOutOfRangeException(nameof(simulationTick), "Simulation tick cannot be negative.");
@@ -209,7 +209,7 @@ public sealed class FoodSelectionService : ITransientSimulationState
             return new FoodSelectionResult(FoodSelectionStatus.InvalidEntity);
         }
 
-        if (!Enum.IsDefined(failure)
+        if (!CompatibilityGuard.IsDefined(failure)
             || string.IsNullOrWhiteSpace(targetId)
             || !_attempts.TryGetValue(entity.Id, out var attempt)
             || !IsCurrentAttempt(entity, attempt)
@@ -368,9 +368,9 @@ public sealed class FoodSelectionService : ITransientSimulationState
         IEnumerable<FoodSource> sources,
         long simulationTick)
     {
-        ArgumentNullException.ThrowIfNull(entity);
-        ArgumentNullException.ThrowIfNull(species);
-        ArgumentNullException.ThrowIfNull(sources);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        if (species is null) throw new ArgumentNullException(nameof(species));
+        if (sources is null) throw new ArgumentNullException(nameof(sources));
         if (simulationTick < 0)
         {
             throw new ArgumentOutOfRangeException(nameof(simulationTick), "Simulation tick cannot be negative.");

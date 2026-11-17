@@ -72,8 +72,8 @@ public sealed class NewGameSession
         bool createVillage = false,
         double? dayLengthSeconds = null)
     {
-        ArgumentNullException.ThrowIfNull(catalog);
-        ArgumentNullException.ThrowIfNull(playerProfile);
+        if (catalog is null) throw new ArgumentNullException(nameof(catalog));
+        if (playerProfile is null) throw new ArgumentNullException(nameof(playerProfile));
         if (!playerProfile.IsValid)
         {
             throw new ArgumentException("The player profile is invalid.", nameof(playerProfile));

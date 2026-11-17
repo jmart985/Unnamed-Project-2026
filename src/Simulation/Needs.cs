@@ -94,7 +94,7 @@ public sealed class NeedsState
 
     public NeedsState(NeedsTuning tuning, double? initialSatiety = null, double? initialHydration = null, double? initialFatigue = null)
     {
-        ArgumentNullException.ThrowIfNull(tuning);
+        if (tuning is null) throw new ArgumentNullException(nameof(tuning));
         _tuning = tuning;
         Satiety = initialSatiety ?? tuning.InitialSatiety;
         Hydration = initialHydration ?? tuning.InitialHydration;
@@ -137,7 +137,7 @@ public sealed class NeedsState
         double? satietyOverride = null,
         double? hydrationOverride = null)
     {
-        ArgumentNullException.ThrowIfNull(stats);
+        if (stats is null) throw new ArgumentNullException(nameof(stats));
         var loadFatigue = LoadFatigue.PerSecond(carriedWeightKg, stats);
         if (isSleeping)
         {

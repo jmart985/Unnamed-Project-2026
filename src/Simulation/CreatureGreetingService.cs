@@ -36,7 +36,7 @@ public sealed class CreatureGreetingService
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _speciesCatalog = speciesCatalog ?? throw new ArgumentNullException(nameof(speciesCatalog));
-        ArgumentNullException.ThrowIfNull(relationshipEventCatalog);
+        if (relationshipEventCatalog is null) throw new ArgumentNullException(nameof(relationshipEventCatalog));
         if (!double.IsFinite(maximumReach) || maximumReach < 0)
         {
             throw new ArgumentOutOfRangeException(nameof(maximumReach));

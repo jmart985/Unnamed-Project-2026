@@ -95,7 +95,7 @@ public sealed class PerceptionQueryService
         string? observerEntityId,
         IEnumerable<CreatureTrack> tracks)
     {
-        ArgumentNullException.ThrowIfNull(tracks);
+        if (tracks is null) throw new ArgumentNullException(nameof(tracks));
         var candidates = tracks.ToArray();
         if (candidates.Any(track => track is null))
         {

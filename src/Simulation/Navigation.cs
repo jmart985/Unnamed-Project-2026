@@ -71,7 +71,7 @@ public sealed class NavigationRequestRegistry<T>(string idPrefix) where T : clas
 
     public T Add(Func<string, T> create)
     {
-        ArgumentNullException.ThrowIfNull(create);
+        if (create is null) throw new ArgumentNullException(nameof(create));
         var record = create($"{idPrefix}{++_nextRequestId:D6}");
         _records.Add(record.Id, record);
         return record;
@@ -128,7 +128,7 @@ public sealed class FakeNavigationAdapter : INavigationAdapter
 
     public string Request(NavigationRequest request)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        if (request is null) throw new ArgumentNullException(nameof(request));
         var requestId = $"navigation-{++_nextRequestId:D6}";
         _requests.Add(requestId, new RequestState(request));
         return requestId;

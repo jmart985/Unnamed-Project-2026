@@ -15,7 +15,7 @@ public sealed class TreeRegrowthService(World world)
 
     public void Restore(IEnumerable<TreeRegrowthSnapshot> snapshots)
     {
-        ArgumentNullException.ThrowIfNull(snapshots);
+        if (snapshots is null) throw new ArgumentNullException(nameof(snapshots));
         world.ClearTreeRegrowthTimers();
         foreach (var snapshot in snapshots)
         {

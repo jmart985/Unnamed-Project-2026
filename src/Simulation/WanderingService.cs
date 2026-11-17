@@ -52,9 +52,9 @@ public sealed class WanderingService : ITransientSimulationState
         IEnumerable<Vector3> goals,
         int decisionSeed = 0)
     {
-        ArgumentNullException.ThrowIfNull(world);
-        ArgumentNullException.ThrowIfNull(navigationForEntity);
-        ArgumentNullException.ThrowIfNull(goals);
+        if (world is null) throw new ArgumentNullException(nameof(world));
+        if (navigationForEntity is null) throw new ArgumentNullException(nameof(navigationForEntity));
+        if (goals is null) throw new ArgumentNullException(nameof(goals));
 
         _goals = goals.ToArray();
         if (_goals.Count == 0)
@@ -79,8 +79,8 @@ public sealed class WanderingService : ITransientSimulationState
         SpeciesDefinition species,
         long simulationTick = 0)
     {
-        ArgumentNullException.ThrowIfNull(entity);
-        ArgumentNullException.ThrowIfNull(species);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        if (species is null) throw new ArgumentNullException(nameof(species));
 
         if (!_world.TryGetEntity(entity.Id, out var worldEntity)
             || !ReferenceEquals(entity, worldEntity))

@@ -17,8 +17,8 @@ internal static class BiologicalSexAssignment
 {
     public static BiologicalSex ForEntity(string entityId, string speciesId)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(entityId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(speciesId);
+        CompatibilityGuard.NotBlank(entityId, nameof(entityId));
+        CompatibilityGuard.NotBlank(speciesId, nameof(speciesId));
 
         // Stable across runs and save/load; assigning sex must not consume simulation RNG.
         var hash = 2166136261u;

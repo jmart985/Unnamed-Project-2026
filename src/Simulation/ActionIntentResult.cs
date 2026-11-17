@@ -16,8 +16,8 @@ public sealed record ActionIntentResult(
 {
     public static ActionIntentResult FromFoodSelection(EntityRecord entity, FoodSelectionResult result)
     {
-        ArgumentNullException.ThrowIfNull(entity);
-        ArgumentNullException.ThrowIfNull(result);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        if (result is null) throw new ArgumentNullException(nameof(result));
         var status = result.Status switch
         {
             FoodSelectionStatus.Selected or FoodSelectionStatus.NotHungry => ActionIntentStatus.Accepted,
@@ -40,8 +40,8 @@ public sealed record ActionIntentResult(
 
     public static ActionIntentResult FromFoodConsumption(EntityRecord entity, FoodConsumptionResult result)
     {
-        ArgumentNullException.ThrowIfNull(entity);
-        ArgumentNullException.ThrowIfNull(result);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        if (result is null) throw new ArgumentNullException(nameof(result));
         var status = result.Status switch
         {
             FoodConsumptionStatus.Ate or FoodConsumptionStatus.NotHungry => ActionIntentStatus.Accepted,
@@ -65,8 +65,8 @@ public sealed record ActionIntentResult(
 
     public static ActionIntentResult FromWoodHauling(EntityRecord entity, WoodHaulingResult result)
     {
-        ArgumentNullException.ThrowIfNull(entity);
-        ArgumentNullException.ThrowIfNull(result);
+        if (entity is null) throw new ArgumentNullException(nameof(entity));
+        if (result is null) throw new ArgumentNullException(nameof(result));
         var status = result.Status switch
         {
             WoodHaulingStatus.Delivered or WoodHaulingStatus.NoWork => ActionIntentStatus.Accepted,

@@ -80,7 +80,7 @@ public static class RelationshipBondClassifier
         RelationshipState relationship,
         RelationshipBondThresholds? thresholds = null)
     {
-        ArgumentNullException.ThrowIfNull(relationship);
+        if (relationship is null) throw new ArgumentNullException(nameof(relationship));
         thresholds ??= RelationshipBondThresholds.ProvisionalDefault;
 
         if (relationship.Fear >= thresholds.FearForFearful)

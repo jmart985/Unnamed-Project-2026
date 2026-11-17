@@ -36,7 +36,7 @@ public sealed class SettlementBedRegistry
     public IReadOnlyList<SettlementBed> Beds => _beds;
     public SettlementBed Add(SettlementBed bed)
     {
-        ArgumentNullException.ThrowIfNull(bed);
+        if (bed is null) throw new ArgumentNullException(nameof(bed));
         if (_beds.Any(existing => existing.Id == bed.Id)) throw new ArgumentException($"Bed ID '{bed.Id}' is already registered.", nameof(bed));
         _beds.Add(bed);
         return bed;

@@ -59,7 +59,7 @@ public sealed class Structure
 
     public void AddBed(Bed bed)
     {
-        ArgumentNullException.ThrowIfNull(bed);
+        if (bed is null) throw new ArgumentNullException(nameof(bed));
         Beds.Add(bed);
     }
 }

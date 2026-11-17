@@ -118,7 +118,7 @@ public sealed class ActionLifecycle
 
     public ActionStartResult TryStart(ActionCandidate candidate, Action? cleanup = null)
     {
-        ArgumentNullException.ThrowIfNull(candidate);
+        if (candidate is null) throw new ArgumentNullException(nameof(candidate));
 
         if (candidate.RequiresEmptyCargo && (_hasCarriedItems?.Invoke() ?? false))
         {
@@ -182,7 +182,7 @@ public sealed class ActionLifecycle
 
     public static ActionCandidate? Select(IEnumerable<ActionCandidate> candidates)
     {
-        ArgumentNullException.ThrowIfNull(candidates);
+        if (candidates is null) throw new ArgumentNullException(nameof(candidates));
 
         return candidates
             .OrderByDescending(candidate => candidate.Priority)

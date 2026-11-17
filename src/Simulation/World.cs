@@ -67,7 +67,7 @@ public sealed partial class World
 
     public void SetFarPopulation(FarEntityRecord record)
     {
-        ArgumentNullException.ThrowIfNull(record);
+        if (record is null) throw new ArgumentNullException(nameof(record));
         if (SpeciesCatalog is null || !SpeciesCatalog.TryGet(record.SpeciesId, out _))
             throw new ArgumentException($"Far population species '{record.SpeciesId}' is not defined in this world.", nameof(record));
         if (_nearPopulations.ContainsKey((record.RegionId, record.SpeciesId)))
@@ -77,7 +77,7 @@ public sealed partial class World
 
     public void SetNearPopulation(NearPopulationRecord record)
     {
-        ArgumentNullException.ThrowIfNull(record);
+        if (record is null) throw new ArgumentNullException(nameof(record));
         if (SpeciesCatalog is null || !SpeciesCatalog.TryGet(record.SpeciesId, out _))
             throw new ArgumentException($"Near population species '{record.SpeciesId}' is not defined in this world.", nameof(record));
         var key = (record.RegionId, record.SpeciesId);
@@ -174,7 +174,7 @@ public sealed partial class World
         else _workSchedules[entity.Id] = schedule;
         return ScheduleUpdateResult.Accepted;
     }
-    public IReadOnlyCollection<string> SquadMemberIds => Array.AsReadOnly(_squadMembers.Order(StringComparer.Ordinal).ToArray());
+    public IReadOnlyCollection<string> SquadMemberIds => Array.AsReadOnly(_squadMembers.OrderBy(value => value, StringComparer.Ordinal).ToArray());
 
     public SquadResult AddSquadMember(string? id)
     {
@@ -218,7 +218,7 @@ public sealed partial class World
 
     public IReadOnlyCollection<EntityRecord> Entities => _entities.Values;
     public IReadOnlyCollection<string> FactionIds =>
-        Array.AsReadOnly(_factionIds.Order(StringComparer.Ordinal).ToArray());
+        Array.AsReadOnly(_factionIds.OrderBy(value => value, StringComparer.Ordinal).ToArray());
     public IReadOnlyCollection<FactionReputationState> FactionReputations =>
         Array.AsReadOnly(_factionReputations
             .OrderBy(pair => pair.Key.EntityId, StringComparer.Ordinal)
@@ -269,7 +269,7 @@ public sealed partial class World
             throw new ArgumentOutOfRangeException(nameof(seed), "The session seed cannot be negative.");
         }
 
-        ArgumentNullException.ThrowIfNull(profile);
+        if (profile is null) throw new ArgumentNullException(nameof(profile));
         if (!profile.IsValid)
         {
             throw new ArgumentException("The player profile is invalid.", nameof(profile));
@@ -484,7 +484,7 @@ public sealed partial class World
         double satiety = 60,
         BiologicalSex? sex = null)
     {
-        ArgumentNullException.ThrowIfNull(species);
+        if (species is null) throw new ArgumentNullException(nameof(species));
         return SpawnEntityCore(
             species.Id,
             position,
@@ -584,7 +584,7 @@ public sealed partial class World
             return CreatureLifecycleTransitionResult.TargetDead;
         }
 
-        if (!Enum.IsDefined(targetState))
+        if (!CompatibilityGuard.IsDefined(targetState))
         {
             return CreatureLifecycleTransitionResult.InvalidTransition;
         }
@@ -959,8 +959,8 @@ public sealed partial class World
     internal void ApplySnapshot(WorldSnapshot snapshot, SpeciesCatalog speciesCatalog)
     {
         SpeciesCatalog = speciesCatalog;
-        ArgumentNullException.ThrowIfNull(snapshot);
-        ArgumentNullException.ThrowIfNull(speciesCatalog);
+        if (snapshot is null) throw new ArgumentNullException(nameof(snapshot));
+        if (speciesCatalog is null) throw new ArgumentNullException(nameof(speciesCatalog));
 
         Reset();
         foreach (var entity in snapshot.Entities)

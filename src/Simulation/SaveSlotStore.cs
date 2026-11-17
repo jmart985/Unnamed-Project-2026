@@ -42,7 +42,13 @@ public sealed class SystemSaveFileSystem : ISaveFileSystem
     {
         if (File.Exists(destinationPath))
         {
+#if NETSTANDARD2_1
+            // Do not delete the old save before replacing it. A failed replacement
+            // must leave the previous valid save available.
+            File.Replace(sourcePath, destinationPath, null);
+#else
             File.Move(sourcePath, destinationPath, overwrite: true);
+#endif
             return;
         }
 
@@ -76,7 +82,7 @@ public sealed class SaveSlotStore
     public void Save(string path, Func<string> serialize)
     {
         ValidatePath(path);
-        ArgumentNullException.ThrowIfNull(serialize);
+        if (serialize is null) throw new ArgumentNullException(nameof(serialize));
 
         var temporaryPath = path + ".tmp";
         try

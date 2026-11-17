@@ -22,7 +22,7 @@ public sealed record PlayerBodyProportions(
 
     public static PlayerBodyProportions From(PlayerCharacterProfile profile)
     {
-        ArgumentNullException.ThrowIfNull(profile);
+        if (profile is null) throw new ArgumentNullException(nameof(profile));
         if (!profile.IsValid)
         {
             throw new ArgumentException("The player profile is invalid.", nameof(profile));

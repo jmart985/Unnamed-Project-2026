@@ -41,7 +41,7 @@ public static class PlayerBodyCustomization
 
     public static PlayerBodyPartAdjustment Mirror(PlayerBodyPartAdjustment adjustment)
     {
-        ArgumentNullException.ThrowIfNull(adjustment);
+        if (adjustment is null) throw new ArgumentNullException(nameof(adjustment));
         var mirroredName = adjustment.PartName switch
         {
             "LeftShoulder" => "RightShoulder", "RightShoulder" => "LeftShoulder",

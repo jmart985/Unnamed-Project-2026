@@ -9,7 +9,7 @@ public sealed class BehavioralTrigger : IMeleeDamageResponder
 
     public BehavioralTrigger(World world)
     {
-        ArgumentNullException.ThrowIfNull(world);
+        if (world is null) throw new ArgumentNullException(nameof(world));
         _world = world;
     }
 

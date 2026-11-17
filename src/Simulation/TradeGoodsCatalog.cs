@@ -43,7 +43,7 @@ public sealed class TradeGoodsCatalog
 
     public static TradeGoodsCatalog Load(Stream stream)
     {
-        ArgumentNullException.ThrowIfNull(stream);
+        if (stream is null) throw new ArgumentNullException(nameof(stream));
 
         TradeGoodData?[]? entries;
         try

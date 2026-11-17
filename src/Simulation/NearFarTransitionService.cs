@@ -19,7 +19,7 @@ public sealed class NearFarTransitionService
 
     public void SetFarRecord(FarEntityRecord record)
     {
-        ArgumentNullException.ThrowIfNull(record);
+        if (record is null) throw new ArgumentNullException(nameof(record));
         if (!_catalog.TryGet(record.SpeciesId, out _)) throw new ArgumentException("Unknown species.", nameof(record));
         _world.SetFarPopulation(record);
     }
@@ -41,7 +41,7 @@ public sealed class NearFarTransitionService
 
     public IReadOnlyList<EntityRecord> Promote(string regionId, string speciesId, IReadOnlyList<Vector3> positions)
     {
-        ArgumentNullException.ThrowIfNull(positions);
+        if (positions is null) throw new ArgumentNullException(nameof(positions));
         if (!_world.TryGetFarPopulation(regionId, speciesId, out var record) || record is null || record.Count == 0)
             return [];
         if (positions.Count != record.Count || positions.Any(position => !float.IsFinite(position.X)

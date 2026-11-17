@@ -16,7 +16,7 @@ public sealed class ResourceLocation
             throw new ArgumentOutOfRangeException(nameof(position), "Position coordinates must be finite.");
         }
 
-        ArgumentNullException.ThrowIfNull(contents);
+        if (contents is null) throw new ArgumentNullException(nameof(contents));
 
         Id = id;
         Position = position;

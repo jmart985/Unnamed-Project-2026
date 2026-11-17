@@ -45,8 +45,8 @@ public sealed class OrderService : ITransientSimulationState
         Func<EntityRecord, INavigationAdapter> navigationForEntity,
         Func<string, bool>? isBehaviorSuppressed = null)
     {
-        ArgumentNullException.ThrowIfNull(world);
-        ArgumentNullException.ThrowIfNull(navigationForEntity);
+        if (world is null) throw new ArgumentNullException(nameof(world));
+        if (navigationForEntity is null) throw new ArgumentNullException(nameof(navigationForEntity));
         _world = world;
         _navigationForEntity = navigationForEntity;
         _isBehaviorSuppressed = isBehaviorSuppressed;
@@ -281,7 +281,7 @@ public sealed class OrderService : ITransientSimulationState
             || entity.Actions.Current?.InterruptsMovementOrders == true;
 
     private static bool IsValidIntent(EntityOrder intent)
-        => Enum.IsDefined(intent.Kind)
+        => CompatibilityGuard.IsDefined(intent.Kind)
             && !string.IsNullOrWhiteSpace(intent.IssuerId)
             && (intent.Kind == EntityOrderKind.Follow
                 ? intent.Position is null

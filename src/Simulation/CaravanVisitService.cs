@@ -55,7 +55,7 @@ public sealed class CaravanVisitService : ITransientSimulationState
 
     public CaravanVisitService(SettlementMarket market)
     {
-        ArgumentNullException.ThrowIfNull(market);
+        if (market is null) throw new ArgumentNullException(nameof(market));
         _market = market;
     }
 

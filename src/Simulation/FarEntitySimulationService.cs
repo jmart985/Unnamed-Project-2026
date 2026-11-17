@@ -41,7 +41,7 @@ public sealed class FarEntitySimulationService
 
     public FarEntitySimulationResult Advance(FarEntitySimulationRequest request)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        if (request is null) throw new ArgumentNullException(nameof(request));
         if (request.ElapsedTicks < 0) throw new ArgumentOutOfRangeException(nameof(request.ElapsedTicks));
         if (request.AvailableFood < 0) throw new ArgumentOutOfRangeException(nameof(request.AvailableFood));
         if (request.MigrationPressure is < 0 or > 100) throw new ArgumentOutOfRangeException(nameof(request.MigrationPressure));

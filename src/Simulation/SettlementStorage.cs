@@ -11,7 +11,7 @@ public sealed class SettlementStorage
         if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("A storage ID is required.", nameof(id));
         if (!float.IsFinite(position.X) || !float.IsFinite(position.Y) || !float.IsFinite(position.Z)) throw new ArgumentOutOfRangeException(nameof(position));
         if (capacity < 0) throw new ArgumentOutOfRangeException(nameof(capacity));
-        ArgumentNullException.ThrowIfNull(acceptedItems);
+        if (acceptedItems is null) throw new ArgumentNullException(nameof(acceptedItems));
         _acceptedItems = acceptedItems.Where(ItemIds.IsKnown).ToHashSet(StringComparer.Ordinal);
         if (_acceptedItems.Count == 0) throw new ArgumentException("At least one known item type is required.", nameof(acceptedItems));
         Id = id; Position = position; Contents = new ResourceContainer(id, capacity);
@@ -19,7 +19,11 @@ public sealed class SettlementStorage
     public string Id { get; }
     public Vector3 Position { get; }
     public ResourceContainer Contents { get; }
+#if NETSTANDARD2_1
+    public IReadOnlyCollection<string> AcceptedItems => _acceptedItems;
+#else
     public IReadOnlySet<string> AcceptedItems => _acceptedItems;
+#endif
     public bool Accepts(string? itemId) => itemId is not null && _acceptedItems.Contains(itemId);
     public ResourceMutationResult TryAdd(string? itemId, int amount) => Accepts(itemId) ? Contents.TryAdd(itemId, amount) : ResourceMutationResult.InvalidDestination;
     public ResourceMutationResult TryRemove(string? itemId, int amount) => Accepts(itemId) ? Contents.TryRemove(itemId, amount) : ResourceMutationResult.InvalidDestination;
