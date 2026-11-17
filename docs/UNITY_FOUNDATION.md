@@ -35,4 +35,6 @@ Framework-only argument guards are expressed with compatible checks; generic enu
 
 The initial implementation passed 802 original-target tests and the same 802 tests against the portable DLL. The full original solution also built with zero warnings or errors. Unity Editor smoke, Windows Mono development build and standalone player smoke passed.
 
+After bringing the foundation onto the main branch that includes the unified controls, the Release solution built with zero warnings or errors. All 814 tests passed against each domain assembly. The current Unity validation run stopped at editor license initialization, so the Editor smoke check, Windows build and standalone player smoke still need to be run against this revision with an activated editor.
+
 This is not full gameplay parity, a visual asset certification, or an IL2CPP/WebGL/mobile compatibility claim. The first connected gameplay slice still needs a Unity navigation/movement adapter and the relevant food/hauling service orchestration, followed by actual arrival, interruption, reservation cleanup and save/load validation. Preserve the ordering identified in the repository integration audit rather than starting independent MonoBehaviour update loops for each domain system.

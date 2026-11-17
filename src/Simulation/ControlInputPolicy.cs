@@ -95,7 +95,7 @@ public sealed class ControlPauseState
     public void SetManual(bool paused) => ManuallyPaused = paused;
     public void SetOwner(string owner, bool paused)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+        CompatibilityGuard.NotBlank(owner, nameof(owner));
         if (paused) _owners.Add(owner); else _owners.Remove(owner);
     }
     public void Reset() { _owners.Clear(); ManuallyPaused = false; }
